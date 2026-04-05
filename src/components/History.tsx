@@ -142,6 +142,21 @@ export default function History() {
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
   const studentName = selectedLesson?.student_name;
+  const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
+
+  useEffect(() => {
+    if (selectedLesson && studentName) {
+      const fetchEndorsements = async () => {
+        const { data } = await supabase
+          .from('endorsements')
+          .select('*')
+          .eq('student_name', studentName)
+          .eq('rating', lessonRating);
+        if (data) setEndorsements(data);
+      };
+      fetchEndorsements();
+    }
+  }, [selectedLessonId, lessonRating]);
 
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = (l.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -280,7 +295,7 @@ export default function History() {
   const handleToggleEndorsement = async (key: string, label: string) => {
     if (!selectedLesson) return;
     const studentName = selectedLesson.student_name;
-    const ratingCode = rating.code;
+    const ratingCode = lessonRating;
     
     const existing = endorsements.find(e => 
       e.student_name === studentName && 
@@ -332,7 +347,7 @@ export default function History() {
     if (!selectedLesson) return false;
     return endorsements.some(e => 
       e.student_name === selectedLesson.student_name && 
-      e.rating === rating.code && 
+      e.rating === lessonRating && 
       e.endorsement_key === key && 
       e.completed
     );
@@ -794,7 +809,7 @@ export default function History() {
                   let ENDORSEMENTS: any[] = [];
                   let SOLO_OPTIONS: any[] = [];
 
-                  if (rating.code === 'ppl') {
+                  if (lessonRating === 'ppl') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.109(a)', rows: [
                         { label: 'Total flight time', ref: '§61.109(a)', have: stats.totFlight, need: 40, unit: 'hrs' },
@@ -833,7 +848,7 @@ export default function History() {
                       { id: '4', label: 'Section 4 — Knowledge Test', description: 'Required before taking the Private Pilot knowledge test.', endorsements: ENDORSEMENTS.slice(10, 11) },
                       { id: '5', label: 'Section 5 — Practical Test Checkride', description: 'Required before taking the Private Pilot practical test.', endorsements: ENDORSEMENTS.slice(11, 13) }
                     ];
-                  } else if (rating.code === 'ir') {
+                  } else if (lessonRating === 'ir') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.65(d)', rows: [
                         { label: 'Cross-country PIC', ref: '§61.65(d)(1)', have: stats.totXc, need: 50, unit: 'hrs' },
@@ -849,7 +864,7 @@ export default function History() {
                       { key: 'A.36', label: 'AC 61-65 A.36 — Instrument rating practical test §61.65(a)(6)' },
                       { key: 'A.37', label: 'AC 61-65 A.37 — Instrument practical test within 60 days §61.39(a)(6)(i)' }
                     ];
-                  } else if (rating.code === 'cpl') {
+                  } else if (lessonRating === 'cpl') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.129(a)', rows: [
                         { label: 'Total flight time', ref: '§61.129(a)(1)', have: stats.totFlight, need: 250, unit: 'hrs' },
@@ -872,7 +887,7 @@ export default function History() {
                       { key: 'A.39', label: 'AC 61-65 A.39 — Commercial pilot practical test §61.129(a)' },
                       { key: 'A.40', label: 'AC 61-65 A.40 — Commercial practical test within 60 days §61.39(a)(6)(i)' }
                     ];
-                  } else if (rating.code === 'cfi') {
+                  } else if (lessonRating === 'cfi') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.183', rows: [
                         { label: 'PIC in category and class', ref: '§61.183(g)', have: stats.totFlight, need: 15, unit: 'hrs' }
@@ -890,7 +905,7 @@ export default function History() {
                       { key: 'cfi_f', label: '§61.183(f) — Pass flight instructor knowledge test' },
                       { key: 'cfi_j', label: '§61.183(j) — Training and endorsement within 2 calendar months' }
                     ];
-                  } else if (rating.code === 'cfii') {
+                  } else if (lessonRating === 'cfii') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.187(b)', rows: [
                         { label: 'Instrument flight training', ref: '§61.187(b)(7)', have: stats.totSim, need: 15, unit: 'hrs' },
@@ -906,7 +921,7 @@ export default function History() {
                       { key: 'cfii_2', label: '§61.187(b)(2) — Hold an instrument rating' },
                       { key: 'cfii_end', label: '§61.187(b) — Logbook endorsement within 2 calendar months' }
                     ];
-                  } else if (rating.code === 'mei') {
+                  } else if (lessonRating === 'mei') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.195(h)', rows: [
                         { label: 'PIC in multiengine airplane', ref: '§61.195(h)(3)', have: getManualValue('mePic'), need: 5, unit: 'hrs', mk: 'mePic' }
@@ -932,13 +947,13 @@ export default function History() {
                                 endorsementsMet === ENDORSEMENTS.length;
 
                   // Fireworks logic
-                  if (allMet && !celebrated[`${selectedLesson.student_name}_${rating.code}`]) {
+                  if (allMet && !celebrated[`${selectedLesson.student_name}_${lessonRating}`]) {
                     confetti({
                       particleCount: 150,
                       spread: 70,
                       origin: { y: 0.6 }
                     });
-                    setCelebrated(prev => ({ ...prev, [`${selectedLesson.student_name}_${rating.code}`]: true }));
+                    setCelebrated(prev => ({ ...prev, [`${selectedLesson.student_name}_${lessonRating}`]: true }));
                   }
 
                   return (
@@ -1037,7 +1052,7 @@ export default function History() {
                           </p>
                         </div>
 
-                        {rating.code === 'ppl' ? (
+                        {lessonRating === 'ppl' ? (
                           <div className="space-y-4">
                             {SOLO_OPTIONS.map(section => {
                               const sectionEndorsementsMet = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).length;
