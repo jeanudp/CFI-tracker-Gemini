@@ -1,0 +1,5 @@
+{
+  "name": "ACS Lesson Tracker",
+  "description": "A flight training progress tracker for Private Pilot ASEL based on FAA Airman Certification Standards.",
+  "requestFramePermissions": []
+}
