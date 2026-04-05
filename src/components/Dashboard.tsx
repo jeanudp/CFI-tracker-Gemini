@@ -1,0 +1,432 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { Student, Lesson } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { cn } from '../lib/utils';
+
+import { ALL_ACS } from '../constants';
+
+export default function Dashboard() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [recentGround, setRecentGround] = useState<Lesson | null>(null);
+  const [recentFlight, setRecentFlight] = useState<Lesson | null>(null);
+  const [newStudentName, setNewStudentName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchData();
+    const saved = localStorage.getItem('sb_selected_student');
+    if (saved) {
+      setSelectedStudent(saved);
+      fetchRecentLessons(saved);
+    }
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: studentsData, error: studentsError } = await supabase.from('students').select('*').order('name');
+      if (studentsError) throw studentsError;
+
+      const { data: lessonsData, error: lessonsError } = await supabase.from('lessons').select('*');
+      if (lessonsError) throw lessonsError;
+
+      setStudents(studentsData || []);
+      setLessons(lessonsData || []);
+    } catch (err: any) {
+      console.error('Fetch error:', err);
+      setError(err.message === 'Failed to fetch' 
+        ? 'Unable to connect to the database. Please check if your Supabase project is active.' 
+        : err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStudentName.trim()) return;
+    setAdding(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data, error } = await supabase
+      .from('students')
+      .insert({ user_id: session.user.id, name: newStudentName.trim() })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setStudents(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewStudentName('');
+      handleSelectStudent(data.name);
+    }
+    setAdding(false);
+  };
+
+  const [studentToDelete, setStudentToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteStudent = async (id: string, name: string) => {
+    const { error: e1 } = await supabase.from('manual_hours').delete().eq('student_name', name);
+    if (e1) { setDeleteError('Failed to delete hours: ' + e1.message); return; }
+    
+    const { error: e2 } = await supabase.from('lessons').delete().eq('student_name', name);
+    if (e2) { setDeleteError('Failed to delete lessons: ' + e2.message); return; }
+    
+    const { error: e3 } = await supabase.from('students').delete().eq('id', id);
+    if (e3) { setDeleteError('Failed to delete student: ' + e3.message); return; }
+    
+    // Successfully deleted all
+    setStudents(prev => prev.filter(s => s.id !== id));
+    if (selectedStudent === name) {
+      setSelectedStudent(null);
+      setRecentGround(null);
+      setRecentFlight(null);
+      localStorage.removeItem('sb_selected_student');
+      localStorage.removeItem('faa_student_info');
+    }
+    setStudentToDelete(null);
+    setDeleteError(null);
+  };
+
+  const fetchRecentLessons = async (studentName: string) => {
+    const { data: groundData } = await supabase
+      .from('lessons')
+      .select('*')
+      .eq('student_name', studentName)
+      .eq('type', 'ground')
+      .order('saved_at', { ascending: false })
+      .limit(1);
+
+    const { data: flightData } = await supabase
+      .from('lessons')
+      .select('*')
+      .eq('student_name', studentName)
+      .eq('type', 'flight')
+      .order('saved_at', { ascending: false })
+      .limit(1);
+
+    setRecentGround(groundData?.[0] || null);
+    setRecentFlight(flightData?.[0] || null);
+  };
+
+  const handleSelectStudent = (name: string) => {
+    setSelectedStudent(name);
+    localStorage.setItem('sb_selected_student', name);
+    localStorage.setItem('faa_student_info', JSON.stringify({ student: name }));
+    fetchRecentLessons(name);
+  };
+
+  const getStudentStats = (name: string) => {
+    const studentLessons = lessons.filter(l => l.student_name === name);
+    let s = 0, n = 0, hrs = 0;
+    studentLessons.forEach(l => {
+      Object.values(l.grades || {}).forEach(g => {
+        if (g === 'S') s++;
+        if (g === 'N') n++;
+      });
+      hrs += parseFloat(l.meta?.totalFlight || '0') || 0;
+    });
+    return { count: studentLessons.length, s, n, hrs: hrs.toFixed(1) };
+  };
+
+  const selectedStats = selectedStudent ? getStudentStats(selectedStudent) : null;
+
+  const getTaskName = (ratingCode: string, taskId: string) => {
+    const [ai, ti] = taskId.split('_').map(Number);
+    const areas = ALL_ACS[ratingCode] || ALL_ACS['ppl'];
+    return areas[ai]?.tasks[ti] || taskId;
+  };
+
+  const LessonSummary = ({ lesson, type }: { lesson: Lesson | null, type: 'ground' | 'flight' }) => {
+    if (!lesson) {
+      return (
+        <div className="p-4 bg-[#f4f5f7] rounded-xl border border-[#dde3ec] text-center">
+          <p className="text-xs text-[#6b7280] italic">No {type} lessons yet.</p>
+        </div>
+      );
+    }
+
+    const niTasks = Object.entries(lesson.grades)
+      .filter(([_, grade]) => grade === 'N' || grade === 'I')
+      .map(([id, grade]) => ({ id, grade, name: getTaskName(lesson.meta?.rating_code || 'ppl', id) }));
+
+    return (
+      <div className="p-4 bg-white rounded-xl border border-[#dde3ec] shadow-sm">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#2a5a8c] bg-[#d4e8f5] px-1.5 py-0.5 rounded">
+                {lesson.meta?.rating_label || 'PPL'}
+              </span>
+              <h4 className="text-sm font-bold text-[#1c2333]">{lesson.label}</h4>
+            </div>
+            <p className="text-[10px] text-[#6b7280] mt-0.5">
+              {new Date(lesson.saved_at).toLocaleDateString()} · {lesson.instructor}
+            </p>
+          </div>
+          {type === 'flight' && lesson.meta?.totalFlight && (
+            <div className="text-right">
+              <div className="text-[10px] font-bold text-[#e8a020] uppercase tracking-widest">Flight Time</div>
+              <div className="text-sm font-mono font-bold text-[#1a3a5c]">{lesson.meta.totalFlight}h</div>
+            </div>
+          )}
+        </div>
+
+        {niTasks.length > 0 ? (
+          <div className="mt-3 space-y-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b]">Focus Areas (N/I)</div>
+            {niTasks.map(task => (
+              <div key={task.id} className="flex items-start gap-2 text-[11px] leading-tight">
+                <span className={cn(
+                  "shrink-0 w-3 h-3 rounded-full flex items-center justify-center text-[8px] font-bold text-white mt-0.5",
+                  task.grade === 'N' ? "bg-[#c0392b]" : "bg-[#e8a020]"
+                )}>
+                  {task.grade}
+                </span>
+                <span className="text-[#1c2333]">{task.name}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#2d7a4f] font-medium">
+            <CheckCircle2 size={12} />
+            All tasks satisfactory
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* Roster Sidebar */}
+      <aside className="w-72 bg-white border-r border-[#dde3ec] flex flex-col shrink-0">
+        <div className="p-4 border-bottom border-[#dde3ec]">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">My Students</h2>
+          <form onSubmit={handleAddStudent} className="flex gap-2">
+            <input
+              type="text"
+              value={newStudentName}
+              onChange={(e) => setNewStudentName(e.target.value)}
+              placeholder="Add student name..."
+              className="flex-1 text-xs border border-[#dde3ec] rounded-lg px-3 py-2 bg-[#f4f5f7] focus:outline-none focus:border-[#4a8ab8] focus:bg-white transition-all"
+            />
+            <button
+              type="submit"
+              disabled={adding}
+              className="bg-[#1a3a5c] text-white p-2 rounded-lg hover:bg-[#2a5a8c] transition-colors disabled:opacity-50"
+            >
+              {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            </button>
+          </form>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="p-8 text-center">
+              <Loader2 size={24} className="animate-spin mx-auto text-[#6b7280] opacity-20" />
+            </div>
+          ) : error ? (
+            <div className="p-6 text-center">
+              <div className="w-10 h-10 bg-[#fdecea] text-[#c0392b] rounded-full flex items-center justify-center mb-3 mx-auto">
+                <AlertCircle size={20} />
+              </div>
+              <p className="text-xs text-[#c0392b] font-medium leading-relaxed mb-4">
+                {error}
+              </p>
+              <button
+                onClick={fetchData}
+                className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] hover:underline"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="p-8 text-center text-[#6b7280] text-sm leading-relaxed">
+              No students yet.<br />Type a name above and tap Add.
+            </div>
+          ) : (
+            students.map(student => {
+              const stats = getStudentStats(student.name);
+              const isActive = selectedStudent === student.name;
+              return (
+                <div
+                  key={student.id}
+                  onClick={() => handleSelectStudent(student.name)}
+                  className={cn(
+                    "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#dde3ec] border-l-4 transition-all",
+                    isActive ? "bg-[#d4e8f5] border-l-[#2a5a8c]" : "border-l-transparent hover:bg-[#f4f5f7]"
+                  )}
+                >
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",
+                    isActive ? "bg-[#2a5a8c] text-white" : "bg-[#d4e8f5] text-[#2a5a8c]"
+                  )}>
+                    {student.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-width-0">
+                    <div className={cn("text-xs font-medium truncate", isActive ? "text-[#1a3a5c] font-bold" : "text-[#1c2333]")}>
+                      {student.name}
+                    </div>
+                    <div className="text-[10px] font-mono text-[#6b7280] mt-0.5 flex items-center gap-2">
+                      <span>{stats.count > 0 ? `${lessons.filter(l => l.student_name === student.name && l.type === 'ground').length}G · ${lessons.filter(l => l.student_name === student.name && l.type === 'flight').length}F` : 'No lessons yet'}</span>
+                      {stats.count > 0 && (
+                        <Link 
+                          to={`/student/${encodeURIComponent(student.name)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[#2a5a8c] hover:underline flex items-center gap-0.5"
+                        >
+                          <TrendingUp size={10} />
+                          Analytics
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStudentToDelete({ id: student.id, name: student.name });
+                    }}
+                    className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[#6b7280] hover:bg-[#fdecea] hover:text-[#c0392b] transition-all"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 bg-[#eef2f8] p-8 overflow-y-auto">
+        <div className="max-w-4xl mx-auto w-full">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-6">
+            <span className="text-[#1a3a5c]">Students</span>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {!selectedStudent ? (
+            <motion.div
+              key="prompt"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="text-center max-w-md"
+            >
+              <div className="text-5xl mb-6 opacity-30">👨‍✈️</div>
+              <h1 className="text-2xl font-bold text-[#1c2333] mb-2">Select a student</h1>
+              <p className="text-sm text-[#6b7280] leading-relaxed">
+                Choose a student from the list on the left to view their progress and start a new lesson.
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="detail"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="w-full max-w-lg"
+            >
+              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-lg overflow-hidden mb-6">
+                <div className="p-6 border-b border-[#dde3ec] flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-[#1c2333]">{selectedStudent}</h2>
+                  <Link
+                    to="/history"
+                    className="text-xs font-medium text-[#2a5a8c] bg-[#d4e8f5] border border-[#4a8ab8] px-3 py-1.5 rounded-lg hover:bg-[#4a8ab8] hover:text-white transition-all"
+                  >
+                    History →
+                  </Link>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Ground Lesson</h3>
+                    <LessonSummary lesson={recentGround} type="ground" />
+                  </div>
+                  <div>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Flight Lesson</h3>
+                    <LessonSummary lesson={recentFlight} type="flight" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Link
+                  to="/rating"
+                  className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all flex items-center justify-center gap-3 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <Plane size={20} />
+                  Start New Lesson →
+                </Link>
+                <Link
+                  to="/history"
+                  className="w-full bg-white text-[#6b7280] font-medium py-3 rounded-xl border-2 border-[#dde3ec] hover:bg-[#f4f5f7] hover:text-[#1c2333] transition-all flex items-center justify-center gap-2"
+                >
+                  <History size={18} />
+                  View Full Lesson History
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {studentToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6"
+              >
+                <div className="w-12 h-12 bg-[#fdecea] text-[#c0392b] rounded-full flex items-center justify-center mb-4 mx-auto">
+                  <Trash2 size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-[#1c2333] text-center mb-2">Delete Student?</h3>
+                <p className="text-sm text-[#6b7280] text-center mb-6">
+                  Are you sure you want to remove <strong>{studentToDelete.name}</strong> and all their lesson history? This action cannot be undone.
+                </p>
+                
+                {deleteError && (
+                  <div className="mb-4 p-3 bg-[#fdecea] text-[#c0392b] text-xs rounded-lg flex items-center gap-2">
+                    <AlertCircle size={14} />
+                    {deleteError}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setStudentToDelete(null);
+                      setDeleteError(null);
+                    }}
+                    className="flex-1 px-4 py-2 text-sm font-medium text-[#6b7280] hover:bg-[#f4f5f7] rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDeleteStudent(studentToDelete.id, studentToDelete.name)}
+                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[#c0392b] hover:bg-[#a93226] rounded-xl transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </main>
+    </div>
+  );
+}

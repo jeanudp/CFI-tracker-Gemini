@@ -1,0 +1,87 @@
+export type Grade = '' | 'S' | 'N' | 'I';
+
+export interface LessonMeta {
+  date?: string;
+  aircraft?: string;
+  notes?: string;
+  route?: string;
+  ldgTotal?: string;
+  ldgDay?: string;
+  ldgNight?: string;
+  xc?: string;
+  night?: string;
+  simInst?: string;
+  imc?: string;
+  groundSim?: string;
+  dual?: string;
+  cfi?: string;
+  sic?: string;
+  pic?: string;
+  totalFlight?: string;
+  solo?: string;
+  soloXc?: string;
+  rating_code?: string;
+  rating_label?: string;
+}
+
+export interface Lesson {
+  id: string;
+  user_id: string;
+  student_name: string;
+  type: 'ground' | 'flight';
+  lesson_num: number;
+  label: string;
+  instructor: string;
+  meta: LessonMeta;
+  grades: Record<string, Grade>;
+  notes: Record<string, string>;
+  saved_at: string;
+}
+
+export interface Student {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface ManualHoursEntry {
+  val: number;
+  date: string;
+}
+
+export interface ManualHours {
+  id: string;
+  user_id: string;
+  student_name: string;
+  field_key: string;
+  entries: ManualHoursEntry[];
+  total: number;
+  updated_at: string;
+}
+
+export interface Endorsement {
+  id: string;
+  user_id: string;
+  student_name: string;
+  rating: string;
+  endorsement_key: string;
+  endorsement_label: string;
+  completed: boolean;
+  completed_date: string | null;
+  created_at: string;
+}
+
+export interface ACSTask {
+  id: string;
+  area: string;
+  task: string;
+  ai: number;
+  ti: number;
+  stds?: string[];
+}
+
+export interface ACSArea {
+  area: string;
+  tasks: string[];
+}
