@@ -94,31 +94,6 @@ export default function App() {
 
   return (
     <Router>
-      {/* Debug Buttons */}
-      <div className="fixed top-0 left-0 right-0 z-[9999] flex justify-center gap-4 p-2 pointer-events-none">
-        <div className="flex gap-4 pointer-events-auto">
-          <button 
-            onClick={async () => {
-              const { data, error } = await supabase.from('lessons').select('id').limit(1);
-              if (error) window.alert('DB Error: ' + error.message);
-              else window.alert('DB Success: Found ' + (data?.length || 0) + ' rows');
-            }}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-red-700 transition-colors"
-          >
-            TEST DB
-          </button>
-          <button 
-            onClick={async () => {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (!session) window.alert('NOT LOGGED IN');
-              else window.alert('LOGGED IN: ' + session.user.email);
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition-colors"
-          >
-            TEST AUTH
-          </button>
-        </div>
-      </div>
       <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route
