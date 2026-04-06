@@ -42,11 +42,30 @@ export default function Layout({ children, user }: LayoutProps) {
       <header className="bg-[#1a3a5c] text-white px-6 h-16 flex items-center justify-between shadow-lg shrink-0 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <div className="w-9 h-9 bg-[#e8a020] rounded-lg flex items-center justify-center text-[#1a3a5c] text-lg font-bold">
-              🛩
+            <div className="w-9 h-9 bg-[#1a3a5c] rounded-lg flex items-center justify-center">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="28" height="28">
+                {/* Fuselage */}
+                <ellipse cx="50" cy="50" rx="5" ry="38" />
+                {/* Main wings */}
+                <path d="M 50 45 Q 20 40 5 55 Q 20 52 50 52" />
+                <path d="M 50 45 Q 80 40 95 55 Q 80 52 50 52" />
+                {/* Horizontal stabilizer */}
+                <path d="M 50 82 Q 35 80 28 86 Q 35 84 50 84" />
+                <path d="M 50 82 Q 65 80 72 86 Q 65 84 50 84" />
+                {/* Nose */}
+                <path d="M 47 14 Q 50 10 53 14" />
+                {/* Engine cowling */}
+                <ellipse cx="50" cy="18" rx="4" ry="5" />
+                {/* Propeller */}
+                <line x1="50" y1="12" x2="50" y2="8" />
+                <path d="M 44 10 Q 50 8 56 10" />
+                {/* Windows */}
+                <rect x="47" y="30" width="6" height="5" rx="1" />
+                <rect x="47" y="37" width="6" height="4" rx="1" />
+              </svg>
             </div>
             <div>
-              <div className="text-sm font-semibold leading-none">ACS Lesson Tracker</div>
+              <div className="text-sm font-semibold leading-none">Part 61 Lesson Tracker</div>
               <div className="text-[10px] opacity-70 uppercase tracking-wider mt-1 flex items-center gap-2">
                 Private Pilot · Part 61
                 <span className={cn(

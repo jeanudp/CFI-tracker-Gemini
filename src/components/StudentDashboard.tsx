@@ -162,324 +162,284 @@ export default function StudentDashboard() {
    .slice(0, 5);
 
   // 5. Readiness Score
-  const totalTasks = acsData.reduce((acc, area) => 
-    acc + area.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')).length, 0);
+  const totalTasksDenominator = 46;
   const masteredTasks = acsData.flatMap((area, ai) => 
-    area.tasks
-      .filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water'))
-      .map((_, ti) => `${ai}_${ti}`)
+    area.tasks.map((_, ti) => `${ai}_${ti}`)
   ).filter(id => lessons.some(l => l.grades?.[id] === 'S')).length;
-  const readinessScore = totalTasks > 0 ? Math.round((masteredTasks / totalTasks) * 100) : 0;
+  const readinessScore = Math.min(100, Math.round((masteredTasks / totalTasksDenominator) * 100));
 
-  // 6. Consistency Score (based on last 3 lessons)
-  const last3 = lessons.slice(-3);
-  const consistencyScore = last3.length > 0 ? Math.round(last3.reduce((acc, l) => {
-    const grades = Object.values(l.grades || {});
-    const s = grades.filter(g => g === 'S').length;
-    return acc + (grades.length > 0 ? (s / grades.length) : 0);
-  }, 0) / last3.length * 100) : 0;
+  const getReadinessColor = (score: number) => {
+    if (score >= 80) return '#2d7a4f'; // Green
+    if (score >= 40) return '#e8a020'; // Gold
+    return '#c0392b'; // Red
+  };
+
+  // 6. Radar Chart Data
+  const getMasteryValue = (grade: string | null) => {
+    switch (grade) {
+      case 'S': return 100;
+      case 'I': return 50;
+      case 'N': return 25;
+      default: return 0;
+    }
+  };
+
+  // Ground Radar (Area I)
+  const groundRadarData = acsData[0]?.tasks.map((task, ti) => {
+    const grade = getMostRecentGrade(0, ti);
+    const { letter, name } = parseTask(task);
+    return {
+      subject: `${letter}. ${name.substring(0, 15)}${name.length > 15 ? '...' : ''} (${grade || '-'})`,
+      fullSubject: `${letter}. ${name}`,
+      value: getMasteryValue(grade),
+      grade: grade || 'None'
+    };
+  }) || [];
+
+  // Flight Radar (Areas II-XII)
+  const flightRadarData = acsData.slice(1).map((area, aiOffset) => {
+    const ai = aiOffset + 1;
+    const scores = area.tasks.map((_, ti) => getMasteryValue(getMostRecentGrade(ai, ti)));
+    const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    
+    // Shorten area names
+    let shortName = area.area.split('. ')[1] || area.area;
+    if (shortName.includes('Takeoffs')) shortName = 'Takeoffs & Landings';
+    if (shortName.includes('Performance')) shortName = 'Performance';
+    if (shortName.includes('Instrument')) shortName = 'Basic Instruments';
+    if (shortName.includes('Emergency')) shortName = 'Emergencies';
+    if (shortName.includes('Night')) shortName = 'Night Ops';
+    if (shortName.includes('Postflight')) shortName = 'Postflight';
+    if (shortName.includes('Airport')) shortName = 'Airport Ops';
+
+    return {
+      subject: shortName,
+      value: Math.round(avgScore),
+      fullArea: area.area
+    };
+  });
+
+  // Summary Counts
+  const getSummaryCounts = (areaIndices: number[]) => {
+    let s = 0, n = 0, i = 0, none = 0;
+    areaIndices.forEach(ai => {
+      acsData[ai]?.tasks.forEach((_, ti) => {
+        const grade = getMostRecentGrade(ai, ti);
+        if (grade === 'S') s++;
+        else if (grade === 'N') n++;
+        else if (grade === 'I') i++;
+        else none++;
+      });
+    });
+    return { s, n, i, none };
+  };
+
+  const groundSummary = getSummaryCounts([0]);
+  const flightSummary = getSummaryCounts(acsData.slice(1).map((_, idx) => idx + 1));
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
         <div className="flex items-center gap-4">
           <Link to="/" className="p-2 rounded-xl bg-white border border-[#dde3ec] text-[#6b7280] hover:text-[#1a3a5c] hover:border-[#1a3a5c] transition-all shadow-sm">
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#1a3a5c]">{studentName}'s Progress</h1>
-            <p className="text-[#6b7280] text-sm font-medium">{rating.label} · {lessons.length} Lessons Completed</p>
+            <h1 className="text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s ACS Proficiency Analytics</h1>
+            <p className="text-[#6b7280] text-sm font-medium uppercase tracking-widest mt-1">{rating.label} · {lessons.length} Lessons</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-sm font-bold text-[#1a3a5c] hover:bg-[#f4f5f7] transition-all shadow-sm">
-            <Share2 size={16} />
-            Share Report
-          </button>
-          <Link to="/history" className="flex items-center gap-2 px-4 py-2 bg-[#1a3a5c] text-white rounded-xl text-sm font-bold hover:bg-[#2a5a8c] transition-all shadow-md">
-            View History
-            <ChevronRight size={16} />
-          </Link>
-        </div>
-      </div>
-
-      {/* Top Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-[#e4f5ec] rounded-lg text-[#2d7a4f]"><Target size={20} /></div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">Readiness Score</span>
+        
+        {/* Overall Readiness Circle */}
+        <div className="flex items-center gap-6 bg-white p-4 pr-8 rounded-3xl border border-[#dde3ec] shadow-sm">
+          <div className="relative w-24 h-24">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50" cy="50" r="42"
+                fill="transparent"
+                stroke="#f4f5f7"
+                strokeWidth="8"
+              />
+              <circle
+                cx="50" cy="50" r="42"
+                fill="transparent"
+                stroke={getReadinessColor(readinessScore)}
+                strokeWidth="8"
+                strokeDasharray={`${readinessScore * 2.64} 264`}
+                strokeLinecap="round"
+                className="transition-all duration-1000 ease-out"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl font-black text-[#1a3a5c]">{readinessScore}%</span>
+            </div>
           </div>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-mono font-bold text-[#1a3a5c]">{readinessScore}%</span>
-            <span className="text-xs text-[#6b7280] mb-1.5">to checkride</span>
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6b7280] mb-1">Overall Readiness</div>
+            <div className="text-lg font-bold text-[#1a3a5c]">ACS Mastery Level</div>
+            <div className="text-[11px] text-[#6b7280] mt-1 font-medium italic">Based on {masteredTasks} of 46 tasks mastered</div>
           </div>
-          <div className="mt-3 h-1.5 bg-[#f4f5f7] rounded-full overflow-hidden">
-            <div className="h-full bg-[#2d7a4f]" style={{ width: `${readinessScore}%` }} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-[#d4e8f5] rounded-lg text-[#2a5a8c]"><TrendingUp size={20} /></div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">Consistency</span>
-          </div>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-mono font-bold text-[#1a3a5c]">{consistencyScore}%</span>
-            <span className="text-xs text-[#6b7280] mb-1.5">last 3 lessons</span>
-          </div>
-          <div className="mt-3 h-1.5 bg-[#f4f5f7] rounded-full overflow-hidden">
-            <div className="h-full bg-[#2a5a8c]" style={{ width: `${consistencyScore}%` }} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-[#fdf0d4] rounded-lg text-[#e8a020]"><Clock size={20} /></div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">Total Hours</span>
-          </div>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-mono font-bold text-[#1a3a5c]">{cumulativeHours.toFixed(1)}</span>
-            <span className="text-xs text-[#6b7280] mb-1.5">logged</span>
-          </div>
-          <div className="mt-3 text-[10px] text-[#6b7280] font-medium">Avg {lessons.length > 0 ? (cumulativeHours / lessons.length).toFixed(1) : 0}h per lesson</div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-[#fdecea] rounded-lg text-[#c0392b]"><AlertTriangle size={20} /></div>
-            <span className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">Weak Areas</span>
-          </div>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-mono font-bold text-[#1a3a5c]">{weakAreas.length}</span>
-            <span className="text-xs text-[#6b7280] mb-1.5">priority tasks</span>
-          </div>
-          <div className="mt-3 text-[10px] text-[#6b7280] font-medium">Requiring immediate focus</div>
         </div>
       </div>
 
-      {/* ACS Mastery Maps */}
-      <div className="space-y-6 mb-8">
-        {/* Map 1: Ground Mastery Map */}
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-            <BookOpen size={18} className="text-[#1a3a5c]" />
-            Ground ACS Mastery — Area I
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* Ground Radar Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-[#2d7a4f]/20" />
+          <h3 className="text-lg font-bold text-[#1a3a5c] mb-8 flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#e4f5ec] rounded-xl flex items-center justify-center text-[#2d7a4f]">
+              <BookOpen size={20} />
+            </div>
+            Ground Knowledge — Area I
           </h3>
           
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-            {acsData[0]?.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')).map((task, ti) => {
-              const grade = getMostRecentGrade(0, ti);
-              const { letter, name } = parseTask(task);
-              return (
-                <div 
-                  key={ti}
-                  className={cn(
-                    "p-3 rounded-xl border flex flex-col items-center justify-center text-center min-h-[80px] transition-all hover:scale-105 shadow-sm",
-                    getGradeColor(grade)
-                  )}
-                >
-                  <span className="text-lg font-black leading-none mb-1">{letter}</span>
-                  <span className="text-[9px] font-bold leading-tight uppercase opacity-80">{name}</span>
-                </div>
-              );
-            })}
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={groundRadarData}>
+                <PolarGrid stroke="#dde3ec" />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={{ fill: '#1a3a5c', fontSize: 10, fontWeight: 600 }}
+                />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar
+                  name="Mastery"
+                  dataKey="value"
+                  stroke="#2d7a4f"
+                  strokeWidth={3}
+                  fill="#2d7a4f"
+                  fillOpacity={0.4}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
 
-          {/* Legend */}
-          <div className="mt-8 flex flex-wrap gap-4 pt-6 border-t border-[#f4f5f7]">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#2d7a4f]" />
-              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Satisfactory (S)</span>
+          <div className="mt-8 flex flex-col gap-6">
+            <div className="flex items-center justify-center gap-3">
+              <span className="px-4 py-1.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full text-xs font-bold border border-[#2d7a4f]/20">{groundSummary.s} Mastered</span>
+              <span className="px-4 py-1.5 bg-[#fdf0d4] text-[#e8a020] rounded-full text-xs font-bold border border-[#e8a020]/20">{groundSummary.i} Incomplete</span>
+              <span className="px-4 py-1.5 bg-[#fdecea] text-[#c0392b] rounded-full text-xs font-bold border border-[#c0392b]/20">{groundSummary.n} Needs Impr.</span>
+              <span className="px-4 py-1.5 bg-[#f4f5f7] text-[#6b7280] rounded-full text-xs font-bold border border-[#dde3ec]">{groundSummary.none} Not Graded</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#c0392b]" />
-              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Needs Improvement (N)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#e8a020]" />
-              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Incomplete (I)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#f4f5f7]" />
-              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Not Graded</span>
+            
+            <div className="flex justify-center gap-6 pt-6 border-t border-[#f4f5f7]">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#2d7a4f]" />
+                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">S = 100%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#e8a020]" />
+                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">I = 50%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#c0392b]" />
+                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">N = 25%</span>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Map 2: Flight ACS Mastery Map */}
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-            <Target size={18} className="text-[#2d7a4f]" />
-            Flight ACS Mastery — Areas II through XII
+        {/* Flight Radar Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-[#1a3a5c]/20" />
+          <h3 className="text-lg font-bold text-[#1a3a5c] mb-8 flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#d4e8f5] rounded-xl flex items-center justify-center text-[#1a3a5c]">
+              <TrendingUp size={20} />
+            </div>
+            Flight Proficiency — Areas II-XII
           </h3>
-
-          <div className="space-y-8">
-            {acsData.slice(1).map((area, aiOffset) => {
-              const ai = aiOffset + 1;
-              const filteredTasks = area.tasks.filter(t => 
-                !t.includes('N/A') && 
-                !t.includes('Seaplane') && 
-                !t.includes('Multiengine') &&
-                !t.includes('ASEL') && 
-                !t.includes('Water')
-              );
-
-              if (filteredTasks.length === 0) return null;
-
-              return (
-                <div key={ai} className="space-y-3">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#dde3ec]" />
-                    {area.area}
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-                    {filteredTasks.map((task, ti) => {
-                      const originalTi = area.tasks.indexOf(task);
-                      const grade = getMostRecentGrade(ai, originalTi);
-                      const { letter, name } = parseTask(task);
-                      return (
-                        <div 
-                          key={ti}
-                          className={cn(
-                            "p-3 rounded-xl border flex flex-col items-center justify-center text-center min-h-[80px] transition-all hover:scale-105 shadow-sm",
-                            getGradeColor(grade)
-                          )}
-                        >
-                          <span className="text-lg font-black leading-none mb-1">{letter}</span>
-                          <span className="text-[9px] font-bold leading-tight uppercase opacity-80">{name}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+          
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={flightRadarData}>
+                <PolarGrid stroke="#dde3ec" />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={{ fill: '#1a3a5c', fontSize: 10, fontWeight: 600 }}
+                />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar
+                  name="Area Mastery"
+                  dataKey="value"
+                  stroke="#1a3a5c"
+                  strokeWidth={3}
+                  fill="#1a3a5c"
+                  fillOpacity={0.3}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+
+          <div className="mt-8 flex flex-col gap-6">
+            <div className="flex items-center justify-center gap-3">
+              <span className="px-4 py-1.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full text-xs font-bold border border-[#2d7a4f]/20">{flightSummary.s} Mastered</span>
+              <span className="px-4 py-1.5 bg-[#fdf0d4] text-[#e8a020] rounded-full text-xs font-bold border border-[#e8a020]/20">{flightSummary.i} Incomplete</span>
+              <span className="px-4 py-1.5 bg-[#fdecea] text-[#c0392b] rounded-full text-xs font-bold border border-[#c0392b]/20">{flightSummary.n} Needs Impr.</span>
+              <span className="px-4 py-1.5 bg-[#f4f5f7] text-[#6b7280] rounded-full text-xs font-bold border border-[#dde3ec]">{flightSummary.none} Not Graded</span>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-[10px] text-[#6b7280] font-medium italic">Area scores averaged across all component tasks</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Grade Trend */}
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-            <TrendingUp size={18} className="text-[#2a5a8c]" />
-            Grade Trend Analysis
+      {/* Weak Areas & Recent Notes (Simplified) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 bg-white rounded-3xl border border-[#dde3ec] p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-[#1c2333] mb-4 flex items-center gap-2">
+            <AlertTriangle size={16} className="text-[#c0392b]" />
+            Priority Focus Areas
           </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f4f5f7" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
-                <Line type="monotone" dataKey="satisfactory" stroke="#2d7a4f" strokeWidth={3} dot={{ r: 4, fill: '#2d7a4f' }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="needsImprovement" stroke="#c0392b" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: '#c0392b' }} />
-                <Line type="monotone" dataKey="incomplete" stroke="#e8a020" strokeWidth={2} strokeDasharray="3 3" dot={{ r: 3, fill: '#e8a020' }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Hours Progress */}
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-            <Clock size={18} className="text-[#e8a020]" />
-            Aeronautical Experience Growth
-          </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={hoursData}>
-                <defs>
-                  <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1a3a5c" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#1a3a5c" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f4f5f7" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip />
-                <Area type="monotone" dataKey="cumulative" stroke="#1a3a5c" strokeWidth={3} fillOpacity={1} fill="url(#colorHours)" />
-                <Bar dataKey="hours" fill="#e8a020" radius={[4, 4, 0, 0]} barSize={20} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Weak Areas Report */}
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-            <AlertTriangle size={18} className="text-[#c0392b]" />
-            Weak Areas Report
-          </h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {weakAreas.length > 0 ? weakAreas.map((item, idx) => (
-              <div key={idx} className="flex items-start gap-4 p-3 bg-[#fdecea] rounded-xl border border-[#f5c0bc]">
-                <div className="w-8 h-8 rounded-full bg-[#c0392b] text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  {idx + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-[#1c2333] truncate">{item.task}</div>
-                  <div className="text-[10px] text-[#6b7280] mt-0.5">{item.area}</div>
-                  <div className="flex gap-2 mt-2">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b] bg-white px-1.5 py-0.5 rounded">
-                      {item.nGrades} Needs Impr.
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#e8a020] bg-white px-1.5 py-0.5 rounded">
-                      {item.iGrades} Incomplete
-                    </span>
-                  </div>
-                </div>
+              <div key={idx} className="p-3 bg-[#fdecea]/50 rounded-xl border border-[#fdecea] text-xs">
+                <div className="font-bold text-[#1a3a5c] mb-1">{item.task}</div>
+                <div className="text-[10px] text-[#6b7280]">{item.area}</div>
               </div>
             )) : (
-              <div className="h-[200px] flex flex-col items-center justify-center text-[#6b7280] italic text-sm">
-                <CheckCircle2 size={32} className="text-[#2d7a4f] mb-2 opacity-20" />
-                No critical weak areas identified.
-              </div>
+              <div className="text-xs text-[#6b7280] italic">No critical weak areas identified.</div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Lesson Timeline */}
-      <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm mb-8">
-        <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-          <Calendar size={18} className="text-[#1a3a5c]" />
-          Lesson Notes Timeline
-        </h3>
-        <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#f4f5f7]">
-          {lessons.slice().reverse().map((l, idx) => (
-            <div key={l.id} className="relative pl-10">
-              <div className="absolute left-3 top-1.5 w-2.5 h-2.5 rounded-full bg-[#1a3a5c] border-2 border-white shadow-sm" />
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-[#1c2333]">{l.label}</span>
-                  <span className="text-[10px] font-mono text-[#6b7280]">{new Date(l.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                </div>
-                <div className="flex gap-1.5">
-                  {Object.values(l.grades || {}).filter(g => g === 'S').length > 0 && (
-                    <span className="text-[9px] font-bold bg-[#e4f5ec] text-[#2d7a4f] px-1.5 py-0.5 rounded">
-                      {Object.values(l.grades || {}).filter(g => g === 'S').length} S
-                    </span>
-                  )}
-                  {Object.values(l.grades || {}).filter(g => g === 'N').length > 0 && (
-                    <span className="text-[9px] font-bold bg-[#fdecea] text-[#c0392b] px-1.5 py-0.5 rounded">
-                      {Object.values(l.grades || {}).filter(g => g === 'N').length} N
-                    </span>
-                  )}
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-[#dde3ec] p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-[#1c2333] mb-4 flex items-center gap-2">
+            <Calendar size={16} className="text-[#1a3a5c]" />
+            Recent Instructor Feedback
+          </h3>
+          <div className="space-y-4">
+            {lessons.slice(-3).reverse().map((l) => (
+              <div key={l.id} className="flex gap-4">
+                <div className="w-1 h-auto bg-[#dde3ec] rounded-full" />
+                <div>
+                  <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider mb-1">
+                    {new Date(l.saved_at).toLocaleDateString()} · {l.label}
+                  </div>
+                  <div className="text-xs text-[#1a3a5c] leading-relaxed italic">
+                    "{l.meta?.notes || "No notes recorded."}"
+                  </div>
                 </div>
               </div>
-              <div className="p-3 bg-[#f4f5f7] rounded-xl text-xs text-[#6b7280] leading-relaxed italic">
-                {l.meta?.notes || "No notes recorded for this lesson."}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -5,7 +5,8 @@ import { Lesson, ManualHours, ManualHoursEntry, Grade, Endorsement } from '../ty
 import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
-import { Search, Trash2, ChevronRight, ChevronLeft, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3 } from 'lucide-react';
+import EndorsementAdvisor from './EndorsementAdvisor';
+import { Search, Trash2, ChevronRight, ChevronLeft, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function History() {
@@ -16,7 +17,7 @@ export default function History() {
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride'>('lesson');
+  const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'advisor'>('lesson');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -538,6 +539,16 @@ export default function History() {
                       Checkride
                     </button>
                     <button
+                      onClick={() => setActiveTab('advisor')}
+                      className={cn(
+                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                        activeTab === 'advisor' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
+                      )}
+                    >
+                      <Sparkles size={14} />
+                      Advisor
+                    </button>
+                    <button
                       onClick={() => navigate(`/student/${studentName}`)}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2"
                     >
@@ -784,6 +795,12 @@ export default function History() {
               </motion.div>
             )}
 
+            {activeTab === 'advisor' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <EndorsementAdvisor studentName={studentName} ratingCode={lessonRating} />
+              </motion.div>
+            )}
+
             {activeTab === 'checkride' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 {(() => {
@@ -842,8 +859,9 @@ export default function History() {
                       { key: 'A.11', text: 'A.11 — Repeated solo cross-country flights not more than 50 NM from the point of departure: 14 CFR § 61.93(b)(2). I certify that [First name, MI, Last name] has received the required training in both directions between and at both [airport names]. I have determined that they are proficient of 14 CFR § 61.93(b)(2) to conduct repeated solo cross-country flights over that route, subject to the following conditions: [List any applicable conditions or limitations.]' },
                       { key: 'A.12', text: 'A.12 — Solo flight in Class B airspace: 14 CFR § 61.95(a). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(a). I have determined they are proficient to conduct solo flights in [name of Class B] airspace. [List any applicable conditions or limitations.]' },
                       { key: 'A.13', text: 'A.13 — Solo flight to, from, or at an airport located in Class B airspace: 14 CFR §§ 61.95(b) and 91.131(b)(1). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at [name of airport]. [List any applicable conditions or limitations.]' },
-                      { key: 'A.36', text: 'A.36 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the [name of] knowledge test.' },
-                      { key: 'A.37', text: 'A.37 — Flight proficiency/practical test: 14 CFR §§ 61.103(f), 61.107(b), and 61.109. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.' }
+                      { key: 'A.32', text: 'A.32 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the [name of] knowledge test.' },
+                      { key: 'A.33', text: 'A.33 — Flight proficiency/practical test: 14 CFR §§ 61.103(f), 61.107(b), and 61.109. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.' },
+                      { key: 'A.34', text: 'A.34 — Practical test within 60 days: 14 CFR § 61.39(a)(6)(i). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.39(a)(6)(i) within 2 calendar months preceding the month of application in preparation for the practical test and I find [First name, MI, Last name] prepared for the [name of] practical test.' }
                     ];
                     SOLO_OPTIONS = [
                       { id: '1', label: 'Section 1 — Prerequisites for Practical Test', description: 'These apply to ALL ratings before any practical test.', endorsements: ENDORSEMENTS.slice(0, 2) },
@@ -851,7 +869,7 @@ export default function History() {
                       { id: '3', label: 'Section 3 — Solo Cross-Country Endorsements', description: 'Required before solo cross-country flights.', endorsements: ENDORSEMENTS.slice(7, 11) },
                       { id: '4', label: 'Section 4 — Solo Flight in Class B Airspace', description: 'Required in addition to standard solo endorsements.', endorsements: ENDORSEMENTS.slice(11, 13) },
                       { id: '5', label: 'Section 5 — Private Pilot Knowledge Test', description: 'Required before the FAA Private Pilot knowledge test.', endorsements: ENDORSEMENTS.slice(13, 14) },
-                      { id: '6', label: 'Section 6 — Private Pilot Practical Test (Checkride)', description: 'Required before the FAA Private Pilot practical test with a DPE.', endorsements: ENDORSEMENTS.slice(14, 15) }
+                      { id: '6', label: 'Section 6 — Private Pilot Practical Test (Checkride)', description: 'Required before the FAA Private Pilot practical test with a DPE.', endorsements: ENDORSEMENTS.slice(14, 16) }
                     ];
                   } else if (lessonRating === 'ir') {
                     REQS = [
@@ -939,7 +957,7 @@ export default function History() {
                   const metCount = allRows.filter(r => r.have >= r.need).length;
                   const endorsementsMet = ENDORSEMENTS.filter(e => isEndorsementMet(e.key)).length;
                   const allMet = lessonRating === 'ppl'
-                    ? (allRows.length > 0 && metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.2') && isEndorsementMet('A.37'))
+                    ? (allRows.length > 0 && metCount === allRows.length && isEndorsementMet('A.33') && isEndorsementMet('A.34'))
                     : (allRows.length > 0 && metCount === allRows.length && ENDORSEMENTS.length > 0 && endorsementsMet === ENDORSEMENTS.length);
 
                   // Fireworks logic
