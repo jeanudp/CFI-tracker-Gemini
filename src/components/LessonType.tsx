@@ -57,7 +57,13 @@ export default function LessonType() {
     setAiPlan(null);
     
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        setAiPlan('Gemini API key is not configured. Please add VITE_GEMINI_API_KEY to your environment variables in Netlify.');
+        setGenerating(false);
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey });
       
       let ratingSpecifics = "";
       if (rating.code === 'ppl') ratingSpecifics = "Reference Private Pilot ASEL ACS tasks (FAA-S-ACS-6B). Focus on basic maneuvers, takeoffs, landings, and private pilot knowledge.";

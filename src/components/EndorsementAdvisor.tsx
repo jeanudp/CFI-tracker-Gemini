@@ -104,7 +104,13 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
     setLoading(true);
     setError(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        setError('Gemini API key is not configured. Please add VITE_GEMINI_API_KEY to your environment variables in Netlify.');
+        setLoading(false);
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey });
       
       const prompt = `
         As an expert FAA flight instructor advisor specializing in AC 61-65K, analyze the following flight details and provide a structured endorsement checklist.

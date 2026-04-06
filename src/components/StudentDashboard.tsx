@@ -176,12 +176,8 @@ export default function StudentDashboard() {
 
   // 6. Radar Chart Data
   const getMasteryValue = (grade: string | null) => {
-    switch (grade) {
-      case 'S': return 100;
-      case 'I': return 50;
-      case 'N': return 25;
-      default: return 0;
-    }
+    if (grade === 'S') return 100;
+    return 0;
   };
 
   // Ground Radar (Area I)
@@ -189,7 +185,7 @@ export default function StudentDashboard() {
     const grade = getMostRecentGrade(0, ti);
     const { letter, name } = parseTask(task);
     return {
-      subject: `${letter}. ${name.substring(0, 15)}${name.length > 15 ? '...' : ''} (${grade || '-'})`,
+      subject: `${letter}. ${name.substring(0, 25)}${name.length > 25 ? '...' : ''}`,
       fullSubject: `${letter}. ${name}`,
       value: getMasteryValue(grade),
       grade: grade || 'None'
@@ -202,18 +198,8 @@ export default function StudentDashboard() {
     const scores = area.tasks.map((_, ti) => getMasteryValue(getMostRecentGrade(ai, ti)));
     const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     
-    // Shorten area names
-    let shortName = area.area.split('. ')[1] || area.area;
-    if (shortName.includes('Takeoffs')) shortName = 'Takeoffs & Landings';
-    if (shortName.includes('Performance')) shortName = 'Performance';
-    if (shortName.includes('Instrument')) shortName = 'Basic Instruments';
-    if (shortName.includes('Emergency')) shortName = 'Emergencies';
-    if (shortName.includes('Night')) shortName = 'Night Ops';
-    if (shortName.includes('Postflight')) shortName = 'Postflight';
-    if (shortName.includes('Airport')) shortName = 'Airport Ops';
-
     return {
-      subject: shortName,
+      subject: area.area,
       value: Math.round(avgScore),
       fullArea: area.area
     };
@@ -333,15 +319,15 @@ export default function StudentDashboard() {
             <div className="flex justify-center gap-6 pt-6 border-t border-[#f4f5f7]">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#2d7a4f]" />
-                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">S = 100%</span>
+                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">S = 100</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#e8a020]" />
-                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">I = 50%</span>
+                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">I = 0</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#c0392b]" />
-                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">N = 25%</span>
+                <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest">N = 0</span>
               </div>
             </div>
           </div>

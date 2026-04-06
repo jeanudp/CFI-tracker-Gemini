@@ -64,16 +64,7 @@ export default function Layout({ children, user }: LayoutProps) {
                 <rect x="47" y="37" width="6" height="4" rx="1" />
               </svg>
             </div>
-            <div>
-              <div className="text-sm font-semibold leading-none">Part 61 Lesson Tracker</div>
-              <div className="text-[10px] opacity-70 uppercase tracking-wider mt-1 flex items-center gap-2">
-                Private Pilot · Part 61
-                <span className={cn(
-                  "w-1.5 h-1.5 rounded-full",
-                  isOnline ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]" : "bg-red-400 animate-pulse"
-                )} />
-              </div>
-            </div>
+            <div className="text-sm font-semibold">Part 61 Lesson Tracker</div>
           </Link>
         </div>
         <div className="flex items-center gap-2">

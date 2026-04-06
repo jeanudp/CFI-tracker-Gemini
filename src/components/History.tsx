@@ -146,6 +146,12 @@ export default function History() {
   const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
 
   useEffect(() => {
+    if (activeTab === 'advisor' && lessonRating !== 'ppl') {
+      setActiveTab('lesson');
+    }
+  }, [lessonRating, activeTab]);
+
+  useEffect(() => {
     if (selectedLesson && studentName) {
       const fetchEndorsements = async () => {
         const { data } = await supabase
@@ -538,16 +544,18 @@ export default function History() {
                       <CheckCircle2 size={14} />
                       Checkride
                     </button>
-                    <button
-                      onClick={() => setActiveTab('advisor')}
-                      className={cn(
-                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                        activeTab === 'advisor' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
-                      )}
-                    >
-                      <Sparkles size={14} />
-                      Advisor
-                    </button>
+                    {lessonRating === 'ppl' && (
+                      <button
+                        onClick={() => setActiveTab('advisor')}
+                        className={cn(
+                          "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                          activeTab === 'advisor' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
+                        )}
+                      >
+                        <Sparkles size={14} />
+                        Advisor
+                      </button>
+                    )}
                     <button
                       onClick={() => navigate(`/student/${studentName}`)}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2"
@@ -795,7 +803,7 @@ export default function History() {
               </motion.div>
             )}
 
-            {activeTab === 'advisor' && (
+            {activeTab === 'advisor' && lessonRating === 'ppl' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <EndorsementAdvisor studentName={studentName} ratingCode={lessonRating} />
               </motion.div>
