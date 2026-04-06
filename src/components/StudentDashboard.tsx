@@ -87,16 +87,35 @@ export default function StudentDashboard() {
 
   const acsData = ALL_ACS[rating.code] || ALL_ACS['ppl'];
 
-  // 1. ACS Mastery Map Data
-  const masteryData = acsData.map((area, ai) => {
-    const tasks = area.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water'));
-    const sat = tasks.filter((_, ti) => lessons.some(l => l.grades?.[`${ai}_${ti}`] === 'S')).length;
-    return {
-      subject: area.area.split(':')[0].substring(0, 15),
-      full: 100,
-      value: tasks.length > 0 ? Math.round((sat / tasks.length) * 100) : 0
-    };
-  });
+  // Helper for Mastery Maps
+  const getMostRecentGrade = (ai: number, ti: number) => {
+    const id = `${ai}_${ti}`;
+    for (let i = lessons.length - 1; i >= 0; i--) {
+      const grade = lessons[i].grades?.[id];
+      if (grade) return grade;
+    }
+    return null;
+  };
+
+  const getGradeColor = (grade: string | null) => {
+    switch (grade) {
+      case 'S': return 'bg-[#2d7a4f] text-white border-[#2d7a4f]';
+      case 'N': return 'bg-[#c0392b] text-white border-[#c0392b]';
+      case 'I': return 'bg-[#e8a020] text-white border-[#e8a020]';
+      default: return 'bg-[#f4f5f7] text-[#6b7280] border-[#dde3ec]';
+    }
+  };
+
+  const parseTask = (task: string) => {
+    const dotIndex = task.indexOf('. ');
+    if (dotIndex !== -1) {
+      return { 
+        letter: task.substring(0, dotIndex), 
+        name: task.substring(dotIndex + 2) 
+      };
+    }
+    return { letter: '', name: task };
+  };
 
   // 2. Grade Trend Data
   const trendData = lessons.map((l, idx) => {
@@ -240,33 +259,109 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Mastery Radar */}
+      {/* ACS Mastery Maps */}
+      <div className="space-y-6 mb-8">
+        {/* Map 1: Ground Mastery Map */}
         <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
           <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
-            <Target size={18} className="text-[#2d7a4f]" />
-            ACS Mastery Map
+            <BookOpen size={18} className="text-[#1a3a5c]" />
+            Ground ACS Mastery — Area I
           </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={masteryData}>
-                <PolarGrid stroke="#dde3ec" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 10 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 10 }} />
-                <Radar
-                  name="Mastery %"
-                  dataKey="value"
-                  stroke="#1a3a5c"
-                  fill="#1a3a5c"
-                  fillOpacity={0.6}
-                />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+            {acsData[0]?.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')).map((task, ti) => {
+              const grade = getMostRecentGrade(0, ti);
+              const { letter, name } = parseTask(task);
+              return (
+                <div 
+                  key={ti}
+                  className={cn(
+                    "p-3 rounded-xl border flex flex-col items-center justify-center text-center min-h-[80px] transition-all hover:scale-105 shadow-sm",
+                    getGradeColor(grade)
+                  )}
+                >
+                  <span className="text-lg font-black leading-none mb-1">{letter}</span>
+                  <span className="text-[9px] font-bold leading-tight uppercase opacity-80">{name}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="mt-8 flex flex-wrap gap-4 pt-6 border-t border-[#f4f5f7]">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#2d7a4f]" />
+              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Satisfactory (S)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#c0392b]" />
+              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Needs Improvement (N)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#e8a020]" />
+              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Incomplete (I)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#f4f5f7]" />
+              <span className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Not Graded</span>
+            </div>
           </div>
         </div>
 
+        {/* Map 2: Flight ACS Mastery Map */}
+        <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
+            <Target size={18} className="text-[#2d7a4f]" />
+            Flight ACS Mastery — Areas II through XII
+          </h3>
+
+          <div className="space-y-8">
+            {acsData.slice(1).map((area, aiOffset) => {
+              const ai = aiOffset + 1;
+              const filteredTasks = area.tasks.filter(t => 
+                !t.includes('N/A') && 
+                !t.includes('Seaplane') && 
+                !t.includes('Multiengine') &&
+                !t.includes('ASEL') && 
+                !t.includes('Water')
+              );
+
+              if (filteredTasks.length === 0) return null;
+
+              return (
+                <div key={ai} className="space-y-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#dde3ec]" />
+                    {area.area}
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+                    {filteredTasks.map((task, ti) => {
+                      const originalTi = area.tasks.indexOf(task);
+                      const grade = getMostRecentGrade(ai, originalTi);
+                      const { letter, name } = parseTask(task);
+                      return (
+                        <div 
+                          key={ti}
+                          className={cn(
+                            "p-3 rounded-xl border flex flex-col items-center justify-center text-center min-h-[80px] transition-all hover:scale-105 shadow-sm",
+                            getGradeColor(grade)
+                          )}
+                        >
+                          <span className="text-lg font-black leading-none mb-1">{letter}</span>
+                          <span className="text-[9px] font-bold leading-tight uppercase opacity-80">{name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Grade Trend */}
         <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
           <h3 className="text-sm font-bold text-[#1c2333] mb-6 flex items-center gap-2">
