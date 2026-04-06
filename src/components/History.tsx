@@ -703,7 +703,7 @@ export default function History() {
                   <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">ACS Coverage (all lessons)</div>
                   <div className="p-4 space-y-3">
                     {acsData.map((area, ai) => {
-                      const tasks = area.tasks.filter(t => !t.includes('N/A'));
+                      const tasks = area.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water'));
                       if (tasks.length === 0) return null;
                       const sat = tasks.filter((_, ti) => studentLessons.some(l => l.grades?.[`${ai}_${ti}`] === 'S')).length;
                       const pct = Math.round((sat / tasks.length) * 100);
@@ -756,11 +756,13 @@ export default function History() {
                       const niGrades: any[] = [];
                       studentLessons.forEach(l => {
                         acsData.forEach((area, ai) => {
-                          area.tasks.forEach((task, ti) => {
-                            if (l.grades?.[`${ai}_${ti}`] === 'N') {
-                              niGrades.push({ task, area: area.area, lesson: l.label, date: new Date(l.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
-                            }
-                          });
+                          area.tasks
+                            .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+                            .forEach((task, ti) => {
+                              if (l.grades?.[`${ai}_${ti}`] === 'N') {
+                                niGrades.push({ task, area: area.area, lesson: l.label, date: new Date(l.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
+                              }
+                            });
                         });
                       });
 
@@ -817,13 +819,13 @@ export default function History() {
                         { label: 'Cross-country flight training', ref: '§61.109(a)(1)(i)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.xc || '0') : 0), 0), need: 3, unit: 'hrs' },
                         { label: 'Night flight training (incl. 100NM XC)', ref: '§61.109(a)(1)(ii)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.night || '0') : 0), 0), need: 3, unit: 'hrs' },
                         { label: 'Night cross-country over 100NM', ref: '§61.109(a)(1)(ii)', have: getManualValue('nightXc100'), need: 1, unit: 'flight', mk: 'nightXc100' },
-                        { label: 'Full stop night landings', ref: '§61.109(a)(1)(ii)', have: stats.totNightLdg, need: 10, unit: 'ldg' },
+                        { label: 'Full stop night landings', ref: '§61.109(a)(1)(ii)', have: stats.totNightLdg, need: 10, unit: 'landings' },
                         { label: 'Instrument training', ref: '§61.109(a)(1)(iii)', have: stats.totSim, need: 3, unit: 'hrs' },
                         { label: 'Practical test prep dual (60 days)', ref: '§61.109(a)(1)(iv)', have: recentDual, need: 3, unit: 'hrs', note: sixtyDaysStr },
                         { label: 'Solo flight time', ref: '§61.109(a)(2)', have: stats.totSolo, need: 10, unit: 'hrs' },
                         { label: 'Solo cross-country', ref: '§61.109(a)(2)(i)', have: stats.totSoloXc, need: 5, unit: 'hrs' },
                         { label: 'Solo XC 150NM total', ref: '§61.109(a)(2)(ii)', have: getManualValue('soloXc150'), need: 1, unit: 'flight', mk: 'soloXc150' },
-                        { label: 'Solo landings at towered airport', ref: '§61.109(a)(2)(iii)', have: getManualValue('soloTowered'), need: 3, unit: 'ldg', mk: 'soloTowered' }
+                        { label: 'Solo landings at towered airport', ref: '§61.109(a)(2)(iii)', have: getManualValue('soloTowered'), need: 3, unit: 'landings', mk: 'soloTowered' }
                       ]}
                     ];
                     ENDORSEMENTS = [
@@ -1016,7 +1018,7 @@ export default function History() {
                                       <div className="flex justify-between items-end">
                                         <div className="flex items-baseline gap-1">
                                           <span className={cn("text-lg font-mono font-bold", met ? "text-[#2d7a4f]" : "text-[#c0392b]")}>
-                                            {row.unit === 'ldg' || row.unit === 'flight' ? row.have : (row.have || 0).toFixed(1)}
+                                            {row.unit === 'landings' || row.unit === 'flight' ? row.have : (row.have || 0).toFixed(1)}
                                           </span>
                                           <span className="text-xs text-[#6b7280] font-mono">/ {row.need} {row.unit}</span>
                                         </div>
@@ -1224,7 +1226,7 @@ export default function History() {
                 <div className="max-h-32 overflow-y-auto mb-4 space-y-2">
                   {getManualEntries(modalData.key).map((e, idx) => (
                     <div key={idx} className="flex items-center justify-between py-1.5 border-b border-[#dde3ec] text-xs">
-                      <span className="text-[#1c2333]">{e.date} — {e.val.toFixed(modalData.unit === 'flight' ? 0 : 1)} {modalData.unit}</span>
+                      <span className="text-[#1c2333]">{e.date} — {e.val.toFixed(modalData.unit === 'flight' || modalData.unit === 'landings' ? 0 : 1)} {modalData.unit}</span>
                       <button onClick={() => handleDeleteManualEntry(idx)} className="text-[#c0392b] hover:bg-[#fdecea] p-1 rounded transition-all">
                         <X size={14} />
                       </button>
@@ -1236,16 +1238,18 @@ export default function History() {
                 </div>
 
                 <div className="text-xs font-bold text-[#1c2333] mb-4">
-                  Total: {getManualValue(modalData.key).toFixed(modalData.unit === 'flight' ? 0 : 1)} / {modalData.need} {modalData.unit === 'flight' ? 'flight(s)' : modalData.unit}
+                  Total: {getManualValue(modalData.key).toFixed(modalData.unit === 'flight' || modalData.unit === 'landings' ? 0 : 1)} / {modalData.need} {modalData.unit === 'flight' ? 'flight(s)' : modalData.unit}
                 </div>
 
                 <div className="flex gap-2">
                   <input
                     type="number"
-                    step="0.1"
+                    step={modalData.unit === 'landings' || modalData.unit === 'flight' ? "1" : "0.1"}
+                    min={modalData.unit === 'landings' || modalData.unit === 'flight' ? "0" : undefined}
+                    max={modalData.unit === 'landings' || modalData.unit === 'flight' ? "99" : undefined}
                     value={newEntryVal}
                     onChange={(e) => setNewEntryVal(e.target.value)}
-                    placeholder="0.0"
+                    placeholder={modalData.unit === 'landings' || modalData.unit === 'flight' ? "0" : "0.0"}
                     className="flex-1 text-sm font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c]"
                   />
                   <button

@@ -101,8 +101,8 @@ export default function LessonType() {
   };
 
   const acsData = rating ? (ALL_ACS as any)[rating.code] || [] : [];
-  const groundTasks = acsData.length > 0 ? acsData[0].tasks.filter((t: string) => !t.includes('N/A')) : [];
-  const flightTasks = acsData.slice(1).reduce((acc: number, area: any) => acc + area.tasks.filter((t: string) => !t.includes('N/A')).length, 0);
+  const groundTasks = acsData.length > 0 ? acsData[0].tasks.filter((t: string) => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')) : [];
+  const flightTasks = acsData.slice(1).reduce((acc: number, area: any) => acc + area.tasks.filter((t: string) => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')).length, 0);
   const flightAreas = acsData.length > 1 ? acsData.length - 1 : 0;
 
   return (

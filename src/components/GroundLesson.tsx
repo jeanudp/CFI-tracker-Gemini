@@ -66,14 +66,16 @@ export default function GroundLesson() {
     });
   }, [navigate]);
 
-  const groundTasks = rating ? ALL_ACS[rating.code][0].tasks.map((task, ti) => ({
-    id: `0_${ti}`,
-    area: ALL_ACS[rating.code][0].area,
-    task,
-    ai: 0,
-    ti,
-    stds: ACS_ELEMENTS[task] || []
-  })) : [];
+  const groundTasks = rating ? ALL_ACS[rating.code][0].tasks
+    .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+    .map((task, ti) => ({
+      id: `0_${ti}`,
+      area: ALL_ACS[rating.code][0].area,
+      task,
+      ai: 0,
+      ti,
+      stds: ACS_ELEMENTS[task] || []
+    })) : [];
 
   const saveToLocal = (newGrades = grades, newNotes = notes, newMetaNotes = lessonNotes, newDate = lessonDate) => {
     if (!rating || editId) return;

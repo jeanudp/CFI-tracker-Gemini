@@ -89,7 +89,7 @@ export default function StudentDashboard() {
 
   // 1. ACS Mastery Map Data
   const masteryData = acsData.map((area, ai) => {
-    const tasks = area.tasks.filter(t => !t.includes('N/A'));
+    const tasks = area.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water'));
     const sat = tasks.filter((_, ti) => lessons.some(l => l.grades?.[`${ai}_${ti}`] === 'S')).length;
     return {
       subject: area.area.split(':')[0].substring(0, 15),
@@ -128,8 +128,10 @@ export default function StudentDashboard() {
 
   // 4. Weak Areas Report
   const weakAreas = acsData.flatMap((area, ai) => 
-    area.tasks.map((task, ti) => {
-      const id = `${ai}_${ti}`;
+    area.tasks
+      .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+      .map((task, ti) => {
+        const id = `${ai}_${ti}`;
       const nGrades = lessons.filter(l => l.grades?.[id] === 'N').length;
       const iGrades = lessons.filter(l => l.grades?.[id] === 'I').length;
       const totalAttempts = lessons.filter(l => l.grades?.[id]).length;
@@ -141,9 +143,12 @@ export default function StudentDashboard() {
    .slice(0, 5);
 
   // 5. Readiness Score
-  const totalTasks = acsData.reduce((acc, area) => acc + area.tasks.length, 0);
+  const totalTasks = acsData.reduce((acc, area) => 
+    acc + area.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')).length, 0);
   const masteredTasks = acsData.flatMap((area, ai) => 
-    area.tasks.map((_, ti) => `${ai}_${ti}`)
+    area.tasks
+      .filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water'))
+      .map((_, ti) => `${ai}_${ti}`)
   ).filter(id => lessons.some(l => l.grades?.[id] === 'S')).length;
   const readinessScore = totalTasks > 0 ? Math.round((masteredTasks / totalTasks) * 100) : 0;
 

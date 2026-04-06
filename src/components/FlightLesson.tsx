@@ -90,14 +90,16 @@ export default function FlightLesson() {
   }, [navigate]);
 
   const flightTasks = rating ? ALL_ACS[rating.code].flatMap((area, ai) => 
-    area.tasks.map((task, ti) => ({
-      id: `${ai}_${ti}`,
-      area: area.area,
-      task,
-      ai,
-      ti,
-      stds: ACS_ELEMENTS[task] || []
-    }))
+    area.tasks
+      .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+      .map((task, ti) => ({
+        id: `${ai}_${ti}`,
+        area: area.area,
+        task,
+        ai,
+        ti,
+        stds: ACS_ELEMENTS[task] || []
+      }))
   ) : [];
 
   const saveToLocal = (newGrades = grades, newNotes = notes, newMeta = meta) => {

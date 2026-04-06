@@ -2,16 +2,15 @@ import { ACSArea } from './types';
 
 export const ALL_ACS: Record<string, ACSArea[]> = {
   ppl: [
-    { area: "I. Preflight Preparation", tasks: ["A. Pilot Qualifications","B. Airworthiness Requirements","C. Weather Information","D. Cross-Country Flight Planning","E. National Airspace System","F. Performance and Limitations","G. Operation of Systems","H. Human Factors","I. Water and Seaplane Characteristics (N/A — ASEL)"] },
-    { area: "II. Preflight Procedures", tasks: ["A. Preflight Assessment","B. Flight Deck Management","C. Engine Starting","D. Taxiing (ASEL)","E. Before Takeoff Check"] },
-    { area: "III. Airport and Seaplane Base Operations", tasks: ["A. Communications","B. Traffic Patterns","C. Airport Markings / Signs / Lighting"] },
+    { area: "I. Preflight Preparation", tasks: ["A. Pilot Qualifications","B. Airworthiness Requirements","C. Weather Information","D. Cross-Country Flight Planning","E. National Airspace System","F. Performance and Limitations","G. Operation of Systems","H. Human Factors"] },
+    { area: "II. Preflight Procedures", tasks: ["A. Preflight Assessment","B. Flight Deck Management","C. Engine Starting","E. Before Takeoff Check"] },
+    { area: "III. Airport Operations", tasks: ["A. Communications","B. Traffic Patterns","C. Airport Markings / Signs / Lighting"] },
     { area: "IV. Takeoffs, Landings, and Go-Arounds", tasks: ["A. Normal Takeoff and Climb","B. Normal Approach and Landing","C. Soft-Field Takeoff and Climb","D. Soft-Field Approach and Landing","E. Short-Field Takeoff and Maximum Performance Climb","F. Short-Field Approach and Landing","G. Forward Slip to a Landing","H. Go-Around / Rejected Landing"] },
     { area: "V. Performance and Ground Reference Maneuvers", tasks: ["A. Steep Turns","B. Ground Reference Maneuvers"] },
     { area: "VI. Navigation", tasks: ["A. Pilotage and Dead Reckoning","B. Navigation Systems and Radar Services","C. Diversion","D. Lost Procedures"] },
     { area: "VII. Slow Flight and Stalls", tasks: ["A. Maneuvering During Slow Flight","B. Power-Off Stalls","C. Power-On Stalls","D. Spin Awareness"] },
     { area: "VIII. Basic Instrument Maneuvers", tasks: ["A. Straight-and-Level Flight","B. Constant Airspeed Climbs","C. Constant Airspeed Descents","D. Turns to Headings","E. Recovery from Unusual Flight Attitudes","F. Radio Communications / Navigation Systems / Radar Services"] },
     { area: "IX. Emergency Operations", tasks: ["A. Emergency Descent","B. Emergency Approach and Landing (Simulated)","C. Systems and Equipment Malfunctions","D. Emergency Equipment and Survival Gear"] },
-    { area: "X. Multiengine Operations (N/A — ASEL)", tasks: [] },
     { area: "XI. Night Operations", tasks: ["A. Night Preparation"] },
     { area: "XII. Postflight Procedures", tasks: ["A. After Landing, Parking, and Securing"] },
   ],
@@ -28,7 +27,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
   cpl: [
     { area: "I. Preflight Preparation", tasks: ["A. Pilot Qualifications", "B. Airworthiness Requirements", "C. Weather Information", "D. Performance and Limitations", "E. Operation of Systems", "F. Human Factors"] },
     { area: "II. Preflight Procedures", tasks: ["A. Preflight Assessment", "B. Flight Deck Management", "C. Engine Starting", "D. Taxiing", "E. Before Takeoff Check"] },
-    { area: "III. Airport and Seaplane Base Operations", tasks: ["A. Communications", "B. Traffic Patterns", "C. Airport Markings / Signs / Lighting"] },
+    { area: "III. Airport Operations", tasks: ["A. Communications", "B. Traffic Patterns", "C. Airport Markings / Signs / Lighting"] },
     { area: "IV. Takeoffs, Landings, and Go-Arounds", tasks: ["A. Normal Takeoff and Climb", "B. Normal Approach and Landing", "C. Soft-Field Takeoff and Climb", "D. Soft-Field Approach and Landing", "E. Short-Field Takeoff and Maximum Performance Climb", "F. Short-Field Approach and Landing", "G. Power-Off 180° Accuracy Approach and Landing", "H. Forward Slip to a Landing", "I. Go-Around / Rejected Landing"] },
     { area: "V. Performance Maneuvers", tasks: ["A. Steep Turns", "B. Steep Spirals", "C. Chandelles", "D. Lazy Eights"] },
     { area: "VI. Ground Reference Maneuvers", tasks: ["A. Eights on Pylons"] },
@@ -44,7 +43,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
     { area: "III. Preflight Preparation", tasks: ["A. Certificates and Documents", "B. Weather Information", "C. Operation of Systems", "D. Performance and Limitations", "E. Airworthiness Requirements"] },
     { area: "IV. Preflight Lesson on a Maneuver to be Performed in Flight", tasks: ["A. Maneuver Lesson"] },
     { area: "V. Preflight Procedures", tasks: ["A. Preflight Assessment", "B. Flight Deck Management", "C. Engine Starting", "D. Taxiing", "E. Before Takeoff Check"] },
-    { area: "VI. Airport and Seaplane Base Operations", tasks: ["A. Communications", "B. Traffic Patterns", "C. Airport Markings / Signs / Lighting"] },
+    { area: "VI. Airport Operations", tasks: ["A. Communications", "B. Traffic Patterns", "C. Airport Markings / Signs / Lighting"] },
     { area: "VII. Takeoffs, Landings, and Go-Arounds", tasks: ["A. Normal Takeoff and Climb", "B. Normal Approach and Landing", "C. Soft-Field Takeoff and Climb", "D. Soft-Field Approach and Landing", "E. Short-Field Takeoff and Maximum Performance Climb", "F. Short-Field Approach and Landing", "G. Power-Off 180° Accuracy Approach and Landing", "H. Forward Slip to a Landing", "I. Go-Around / Rejected Landing"] },
     { area: "VIII. Fundamentals of Flight", tasks: ["A. Straight-and-Level Flight", "B. Level Turns", "C. Climbs and Climbing Turns", "D. Descents and Descending Turns"] },
     { area: "IX. Performance Maneuvers", tasks: ["A. Steep Turns", "B. Steep Spirals", "C. Chandelles", "D. Lazy Eights"] },
@@ -61,7 +60,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
   mei: [
     { area: "I. Preflight Preparation", tasks: ["A. Pilot Qualifications", "B. Airworthiness Requirements", "C. Weather Information", "D. Performance and Limitations", "E. Operation of Systems", "F. Multiengine Aerodynamics", "G. Multiengine Systems and Emergencies", "H. Vmc Demonstration Theory"] },
     { area: "II. Preflight Procedures", tasks: ["A. Preflight Assessment", "B. Flight Deck Management", "C. Engine Starting", "D. Taxiing", "E. Before Takeoff Check"] },
-    { area: "III. Airport and Seaplane Base Operations", tasks: ["A. Communications", "B. Traffic Patterns", "C. Airport Markings / Signs / Lighting"] },
+    { area: "III. Airport Operations", tasks: ["A. Communications", "B. Traffic Patterns", "C. Airport Markings / Signs / Lighting"] },
     { area: "IV. Takeoffs, Landings, and Go-Arounds", tasks: ["A. Normal Takeoff and Climb", "B. Normal Approach and Landing", "C. Short-Field Takeoff and Maximum Performance Climb", "D. Short-Field Approach and Landing", "E. Go-Around / Rejected Landing"] },
     { area: "V. Multiengine Operations", tasks: ["A. Maneuvering with One Engine Inoperative", "B. Vmc Demonstration", "C. Engine Failure During Takeoff Before Vmc", "D. Engine Failure After Liftoff", "E. Approach and Landing with One Engine Inoperative"] },
     { area: "VI. Emergency Operations", tasks: ["A. Systems and Equipment Malfunctions", "B. Emergency Equipment and Survival Gear"] },
@@ -73,10 +72,6 @@ export const ACS_ELEMENTS: Record<string, string[]> = {
   'A. Preflight Assessment': [],
   'B. Flight Deck Management': [],
   'C. Engine Starting': [],
-  'D. Taxiing (ASEL)': [
-    'Safe taxi speed; correct aileron/elevator deflection for wind',
-    'Comply with all hold short instructions',
-  ],
   'E. Before Takeoff Check': [],
   'A. Communications': [],
   'B. Traffic Patterns': [

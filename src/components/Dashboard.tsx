@@ -158,7 +158,8 @@ export default function Dashboard() {
 
     const niTasks = Object.entries(lesson.grades)
       .filter(([_, grade]) => grade === 'N' || grade === 'I')
-      .map(([id, grade]) => ({ id, grade, name: getTaskName(lesson.meta?.rating_code || 'ppl', id) }));
+      .map(([id, grade]) => ({ id, grade, name: getTaskName(lesson.meta?.rating_code || 'ppl', id) }))
+      .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'));
 
     return (
       <div className="p-4 bg-white rounded-xl border border-[#dde3ec] shadow-sm">
