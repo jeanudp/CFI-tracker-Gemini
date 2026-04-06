@@ -829,26 +829,29 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.1', text: 'AC 61-65K A.1 — Student pilot certificate §61.85: I certify that [First name, MI, Last name] has met the eligibility requirements of §61.83 and has demonstrated satisfactory proficiency and safety as required by §61.87 in a [make and model aircraft]' },
-                      { key: 'A.2', text: 'AC 61-65K A.2 — Pre-solo aeronautical knowledge §61.87(b): I certify that [First name, MI, Last name] has demonstrated satisfactory aeronautical knowledge of the rules and procedures that apply to student solo flight operations under §61.87(b)(1) through (14)' },
-                      { key: 'A.3', text: 'AC 61-65K A.3 — Pre-solo flight training §61.87(c): I certify that [First name, MI, Last name] has received and logged flight training in the maneuvers and procedures listed in §61.87(d)(1) through (d)(n) and is prepared for the solo flight(s)' },
-                      { key: 'A.4', text: 'AC 61-65K A.4 — Pre-solo 90-day endorsement §61.87(n): I certify that [First name, MI, Last name] has received the required training of §61.87. I have determined that he/she is prepared to make solo flights in a [make and model aircraft]. This endorsement expires 90 days from the date of signature' },
-                      { key: 'A.4_xc', text: 'AC 61-65K A.4 — 90-day solo endorsement must be current and not expired §61.87(n)' },
-                      { key: 'A.9', text: 'AC 61-65K A.9 — Solo cross-country flight planning §61.93(c)(1): I certify that [First name, MI, Last name] has received solo cross-country training. I have reviewed the cross-country planning of the flight described below and find the planning and the student\'s preparation to be adequate for the proposed cross-country flight under VFR. The student is authorized to conduct the following solo cross-country flight from [location] to [location] via [route] on [date] in a [make and model aircraft]' },
-                      { key: 'A.10', text: 'AC 61-65K A.10 — Solo cross-country §61.93(c)(2): I certify that [First name, MI, Last name] has received the required solo cross-country training and endorsements required by §61.93. I have determined that he/she is prepared to make solo cross-country flights in a [make and model aircraft] in [geographical area]' },
-                      { key: 'A.4_b', text: 'AC 61-65K A.4 — 90-day solo endorsement must be current §61.87(n)' },
-                      { key: 'A.11', text: 'AC 61-65K A.11 — Solo flight in Class B airspace §61.95(a): I certify that [First name, MI, Last name] has received the required training in [name of Class B airspace area]. I have determined he/she is prepared to conduct solo flight operations in that airspace' },
-                      { key: 'A.12', text: 'AC 61-65K A.12 — Solo flight to from or at a Class B airport §61.95(b) and §91.131(b)(1): I certify that [First name, MI, Last name] has received the required training for [name of airport]. I have determined he/she is prepared to conduct solo flight operations at that airport' },
-                      { key: 'A.32', text: 'AC 61-65K A.32 — Aeronautical knowledge test §61.35(a)(1): I certify that [First name, MI, Last name] has received the required training of §61.105. I have determined that he/she is prepared for the Private Pilot knowledge test' },
-                      { key: 'A.33', text: 'AC 61-65K A.33 — Flight proficiency and aeronautical experience §61.103(f): I certify that [First name, MI, Last name] has received the required training of §61.107(b)(1) through (b)(n). I have determined that he/she meets the applicable aeronautical experience requirements of §61.109 and is prepared for the Private Pilot practical test' },
-                      { key: 'A.34', text: 'AC 61-65K A.34 — Practical test within 60 days §61.39(a)(6)(i) and (ii): I certify that [First name, MI, Last name] has received flight training within the preceding 60 days and I have determined he/she is prepared for the Private Pilot practical test' }
+                      { key: 'A.1', text: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii). I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of [applicable] certificate.' },
+                      { key: 'A.2', text: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required. I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the [applicable] airman knowledge test.' },
+                      { key: 'A.3', text: 'A.3 — Pre-solo aeronautical knowledge: 14 CFR § 61.87(b). I certify that [First name, MI, Last name] has satisfactorily completed the pre-solo knowledge test of 14 CFR § 61.87(b) for the [make and model] aircraft.' },
+                      { key: 'A.4', text: 'A.4 — Pre-solo flight training: 14 CFR § 61.87(c)(1) and (2). I certify that [First name, MI, Last name] has received and logged pre-solo flight training for the maneuvers and procedures that are appropriate to the [make and model] aircraft. I have determined they have demonstrated satisfactory proficiency and safety on the maneuvers and procedures required by 14 CFR § 61.87 in this or similar make and model of aircraft to be flown.' },
+                      { key: 'A.5', text: 'A.5 — Pre-solo flight training at night: 14 CFR § 61.87(o). I certify that [First name, MI, Last name] has received flight training at night on night flying procedures that include takeoffs, approaches, landings, and go-arounds at night at the [airport name] airport where the solo flight will be conducted; navigation training at night in the vicinity of the [airport name] airport where the solo flight will be conducted. This endorsement expires 90 calendar days from the date the flight training at night was received.' },
+                      { key: 'A.6', text: 'A.6 — Solo flight (first 90-calendar-day period): 14 CFR § 61.87(n). I certify that [First name, MI, Last name] has received the required training to qualify for solo flying. I have determined they meet the applicable requirements of 14 CFR § 61.87(n) and are proficient to make solo flights in [make and model].' },
+                      { key: 'A.7', text: 'A.7 — Solo flight (each additional 90-calendar-day period): 14 CFR § 61.87(p). I certify that [First name, MI, Last name] has received the required training to qualify for solo flying. I have determined that they meet the applicable requirements of 14 CFR § 61.87(p) and are proficient to make solo flights in [make and model].' },
+                      { key: 'A.8', text: 'A.8 — Solo takeoffs and landings at another airport within 25 NM: 14 CFR § 61.93(b)(1). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.93(b)(1). I have determined that they are proficient to practice solo takeoffs and landings at [airport name]. The takeoffs and landings at [airport name] are subject to the following conditions: [List any applicable conditions or limitations.]' },
+                      { key: 'A.9', text: 'A.9 — Solo cross-country flight: 14 CFR § 61.93(c)(1) and (2). I certify that [First name, MI, Last name] has received the required solo cross-country training. I find they have met the applicable requirements of 14 CFR § 61.93 and are proficient to make solo cross-country flights in a [make and model] aircraft, [aircraft category].' },
+                      { key: 'A.10', text: 'A.10 — Solo cross-country flight: 14 CFR § 61.93(c)(3). I have reviewed the cross-country planning of [First name, MI, Last name]. I find the planning and preparation to be correct to make the solo flight from [origination airport] to [destination airport] via [route of flight] with landings at [names of the airports] in a [make and model] aircraft on [date]. [List any applicable conditions or limitations.]' },
+                      { key: 'A.11', text: 'A.11 — Repeated solo cross-country flights not more than 50 NM from the point of departure: 14 CFR § 61.93(b)(2). I certify that [First name, MI, Last name] has received the required training in both directions between and at both [airport names]. I have determined that they are proficient of 14 CFR § 61.93(b)(2) to conduct repeated solo cross-country flights over that route, subject to the following conditions: [List any applicable conditions or limitations.]' },
+                      { key: 'A.12', text: 'A.12 — Solo flight in Class B airspace: 14 CFR § 61.95(a). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(a). I have determined they are proficient to conduct solo flights in [name of Class B] airspace. [List any applicable conditions or limitations.]' },
+                      { key: 'A.13', text: 'A.13 — Solo flight to, from, or at an airport located in Class B airspace: 14 CFR §§ 61.95(b) and 91.131(b)(1). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at [name of airport]. [List any applicable conditions or limitations.]' },
+                      { key: 'A.36', text: 'A.36 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the [name of] knowledge test.' },
+                      { key: 'A.37', text: 'A.37 — Flight proficiency/practical test: 14 CFR §§ 61.103(f), 61.107(b), and 61.109. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.' }
                     ];
                     SOLO_OPTIONS = [
-                      { id: '1', label: 'Section 1 — Student Pilot Certificate and Pre-Solo', description: 'These endorsements are required before the first solo flight.', endorsements: ENDORSEMENTS.slice(0, 4) },
-                      { id: '2', label: 'Section 2 — Solo Cross-Country', description: 'These endorsements are required before solo cross-country flights.', endorsements: ENDORSEMENTS.slice(4, 7) },
-                      { id: '3', label: 'Section 3 — Solo Flight in Class B Airspace or to Class B Airport', description: 'These endorsements are required in addition to standard solo endorsements.', endorsements: ENDORSEMENTS.slice(7, 10) },
-                      { id: '4', label: 'Section 4 — Knowledge Test', description: 'Required before the FAA Private Pilot knowledge test.', endorsements: ENDORSEMENTS.slice(10, 11) },
-                      { id: '5', label: 'Section 5 — Practical Test', description: 'Required before the FAA Private Pilot practical test with a DPE.', endorsements: ENDORSEMENTS.slice(11, 13) }
+                      { id: '1', label: 'Section 1 — Prerequisites for Practical Test', description: 'These apply to ALL ratings before any practical test.', endorsements: ENDORSEMENTS.slice(0, 2) },
+                      { id: '2', label: 'Section 2 — Student Pilot and Pre-Solo Endorsements', description: 'Required before the student\'s first solo flight.', endorsements: ENDORSEMENTS.slice(2, 7) },
+                      { id: '3', label: 'Section 3 — Solo Cross-Country Endorsements', description: 'Required before solo cross-country flights.', endorsements: ENDORSEMENTS.slice(7, 11) },
+                      { id: '4', label: 'Section 4 — Solo Flight in Class B Airspace', description: 'Required in addition to standard solo endorsements.', endorsements: ENDORSEMENTS.slice(11, 13) },
+                      { id: '5', label: 'Section 5 — Private Pilot Knowledge Test', description: 'Required before the FAA Private Pilot knowledge test.', endorsements: ENDORSEMENTS.slice(13, 14) },
+                      { id: '6', label: 'Section 6 — Private Pilot Practical Test (Checkride)', description: 'Required before the FAA Private Pilot practical test with a DPE.', endorsements: ENDORSEMENTS.slice(14, 15) }
                     ];
                   } else if (lessonRating === 'ir') {
                     REQS = [
@@ -861,10 +864,11 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.32', label: 'AC 61-65 A.32 — Aeronautical knowledge test §61.35(a)(1)' },
-                      { key: 'A.35', label: 'AC 61-65 A.35 — Instrument rating aeronautical knowledge test' },
-                      { key: 'A.36', label: 'AC 61-65 A.36 — Instrument rating practical test §61.65(a)(6)' },
-                      { key: 'A.37', label: 'AC 61-65 A.37 — Instrument practical test within 60 days §61.39(a)(6)(i)' }
+                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
+                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
+                      { key: 'A.42', label: 'A.42 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1) and 61.65(a) and (b)' },
+                      { key: 'A.43', label: 'A.43 — Flight proficiency/practical test: 14 CFR § 61.65(a)(6)' },
+                      { key: 'A.44', label: 'A.44 — Prerequisites for instrument practical tests: 14 CFR § 61.39(a)' }
                     ];
                   } else if (lessonRating === 'cpl') {
                     REQS = [
@@ -884,10 +888,10 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.32', label: 'AC 61-65 A.32 — Aeronautical knowledge test §61.35(a)(1)' },
-                      { key: 'A.38', label: 'AC 61-65 A.38 — Commercial pilot aeronautical knowledge test' },
-                      { key: 'A.39', label: 'AC 61-65 A.39 — Commercial pilot practical test §61.129(a)' },
-                      { key: 'A.40', label: 'AC 61-65 A.40 — Commercial practical test within 60 days §61.39(a)(6)(i)' }
+                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
+                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
+                      { key: 'A.38', label: 'A.38 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.123(c), and 61.125' },
+                      { key: 'A.39', label: 'A.39 — Flight proficiency/practical test: 14 CFR §§ 61.123(e), 61.127, and 61.129' }
                     ];
                   } else if (lessonRating === 'cfi') {
                     REQS = [
@@ -896,16 +900,12 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.32', label: 'AC 61-65 A.32 — Fundamentals of instruction knowledge test §61.35(a)(1)' },
-                      { key: 'A.41', label: 'AC 61-65 A.41 — Fundamentals of instruction knowledge test §61.183(d)' },
-                      { key: 'A.42', label: 'AC 61-65 A.42 — Flight instructor aeronautical knowledge test §61.183(f)' },
-                      { key: 'A.43', label: 'AC 61-65 A.43 — Flight instructor practical test §61.183(g)' },
-                      { key: 'A.44', label: 'AC 61-65 A.44 — Spin training endorsement §61.183(i)' },
-                      { key: 'A.45', label: 'AC 61-65 A.45 — Practical test within 60 days §61.39(a)(6)(i)' },
-                      { key: 'cfi_d', label: '§61.183(d) — Hold at least a commercial pilot certificate' },
-                      { key: 'cfi_e', label: '§61.183(e) — Pass fundamentals of instruction knowledge test' },
-                      { key: 'cfi_f', label: '§61.183(f) — Pass flight instructor knowledge test' },
-                      { key: 'cfi_j', label: '§61.183(j) — Training and endorsement within 2 calendar months' }
+                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
+                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
+                      { key: 'A.45', label: 'A.45 — Fundamentals of instructing knowledge test: 14 CFR § 61.183(d)' },
+                      { key: 'A.46', label: 'A.46 — Flight instructor aeronautical knowledge test: 14 CFR § 61.183(f)' },
+                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g)' },
+                      { key: 'A.49', label: 'A.49 — Spin training: 14 CFR § 61.183(i)(1)' }
                     ];
                   } else if (lessonRating === 'cfii') {
                     REQS = [
@@ -915,13 +915,10 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.32', label: 'AC 61-65 A.32 — Aeronautical knowledge test §61.35(a)(1)' },
-                      { key: 'A.46', label: 'AC 61-65 A.46 — Instrument flight instructor aeronautical knowledge test' },
-                      { key: 'A.47', label: 'AC 61-65 A.47 — Instrument flight instructor practical test §61.187(a)' },
-                      { key: 'A.48', label: 'AC 61-65 A.48 — Practical test within 60 days §61.39(a)(6)(i)' },
-                      { key: 'cfii_1', label: '§61.187(b)(1) — Hold a flight instructor certificate' },
-                      { key: 'cfii_2', label: '§61.187(b)(2) — Hold an instrument rating' },
-                      { key: 'cfii_end', label: '§61.187(b) — Logbook endorsement within 2 calendar months' }
+                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
+                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
+                      { key: 'A.46', label: 'A.46 — Flight instructor aeronautical knowledge test: 14 CFR § 61.183(f)' },
+                      { key: 'A.48', label: 'A.48 — Flight instructor certificate with instrument rating/practical test: 14 CFR §§ 61.183(g) and 61.187(a) and (b)(7)' }
                     ];
                   } else if (lessonRating === 'mei') {
                     REQS = [
@@ -930,13 +927,11 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.32', label: 'AC 61-65 A.32 — Aeronautical knowledge test §61.35(a)(1)' },
-                      { key: 'A.72', label: 'AC 61-65 A.72 — Multiengine class rating practical test' },
-                      { key: 'A.73', label: 'AC 61-65 A.73 — Multiengine flight instructor practical test §61.195(h)' },
-                      { key: 'A.48', label: 'AC 61-65 A.48 — Practical test within 60 days §61.39(a)(6)(i)' },
-                      { key: 'mei_1', label: '§61.195(h)(1) — Hold a flight instructor certificate' },
-                      { key: 'mei_2', label: '§61.195(h)(2) — Hold a multiengine class rating' },
-                      { key: 'mei_4', label: '§61.195(h)(4) — Logbook endorsement for multiengine competency' }
+                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
+                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
+                      { key: 'A.46', label: 'A.46 — Flight instructor aeronautical knowledge test: 14 CFR § 61.183(f)' },
+                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g)' },
+                      { key: 'A.49', label: 'A.49 — Spin training: 14 CFR § 61.183(i)(1)' }
                     ];
                   }
 
@@ -944,7 +939,7 @@ export default function History() {
                   const metCount = allRows.filter(r => r.have >= r.need).length;
                   const endorsementsMet = ENDORSEMENTS.filter(e => isEndorsementMet(e.key)).length;
                   const allMet = lessonRating === 'ppl'
-                    ? (allRows.length > 0 && metCount === allRows.length && isEndorsementMet('A.33') && isEndorsementMet('A.34'))
+                    ? (allRows.length > 0 && metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.2') && isEndorsementMet('A.37'))
                     : (allRows.length > 0 && metCount === allRows.length && ENDORSEMENTS.length > 0 && endorsementsMet === ENDORSEMENTS.length);
 
                   // Fireworks logic
