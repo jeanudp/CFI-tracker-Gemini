@@ -71,29 +71,50 @@ export default function Dashboard() {
     setIsRatingModalOpen(true);
   };
 
-  const confirmAddStudent = async () => {
-    if (!pendingStudentName || !selectedRatingCode) return;
-    setAdding(true);
+  const handleSaveNewStudent = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    
+    if (!session?.user?.id) {
+      console.error('No session found');
+      return;
+    }
 
+    if (!pendingStudentName.trim()) {
+      alert('Please enter a student name');
+      return;
+    }
+
+    if (!selectedRatingCode) {
+      alert('Please select a rating');
+      return;
+    }
+
+    setAdding(true);
     const rating = (RATINGS as any)[selectedRatingCode];
 
     const { data, error } = await supabase
       .from('students')
       .insert({ 
         user_id: session.user.id, 
-        name: pendingStudentName,
+        name: pendingStudentName.trim(),
         current_rating: selectedRatingCode,
         current_rating_label: rating.label
       })
       .select()
       .single();
 
-    if (!error && data) {
+    if (error) {
+      console.error('Supabase error:', error);
+      alert('Failed to save student: ' + error.message);
+      setAdding(false);
+      return;
+    }
+
+    if (data) {
       setStudents(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
       setNewStudentName('');
       setPendingStudentName('');
+      setSelectedRatingCode(null);
       setIsRatingModalOpen(false);
       handleSelectStudent(data.name);
     }
@@ -629,7 +650,7 @@ export default function Dashboard() {
                     Cancel
                   </button>
                   <button
-                    onClick={confirmAddStudent}
+                    onClick={handleSaveNewStudent}
                     disabled={adding || !selectedRatingCode}
                     className="flex-3 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl hover:bg-[#2a5a8c] transition-all disabled:opacity-50 shadow-md"
                   >
