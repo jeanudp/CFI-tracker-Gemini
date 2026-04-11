@@ -28,11 +28,14 @@ export interface LessonMeta {
   nightDual?: string;
   nightTakeoffs?: string;
   nightPic?: string;
+  nightSolo?: string;
+  simDeviceType?: string;
   nightTakeoffsPic?: string;
   nightLandingsPic?: string;
   ftd?: string;
   ffs?: string;
   atdSE?: string;
+  studentFlewSolo?: boolean;
   rating_code?: string;
   rating_label?: string;
 }
@@ -70,6 +73,7 @@ export interface Student {
 export interface ManualHoursEntry {
   val: number;
   date: string;
+  completedDate?: string;
 }
 
 export interface ManualHours {

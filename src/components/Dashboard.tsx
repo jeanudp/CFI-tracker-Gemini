@@ -29,6 +29,11 @@ export default function Dashboard() {
   const [isCheckrideConfirmOpen, setIsCheckrideConfirmOpen] = useState(false);
   const [isNextRatingModalOpen, setIsNextRatingModalOpen] = useState(false);
   const [processingCheckride, setProcessingCheckride] = useState(false);
+  const [manualHours, setManualHours] = useState<any[]>([]);
+  const [endorsements, setEndorsements] = useState<any[]>([]);
+  const [isUndoConfirmOpen, setIsUndoConfirmOpen] = useState(false);
+  const [ratingToUndo, setRatingToUndo] = useState<PassedRating | null>(null);
+  const [undoSuccess, setUndoSuccess] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -51,8 +56,16 @@ export default function Dashboard() {
       const { data: lessonsData, error: lessonsError } = await supabase.from('lessons').select('*');
       if (lessonsError) throw lessonsError;
 
+      const { data: manualData, error: manualError } = await supabase.from('manual_hours').select('*');
+      if (manualError) throw manualError;
+
+      const { data: endorsementsData, error: endorsementsError } = await supabase.from('endorsements').select('*');
+      if (endorsementsError) throw endorsementsError;
+
       setStudents(studentsData || []);
       setLessons(lessonsData || []);
+      setManualHours(manualData || []);
+      setEndorsements(endorsementsData || []);
     } catch (err: any) {
       console.error('Fetch error:', err);
       setError(err.message === 'Failed to fetch' 
@@ -254,9 +267,196 @@ export default function Dashboard() {
 
   const handleSelectStudent = (name: string) => {
     setSelectedStudent(name);
+    setUndoSuccess(null);
     localStorage.setItem('sb_selected_student', name);
     localStorage.setItem('faa_student_info', JSON.stringify({ student: name }));
     fetchRecentLessons(name);
+  };
+
+  const getCumulativeStats = (studentName: string) => {
+    const studentLessons = lessons.filter(l => l.student_name === studentName);
+    let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0;
+    let totXcDual = 0, totXcPic = 0, totSimInst = 0, totNightDual = 0;
+    
+    studentLessons.forEach(l => {
+      const m = l.meta || {};
+      totFlight += parseFloat(m.totalFlight || '0') || 0;
+      totDual += parseFloat(m.dual || '0') || 0;
+      totXc += parseFloat(m.xc || '0') || 0;
+      totNight += parseFloat(m.night || '0') || 0;
+      totNightLdg += parseInt(m.ldgNight || '0') || 0;
+      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
+      totSolo += parseFloat(m.solo || '0') || 0;
+      totSoloXc += parseFloat(m.soloXc || '0') || 0;
+      totXcDual += parseFloat(m.xcDual || '0') || 0;
+      totXcPic += parseFloat(m.xcPic || '0') || 0;
+      totSimInst += parseFloat(m.simInst || '0') || 0;
+      totNightDual += parseFloat(m.nightDual || '0') || 0;
+    });
+
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const recentDual = studentLessons
+      .filter(l => new Date(l.saved_at) >= sixtyDaysAgo)
+      .reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') || 0), 0);
+    
+    const recentInst = studentLessons
+      .filter(l => new Date(l.saved_at) >= sixtyDaysAgo)
+      .reduce((sum, l) => sum + (parseFloat(l.meta?.simInst || '0') || 0), 0);
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const recentInst6mo = studentLessons
+      .filter(l => new Date(l.saved_at) >= sixMonthsAgo)
+      .reduce((sum, l) => sum + (parseFloat(l.meta?.simInst || '0') || 0), 0);
+
+    const picTime = studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
+
+    return { 
+      totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc,
+      totXcDual, totXcPic, totSimInst, totNightDual, recentDual, recentInst, recentInst6mo, picTime
+    };
+  };
+
+  const getManualValue = (studentName: string, key: string) => {
+    const m = manualHours.find(h => h.student_name === studentName && h.field_key === key);
+    return m ? m.total : 0;
+  };
+
+  const isEndorsementMet = (studentName: string, ratingCode: string, key: string) => {
+    return endorsements.some(e => 
+      e.student_name === studentName && 
+      e.rating === ratingCode && 
+      e.endorsement_key === key && 
+      e.completed
+    );
+  };
+
+  const checkRequirements = (student: Student) => {
+    const stats = getCumulativeStats(student.name);
+    const rating = student.current_rating;
+    const name = student.name;
+
+    if (rating === 'ppl') {
+      return (
+        stats.totFlight >= 40 &&
+        stats.totDual >= 20 &&
+        stats.totXcDual >= 3 &&
+        stats.totNightDual >= 3 &&
+        stats.totNightLdg >= 10 &&
+        stats.totSim >= 3 &&
+        stats.recentDual >= 3 &&
+        stats.totSolo >= 10 &&
+        stats.totSoloXc >= 5 &&
+        getManualValue(name, 'soloXc150') >= 1 &&
+        getManualValue(name, 'soloTowered') >= 3 &&
+        isEndorsementMet(name, 'ppl', 'A.1') &&
+        isEndorsementMet(name, 'ppl', 'A.37')
+      );
+    }
+
+    if (rating === 'ir') {
+      return (
+        stats.totXcPic >= 50 &&
+        stats.totSim >= 40 &&
+        stats.totSimInst >= 15 &&
+        stats.recentInst >= 3 &&
+        getManualValue(name, 'ifrXc250') >= 1 &&
+        isEndorsementMet(name, 'ir', 'A.1') &&
+        isEndorsementMet(name, 'ir', 'A.43')
+      );
+    }
+
+    if (rating === 'cpl') {
+      return (
+        stats.totFlight >= 250 &&
+        stats.picTime >= 100 &&
+        stats.totXc >= 50 &&
+        stats.totSim >= 10 &&
+        getManualValue(name, 'complex') >= 10 &&
+        getManualValue(name, 'dayXc100') >= 1 &&
+        getManualValue(name, 'nightXc100') >= 1 &&
+        stats.recentDual >= 3 &&
+        stats.totSolo >= 10 &&
+        getManualValue(name, 'nightSoloTowered') >= 1 &&
+        getManualValue(name, 'soloXc300') >= 1 &&
+        isEndorsementMet(name, 'cpl', 'A.1') &&
+        isEndorsementMet(name, 'cpl', 'A.39')
+      );
+    }
+
+    if (rating === 'cfi') {
+      return (
+        stats.picTime >= 15 &&
+        getManualValue(name, 'commercialHeld') >= 1 &&
+        getManualValue(name, 'foiPassed') >= 1 &&
+        getManualValue(name, 'cfiPassed') >= 1 &&
+        getManualValue(name, 'endorsement2mo') >= 1 &&
+        isEndorsementMet(name, 'cfi', 'A.1') &&
+        isEndorsementMet(name, 'cfi', 'A.47') &&
+        isEndorsementMet(name, 'cfi', 'A.49')
+      );
+    }
+
+    if (rating === 'cfii') {
+      return (
+        getManualValue(name, 'cfiHeld') >= 1 &&
+        getManualValue(name, 'instrumentHeld') >= 1 &&
+        getManualValue(name, 'instRecent') >= 1 &&
+        isEndorsementMet(name, 'cfii', 'A.1') &&
+        isEndorsementMet(name, 'cfii', 'A.48')
+      );
+    }
+
+    if (rating === 'mei') {
+      return (
+        getManualValue(name, 'cfiHeld') >= 1 &&
+        getManualValue(name, 'multiengineHeld') >= 1 &&
+        getManualValue(name, 'mePic') >= 5 &&
+        isEndorsementMet(name, 'mei', 'A.1') &&
+        isEndorsementMet(name, 'mei', 'A.47')
+      );
+    }
+
+    return false;
+  };
+
+  const handleUndoCheckride = async () => {
+    if (!selectedStudent || !ratingToUndo) return;
+    const student = students.find(s => s.name === selectedStudent);
+    if (!student) return;
+
+    setProcessingCheckride(true);
+    try {
+      const updatedHistory = (student.checkride_passed_ratings || []).filter(r => r.code !== ratingToUndo.code);
+      
+      const { error } = await supabase
+        .from('students')
+        .update({ 
+          checkride_passed_ratings: updatedHistory,
+          current_rating: ratingToUndo.code,
+          current_rating_label: ratingToUndo.label
+        })
+        .eq('id', student.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setStudents(prev => prev.map(s => s.id === student.id ? { 
+        ...s, 
+        checkride_passed_ratings: updatedHistory,
+        current_rating: ratingToUndo.code,
+        current_rating_label: ratingToUndo.label
+      } : s));
+      
+      setUndoSuccess(`Checkride pass undone. Student is back on ${ratingToUndo.label}`);
+      setIsUndoConfirmOpen(false);
+      setRatingToUndo(null);
+    } catch (err) {
+      console.error('Undo checkride error:', err);
+    } finally {
+      setProcessingCheckride(false);
+    }
   };
 
   const getStudentStats = (name: string) => {
@@ -516,13 +716,32 @@ export default function Dashboard() {
                       <div className="space-y-2">
                         {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings.map((r, idx) => (
                           <div key={idx} className="flex items-center justify-between text-xs">
-                            <span className="font-medium text-[#1c2333]">{r.label}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-[#1c2333]">{r.label}</span>
+                              <button
+                                onClick={() => {
+                                  setRatingToUndo(r);
+                                  setIsUndoConfirmOpen(true);
+                                }}
+                                className="p-1 text-[#6b7280] hover:text-[#c0392b] hover:bg-red-50 rounded transition-all"
+                                title="Undo checkride pass"
+                              >
+                                <History size={12} />
+                              </button>
+                            </div>
                             <span className="text-[#6b7280]">Passed {r.date}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : null}
+
+                  {undoSuccess && (
+                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                      <CheckCircle2 size={14} />
+                      {undoSuccess}
+                    </div>
+                  )}
 
                   <div>
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Ground Lesson</h3>
@@ -534,13 +753,51 @@ export default function Dashboard() {
                   </div>
 
                   <div className="pt-2">
-                    <button
-                      onClick={() => setIsCheckrideConfirmOpen(true)}
-                      className="w-full bg-[#2d7a4f] text-white font-bold py-3 rounded-xl hover:bg-[#24633f] transition-all flex items-center justify-center gap-2 shadow-sm"
-                    >
-                      <CheckCircle size={18} />
-                      Checkride Passed
-                    </button>
+                    {(() => {
+                      const student = students.find(s => s.name === selectedStudent);
+                      if (!student) return null;
+                      
+                      const isPassed = student.checkride_passed_ratings?.some(r => r.code === student.current_rating);
+                      if (isPassed) {
+                        const passDate = student.checkride_passed_ratings?.find(r => r.code === student.current_rating)?.date;
+                        return (
+                          <div className="bg-[#f0fdf4] border-2 border-[#bbf7d0] rounded-xl p-4 flex flex-col items-center justify-center gap-1">
+                            <div className="flex items-center gap-2 text-[#166534] font-bold">
+                              <CheckCircle size={20} />
+                              Checkride Passed
+                            </div>
+                            <div className="text-[10px] text-[#166534] opacity-70 font-bold uppercase tracking-widest">
+                              Completed on {passDate}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const requirementsMet = checkRequirements(student);
+                      
+                      return (
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => setIsCheckrideConfirmOpen(true)}
+                            disabled={!requirementsMet}
+                            className={cn(
+                              "w-full font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm",
+                              requirementsMet 
+                                ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] animate-pulse shadow-[0_0_15px_rgba(45,122,79,0.4)]" 
+                                : "bg-[#dde3ec] text-[#6b7280] cursor-not-allowed"
+                            )}
+                          >
+                            <CheckCircle size={18} />
+                            Checkride Passed
+                          </button>
+                          {!requirementsMet && (
+                            <p className="text-[10px] text-center text-[#6b7280] font-medium">
+                              Requirements not yet met. View the <Link to="/history" className="text-[#1a3a5c] underline">Checkride tab</Link> to see what is missing.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -705,9 +962,9 @@ export default function Dashboard() {
                 <div className="w-16 h-16 bg-[#e4f5ec] text-[#2d7a4f] rounded-full flex items-center justify-center mb-6 mx-auto">
                   <Award size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-[#1c2333] mb-2">Checkride Passed?</h3>
-                <p className="text-sm text-[#6b7280] mb-8">
-                  Has <strong>{selectedStudent}</strong> passed their <strong>{students.find(s => s.name === selectedStudent)?.current_rating_label}</strong> checkride?
+                <h3 className="text-xl font-bold text-[#1c2333] mb-2">Confirm Checkride Pass</h3>
+                <p className="text-sm text-[#6b7280] mb-8 leading-relaxed">
+                  You are about to record that <strong>{selectedStudent}</strong> has passed their <strong>{students.find(s => s.name === selectedStudent)?.current_rating_label}</strong> checkride. This will lock this rating and prompt you to select the next rating. Are you sure?
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -719,9 +976,43 @@ export default function Dashboard() {
                   <button
                     onClick={handleCheckridePassed}
                     disabled={processingCheckride}
-                    className="flex-2 py-3 bg-[#2d7a4f] text-white font-bold rounded-xl hover:bg-[#24633f] transition-all shadow-md disabled:opacity-50"
+                    className="flex-[2] py-3 bg-[#2d7a4f] text-white font-bold rounded-xl hover:bg-[#24633f] transition-all shadow-md disabled:opacity-50"
                   >
                     {processingCheckride ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Confirm Pass'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {isUndoConfirmOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center"
+              >
+                <div className="w-16 h-16 bg-[#fdecea] text-[#c0392b] rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <AlertCircle size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#1c2333] mb-2">Undo Checkride Pass?</h3>
+                <p className="text-sm text-[#6b7280] mb-8 leading-relaxed">
+                  Are you sure you want to undo the checkride pass for <strong>{ratingToUndo?.label}</strong>? This cannot be undone easily.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsUndoConfirmOpen(false)}
+                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUndoCheckride}
+                    disabled={processingCheckride}
+                    className="flex-[2] py-3 bg-[#c0392b] text-white font-bold rounded-xl hover:bg-[#a93226] transition-all shadow-md disabled:opacity-50"
+                  >
+                    {processingCheckride ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Undo Pass'}
                   </button>
                 </div>
               </motion.div>

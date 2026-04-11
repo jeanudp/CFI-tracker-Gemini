@@ -6,7 +6,7 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function History() {
@@ -23,6 +23,85 @@ export default function History() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ key: string, label: string, need: number, unit: string } | null>(null);
   const [newEntryVal, setNewEntryVal] = useState('');
+  const [editingDateKey, setEditingDateKey] = useState<string | null>(null);
+  const [tempDate, setTempDate] = useState<string>('');
+  const [newLogDates, setNewLogDates] = useState<Record<string, string>>({});
+
+  const getManualDate = (key: string) => {
+    const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
+                   key === 'soloXc150' ? 'soloXC150Date' : 
+                   key === 'soloTowered' ? 'soloToweredDate' : '';
+    if (!dateKey) return '';
+    const m = manualHours.find(h => h.student_name === selectedLesson?.student_name && h.field_key === dateKey);
+    if (!m || m.entries.length === 0) return '';
+    return m.entries[0].completedDate || m.entries[0].date;
+  };
+
+  const saveManualDate = async (key: string, date: string) => {
+    if (!selectedLesson) return;
+    const studentName = selectedLesson.student_name;
+    const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
+                   key === 'soloXc150' ? 'soloXC150Date' : 
+                   key === 'soloTowered' ? 'soloToweredDate' : '';
+    if (!dateKey) return;
+
+    const existing = manualHours.find(m => m.student_name === studentName && m.field_key === dateKey);
+    const newEntry = { val: 1, date: new Date().toLocaleDateString(), completedDate: date };
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    if (existing) {
+      const { error } = await supabase
+        .from('manual_hours')
+        .update({ entries: [newEntry], total: 1, updated_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (!error) {
+        setManualHours(prev => prev.map(m => m.id === existing.id ? { ...m, entries: [newEntry], total: 1 } : m));
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('manual_hours')
+        .insert({ user_id: session.user.id, student_name: studentName, field_key: dateKey, entries: [newEntry], total: 1 })
+        .select()
+        .single();
+      if (!error && data) {
+        setManualHours(prev => [...prev, data]);
+      }
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  const handleSpecialLog = async (row: any, date: string, count: number) => {
+    if (!selectedLesson) return;
+    const studentName = selectedLesson.student_name;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const existingMain = manualHours.find(m => m.student_name === studentName && m.field_key === row.mk);
+    const newEntryMain = { val: count, date: new Date().toLocaleDateString() };
+    
+    if (existingMain) {
+      const { error } = await supabase.from('manual_hours').update({ entries: [newEntryMain], total: count, updated_at: new Date().toISOString() }).eq('id', existingMain.id);
+      if (!error) {
+        setManualHours(prev => prev.map(m => m.id === existingMain.id ? { ...m, entries: [newEntryMain], total: count } : m));
+      }
+    } else {
+      const { data, error } = await supabase.from('manual_hours').insert({ user_id: session.user.id, student_name: studentName, field_key: row.mk, entries: [newEntryMain], total: count }).select().single();
+      if (!error && data) {
+        setManualHours(prev => [...prev, data]);
+      }
+    }
+
+    await saveManualDate(row.mk!, date);
+  };
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -232,9 +311,12 @@ export default function History() {
       totFfs += parseFloat(m.ffs || '0') || 0;
       totAtdSE += parseFloat(m.atdSE || '0') || 0;
     });
+
+    const picTime = studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
+
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
-      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totNightTakeoffsPic, totNightLandingsPic, totFtd, totFfs, totAtdSE
+      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totNightTakeoffsPic, totNightLandingsPic, totFtd, totFfs, totAtdSE, picTime
     };
   };
 
@@ -1126,7 +1208,8 @@ export default function History() {
                       { key: 'A.13', text: 'A.13 — Solo flight to, from, or at an airport located in Class B airspace: 14 CFR §§ 61.95(b) and 91.131(b)(1). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at [name of airport]. [List any applicable conditions or limitations.]' },
                       { key: 'A.32', text: 'A.32 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the [name of] knowledge test.' },
                       { key: 'A.33', text: 'A.33 — Flight proficiency/practical test: 14 CFR §§ 61.103(f), 61.107(b), and 61.109. I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.' },
-                      { key: 'A.34', text: 'A.34 — Practical test within 60 days: 14 CFR § 61.39(a)(6)(i). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.39(a)(6)(i) within 2 calendar months preceding the month of application in preparation for the practical test and I find [First name, MI, Last name] prepared for the [name of] practical test.' }
+                      { key: 'A.34', text: 'A.34 — Practical test within 60 days: 14 CFR § 61.39(a)(6)(i). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.39(a)(6)(i) within 2 calendar months preceding the month of application in preparation for the practical test and I find [First name, MI, Last name] prepared for the [name of] practical test.' },
+                      { key: 'A.37', text: 'A.37 — Commercial Pilot Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.123(c), and 61.125. (Required for PPL per instructor rules).' }
                     ];
                     SOLO_OPTIONS = [
                       { id: '1', label: 'Section 1 — Prerequisites for Practical Test', description: 'These apply to ALL ratings before any practical test.', endorsements: ENDORSEMENTS.slice(0, 2) },
@@ -1134,7 +1217,7 @@ export default function History() {
                       { id: '3', label: 'Section 3 — Solo Cross-Country Endorsements', description: 'Required before solo cross-country flights.', endorsements: ENDORSEMENTS.slice(7, 11) },
                       { id: '4', label: 'Section 4 — Solo Flight in Class B Airspace', description: 'Required in addition to standard solo endorsements.', endorsements: ENDORSEMENTS.slice(11, 13) },
                       { id: '5', label: 'Section 5 — Private Pilot Knowledge Test', description: 'Required before the FAA Private Pilot knowledge test.', endorsements: ENDORSEMENTS.slice(13, 14) },
-                      { id: '6', label: 'Section 6 — Private Pilot Practical Test (Checkride)', description: 'Required before the FAA Private Pilot practical test with a DPE.', endorsements: ENDORSEMENTS.slice(14, 16) }
+                      { id: '6', label: 'Section 6 — Private Pilot Practical Test (Checkride)', description: 'Required before the FAA Private Pilot practical test with a DPE.', endorsements: ENDORSEMENTS.slice(14, 17) }
                     ];
                   } else if (lessonRating === 'ir') {
                     REQS = [
@@ -1158,7 +1241,7 @@ export default function History() {
                       { section: 'Flight Time Requirements', ref: '§61.129(a)', rows: [
                         { label: 'Total flight time', ref: '§61.129(a)(1)', have: stats.totFlight, need: 250, unit: 'hrs' },
                         { label: 'Powered aircraft time', ref: '§61.129(a)(2)', have: stats.totFlight, need: 100, unit: 'hrs' },
-                        { label: 'PIC flight time', ref: '§61.129(a)(3)(i)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0), need: 100, unit: 'hrs' },
+                        { label: 'PIC flight time', ref: '§61.129(a)(3)(i)', have: stats.picTime, need: 100, unit: 'hrs' },
                         { label: 'Cross-country PIC', ref: '§61.129(a)(3)(ii)', have: stats.totXc, need: 50, unit: 'hrs' },
                         { label: 'Instrument training', ref: '§61.129(a)(4)(i)', have: stats.totSim, need: 10, unit: 'hrs' },
                         { label: 'Complex or turbine aircraft', ref: '§61.129(a)(4)(ii)', have: getManualValue('complex'), need: 10, unit: 'hrs', mk: 'complex' },
@@ -1166,7 +1249,7 @@ export default function History() {
                         { label: '2-hr Night XC > 100NM', ref: '§61.129(a)(4)(iv)', have: getManualValue('nightXc100'), need: 1, unit: 'flight', mk: 'nightXc100' },
                         { label: 'Practical test prep dual (60 days)', ref: '§61.129(a)(4)(v)', have: recentDual, need: 3, unit: 'hrs', note: sixtyDaysStr },
                         { label: 'Solo PIC time', ref: '§61.129(a)(5)(i)', have: stats.totSolo, need: 10, unit: 'hrs' },
-                        { label: 'Night VFR with 10 landings towered', ref: '§61.129(a)(5)(ii)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.night || '0') : 0), 0) >= 5 && stats.totNightLdg >= 10 ? 1 : 0, need: 1, unit: 'flight' },
+                        { label: 'Night VFR with 10 landings towered', ref: '§61.129(a)(5)(ii)', have: getManualValue('nightSoloTowered'), need: 1, unit: 'flight', mk: 'nightSoloTowered' },
                         { label: 'Solo XC 300NM', ref: '§61.129(a)(5)(iii)', have: getManualValue('soloXc300'), need: 1, unit: 'flight', mk: 'soloXc300' }
                       ]}
                     ];
@@ -1179,7 +1262,11 @@ export default function History() {
                   } else if (lessonRating === 'cfi') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.183', rows: [
-                        { label: 'PIC in category and class', ref: '§61.183(g)', have: stats.totFlight, need: 15, unit: 'hrs' }
+                        { label: 'PIC in category and class', ref: '§61.183(g)', have: stats.picTime, need: 15, unit: 'hrs' },
+                        { label: 'Commercial certificate held', ref: '§61.183(c)', have: getManualValue('commercialHeld'), need: 1, unit: 'cert', mk: 'commercialHeld' },
+                        { label: 'FOI knowledge test passed', ref: '§61.183(d)', have: getManualValue('foiPassed'), need: 1, unit: 'test', mk: 'foiPassed' },
+                        { label: 'CFI knowledge test passed', ref: '§61.183(f)', have: getManualValue('cfiPassed'), need: 1, unit: 'test', mk: 'cfiPassed' },
+                        { label: 'Practical test prep dual (60 days)', ref: '§61.183(g)', have: getManualValue('endorsement2mo'), need: 1, unit: 'hrs', mk: 'endorsement2mo' }
                       ]}
                     ];
                     ENDORSEMENTS = [
@@ -1193,8 +1280,9 @@ export default function History() {
                   } else if (lessonRating === 'cfii') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.187(b)', rows: [
-                        { label: 'Instrument flight training', ref: '§61.187(b)(7)', have: stats.totSim, need: 15, unit: 'hrs' },
-                        { label: 'Instrument recent experience §61.57(c)', ref: '§61.187(b)', have: recentInst6mo >= 0.1 ? 1 : 0, need: 1, unit: 'flight' }
+                        { label: 'CFI certificate held', ref: '§61.183', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld' },
+                        { label: 'Instrument rating held', ref: '§61.183', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld' },
+                        { label: 'Instrument recent experience §61.57(c)', ref: '§61.187(b)', have: getManualValue('instRecent'), need: 1, unit: 'flight', mk: 'instRecent' }
                       ]}
                     ];
                     ENDORSEMENTS = [
@@ -1206,6 +1294,8 @@ export default function History() {
                   } else if (lessonRating === 'mei') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.195(h)', rows: [
+                        { label: 'CFI certificate held', ref: '§61.183', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld' },
+                        { label: 'Multiengine rating held', ref: '§61.183', have: getManualValue('multiengineHeld'), need: 1, unit: 'rating', mk: 'multiengineHeld' },
                         { label: 'PIC in multiengine airplane', ref: '§61.195(h)(3)', have: getManualValue('mePic'), need: 5, unit: 'hrs', mk: 'mePic' }
                       ]}
                     ];
@@ -1213,17 +1303,28 @@ export default function History() {
                       { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
                       { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
                       { key: 'A.46', label: 'A.46 — Flight instructor aeronautical knowledge test: 14 CFR § 61.183(f)' },
-                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g)' },
-                      { key: 'A.49', label: 'A.49 — Spin training: 14 CFR § 61.183(i)(1)' }
+                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g)' }
                     ];
                   }
 
                   const allRows = REQS.flatMap(r => r.rows);
                   const metCount = allRows.filter(r => r.have >= r.need).length;
                   const endorsementsMet = ENDORSEMENTS.filter(e => isEndorsementMet(e.key)).length;
-                  const allMet = lessonRating === 'ppl'
-                    ? (allRows.length > 0 && metCount === allRows.length && isEndorsementMet('A.33') && isEndorsementMet('A.34'))
-                    : (allRows.length > 0 && metCount === allRows.length && ENDORSEMENTS.length > 0 && endorsementsMet === ENDORSEMENTS.length);
+                  
+                  let allMet = false;
+                  if (lessonRating === 'ppl') {
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.37');
+                  } else if (lessonRating === 'ir') {
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.43');
+                  } else if (lessonRating === 'cpl') {
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.39');
+                  } else if (lessonRating === 'cfi') {
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49');
+                  } else if (lessonRating === 'cfii') {
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.48');
+                  } else if (lessonRating === 'mei') {
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47');
+                  }
 
                   // Fireworks logic
                   if (allMet && !celebrated[`${selectedLesson.student_name}_${lessonRating}`]) {
@@ -1307,13 +1408,102 @@ export default function History() {
                                     </div>
                                   </div>
                                   {row.mk && (
-                                    <button
-                                      onClick={() => openModal(row.mk!, row.label, row.need, row.unit)}
-                                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] bg-white text-[#1a3a5c] hover:bg-[#f4f5f7] transition-all text-[10px] font-bold uppercase tracking-wider"
-                                    >
-                                      <Plus size={12} />
-                                      Log
-                                    </button>
+                                    <div className="shrink-0">
+                                      {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' ? (
+                                        met ? (
+                                          <div className="flex flex-col items-end gap-1">
+                                            <div className="flex items-center gap-2 text-[#2d7a4f] font-bold text-[11px]">
+                                              <CheckCircle2 size={14} />
+                                              {row.mk === 'soloTowered' ? `${row.have} of ${row.need} landings — ` : ''}
+                                              Completed on {formatDate(getManualDate(row.mk))}
+                                            </div>
+                                            {editingDateKey === row.mk ? (
+                                              <div className="flex items-center gap-2 mt-1">
+                                                <input 
+                                                  type="date"
+                                                  value={tempDate}
+                                                  onChange={(e) => setTempDate(e.target.value)}
+                                                  className="h-[44px] border border-[#dde3ec] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#2a5a8c]"
+                                                />
+                                                <button 
+                                                  onClick={() => {
+                                                    saveManualDate(row.mk!, tempDate);
+                                                    setEditingDateKey(null);
+                                                  }}
+                                                  className="text-[10px] font-bold text-[#2d7a4f] hover:underline"
+                                                >
+                                                  Save
+                                                </button>
+                                                <button 
+                                                  onClick={() => setEditingDateKey(null)}
+                                                  className="text-[10px] font-bold text-[#6b7280] hover:underline"
+                                                >
+                                                  Cancel
+                                                </button>
+                                              </div>
+                                            ) : (
+                                              <button 
+                                                onClick={() => {
+                                                  setEditingDateKey(row.mk!);
+                                                  setTempDate(getManualDate(row.mk!));
+                                                }}
+                                                className="flex items-center gap-1 text-[10px] font-bold text-[#1a3a5c] hover:underline"
+                                              >
+                                                <Pencil size={10} />
+                                                Edit Date
+                                              </button>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <div className="flex flex-col gap-2 min-w-[160px]">
+                                            {row.mk === 'soloTowered' && (
+                                              <div className="flex flex-col gap-1">
+                                                <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">Landings Count</label>
+                                                <input 
+                                                  type="number"
+                                                  min="0"
+                                                  max="3"
+                                                  defaultValue={row.have}
+                                                  id={`count-${row.mk}`}
+                                                  className="h-[44px] w-full border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
+                                                />
+                                              </div>
+                                            )}
+                                            <div className="flex flex-col gap-1">
+                                              <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">
+                                                {row.mk === 'soloTowered' ? 'Date of Last Landing' : 'Date Completed'}
+                                              </label>
+                                              <div className="flex items-center gap-2">
+                                                <input 
+                                                  type="date"
+                                                  id={`date-${row.mk}`}
+                                                  defaultValue={new Date().toISOString().split('T')[0]}
+                                                  className="h-[44px] flex-1 border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
+                                                />
+                                                <button
+                                                  onClick={() => {
+                                                    const dateVal = (document.getElementById(`date-${row.mk}`) as HTMLInputElement).value;
+                                                    const countVal = row.mk === 'soloTowered' ? parseInt((document.getElementById(`count-${row.mk}`) as HTMLInputElement).value) : 1;
+                                                    handleSpecialLog(row, dateVal, countVal);
+                                                  }}
+                                                  className="h-[44px] px-4 rounded-lg bg-[#1a3a5c] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#2a5a8c] transition-all"
+                                                >
+                                                  Log
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )
+                                      ) : (
+                                        <button
+                                          onClick={() => openModal(row.mk!, row.label, row.need, row.unit)}
+                                          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] bg-white text-[#1a3a5c] hover:bg-[#f4f5f7] transition-all text-[10px] font-bold uppercase tracking-wider"
+                                        >
+                                          <Plus size={12} />
+                                          Log
+                                        </button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               );

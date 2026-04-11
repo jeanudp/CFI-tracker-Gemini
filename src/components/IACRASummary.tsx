@@ -30,6 +30,7 @@ interface IacraTotals {
   ftdTime: number;
   ffsTime: number;
   atdSE: number;
+  nightSolo: number;
 }
 
 export default function IACRASummary() {
@@ -64,7 +65,8 @@ export default function IACRASummary() {
       totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0, sicTime: 0, cfiTime: 0,
       xcTotal: 0, xcDual: 0, xcSolo: 0, xcPic: 0, instTotal: 0, atdInst: 0,
       nightTotal: 0, nightDual: 0, nightPic: 0, nightTakeoffs: 0, nightLandings: 0,
-      nightTakeoffsPic: 0, nightLandingsPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0
+      nightTakeoffsPic: 0, nightLandingsPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
+      nightSolo: 0
     };
 
     pplLessons.forEach(l => {
@@ -80,6 +82,7 @@ export default function IACRASummary() {
       totals.xcDual += parseFloat(m.xcDual || '0') || 0;
       totals.xcSolo += parseFloat(m.xcSolo || '0') || 0;
       totals.xcPic += parseFloat(m.xcPic || '0') || 0;
+      totals.nightSolo += parseFloat(m.nightSolo || '0') || 0;
       totals.instTotal += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
       totals.atdInst += parseFloat(m.atdInst || '0') || 0;
       totals.nightTotal += parseFloat(m.night || '0') || 0;
@@ -266,6 +269,7 @@ export default function IACRASummary() {
                 { label: 'Instrument (Total)', airplane: totals.instTotal, atd: totals.atdInst, min: 3, ref: '§61.109(a)(1)(iii)' },
                 { label: 'Night (Total)', airplane: totals.nightTotal, atd: 0 },
                 { label: 'Night Instruction', airplane: totals.nightDual, atd: 0, min: 3, ref: '§61.109(a)(1)(ii)' },
+                { label: 'Night Solo', airplane: totals.nightSolo, atd: 0 },
                 { label: 'Night PIC', airplane: totals.nightPic, atd: 0 },
                 { label: 'Night Takeoffs', airplane: totals.nightTakeoffs, atd: 0 },
                 { label: 'Night Landings', airplane: totals.nightLandings, atd: 0, min: 10, ref: '§61.109(a)(1)(ii)' },
