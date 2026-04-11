@@ -32,10 +32,10 @@ export default function History() {
   const getRatingBadgeColor = (code: string) => {
     const c = code?.toLowerCase();
     if (c === 'ir') return "bg-[#7c3aed] text-white";
-    if (c === 'cpl') return "bg-[#059669] text-white";
-    if (c === 'cfi') return "bg-[#ea580c] text-white";
-    if (c === 'cfii') return "bg-[#0d9488] text-white";
-    if (c === 'mei') return "bg-[#dc2626] text-white";
+    if (c === 'cpl') return "bg-[#2d7a4f] text-white";
+    if (c === 'cfi') return "bg-[#e67e22] text-white";
+    if (c === 'cfii') return "bg-[#16a34a] text-white";
+    if (c === 'mei') return "bg-[#c0392b] text-white";
     return "bg-[#1a3a5c] text-white";
   };
 
@@ -64,7 +64,7 @@ export default function History() {
           </div>
           <div className="text-[11px] text-[#6b7280] mt-0.5">
             {lesson.saved_at ? new Date(lesson.saved_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—'}
-            {lesson.instructor ? ` · ${lesson.instructor}` : ''}
+            {lesson.student_name ? ` · ${lesson.student_name}` : ''}
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {Object.values(lesson.grades || {}).filter(g => g === 'S').length > 0 && (
@@ -202,6 +202,8 @@ export default function History() {
 
   const getCumulativeStats = () => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
+    let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totNightTakeoffsPic = 0, totNightLandingsPic = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
+    
     studentLessons.forEach(l => {
       const m = l.meta || {};
       totFlight += parseFloat(m.totalFlight || '0') || 0;
@@ -209,14 +211,31 @@ export default function History() {
       totXc += parseFloat(m.xc || '0') || 0;
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
-      totSim += parseFloat(m.simInst || '0') || 0;
+      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
       totSolo += parseFloat(m.solo || '0') || 0;
       totSoloXc += parseFloat(m.soloXc || '0') || 0;
       totLdg += parseInt(m.ldgTotal || '0') || 0;
       totLdgDay += parseInt(m.ldgDay || '0') || 0;
       totLdgNight += parseInt(m.ldgNight || '0') || 0;
+      
+      totAtd += parseFloat(m.atd || '0') || 0;
+      totXcDual += parseFloat(m.xcDual || '0') || 0;
+      totXcSolo += parseFloat(m.xcSolo || '0') || 0;
+      totXcPic += parseFloat(m.xcPic || '0') || 0;
+      totAtdInst += parseFloat(m.atdInst || '0') || 0;
+      totNightDual += parseFloat(m.nightDual || '0') || 0;
+      totNightPic += parseFloat(m.nightPic || '0') || 0;
+      totNightTakeoffs += parseInt(m.nightTakeoffs || '0') || 0;
+      totNightTakeoffsPic += parseInt(m.nightTakeoffsPic || '0') || 0;
+      totNightLandingsPic += parseInt(m.nightLandingsPic || '0') || 0;
+      totFtd += parseFloat(m.ftd || '0') || 0;
+      totFfs += parseFloat(m.ffs || '0') || 0;
+      totAtdSE += parseFloat(m.atdSE || '0') || 0;
     });
-    return { totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight };
+    return { 
+      totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
+      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totNightTakeoffsPic, totNightLandingsPic, totFtd, totFfs, totAtdSE
+    };
   };
 
   const openModal = (key: string, label: string, need: number, unit: string) => {
@@ -643,27 +662,149 @@ export default function History() {
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">Flight Time Log</div>
-                  <div className="p-4 space-y-2">
-                    {[
-                      ['Date', selectedLesson.meta?.date],
-                      ['Aircraft', selectedLesson.meta?.aircraft],
-                      ['Route', selectedLesson.meta?.route],
-                      ['Total Landings', selectedLesson.meta?.ldgTotal],
-                      ['Day Landings', selectedLesson.meta?.ldgDay],
-                      ['Night Landings', selectedLesson.meta?.ldgNight],
-                      ['Cross-Country', selectedLesson.meta?.xc ? `${selectedLesson.meta.xc}h` : ''],
-                      ['Night', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
-                      ['Sim. Instrument', selectedLesson.meta?.simInst ? `${selectedLesson.meta.simInst}h` : ''],
-                      ['Dual Received', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''],
-                      ['Solo', selectedLesson.meta?.solo ? `${selectedLesson.meta.solo}h` : ''],
-                      ['Solo X-Country', selectedLesson.meta?.soloXc ? `${selectedLesson.meta.soloXc}h` : ''],
-                      ['Total Flight Time', selectedLesson.meta?.totalFlight ? `${selectedLesson.meta.totalFlight}h` : '']
-                    ].filter(d => d[1]).map(([label, val]) => (
-                      <div key={label} className="flex justify-between items-center py-1.5 border-b border-[#dde3ec] last:border-0">
-                        <span className="text-xs text-[#6b7280]">{label}</span>
-                        <span className="text-sm font-bold text-[#1c2333]">{val}</span>
+                  <div className="p-4 space-y-6">
+                    {/* Group 1 — Total Time */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['Total Flight Time', selectedLesson.meta?.totalFlight ? `${selectedLesson.meta.totalFlight}h` : ''],
+                          ['ATD Time', selectedLesson.meta?.atd ? `${selectedLesson.meta.atd}h` : ''],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Group 2 — Instruction and Solo */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['Dual Instruction', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''],
+                          ['Solo Flight Time', selectedLesson.meta?.solo ? `${selectedLesson.meta.solo}h` : ''],
+                          ['Solo XC', selectedLesson.meta?.soloXc ? `${selectedLesson.meta.soloXc}h` : ''],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Group 3 — Pilot in Command */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['PIC Time', selectedLesson.meta?.pic ? `${selectedLesson.meta.pic}h` : ''],
+                          ['SIC Time', selectedLesson.meta?.sic ? `${selectedLesson.meta.sic}h` : ''],
+                          ['As CFI', selectedLesson.meta?.cfi ? `${selectedLesson.meta.cfi}h` : ''],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Group 4 — Cross Country */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['XC (Total)', selectedLesson.meta?.xc ? `${selectedLesson.meta.xc}h` : ''],
+                          ['XC Dual', selectedLesson.meta?.xcDual ? `${selectedLesson.meta.xcDual}h` : ''],
+                          ['XC Solo', selectedLesson.meta?.xcSolo ? `${selectedLesson.meta.xcSolo}h` : ''],
+                          ['XC PIC', selectedLesson.meta?.xcPic ? `${selectedLesson.meta.xcPic}h` : ''],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Group 5 — Instrument */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['Simulated Instrument', selectedLesson.meta?.simInst ? `${selectedLesson.meta.simInst}h` : ''],
+                          ['Actual IMC', selectedLesson.meta?.imc ? `${selectedLesson.meta.imc}h` : ''],
+                          ['ATD Instrument', selectedLesson.meta?.atdInst ? `${selectedLesson.meta.atdInst}h` : ''],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Group 6 — Night */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
+                          ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
+                          ['Night PIC', selectedLesson.meta?.nightPic ? `${selectedLesson.meta.nightPic}h` : ''],
+                          ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
+                          ['Night Landings', selectedLesson.meta?.ldgNight],
+                          ['Night TO PIC', selectedLesson.meta?.nightTakeoffsPic],
+                          ['Night Ldg PIC', selectedLesson.meta?.nightLandingsPic],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Group 7 — Simulator and Device */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['FTD Time', selectedLesson.meta?.ftd ? `${selectedLesson.meta.ftd}h` : ''],
+                          ['FFS Time', selectedLesson.meta?.ffs ? `${selectedLesson.meta.ffs}h` : ''],
+                          ['ATD SE', selectedLesson.meta?.atdSE ? `${selectedLesson.meta.atdSE}h` : ''],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Other Details */}
+                    <div>
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
+                      <div className="space-y-1">
+                        {[
+                          ['Date', selectedLesson.meta?.date],
+                          ['Aircraft', selectedLesson.meta?.aircraft],
+                          ['Route', selectedLesson.meta?.route],
+                          ['Total Landings', selectedLesson.meta?.ldgTotal],
+                          ['Day Landings', selectedLesson.meta?.ldgDay],
+                        ].filter(d => d[1]).map(([label, val]) => (
+                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                            <span className="text-xs text-[#64748b]">{label}</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                     {!Object.entries(selectedLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v) && (
                       <div className="text-sm text-[#6b7280] italic">No flight log data.</div>
                     )}
@@ -744,26 +885,142 @@ export default function History() {
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">Hours Summary</div>
-                  <div className="p-4 space-y-2">
+                  <div className="p-4 space-y-6">
                     {(() => {
                       const stats = getCumulativeStats();
-                      return ([
-                        ['Total Flight Time', stats.totFlight],
-                        ['Dual Received', stats.totDual],
-                        ['Cross-Country', stats.totXc],
-                        ['Night', stats.totNight],
-                        ['Sim. Instrument', stats.totSim],
-                        ['Solo', stats.totSolo],
-                        ['Solo X-Country', stats.totSoloXc],
-                        ['Total Landings', stats.totLdg],
-                        ['Day Landings', stats.totLdgDay],
-                        ['Night Landings', stats.totNightLdg]
-                      ] as [string, number][]).map(([label, val]) => (
-                        <div key={label} className="flex justify-between items-center py-1.5 border-b border-[#dde3ec] last:border-0">
-                          <span className="text-xs text-[#6b7280]">{label}</span>
-                          <span className="text-sm font-bold font-mono text-[#1a3a5c]">{typeof val === 'number' ? (label.includes('Landings') ? val : val.toFixed(1)) : '—'}</span>
-                        </div>
-                      ));
+                      return (
+                        <>
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Total Flight Time', `${stats.totFlight.toFixed(1)}h`],
+                                ['ATD Time', `${stats.totAtd.toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Dual Instruction', `${stats.totDual.toFixed(1)}h`],
+                                ['Solo Flight Time', `${stats.totSolo.toFixed(1)}h`],
+                                ['Solo XC', `${stats.totSoloXc.toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['PIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0).toFixed(1)}h`],
+                                ['SIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.sic || '0') || 0), 0).toFixed(1)}h`],
+                                ['As CFI', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.cfi || '0') || 0), 0).toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['XC (Total)', `${stats.totXc.toFixed(1)}h`],
+                                ['XC Dual', `${stats.totXcDual.toFixed(1)}h`],
+                                ['XC Solo', `${stats.totXcSolo.toFixed(1)}h`],
+                                ['XC PIC', `${stats.totXcPic.toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Instrument (Total)', `${stats.totSim.toFixed(1)}h`],
+                                ['ATD Instrument', `${stats.totAtdInst.toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
+                                ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
+                                ['Night PIC', `${stats.totNightPic.toFixed(1)}h`],
+                                ['Night Takeoffs', stats.totNightTakeoffs],
+                                ['Night Landings', stats.totNightLdg],
+                                ['Night TO PIC', stats.totNightTakeoffsPic],
+                                ['Night Ldg PIC', stats.totNightLandingsPic],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['FTD Time', `${stats.totFtd.toFixed(1)}h`],
+                                ['FFS Time', `${stats.totFfs.toFixed(1)}h`],
+                                ['ATD SE', `${stats.totAtdSE.toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Total Landings', stats.totLdg],
+                                ['Day Landings', stats.totLdgDay],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      );
                     })()}
                   </div>
                 </div>
@@ -841,8 +1098,8 @@ export default function History() {
                       { section: 'Flight Time Requirements', ref: '§61.109(a)', rows: [
                         { label: 'Total flight time', ref: '§61.109(a)', have: stats.totFlight, need: 40, unit: 'hrs' },
                         { label: 'Flight training from authorized instructor', ref: '§61.109(a)(1)', have: stats.totDual, need: 20, unit: 'hrs' },
-                        { label: 'Cross-country flight training', ref: '§61.109(a)(1)(i)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.xc || '0') : 0), 0), need: 3, unit: 'hrs' },
-                        { label: 'Night flight training (incl. 100NM XC)', ref: '§61.109(a)(1)(ii)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.night || '0') : 0), 0), need: 3, unit: 'hrs' },
+                        { label: 'Cross-country flight training', ref: '§61.109(a)(1)(i)', have: stats.totXcDual, need: 3, unit: 'hrs' },
+                        { label: 'Night flight training (incl. 100NM XC)', ref: '§61.109(a)(1)(ii)', have: stats.totNightDual, need: 3, unit: 'hrs' },
                         { label: 'Night cross-country over 100NM', ref: '§61.109(a)(1)(ii)', have: getManualValue('nightXc100'), need: 1, unit: 'flight', mk: 'nightXc100' },
                         { label: 'Full stop night landings', ref: '§61.109(a)(1)(ii)', have: stats.totNightLdg, need: 10, unit: 'landings' },
                         { label: 'Instrument training', ref: '§61.109(a)(1)(iii)', have: stats.totSim, need: 3, unit: 'hrs' },

@@ -20,6 +20,19 @@ export interface LessonMeta {
   totalFlight?: string;
   solo?: string;
   soloXc?: string;
+  atd?: string;
+  xcDual?: string;
+  xcSolo?: string;
+  xcPic?: string;
+  atdInst?: string;
+  nightDual?: string;
+  nightTakeoffs?: string;
+  nightPic?: string;
+  nightTakeoffsPic?: string;
+  nightLandingsPic?: string;
+  ftd?: string;
+  ffs?: string;
+  atdSE?: string;
   rating_code?: string;
   rating_label?: string;
 }
@@ -38,11 +51,20 @@ export interface Lesson {
   saved_at: string;
 }
 
+export interface PassedRating {
+  code: string;
+  label: string;
+  date: string;
+}
+
 export interface Student {
   id: string;
   user_id: string;
   name: string;
   created_at: string;
+  current_rating: string;
+  current_rating_label: string;
+  checkride_passed_ratings: PassedRating[];
 }
 
 export interface ManualHoursEntry {

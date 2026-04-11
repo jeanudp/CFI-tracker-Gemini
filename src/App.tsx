@@ -10,6 +10,7 @@ import GroundLesson from './components/GroundLesson';
 import FlightLesson from './components/FlightLesson';
 import History from './components/History';
 import StudentDashboard from './components/StudentDashboard';
+import IACRASummary from './components/IACRASummary';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -174,6 +175,18 @@ export default function App() {
             session ? (
               <Layout user={session.user}>
                 <StudentDashboard />
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route
+          path="/iacra/:studentName"
+          element={
+            session ? (
+              <Layout user={session.user}>
+                <IACRASummary />
               </Layout>
             ) : (
               <Navigate to="/auth" />

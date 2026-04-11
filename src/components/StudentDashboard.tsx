@@ -17,6 +17,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rating, setRating] = useState<any>(Object.values(RATINGS)[0]);
+  const [student, setStudent] = useState<Student | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +32,22 @@ export default function StudentDashboard() {
     setLoading(true);
     setError(null);
     try {
+      // Fetch student profile
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('name', studentName)
+        .single();
+      
+      if (studentError && studentError.code !== 'PGRST116') throw studentError;
+      
+      if (studentData) {
+        setStudent(studentData);
+        if (studentData.current_rating) {
+          setRating((RATINGS as any)[studentData.current_rating] || Object.values(RATINGS)[0]);
+        }
+      }
+
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
@@ -41,9 +58,12 @@ export default function StudentDashboard() {
       
       setLessons(lessonsData || []);
       
-      const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
-      if (savedRating.code) {
-        setRating((RATINGS as any)[savedRating.code] || Object.values(RATINGS)[0]);
+      // Fallback to localStorage if student profile doesn't have rating yet
+      if (!studentData?.current_rating) {
+        const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
+        if (savedRating.code) {
+          setRating((RATINGS as any)[savedRating.code] || Object.values(RATINGS)[0]);
+        }
       }
     } catch (err: any) {
       console.error('Fetch error:', err);

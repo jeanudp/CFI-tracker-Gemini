@@ -1,390 +1,430 @@
-import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
-import Markdown from 'react-markdown';
-import { Plane, MapPin, Plus, X, Loader2, Copy, RefreshCw, AlertTriangle, CheckCircle, Info, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { Plane, CheckCircle, AlertTriangle, RefreshCw, ChevronRight, Award, BookOpen, MapPin, CheckSquare, Square, Loader2, Plus } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface EndorsementAdvisorProps {
   studentName?: string;
   ratingCode?: string;
 }
 
+const ENDORSEMENTS_DATA: Record<string, { ref: string; text: string }> = {
+  'A.1': {
+    ref: '§61.39(a)(6)(i) and (ii)',
+    text: 'I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of [applicable] certificate.'
+  },
+  'A.2': {
+    ref: '§61.39(a)(6)(iii)',
+    text: 'I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the [applicable] airman knowledge test.'
+  },
+  'A.3': {
+    ref: '§61.87(b)',
+    text: 'I certify that [First name, MI, Last name] has satisfactorily completed the pre-solo knowledge test of 14 CFR § 61.87(b) for the [make and model] aircraft.'
+  },
+  'A.4': {
+    ref: '§61.87(c)(1) and (2)',
+    text: 'I certify that [First name, MI, Last name] has received and logged pre-solo flight training for the maneuvers and procedures that are appropriate to the [make and model] aircraft. I have determined they have demonstrated satisfactory proficiency and safety on the maneuvers and procedures required by 14 CFR § 61.87 in this or similar make and model of aircraft to be flown.'
+  },
+  'A.5': {
+    ref: '§61.87(o)',
+    text: 'I certify that [First name, MI, Last name] has received flight training at night on night flying procedures that include takeoffs, approaches, landings, and go-arounds at night at the [airport name] airport where the solo flight will be conducted; navigation training at night in the vicinity of the [airport name] airport where the solo flight will be conducted. This endorsement expires 90 calendar days from the date the flight training at night was received.'
+  },
+  'A.6': {
+    ref: '§61.87(n)',
+    text: 'I certify that [First name, MI, Last name] has received the required training to qualify for solo flying. I have determined they meet the applicable requirements of 14 CFR § 61.87(n) and are proficient to make solo flights in [make and model].'
+  },
+  'A.7': {
+    ref: '§61.87(p)',
+    text: 'I certify that [First name, MI, Last name] has received the required training to qualify for solo flying. I have determined that they meet the applicable requirements of 14 CFR § 61.87(p) and are proficient to make solo flights in [make and model].'
+  },
+  'A.8': {
+    ref: '§61.93(b)(1)',
+    text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.93(b)(1). I have determined that they are proficient to practice solo takeoffs and landings at [airport name]. The takeoffs and landings at [airport name] are subject to the following conditions: [List any applicable conditions or limitations.]'
+  },
+  'A.9': {
+    ref: '§61.93(c)(1) and (2)',
+    text: 'I certify that [First name, MI, Last name] has received the required solo cross-country training. I find they have met the applicable requirements of 14 CFR § 61.93 and are proficient to make solo cross-country flights in a [make and model] aircraft, [aircraft category].'
+  },
+  'A.10': {
+    ref: '§61.93(c)(3)',
+    text: 'I have reviewed the cross-country planning of [First name, MI, Last name]. I find the planning and preparation to be correct to make the solo flight from [origination airport] to [destination airport] via [route of flight] with landings at [names of the airports] in a [make and model] aircraft on [date]. [List any applicable conditions or limitations.]'
+  },
+  'A.11': {
+    ref: '§61.93(b)(2)',
+    text: 'I certify that [First name, MI, Last name] has received the required training in both directions between and at both [airport names]. I have determined that they are proficient of 14 CFR § 61.93(b)(2) to conduct repeated solo cross-country flights over that route, subject to the following conditions: [List any applicable conditions or limitations.]'
+  },
+  'A.12': {
+    ref: '§61.95(a)',
+    text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(a). I have determined they are proficient to conduct solo flights in [name of Class B] airspace. [List any applicable conditions or limitations.]'
+  },
+  'A.13': {
+    ref: '§61.95(b) and §91.131(b)(1)',
+    text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at [name of airport]. [List any applicable conditions or limitations.]'
+  },
+  'A.36': {
+    ref: '§61.35(a)(1) §61.103(d) and §61.105',
+    text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the [name of] knowledge test.'
+  },
+  'A.37': {
+    ref: '§61.103(f) §61.107(b) and §61.109',
+    text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.'
+  }
+};
+
+type Goal = 'first-solo' | 'solo-nearby' | 'solo-xc' | 'knowledge-test' | 'checkride';
+
 export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: EndorsementAdvisorProps) {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
+  const [goal, setGoal] = useState<Goal | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [savedEndorsements, setSavedEndorsements] = useState<string[]>([]);
+  const [saving, setSaving] = useState<string | null>(null);
 
-  // Form State
-  const [departure, setDeparture] = useState('');
-  const [destination, setDestination] = useState('');
-  const [waypoints, setWaypoints] = useState<string[]>([]);
-  const [flightType, setFlightType] = useState('Traffic Pattern Only');
-  const [studentExperience, setStudentExperience] = useState('not soloed');
-  const [estimatedDistance, setEstimatedDistance] = useState('');
-  
-  const [context, setContext] = useState({
-    firstTimeDestination: false,
-    nightFlight: false,
-    classBAirspace: false,
-    valid90DaySolo: false,
-    passedKnowledgeTest: false,
-    retestAfterDisapproval: false,
-    needsXcPlanningReview: false,
-    firstTimeTowered: false
-  });
-
-  const flightTypes = [
-    "Traffic Pattern Only",
-    "Local Solo (within 25NM)",
-    "Cross-Country Solo (>25NM)",
-    "Repeated Cross-Country (within 50NM)",
-    "Night Solo",
-    "Class B Airspace Transit",
-    "Checkride Preparation Flight",
-    "First Ever Solo Flight"
-  ];
-
-  const experienceLevels = [
-    { id: 'not soloed', label: 'Pre-Solo (never soloed)' },
-    { id: 'soloed, 90-day current', label: 'Soloed (90-day current)' },
-    { id: 'soloed, 90-day expired', label: 'Soloed (90-day expired)' },
-    { id: 'preparing for checkride', label: 'Preparing for Checkride' }
-  ];
-
-  const presets = [
-    {
-      label: 'First Solo',
-      data: {
-        flightType: 'First Ever Solo Flight',
-        studentExperience: 'not soloed',
-        context: { firstTimeTowered: true }
-      }
-    },
-    {
-      label: 'XC Solo',
-      data: {
-        flightType: 'Cross-Country Solo (>25NM)',
-        studentExperience: 'soloed, 90-day current',
-        context: { needsXcPlanningReview: true, firstTimeDestination: true }
-      }
-    },
-    {
-      label: 'Checkride Prep',
-      data: {
-        flightType: 'Checkride Preparation Flight',
-        studentExperience: 'preparing for checkride',
-        context: { passedKnowledgeTest: true }
-      }
+  useEffect(() => {
+    if (studentName) {
+      fetchEndorsements();
     }
-  ];
+  }, [studentName, ratingCode]);
 
-  const applyPreset = (preset: typeof presets[0]) => {
-    setFlightType(preset.data.flightType);
-    setStudentExperience(preset.data.studentExperience);
-    setContext(prev => ({ ...prev, ...preset.data.context }));
-  };
-
-  const addWaypoint = () => {
-    if (waypoints.length < 3) {
-      setWaypoints([...waypoints, '']);
+  const fetchEndorsements = async () => {
+    const { data } = await supabase
+      .from('endorsements')
+      .select('endorsement_key')
+      .eq('student_name', studentName)
+      .eq('rating', ratingCode)
+      .eq('completed', true);
+    
+    if (data) {
+      setSavedEndorsements(data.map(e => e.endorsement_key));
     }
   };
 
-  const removeWaypoint = (index: number) => {
-    setWaypoints(waypoints.filter((_, i) => i !== index));
-  };
+  const handleMarkAsGiven = async (key: string) => {
+    if (!studentName) return;
+    setSaving(key);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-  const updateWaypoint = (index: number, val: string) => {
-    const newWaypoints = [...waypoints];
-    newWaypoints[index] = val.toUpperCase().slice(0, 4);
-    setWaypoints(newWaypoints);
-  };
+    const label = `AC 61-65K ${key}: ${ENDORSEMENTS_DATA[key].text}`;
 
-  const handleAnalyze = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        setError('Gemini API key is not configured. Please add VITE_GEMINI_API_KEY to your environment variables in Netlify.');
-        setLoading(false);
-        return;
-      }
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const prompt = `
-        As an expert FAA flight instructor advisor specializing in AC 61-65K, analyze the following flight details and provide a structured endorsement checklist.
-        
-        STUDENT NAME: ${studentName || 'Unknown'}
-        RATING: ${ratingCode.toUpperCase()}
-        
-        FLIGHT DETAILS:
-        - Departure: ${departure || 'KRDM'}
-        - Destination: ${destination || 'KPDX'}
-        - Waypoints: ${waypoints.join(', ') || 'None'}
-        - Flight Type: ${flightType}
-        - Student Experience: ${experienceLevels.find(e => e.id === studentExperience)?.label}
-        - Estimated Distance: ${estimatedDistance || 'N/A'} NM
-        
-        CONTEXTUAL FACTORS:
-        - First time to this destination: ${context.firstTimeDestination ? 'Yes' : 'No'}
-        - Night flight: ${context.nightFlight ? 'Yes' : 'No'}
-        - Class B airspace: ${context.classBAirspace ? 'Yes' : 'No'}
-        - Valid 90-day solo endorsement: ${context.valid90DaySolo ? 'Yes' : 'No'}
-        - Passed FAA knowledge test: ${context.passedKnowledgeTest ? 'Yes' : 'No'}
-        - Retest after disapproval: ${context.retestAfterDisapproval ? 'Yes' : 'No'}
-        - Needs XC planning review: ${context.needsXcPlanningReview ? 'Yes' : 'No'}
-        - First time to towered airport: ${context.firstTimeTowered ? 'Yes' : 'No'}
-
-        Please provide the response in the following Markdown format:
-        
-        ### Required Endorsements
-        (List specific AC 61-65K endorsement numbers and titles, e.g., A.1, A.2, A.3, etc. with brief explanation of why)
-        
-        ### Warnings and Reminders
-        (Important safety or regulatory warnings specific to this flight)
-        
-        ### Not Required for This Flight
-        (Endorsements that might be thought of but are NOT needed for this specific scenario)
-      `;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
+    const { error } = await supabase
+      .from('endorsements')
+      .insert({
+        user_id: session.user.id,
+        student_name: studentName,
+        rating: ratingCode,
+        endorsement_key: key,
+        endorsement_label: label,
+        completed: true,
+        completed_date: new Date().toISOString()
       });
 
-      setResult(response.text || 'No response generated.');
-    } catch (err: any) {
-      console.error('AI Error:', err);
-      setError(err.message || 'Failed to generate endorsement advice.');
-    } finally {
-      setLoading(false);
+    if (!error) {
+      setSavedEndorsements(prev => [...prev, key]);
     }
+    setSaving(null);
   };
 
-  const copyToClipboard = () => {
-    if (result) {
-      navigator.clipboard.writeText(result);
-    }
+  const reset = () => {
+    setStep(1);
+    setGoal(null);
+    setAnswers({});
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-        <div className="bg-[#1a3a5c] px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/10 rounded-lg">
-              <Plane size={20} className="text-[#e8a020]" />
-            </div>
-            <div>
-              <h3 className="text-white font-bold">Endorsement Advisor</h3>
-              <p className="text-white/60 text-[10px] uppercase tracking-widest">AC 61-65K Compliance Engine</p>
-            </div>
+  const handleGoalSelect = (selectedGoal: Goal) => {
+    setGoal(selectedGoal);
+    setStep(2);
+  };
+
+  const handleAnswer = (questionId: string, answer: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    setStep(prev => prev + 1);
+  };
+
+  const renderQuestion = () => {
+    if (step === 1) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-[#1a3a5c]">What does the student need to do?</h3>
+            <p className="text-sm text-[#6b7280]">Select the primary goal to determine required endorsements</p>
           </div>
-          <div className="flex gap-2">
-            {presets.map(p => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { id: 'first-solo', label: 'First Solo Flight', icon: <Plane size={24} /> },
+              { id: 'solo-nearby', label: 'Solo at a Nearby Airport within 25NM', icon: <MapPin size={24} /> },
+              { id: 'solo-xc', label: 'Solo Cross-Country Flight', icon: <ChevronRight size={24} /> },
+              { id: 'knowledge-test', label: 'Knowledge Test', icon: <BookOpen size={24} /> },
+              { id: 'checkride', label: 'Checkride Practical Test', icon: <Award size={24} /> },
+            ].map((item) => (
               <button
-                key={p.label}
-                onClick={() => applyPreset(p)}
-                className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold rounded-full transition-all border border-white/10"
+                key={item.id}
+                onClick={() => handleGoalSelect(item.id as Goal)}
+                className="flex flex-col items-center justify-center p-6 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] hover:shadow-lg transition-all group"
               >
-                {p.label}
+                <div className="w-12 h-12 bg-[#f4f5f7] rounded-xl flex items-center justify-center text-[#1a3a5c] mb-4 group-hover:bg-[#1a3a5c] group-hover:text-white transition-colors">
+                  {item.icon}
+                </div>
+                <span className="text-sm font-bold text-[#1c2333] text-center">{item.label}</span>
               </button>
             ))}
           </div>
         </div>
+      );
+    }
 
-        <div className="p-6 space-y-6">
-          {/* Row 1: Airports */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest ml-1">Departure</label>
-              <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
-                <input
-                  type="text"
-                  value={departure}
-                  onChange={(e) => setDeparture(e.target.value.toUpperCase().slice(0, 4))}
-                  placeholder="KRDM"
-                  className="w-full pl-9 pr-3 py-2.5 bg-[#f8fafc] border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:border-[#1a3a5c] transition-all font-mono"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest ml-1">Destination</label>
-              <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value.toUpperCase().slice(0, 4))}
-                  placeholder="KPDX"
-                  className="w-full pl-9 pr-3 py-2.5 bg-[#f8fafc] border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:border-[#1a3a5c] transition-all font-mono"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest ml-1">Waypoints</label>
-              <div className="flex flex-wrap gap-2">
-                {waypoints.map((wp, idx) => (
-                  <div key={idx} className="relative flex items-center">
-                    <input
-                      type="text"
-                      value={wp}
-                      onChange={(e) => updateWaypoint(idx, e.target.value)}
-                      placeholder="WP"
-                      className="w-16 px-2 py-2 bg-[#f8fafc] border border-[#dde3ec] rounded-lg text-xs focus:outline-none focus:border-[#1a3a5c] transition-all font-mono"
-                    />
-                    <button 
-                      onClick={() => removeWaypoint(idx)}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-all"
-                    >
-                      <X size={8} />
-                    </button>
-                  </div>
-                ))}
-                {waypoints.length < 3 && (
-                  <button
-                    onClick={addWaypoint}
-                    className="flex items-center justify-center w-10 h-9 border-2 border-dashed border-[#dde3ec] rounded-xl text-[#94a3b8] hover:border-[#1a3a5c] hover:text-[#1a3a5c] transition-all"
-                  >
-                    <Plus size={16} />
-                  </button>
-                )}
-              </div>
+    // Logic for subsequent questions
+    if (goal === 'first-solo') {
+      if (step === 2) return renderYesNo('q2', 'Has the student completed and passed the pre-solo aeronautical knowledge test per §61.87(b)?');
+      if (step === 3) return renderYesNo('q3', 'Has the student received and logged pre-solo flight training for the maneuvers and procedures in §61.87(d) for this make and model?');
+      if (step === 4) return renderYesNo('q4', 'Will this solo flight include any flying after official sunset?');
+      if (step === 5) return renderYesNo('q5', 'Will this solo flight be in Class B airspace or to a Class B airport?');
+      if (step === 6 && answers.q5 === 'yes') {
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold text-[#1a3a5c] text-center">Class B Operations</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onClick={() => handleAnswer('q5_sub', 'airspace')} className="p-6 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] font-bold text-sm">Class B Airspace only</button>
+              <button onClick={() => handleAnswer('q5_sub', 'airport')} className="p-6 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] font-bold text-sm">Class B Airport</button>
             </div>
           </div>
+        );
+      }
+    }
 
-          {/* Row 2: Flight Type */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest ml-1">Flight Type</label>
-              <div className="relative">
-                <select
-                  value={flightType}
-                  onChange={(e) => setFlightType(e.target.value)}
-                  className="w-full appearance-none pl-4 pr-10 py-2.5 bg-[#f8fafc] border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:border-[#1a3a5c] transition-all cursor-pointer"
-                >
-                  {flightTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
-              </div>
+    if (goal === 'solo-nearby') {
+      if (step === 2) return renderYesNo('q2', "Is the student's 90-day solo endorsement current and not expired?");
+      if (step === 3) return renderYesNo('q3', 'Has the student received training for operations at this specific airport?');
+    }
+
+    if (goal === 'solo-xc') {
+      if (step === 2) return renderYesNo('q2', "Is the student's 90-day solo endorsement current and not expired?");
+      if (step === 3) return renderYesNo('q3', 'Has the student ever been given the general solo cross-country authorization before?');
+      if (step === 4) return renderYesNo('q4', 'Is this a specific planned cross-country flight that needs a planning review today?');
+      if (step === 5) return renderYesNo('q5', 'Is this a repeated cross-country to the same airport within 50NM that has been flown before?');
+      if (step === 6) return renderYesNo('q6', 'Will the flight go through Class B airspace or land at a Class B airport?');
+      if (step === 7 && answers.q6 === 'yes') {
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold text-[#1a3a5c] text-center">Class B Operations</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onClick={() => handleAnswer('q6_sub', 'airspace')} className="p-6 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] font-bold text-sm">Class B Airspace</button>
+              <button onClick={() => handleAnswer('q6_sub', 'airport')} className="p-6 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] font-bold text-sm">Class B Airport</button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest ml-1">Student Experience</label>
-                <div className="relative">
-                  <select
-                    value={studentExperience}
-                    onChange={(e) => setStudentExperience(e.target.value)}
-                    className="w-full appearance-none pl-4 pr-10 py-2.5 bg-[#f8fafc] border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:border-[#1a3a5c] transition-all cursor-pointer"
-                  >
-                    {experienceLevels.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
+          </div>
+        );
+      }
+    }
+
+    if (goal === 'knowledge-test') {
+      if (step === 2) return renderYesNo('q2', 'Has the student received ground training covering all required knowledge areas of §61.105?');
+    }
+
+    if (goal === 'checkride') {
+      if (step === 2) return renderYesNo('q2', 'Has the student passed the FAA Private Pilot knowledge test?');
+      if (step === 3) return renderYesNo('q3', 'Has the student met all aeronautical experience requirements of §61.109?');
+      if (step === 4) return renderYesNo('q4', 'Has the student received flight training within the past 60 calendar days in preparation for this practical test?');
+      if (step === 5) return renderYesNo('q5', 'Is this a retest after a Notice of Disapproval?');
+    }
+
+    return renderResults();
+  };
+
+  const renderYesNo = (id: string, question: string) => (
+    <div className="space-y-6">
+      <h3 className="text-lg font-bold text-[#1a3a5c] text-center">{question}</h3>
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={() => handleAnswer(id, 'yes')}
+          className="px-12 py-4 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] hover:bg-[#f4f5f7] font-bold text-[#1a3a5c] transition-all"
+        >
+          Yes
+        </button>
+        <button
+          onClick={() => handleAnswer(id, 'no')}
+          className="px-12 py-4 bg-white border-2 border-[#dde3ec] rounded-2xl hover:border-[#1a3a5c] hover:bg-[#f4f5f7] font-bold text-[#1a3a5c] transition-all"
+        >
+          No
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderResults = () => {
+    const endorsements: string[] = [];
+    const warnings: { type: 'red' | 'orange'; text: string }[] = [];
+
+    if (goal === 'first-solo') {
+      endorsements.push('A.6');
+      if (answers.q2 === 'yes') endorsements.push('A.3');
+      else warnings.push({ type: 'red', text: 'Student must pass the pre-solo knowledge test before solo flight is authorized per §61.87(b)' });
+      
+      if (answers.q3 === 'yes') endorsements.push('A.4');
+      else warnings.push({ type: 'red', text: 'Student must receive and log the required pre-solo flight training per §61.87(c) before solo flight is authorized' });
+      
+      if (answers.q4 === 'yes') endorsements.push('A.5');
+      
+      if (answers.q5_sub === 'airspace') endorsements.push('A.12');
+      if (answers.q5_sub === 'airport') endorsements.push('A.13');
+    }
+
+    if (goal === 'solo-nearby') {
+      if (answers.q2 === 'no') warnings.push({ type: 'red', text: 'The 90-day solo endorsement A.6 or A.7 must be current before authorizing any solo flight. A.6 is for the first 90-day period §61.87(n) and A.7 is for each additional 90-day period §61.87(p)' });
+      
+      if (answers.q2 === 'yes' && answers.q3 === 'yes') endorsements.push('A.8');
+      
+      if (answers.q3 === 'no') warnings.push({ type: 'orange', text: 'Student must receive training for operations at the specific airport before this endorsement can be given per §61.93(b)(1)' });
+    }
+
+    if (goal === 'solo-xc') {
+      if (answers.q2 === 'no') warnings.push({ type: 'red', text: 'The 90-day solo endorsement must be current before any solo cross-country flight. Give A.6 Solo flight first 90-day period §61.87(n) if first time or A.7 Solo flight each additional 90-day period §61.87(p) if renewing' });
+      
+      if (answers.q3 === 'no') endorsements.push('A.9');
+      
+      if (answers.q4 === 'yes') endorsements.push('A.10');
+      
+      if (answers.q5 === 'yes') endorsements.push('A.11');
+      
+      if (answers.q6_sub === 'airspace') endorsements.push('A.12');
+      if (answers.q6_sub === 'airport') endorsements.push('A.13');
+    }
+
+    if (goal === 'knowledge-test') {
+      if (answers.q2 === 'yes') endorsements.push('A.36');
+      else warnings.push({ type: 'red', text: 'The student must complete ground training covering all areas of §61.105 before the knowledge test endorsement can be given' });
+    }
+
+    if (goal === 'checkride') {
+      endorsements.push('A.1', 'A.37');
+      if (answers.q2 === 'no') warnings.push({ type: 'red', text: 'Student must pass the FAA knowledge test before the practical test endorsement can be given' });
+      if (answers.q3 === 'no') warnings.push({ type: 'orange', text: 'Student does not yet meet the aeronautical experience requirements of §61.109. Review the Checkride tab requirements' });
+      if (answers.q4 === 'no') warnings.push({ type: 'red', text: 'The 60-day recency requirement is not met per §61.39(a)(6)(i). Flight training must be received within 60 calendar days preceding the month of application' });
+      if (answers.q5 === 'yes') endorsements.push('A.2');
+    }
+
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+        {endorsements.length > 0 && (
+          <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl overflow-hidden">
+            <div className="bg-[#2d7a4f] px-6 py-3 text-white font-bold text-sm flex items-center gap-2">
+              <CheckCircle size={18} />
+              Required Endorsements
+            </div>
+            <div className="p-6 space-y-6">
+              {endorsements.map(key => {
+                const data = ENDORSEMENTS_DATA[key];
+                const isSaved = savedEndorsements.includes(key);
+                return (
+                  <div key={key} className="bg-white p-4 rounded-xl border border-[#dde3ec] shadow-sm">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-[#1a3a5c] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{key}</span>
+                        <span className="text-[10px] font-mono text-[#6b7280]">{data.ref}</span>
+                      </div>
+                      <button
+                        onClick={() => !isSaved && handleMarkAsGiven(key)}
+                        disabled={isSaved || saving === key}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                          isSaved 
+                            ? "bg-[#e4f5ec] text-[#2d7a4f] cursor-default" 
+                            : "bg-[#1a3a5c] text-white hover:bg-[#2a5a8c] shadow-sm"
+                        )}
+                      >
+                        {saving === key ? <Loader2 size={12} className="animate-spin" /> : (isSaved ? <CheckCircle size={12} /> : <Plus size={12} />)}
+                        {isSaved ? 'Endorsement Given' : 'Mark as Given'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-[#1c2333] leading-relaxed italic border-l-4 border-[#f4f5f7] pl-4 py-1">
+                      "{data.text.replace('[First name, MI, Last name]', studentName || '[Student Name]')}"
+                    </p>
+                    {key === 'A.5' && (
+                      <div className="mt-2 text-[10px] text-[#e8a020] font-bold flex items-center gap-1">
+                        <AlertTriangle size={12} />
+                        Note: This endorsement expires 90 calendar days from date of training
+                      </div>
+                    )}
+                    {(key === 'A.9' || key === 'A.10') && (
+                      <div className="mt-2 text-[10px] text-[#6b7280] italic">
+                        Note: {key === 'A.9' ? 'This is the one-time general authorization for solo cross-country flights.' : 'This endorsement is required for every individual solo cross-country flight. The instructor must review the student\'s specific flight planning each time.'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {warnings.length > 0 && (
+          <div className="bg-[#fef2f2] border border-[#fecaca] rounded-2xl overflow-hidden">
+            <div className="bg-[#c0392b] px-6 py-3 text-white font-bold text-sm flex items-center gap-2">
+              <AlertTriangle size={18} />
+              Action Required
+            </div>
+            <div className="p-6 space-y-3">
+              {warnings.map((w, idx) => (
+                <div key={idx} className={cn(
+                  "p-4 rounded-xl border flex items-start gap-3 text-xs font-medium",
+                  w.type === 'red' ? "bg-red-50 border-red-100 text-red-700" : "bg-orange-50 border-orange-100 text-orange-700"
+                )}>
+                  <AlertTriangle size={16} className="shrink-0" />
+                  {w.text}
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest ml-1">Est. Distance (NM)</label>
-                <input
-                  type="number"
-                  value={estimatedDistance}
-                  onChange={(e) => setEstimatedDistance(e.target.value)}
-                  placeholder="e.g. 55"
-                  className="w-full px-4 py-2.5 bg-[#f8fafc] border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:border-[#1a3a5c] transition-all"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Context Checkboxes */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-[0.2em] border-b border-[#f1f5f9] pb-2">Contextual Factors</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { id: 'firstTimeDestination', label: 'First time to this destination' },
-                { id: 'nightFlight', label: 'Night flight' },
-                { id: 'classBAirspace', label: 'Class B airspace' },
-                { id: 'valid90DaySolo', label: 'Valid 90-day solo endorsement' },
-                { id: 'passedKnowledgeTest', label: 'Passed FAA knowledge test' },
-                { id: 'retestAfterDisapproval', label: 'Retest after disapproval' },
-                { id: 'needsXcPlanningReview', label: 'Needs XC planning review' },
-                { id: 'firstTimeTowered', label: 'First time to towered airport' }
-              ].map(item => (
-                <label key={item.id} className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative flex items-center justify-center mt-0.5">
-                    <input
-                      type="checkbox"
-                      checked={(context as any)[item.id]}
-                      onChange={(e) => setContext({ ...context, [item.id]: e.target.checked })}
-                      className="peer sr-only"
-                    />
-                    <div className="w-5 h-5 border-2 border-[#dde3ec] rounded-md bg-white peer-checked:bg-[#1a3a5c] peer-checked:border-[#1a3a5c] transition-all" />
-                    <CheckCircle size={12} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-all" />
-                  </div>
-                  <span className="text-xs text-[#64748b] group-hover:text-[#1a3a5c] transition-all leading-tight">{item.label}</span>
-                </label>
               ))}
             </div>
           </div>
+        )}
 
-          <div className="pt-4 flex justify-center">
-            <button
-              onClick={handleAnalyze}
-              disabled={loading}
-              className="px-8 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl hover:bg-[#2a5a8c] disabled:opacity-50 transition-all flex items-center gap-3 shadow-lg shadow-[#1a3a5c]/20"
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-              {loading ? 'Analyzing Compliance...' : 'Generate Endorsement Advice'}
-            </button>
-          </div>
+        <div className="flex justify-center">
+          <button
+            onClick={reset}
+            className="flex items-center gap-2 px-8 py-3 bg-white border-2 border-[#dde3ec] rounded-xl text-sm font-bold text-[#6b7280] hover:text-[#1a3a5c] hover:border-[#1a3a5c] transition-all"
+          >
+            <RefreshCw size={18} />
+            Start Over
+          </button>
         </div>
       </div>
+    );
+  };
 
-      {error && (
-        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3 text-red-600 animate-in fade-in slide-in-from-top-2">
-          <AlertTriangle size={18} />
-          <p className="text-sm font-medium">{error}</p>
-        </div>
-      )}
-
-      {result && (
-        <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-          <div className="bg-[#f8fafc] px-6 py-4 border-b border-[#dde3ec] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-[#2d7a4f]" />
-              <h4 className="text-sm font-bold text-[#1a3a5c]">Analysis Results</h4>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={copyToClipboard}
-                className="p-2 text-[#64748b] hover:text-[#1a3a5c] hover:bg-white rounded-lg transition-all"
-                title="Copy All"
-              >
-                <Copy size={16} />
-              </button>
-              <button
-                onClick={() => setResult(null)}
-                className="p-2 text-[#64748b] hover:text-[#1a3a5c] hover:bg-white rounded-lg transition-all"
-                title="New Analysis"
-              >
-                <RefreshCw size={16} />
-              </button>
-            </div>
+  return (
+    <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-sm overflow-hidden">
+      <div className="bg-[#1a3a5c] px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/10 rounded-lg">
+            <Plane size={20} className="text-[#e8a020]" />
           </div>
-          <div className="p-8">
-            <div className="prose prose-sm max-w-none prose-headings:text-[#1a3a5c] prose-headings:font-black prose-p:text-[#64748b] prose-li:text-[#64748b]">
-              <Markdown>{result}</Markdown>
-            </div>
-          </div>
-          <div className="bg-[#f8fafc] px-6 py-4 border-t border-[#dde3ec] flex items-center gap-3">
-            <Info size={14} className="text-[#1a3a5c]" />
-            <p className="text-[10px] text-[#64748b] leading-relaxed">
-              This advisor is for informational purposes only. Always verify endorsement requirements directly in AC 61-65K and 14 CFR Part 61.
-            </p>
+          <div>
+            <h3 className="text-white font-bold">Endorsement Advisor</h3>
+            <p className="text-white/60 text-[10px] uppercase tracking-widest">Rule-Based Compliance Tool</p>
           </div>
         </div>
-      )}
+        {step > 1 && (
+          <button
+            onClick={reset}
+            className="text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+
+      <div className="p-8 min-h-[400px] flex flex-col justify-center">
+        {renderQuestion()}
+      </div>
+
+      <div className="bg-[#f8fafc] px-6 py-4 border-t border-[#dde3ec] flex items-center gap-3">
+        <div className="w-5 h-5 bg-[#1a3a5c]/10 rounded flex items-center justify-center text-[#1a3a5c]">
+          <Award size={12} />
+        </div>
+        <p className="text-[10px] text-[#64748b] leading-relaxed">
+          This tool uses rule-based logic from <strong>AC 61-65K</strong>. Always verify requirements in the current FAR/AIM before signing.
+        </p>
+      </div>
     </div>
   );
 }
