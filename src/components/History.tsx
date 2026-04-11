@@ -902,7 +902,7 @@ export default function History() {
                   </div>
                   <div className="divide-y divide-[#dde3ec]">
                     {acsData.map((area, ai) => {
-                      const tasksInArea = area.tasks.map((task, ti) => ({ task, id: `${ai}_${ti}` }))
+                      const tasksInArea = area.tasks.map((task, ti) => ({ name: task.name, id: `${ai}_${ti}` }))
                         .filter(t => selectedLesson.grades?.[t.id]);
                       if (tasksInArea.length === 0) return null;
 
@@ -913,7 +913,7 @@ export default function History() {
                           </div>
                           {tasksInArea.map(t => (
                             <div key={t.id} className="grid grid-cols-[1fr_50px_1fr] items-center min-h-[34px] border-b border-[#dde3ec] last:border-0">
-                              <div className="px-4 py-2 text-xs font-medium text-[#1c2333]">{t.task}</div>
+                              <div className="px-4 py-2 text-xs font-medium text-[#1c2333]">{t.name}</div>
                               <div className="text-center">
                                 <span className={cn(
                                   "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white",
@@ -947,7 +947,7 @@ export default function History() {
                   <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">ACS Coverage (all lessons)</div>
                   <div className="p-4 space-y-3">
                     {acsData.map((area, ai) => {
-                      const tasks = area.tasks.filter(t => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water'));
+                      const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
                       if (tasks.length === 0) return null;
                       const sat = tasks.filter((_, ti) => studentLessons.some(l => l.grades?.[`${ai}_${ti}`] === 'S')).length;
                       const pct = Math.round((sat / tasks.length) * 100);
@@ -1117,7 +1117,7 @@ export default function History() {
                       studentLessons.forEach(l => {
                         acsData.forEach((area, ai) => {
                           area.tasks
-                            .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+                            .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
                             .forEach((task, ti) => {
                               if (l.grades?.[`${ai}_${ti}`] === 'N') {
                                 niGrades.push({ task, area: area.area, lesson: l.label, date: new Date(l.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
@@ -1134,7 +1134,7 @@ export default function History() {
                             N · {g.lesson} · {g.date}
                           </span>
                           <span className="text-xs">
-                            <strong className="text-[#1c2333]">{g.task}</strong> <span className="text-[#6b7280]">({g.area})</span>
+                            <strong className="text-[#1c2333]">{g.task.name}</strong> <span className="text-[#6b7280]">({g.area})</span>
                           </span>
                         </div>
                       ));

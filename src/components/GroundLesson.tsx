@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
-import { Grade, LessonMeta } from '../types';
+import { ALL_ACS, RATINGS } from '../constants';
+import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion } from 'motion/react';
 import { ChevronDown, Save, Trash2, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, AlertCircle, HelpCircle, Loader2, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { ACSStandardsModal } from './ACSStandardsModal';
 
 export default function GroundLesson() {
   const [studentName, setStudentName] = useState('');
@@ -19,6 +20,7 @@ export default function GroundLesson() {
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
+  const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,14 +69,13 @@ export default function GroundLesson() {
   }, [navigate]);
 
   const groundTasks = rating ? ALL_ACS[rating.code][0].tasks
-    .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+    .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
     .map((task, ti) => ({
+      ...task,
       id: `0_${ti}`,
       area: ALL_ACS[rating.code][0].area,
-      task,
       ai: 0,
-      ti,
-      stds: ACS_ELEMENTS[task] || []
+      ti
     })) : [];
 
   const saveToLocal = (newGrades = grades, newNotes = notes, newMetaNotes = lessonNotes, newDate = lessonDate) => {
@@ -90,9 +91,45 @@ export default function GroundLesson() {
     const cycle: Grade[] = ['', 'S', 'N', 'I'];
     const current = grades[taskId] || '';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    
+    if (next === 'N') {
+      const task = groundTasks.find(t => t.id === taskId);
+      if (task) {
+        setActiveACSTask({ task, id: taskId, prevGrade: current });
+        return;
+      }
+    }
+
     const newGrades = { ...grades, [taskId]: next };
     setGrades(newGrades);
     saveToLocal(newGrades);
+  };
+
+  const handleACSConfirm = (selectedStds: ACSStandard[], acsNotes: string) => {
+    if (!activeACSTask) return;
+    
+    const taskId = activeACSTask.id;
+    const newGrades = { ...grades, [taskId]: 'N' as Grade };
+    
+    // Format the note
+    const stdsText = selectedStds.map(s => `${s.code} ${s.description}`).join(', ');
+    const formattedNote = `Failed standards: ${stdsText}.${acsNotes ? ` Notes: ${acsNotes}` : ''}`;
+    
+    const newNotes = { ...notes, [taskId]: formattedNote };
+    
+    setGrades(newGrades);
+    setNotes(newNotes);
+    saveToLocal(newGrades, newNotes);
+    setActiveACSTask(null);
+  };
+
+  const handleACSCancel = () => {
+    if (!activeACSTask) return;
+    const taskId = activeACSTask.id;
+    const newGrades = { ...grades, [taskId]: activeACSTask.prevGrade };
+    setGrades(newGrades);
+    saveToLocal(newGrades);
+    setActiveACSTask(null);
   };
 
   const handleFillAll = () => {
@@ -317,10 +354,10 @@ export default function GroundLesson() {
                     onClick={() => toggleExpand(task.id)}
                     className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
                   >
-                    {task.task}
+                    {task.name}
                     <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
                   </div>
-                  {isExpanded && task.stds && (
+                  {isExpanded && task.stds && task.stds.length > 0 && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
@@ -329,7 +366,7 @@ export default function GroundLesson() {
                       {task.stds.map((std, idx) => (
                         <div key={idx} className="text-[11px] text-[#1a4a2e] leading-relaxed flex gap-2">
                           <span className="opacity-40 shrink-0">·</span>
-                          <span>{std}</span>
+                          <span>{std.code} — {std.description}</span>
                         </div>
                       ))}
                     </motion.div>
@@ -385,6 +422,14 @@ export default function GroundLesson() {
           Save Lesson
         </button>
       </div>
+
+      {activeACSTask && (
+        <ACSStandardsModal 
+          task={activeACSTask.task}
+          onConfirm={handleACSConfirm}
+          onCancel={handleACSCancel}
+        />
+      )}
     </div>
   );
 }

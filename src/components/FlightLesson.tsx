@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
-import { Grade, LessonMeta } from '../types';
+import { ALL_ACS, RATINGS } from '../constants';
+import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { ACSStandardsModal } from './ACSStandardsModal';
 
 export default function FlightLesson() {
   const [studentName, setStudentName] = useState('');
@@ -64,6 +65,7 @@ export default function FlightLesson() {
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
+  const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -116,14 +118,13 @@ export default function FlightLesson() {
 
   const flightTasks = rating ? ALL_ACS[rating.code].flatMap((area, ai) => 
     area.tasks
-      .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+      .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
       .map((task, ti) => ({
+        ...task,
         id: `${ai}_${ti}`,
         area: area.area,
-        task,
         ai,
-        ti,
-        stds: ACS_ELEMENTS[task] || []
+        ti
       }))
   ) : [];
 
@@ -140,9 +141,45 @@ export default function FlightLesson() {
     const cycle: Grade[] = ['', 'S', 'N', 'I'];
     const current = grades[taskId] || '';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    
+    if (next === 'N') {
+      const task = flightTasks.find(t => t.id === taskId);
+      if (task) {
+        setActiveACSTask({ task, id: taskId, prevGrade: current });
+        return;
+      }
+    }
+
     const newGrades = { ...grades, [taskId]: next };
     setGrades(newGrades);
     saveToLocal(newGrades);
+  };
+
+  const handleACSConfirm = (selectedStds: ACSStandard[], acsNotes: string) => {
+    if (!activeACSTask) return;
+    
+    const taskId = activeACSTask.id;
+    const newGrades = { ...grades, [taskId]: 'N' as Grade };
+    
+    // Format the note
+    const stdsText = selectedStds.map(s => `${s.code} ${s.description}`).join(', ');
+    const formattedNote = `Failed standards: ${stdsText}.${acsNotes ? ` Notes: ${acsNotes}` : ''}`;
+    
+    const newNotes = { ...notes, [taskId]: formattedNote };
+    
+    setGrades(newGrades);
+    setNotes(newNotes);
+    saveToLocal(newGrades, newNotes);
+    setActiveACSTask(null);
+  };
+
+  const handleACSCancel = () => {
+    if (!activeACSTask) return;
+    const taskId = activeACSTask.id;
+    const newGrades = { ...grades, [taskId]: activeACSTask.prevGrade };
+    setGrades(newGrades);
+    saveToLocal(newGrades);
+    setActiveACSTask(null);
   };
 
   const handleFillAll = () => {
@@ -886,21 +923,21 @@ export default function FlightLesson() {
                           onClick={() => toggleExpand(id)}
                           className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
                         >
-                          {task}
-                          {ACS_ELEMENTS[task]?.length > 0 && (
+                          {task.name}
+                          {task.stds && task.stds.length > 0 && (
                             <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
                           )}
                         </div>
-                        {isExpanded && ACS_ELEMENTS[task]?.length > 0 && (
+                        {isExpanded && task.stds && task.stds.length > 0 && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             className="mt-3 p-3 bg-[#d4e8f5] rounded-lg border-l-4 border-[#2a5a8c] space-y-1.5"
                           >
-                            {ACS_ELEMENTS[task].map((std, idx) => (
+                            {task.stds.map((std, idx) => (
                               <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
                                 <span className="opacity-40 shrink-0">·</span>
-                                <span>{std}</span>
+                                <span>{std.code} — {std.description}</span>
                               </div>
                             ))}
                           </motion.div>
@@ -959,6 +996,14 @@ export default function FlightLesson() {
           Save Lesson
         </button>
       </div>
+
+      {activeACSTask && (
+        <ACSStandardsModal 
+          task={activeACSTask.task}
+          onConfirm={handleACSConfirm}
+          onCancel={handleACSCancel}
+        />
+      )}
     </div>
   );
 }

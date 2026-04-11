@@ -98,16 +98,21 @@ export interface Endorsement {
   created_at: string;
 }
 
+export interface ACSStandard {
+  code: string;
+  category: 'K' | 'R' | 'S';
+  description: string;
+}
+
 export interface ACSTask {
-  id: string;
-  area: string;
-  task: string;
-  ai: number;
-  ti: number;
-  stds?: string[];
+  name: string;
+  code: string;
+  references: string;
+  objective: string;
+  stds: ACSStandard[];
 }
 
 export interface ACSArea {
   area: string;
-  tasks: string[];
+  tasks: ACSTask[];
 }

@@ -481,7 +481,10 @@ export default function Dashboard() {
   const getTaskName = (ratingCode: string, taskId: string) => {
     const [ai, ti] = taskId.split('_').map(Number);
     const areas = ALL_ACS[ratingCode] || ALL_ACS['ppl'];
-    return areas[ai]?.tasks[ti] || taskId;
+    const area = areas[ai];
+    if (!area) return taskId;
+    const task = area.tasks[ti];
+    return task ? task.name : taskId;
   };
 
   const LessonSummary = ({ lesson, type }: { lesson: Lesson | null, type: 'ground' | 'flight' }) => {

@@ -168,14 +168,14 @@ export default function StudentDashboard() {
   // 4. Weak Areas Report
   const weakAreas = acsData.flatMap((area, ai) => 
     area.tasks
-      .filter(task => !task.includes('N/A') && !task.includes('ASEL') && !task.includes('Seaplane') && !task.includes('Water'))
+      .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
       .map((task, ti) => {
         const id = `${ai}_${ti}`;
       const nGrades = lessons.filter(l => l.grades?.[id] === 'N').length;
       const iGrades = lessons.filter(l => l.grades?.[id] === 'I').length;
       const totalAttempts = lessons.filter(l => l.grades?.[id]).length;
       const isMastered = lessons.some(l => l.grades?.[id] === 'S');
-      return { task, area: area.area, nGrades, iGrades, totalAttempts, isMastered, score: nGrades * 2 + iGrades };
+      return { task: task.name, area: area.area, nGrades, iGrades, totalAttempts, isMastered, score: nGrades * 2 + iGrades };
     })
   ).filter(t => t.score > 0 && !t.isMastered)
    .sort((a, b) => b.score - a.score)
@@ -203,7 +203,7 @@ export default function StudentDashboard() {
   // Ground Radar (Area I)
   const groundRadarData = acsData[0]?.tasks.map((task, ti) => {
     const grade = getMostRecentGrade(0, ti);
-    const { letter, name } = parseTask(task);
+    const { letter, name } = parseTask(task.name);
     return {
       subject: `${letter}. ${name.substring(0, 25)}${name.length > 25 ? '...' : ''}`,
       fullSubject: `${letter}. ${name}`,
