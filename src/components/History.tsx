@@ -30,7 +30,8 @@ export default function History() {
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
                    key === 'soloXc150' ? 'soloXC150Date' : 
-                   key === 'soloTowered' ? 'soloToweredDate' : '';
+                   key === 'soloTowered' ? 'soloToweredDate' : 
+                   key === 'ifrXc250' ? 'ifrXc250Date' : '';
     if (!dateKey) return '';
     const m = manualHours.find(h => h.student_name === selectedLesson?.student_name && h.field_key === dateKey);
     if (!m || m.entries.length === 0) return '';
@@ -42,7 +43,8 @@ export default function History() {
     const studentName = selectedLesson.student_name;
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
                    key === 'soloXc150' ? 'soloXC150Date' : 
-                   key === 'soloTowered' ? 'soloToweredDate' : '';
+                   key === 'soloTowered' ? 'soloToweredDate' : 
+                   key === 'ifrXc250' ? 'ifrXc250Date' : '';
     if (!dateKey) return;
 
     const existing = manualHours.find(m => m.student_name === studentName && m.field_key === dateKey);
@@ -279,20 +281,20 @@ export default function History() {
   const rating = getRating();
   const acsData = ALL_ACS[rating.code] || ALL_ACS['ppl'];
 
-  const getCumulativeStats = () => {
+  const getCumulativeStats = (lessonsToSum = studentLessons) => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
     let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totNightTakeoffsPic = 0, totNightLandingsPic = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
     
-    studentLessons.forEach(l => {
+    lessonsToSum.forEach(l => {
       const m = l.meta || {};
       totFlight += parseFloat(m.totalFlight || '0') || 0;
       totDual += parseFloat(m.dual || '0') || 0;
       totXc += parseFloat(m.xc || '0') || 0;
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
-      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
+      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0);
       totSolo += parseFloat(m.solo || '0') || 0;
-      totSoloXc += parseFloat(m.soloXc || '0') || 0;
+      totSoloXc += parseFloat(m.xcSolo || '0') || 0;
       totLdg += parseInt(m.ldgTotal || '0') || 0;
       totLdgDay += parseInt(m.ldgDay || '0') || 0;
       totLdgNight += parseInt(m.ldgNight || '0') || 0;
@@ -312,7 +314,7 @@ export default function History() {
       totAtdSE += parseFloat(m.atdSE || '0') || 0;
     });
 
-    const picTime = studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
+    const picTime = lessonsToSum.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
 
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
@@ -1151,8 +1153,8 @@ export default function History() {
             {activeTab === 'checkride' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 {(() => {
-                  const stats = getCumulativeStats();
-                  const sls = studentLessons;
+                  const sls = studentLessons.filter(l => (l.meta?.rating_code || 'ppl') === lessonRating);
+                  const stats = getCumulativeStats(sls);
                   const sixtyDaysAgo = new Date();
                   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
                   const sixtyDaysStr = `Calculated from ${sixtyDaysAgo.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} to ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
@@ -1222,19 +1224,33 @@ export default function History() {
                   } else if (lessonRating === 'ir') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.65(d)', rows: [
-                        { label: 'Cross-country PIC', ref: '§61.65(d)(1)', have: stats.totXc, need: 50, unit: 'hrs' },
-                        { label: 'Actual or simulated instrument', ref: '§61.65(d)(2)', have: stats.totSim, need: 40, unit: 'hrs' },
-                        { label: 'Instrument training from instructor', ref: '§61.65(d)(3)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.simInst || '0') : 0), 0), need: 15, unit: 'hrs' },
-                        { label: 'Instrument training (60 days)', ref: '§61.65(d)(4)', have: recentInst, need: 3, unit: 'hrs', note: sixtyDaysStr },
-                        { label: 'IFR XC 250NM', ref: '§61.65(d)(5)', have: getManualValue('ifrXc250'), need: 1, unit: 'flight', mk: 'ifrXc250' }
+                        { label: 'Cross-Country PIC Time', ref: '§61.65(d)(1)', have: stats.totXcPic, need: 50, unit: 'hrs' },
+                        { label: 'Actual or Simulated Instrument Time', ref: '§61.65(d)(2)', have: stats.totSim, need: 40, unit: 'hrs' },
+                        { label: 'Instrument Training from Authorized Instructor', ref: '§61.65(d)(3)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.simInst || '0') : 0), 0), need: 15, unit: 'hrs' },
+                        { label: 'Instrument Training within 60 Days', ref: '§61.65(d)(4)', have: recentInst, need: 3, unit: 'hrs', note: sixtyDaysStr },
+                        { label: 'IFR Cross-Country Flight 250NM', ref: '§61.65(d)(5)', have: getManualValue('ifrXc250'), need: 1, unit: 'flight', mk: 'ifrXc250', note: 'One cross-country flight in actual or simulated IMC along airways or ATC routing with an instrument approach at each airport and three different kinds of approaches with a total distance of at least 250NM' }
                       ]}
                     ];
-                    ENDORSEMENTS = [
-                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
-                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
-                      { key: 'A.42', label: 'A.42 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1) and 61.65(a) and (b)' },
-                      { key: 'A.43', label: 'A.43 — Flight proficiency/practical test: 14 CFR § 61.65(a)(6)' },
-                      { key: 'A.44', label: 'A.44 — Prerequisites for instrument practical tests: 14 CFR § 61.39(a)' }
+                    SOLO_OPTIONS = [
+                      { 
+                        id: 'knowledge', 
+                        label: 'Knowledge Test', 
+                        description: 'Required before the FAA Instrument Rating knowledge test.', 
+                        endorsements: [
+                          { key: 'A.42', text: 'AC 61-65K A.42 — Aeronautical knowledge test §61.35(a)(1) and §61.65(a) and (b): I certify that [First name, MI, Last name] has received the required training of 14 CFR §61.65(b). I have determined that they are prepared for the Instrument–airplane knowledge test.' }
+                        ] 
+                      },
+                      { 
+                        id: 'practical', 
+                        label: 'Practical Test', 
+                        description: 'Required before the FAA Instrument Rating practical test.', 
+                        endorsements: [
+                          { key: 'A.43', text: 'AC 61-65K A.43 — Flight proficiency/practical test §61.65(a)(6): I certify that [First name, MI, Last name] has received the required training of 14 CFR §61.65(c) and (d). I have determined they are prepared for the Instrument–airplane practical test.' },
+                          { key: 'A.44', text: 'AC 61-65K A.44 — Prerequisites for instrument practical tests §61.39(a): I certify that [First name, MI, Last name] has received and logged the required flight time/training of 14 CFR §61.39(a) in preparation for the practical test within 2 calendar months preceding the date of the test and has satisfactory knowledge of the subject areas in which they were shown to be deficient by the FAA Airman Knowledge Test Report. I have determined they are prepared for the Instrument–airplane practical test.' },
+                          { key: 'A.1', text: 'AC 61-65K A.1 — Prerequisites for practical test §61.39(a)(6)(i) and (ii): I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of Instrument Rating.' },
+                          { key: 'A.2', text: 'AC 61-65K A.2 — Review of deficiencies §61.39(a)(6)(iii) as required: I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the Instrument Rating airman knowledge test.' }
+                        ] 
+                      }
                     ];
                   } else if (lessonRating === 'cpl') {
                     REQS = [
@@ -1315,7 +1331,7 @@ export default function History() {
                   if (lessonRating === 'ppl') {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.37');
                   } else if (lessonRating === 'ir') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.43');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.43') && isEndorsementMet('A.44') && isEndorsementMet('A.1');
                   } else if (lessonRating === 'cpl') {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.39');
                   } else if (lessonRating === 'cfi') {
@@ -1346,7 +1362,7 @@ export default function History() {
                         >
                           <div className="text-4xl">🎉</div>
                           <h2 className="text-2xl font-black tracking-tight">CHECKRIDE READY</h2>
-                          <p className="text-sm opacity-90">{lessonRating === 'ppl' ? 'All §61.109(a) flight requirements and practical test endorsements have been met.' : 'All FAR Part 61 requirements and AC 61-65 endorsements have been met.'}</p>
+                          <p className="text-sm opacity-90">{lessonRating === 'ppl' ? 'All §61.109(a) flight requirements and practical test endorsements have been met.' : lessonRating === 'ir' ? 'All §61.65(d) flight requirements and practical test endorsements have been met.' : 'All FAR Part 61 requirements and AC 61-65 endorsements have been met.'}</p>
                           <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest pt-2">
                             Verified on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                           </div>
@@ -1409,7 +1425,7 @@ export default function History() {
                                   </div>
                                   {row.mk && (
                                     <div className="shrink-0">
-                                      {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' ? (
+                                      {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' || row.mk === 'ifrXc250' ? (
                                         met ? (
                                           <div className="flex flex-col items-end gap-1">
                                             <div className="flex items-center gap-2 text-[#2d7a4f] font-bold text-[11px]">

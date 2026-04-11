@@ -58,6 +58,7 @@ export default function FlightLesson() {
     night: false,
     sim: false
   });
+  const [soloGroupExpanded, setSoloGroupExpanded] = useState(false);
   const [isLogbookOpen, setIsLogbookOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -445,25 +446,29 @@ export default function FlightLesson() {
                         type="checkbox"
                         id="solo-toggle"
                         checked={meta.studentFlewSolo}
-                        onChange={(e) => handleMetaChange('studentFlewSolo', e.target.checked)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          handleMetaChange('studentFlewSolo', checked);
+                          setSoloGroupExpanded(checked);
+                        }}
                         className="w-4 h-4 text-[#1a3a5c] border-[#dde3ec] rounded focus:ring-[#1a3a5c]"
                       />
                       <label htmlFor="solo-toggle" className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] cursor-pointer">Student Flew Solo</label>
                     </div>
                     {meta.studentFlewSolo && (
                       <button
-                        onClick={() => setExpandedGroups(prev => ({ ...prev, solo: !prev.solo }))}
+                        onClick={() => setSoloGroupExpanded(!soloGroupExpanded)}
                         className="flex items-center gap-2"
                       >
                         <div className="text-[10px] font-mono text-[#6b7280]">
                           {meta.solo || '0.0'} hrs
                         </div>
-                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.solo && "rotate-90")} />
+                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", soloGroupExpanded && "rotate-90")} />
                       </button>
                     )}
                   </div>
                   <AnimatePresence>
-                    {meta.studentFlewSolo && expandedGroups.solo && (
+                    {meta.studentFlewSolo && soloGroupExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -717,13 +722,6 @@ export default function FlightLesson() {
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings</label>
                             <div className="flex items-center gap-2">
                               <input type="number" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">count</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Takeoffs PIC</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" value={meta.nightTakeoffsPic} onChange={(e) => handleMetaChange('nightTakeoffsPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>

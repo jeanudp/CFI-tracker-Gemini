@@ -276,7 +276,7 @@ export default function Dashboard() {
   const getCumulativeStats = (studentName: string) => {
     const studentLessons = lessons.filter(l => l.student_name === studentName);
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0;
-    let totXcDual = 0, totXcPic = 0, totSimInst = 0, totNightDual = 0;
+    let totXcDual = 0, totXcPic = 0, totSimInst = 0, totNightDual = 0, totInstDual = 0;
     
     studentLessons.forEach(l => {
       const m = l.meta || {};
@@ -285,12 +285,15 @@ export default function Dashboard() {
       totXc += parseFloat(m.xc || '0') || 0;
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
-      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
+      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0);
       totSolo += parseFloat(m.solo || '0') || 0;
       totSoloXc += parseFloat(m.soloXc || '0') || 0;
       totXcDual += parseFloat(m.xcDual || '0') || 0;
       totXcPic += parseFloat(m.xcPic || '0') || 0;
       totSimInst += parseFloat(m.simInst || '0') || 0;
+      if (parseFloat(m.dual || '0') > 0) {
+        totInstDual += parseFloat(m.simInst || '0') || 0;
+      }
       totNightDual += parseFloat(m.nightDual || '0') || 0;
     });
 
@@ -314,7 +317,7 @@ export default function Dashboard() {
 
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc,
-      totXcDual, totXcPic, totSimInst, totNightDual, recentDual, recentInst, recentInst6mo, picTime
+      totXcDual, totXcPic, totSimInst, totNightDual, recentDual, recentInst, recentInst6mo, picTime, totInstDual
     };
   };
 
@@ -359,11 +362,12 @@ export default function Dashboard() {
       return (
         stats.totXcPic >= 50 &&
         stats.totSim >= 40 &&
-        stats.totSimInst >= 15 &&
+        stats.totInstDual >= 15 &&
         stats.recentInst >= 3 &&
         getManualValue(name, 'ifrXc250') >= 1 &&
-        isEndorsementMet(name, 'ir', 'A.1') &&
-        isEndorsementMet(name, 'ir', 'A.43')
+        isEndorsementMet(name, 'ir', 'A.43') &&
+        isEndorsementMet(name, 'ir', 'A.44') &&
+        isEndorsementMet(name, 'ir', 'A.1')
       );
     }
 
