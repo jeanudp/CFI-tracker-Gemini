@@ -4,7 +4,6 @@ import { supabase } from './lib/supabase';
 import Layout from './components/Layout';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
-import RatingSelection from './components/RatingSelection';
 import LessonType from './components/LessonType';
 import GroundLesson from './components/GroundLesson';
 import FlightLesson from './components/FlightLesson';
@@ -103,18 +102,6 @@ export default function App() {
             session ? (
               <Layout user={session.user}>
                 <Dashboard />
-              </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
-          }
-        />
-        <Route
-          path="/rating"
-          element={
-            session ? (
-              <Layout user={session.user}>
-                <RatingSelection />
               </Layout>
             ) : (
               <Navigate to="/auth" />

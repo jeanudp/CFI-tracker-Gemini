@@ -96,16 +96,10 @@ export default function Layout({ children, user }: LayoutProps) {
           )}
 
           {path === '/lesson-type' && (
-            <>
-              <Link to="/rating" className={buttonClass}>
-                <Plane size={14} />
-                <span>Rating</span>
-              </Link>
-              <button onClick={handleSignOut} className={buttonClass}>
-                <LogOut size={14} />
-                <span>Sign Out</span>
-              </button>
-            </>
+            <button onClick={handleSignOut} className={buttonClass}>
+              <LogOut size={14} />
+              <span>Sign Out</span>
+            </button>
           )}
 
           {path === '/ground' && (
@@ -151,16 +145,10 @@ export default function Layout({ children, user }: LayoutProps) {
           )}
 
           {path === '/history' && (
-            <>
-              <Link to="/rating" className={buttonClass}>
-                <Plus size={14} />
-                <span>New Lesson</span>
-              </Link>
-              <button onClick={handleSignOut} className={buttonClass}>
-                <LogOut size={14} />
-                <span>Sign Out</span>
-              </button>
-            </>
+            <button onClick={handleSignOut} className={buttonClass}>
+              <LogOut size={14} />
+              <span>Sign Out</span>
+            </button>
           )}
 
           {(path === '/' || path.startsWith('/student/')) && (

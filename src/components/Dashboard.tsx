@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText } from 'lucide-react';
+import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 
@@ -79,15 +79,8 @@ export default function Dashboard() {
       return;
     }
 
-    if (!pendingStudentName.trim()) {
-      alert('Please enter a student name');
-      return;
-    }
-
-    if (!selectedRatingCode) {
-      alert('Please select a rating');
-      return;
-    }
+    if (!pendingStudentName.trim()) return;
+    if (!selectedRatingCode) return;
 
     setAdding(true);
     const rating = (RATINGS as any)[selectedRatingCode];
@@ -104,7 +97,6 @@ export default function Dashboard() {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       alert('Failed to save student: ' + error.message);
       setAdding(false);
       return;
@@ -158,6 +150,7 @@ export default function Dashboard() {
 
       // Wait 3 seconds then show next rating modal
       setTimeout(() => {
+        setSelectedRatingCode(null); // Reset for next selection
         setIsNextRatingModalOpen(true);
       }, 3000);
 
@@ -204,13 +197,9 @@ export default function Dashboard() {
     const student = students.find(s => s.name === selectedStudent);
     if (!student) return;
 
-    const rating = (RATINGS as any)[student.current_rating];
     localStorage.setItem('selected_rating', JSON.stringify({
       code: student.current_rating,
-      label: rating.label,
-      acs: rating.acs,
-      groundPage: rating.groundPage,
-      flightPage: rating.flightPage
+      label: student.current_rating_label
     }));
     
     navigate('/lesson-type');
@@ -585,76 +574,120 @@ export default function Dashboard() {
 
         <AnimatePresence>
           {isRatingModalOpen && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#1a3a5c]/40 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4 overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-[#eef2f8] rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+                className="bg-[#f8fafc] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-6 bg-white border-b border-[#dde3ec] flex items-center justify-between">
+                <div className="p-6 bg-white border-b border-[#dde3ec] flex justify-between items-center shrink-0">
                   <div>
-                    <h3 className="text-xl font-black text-[#1a3a5c]">Select Rating for {pendingStudentName}</h3>
-                    <p className="text-xs text-[#6b7280] mt-1">Choose the initial rating this student will pursue</p>
+                    <h2 className="text-xl font-black text-[#1a3a5c]">Add New Student</h2>
+                    <p className="text-xs text-[#6b7280] mt-1">Enter details and select a rating</p>
                   </div>
                   <button 
                     onClick={() => setIsRatingModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] rounded-xl text-[#6b7280] transition-colors"
+                    className="p-2 hover:bg-[#f4f5f7] rounded-full transition-all"
                   >
-                    <X size={20} />
+                    <X size={20} className="text-[#6b7280]" />
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.entries(RATINGS).map(([code, rating]: [string, any]) => {
-                      const colors: Record<string, string> = {
-                        ppl: 'bg-[#1a3a5c]',
-                        ir: 'bg-[#7c3aed]',
-                        cpl: 'bg-[#2d7a4f]',
-                        cfi: 'bg-[#e67e22]',
-                        cfii: 'bg-[#16a34a]',
-                        mei: 'bg-[#c0392b]'
-                      };
-                      const isSelected = selectedRatingCode === code;
-                      return (
-                        <div
-                          key={code}
-                          onClick={() => setSelectedRatingCode(code)}
-                          className={cn(
-                            "relative bg-white rounded-2xl border-2 p-6 cursor-pointer transition-all group",
-                            isSelected ? "border-[#1a3a5c] shadow-lg scale-[1.02]" : "border-[#dde3ec] hover:border-[#1a3a5c]/30"
-                          )}
-                        >
-                          <div className={cn("w-10 h-10 rounded-xl mb-4 flex items-center justify-center text-white", colors[code])}>
-                            <Award size={20} />
-                          </div>
-                          <h4 className="font-bold text-[#1a3a5c] mb-1">{rating.label}</h4>
-                          <p className="text-[10px] text-[#6b7280] font-mono uppercase tracking-wider">{rating.acs}</p>
-                          {isSelected && (
-                            <div className="absolute top-4 right-4 text-[#1a3a5c]">
-                              <CheckCircle size={20} />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                <div className="flex-1 overflow-y-auto p-6 sm:p-10">
+                  <div className="max-w-2xl mx-auto space-y-10">
+                    {/* Name Input */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-[#1a3a5c] uppercase tracking-widest ml-1">Student Name</label>
+                      <input
+                        type="text"
+                        value={pendingStudentName}
+                        onChange={(e) => setPendingStudentName(e.target.value)}
+                        placeholder="Enter student name"
+                        className="w-full text-lg font-bold border-2 border-[#dde3ec] rounded-2xl px-6 py-4 focus:outline-none focus:border-[#1a3a5c] transition-all placeholder:text-[#dde3ec]"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Rating Selection */}
+                    <div className="space-y-6">
+                      <div className="text-center">
+                        <h3 className="text-lg font-bold text-[#1c2333]">Select Initial Rating</h3>
+                        <p className="text-sm text-[#6b7280]">Choose the certificate they are working toward</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {Object.entries(RATINGS).map(([code, rating]) => {
+                          const isSelected = selectedRatingCode === code;
+                          const icons: Record<string, any> = {
+                            ppl: Plane,
+                            ir: Cloud,
+                            cpl: Gauge,
+                            cfi: ClipboardList,
+                            cfii: Compass,
+                            mei: Navigation
+                          };
+                          const colors: Record<string, string> = {
+                            ppl: 'bg-[#d4e8f5] text-[#1a3a5c] border-[#1a3a5c]',
+                            ir: 'bg-[#ede8f8] text-[#5b3fa0] border-[#5b3fa0]',
+                            cpl: 'bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]',
+                            cfi: 'bg-[#fdf0e4] text-[#c05c10] border-[#c05c10]',
+                            cfii: 'bg-[#e0f5f2] text-[#1a7a6e] border-[#1a7a6e]',
+                            mei: 'bg-[#fdecea] text-[#c0392b] border-[#c0392b]'
+                          };
+                          const Icon = icons[code];
+
+                          return (
+                            <motion.div
+                              key={code}
+                              whileHover={{ y: -3 }}
+                              onClick={() => setSelectedRatingCode(code)}
+                              className={cn(
+                                "bg-white rounded-2xl border-2 p-6 text-center transition-all relative flex flex-col items-center gap-3 cursor-pointer",
+                                isSelected ? cn("shadow-xl scale-[1.05]", colors[code]) : "border-[#dde3ec] hover:border-[#1a3a5c]/30 hover:shadow-lg"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-14 h-14 rounded-2xl flex items-center justify-center transition-colors",
+                                isSelected ? "bg-white/20" : colors[code].split(' ').slice(0, 2).join(' ')
+                              )}>
+                                <Icon size={24} />
+                              </div>
+                              <div>
+                                <div className="text-sm font-bold leading-tight">{rating.label}</div>
+                                <div className="text-[10px] opacity-60 mt-1">{rating.acs}</div>
+                              </div>
+                              {isSelected && (
+                                <div className="absolute top-2 right-2">
+                                  <CheckCircle size={16} />
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3">
+                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3 shrink-0">
                   <button
                     onClick={() => setIsRatingModalOpen(false)}
-                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-xl transition-all"
+                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-2xl transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveNewStudent}
-                    disabled={adding || !selectedRatingCode}
-                    className="flex-3 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl hover:bg-[#2a5a8c] transition-all disabled:opacity-50 shadow-md"
+                    disabled={adding || !selectedRatingCode || !pendingStudentName.trim()}
+                    className={cn(
+                      "flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg",
+                      adding || !selectedRatingCode || !pendingStudentName.trim() 
+                        ? "bg-[#dde3ec] cursor-not-allowed" 
+                        : "bg-[#1a3a5c] hover:bg-[#2a5a8c]"
+                    )}
                   >
-                    {adding ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Confirm & Save Student'}
+                    {adding ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Save Student'}
                   </button>
                 </div>
               </motion.div>
@@ -695,67 +728,100 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Next Rating Modal (Checkride Passed) */}
           {isNextRatingModalOpen && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#1a3a5c]/40 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4 overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-[#eef2f8] rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+                className="bg-[#f8fafc] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-8 bg-white border-b border-[#dde3ec] text-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#e4f5ec] text-[#2d7a4f] rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-                    <CheckCircle size={12} />
-                    Checkride Successfully Recorded
+                <div className="p-6 bg-white border-b border-[#dde3ec] flex justify-between items-center shrink-0">
+                  <div>
+                    <h2 className="text-xl font-black text-[#1a3a5c]">Checkride Passed!</h2>
+                    <p className="text-xs text-[#6b7280] mt-1">What rating is {selectedStudent} pursuing next?</p>
                   </div>
-                  <h3 className="text-2xl font-black text-[#1a3a5c]">What rating would {selectedStudent} like to pursue next?</h3>
+                  <button 
+                    onClick={() => setIsNextRatingModalOpen(false)}
+                    className="p-2 hover:bg-[#f4f5f7] rounded-full transition-all"
+                  >
+                    <X size={20} className="text-[#6b7280]" />
+                  </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.entries(RATINGS).map(([code, rating]: [string, any]) => {
-                      const colors: Record<string, string> = {
-                        ppl: 'bg-[#1a3a5c]',
-                        ir: 'bg-[#7c3aed]',
-                        cpl: 'bg-[#2d7a4f]',
-                        cfi: 'bg-[#e67e22]',
-                        cfii: 'bg-[#16a34a]',
-                        mei: 'bg-[#c0392b]'
-                      };
-                      const student = students.find(s => s.name === selectedStudent);
-                      const isPassed = student?.checkride_passed_ratings?.some(r => r.code === code);
-                      const isCurrent = student?.current_rating === code;
-                      
-                      return (
-                        <div
-                          key={code}
-                          onClick={() => !isPassed && handleSelectNextRating(code)}
-                          className={cn(
-                            "relative bg-white rounded-2xl border-2 p-6 transition-all group",
-                            isPassed ? "opacity-60 grayscale border-[#dde3ec] cursor-not-allowed" : "cursor-pointer border-[#dde3ec] hover:border-[#1a3a5c] hover:shadow-lg"
-                          )}
-                        >
-                          <div className={cn("w-10 h-10 rounded-xl mb-4 flex items-center justify-center text-white", colors[code])}>
-                            <Award size={20} />
-                          </div>
-                          <h4 className="font-bold text-[#1a3a5c] mb-1">{rating.label}</h4>
-                          <p className="text-[10px] text-[#6b7280] font-mono uppercase tracking-wider">{rating.acs}</p>
-                          
-                          {isPassed && (
-                            <div className="absolute top-4 right-4 flex items-center gap-1 text-[#2d7a4f] font-bold text-[10px] uppercase tracking-widest">
-                              <CheckCircle size={16} />
-                              Passed
+                <div className="flex-1 overflow-y-auto p-6 sm:p-10">
+                  <div className="max-w-2xl mx-auto">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {Object.entries(RATINGS).map(([code, rating]) => {
+                        const isSelected = selectedRatingCode === code;
+                        const icons: Record<string, any> = {
+                          ppl: Plane,
+                          ir: Cloud,
+                          cpl: Gauge,
+                          cfi: ClipboardList,
+                          cfii: Compass,
+                          mei: Navigation
+                        };
+                        const colors: Record<string, string> = {
+                          ppl: 'bg-[#d4e8f5] text-[#1a3a5c] border-[#1a3a5c]',
+                          ir: 'bg-[#ede8f8] text-[#5b3fa0] border-[#5b3fa0]',
+                          cpl: 'bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]',
+                          cfi: 'bg-[#fdf0e4] text-[#c05c10] border-[#c05c10]',
+                          cfii: 'bg-[#e0f5f2] text-[#1a7a6e] border-[#1a7a6e]',
+                          mei: 'bg-[#fdecea] text-[#c0392b] border-[#c0392b]'
+                        };
+                        const Icon = icons[code];
+
+                        return (
+                          <motion.div
+                            key={code}
+                            whileHover={{ y: -3 }}
+                            onClick={() => setSelectedRatingCode(code)}
+                            className={cn(
+                              "bg-white rounded-2xl border-2 p-6 text-center transition-all relative flex flex-col items-center gap-3 cursor-pointer",
+                              isSelected ? cn("shadow-xl scale-[1.05]", colors[code]) : "border-[#dde3ec] hover:border-[#1a3a5c]/30 hover:shadow-lg"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-14 h-14 rounded-2xl flex items-center justify-center transition-colors",
+                              isSelected ? "bg-white/20" : colors[code].split(' ').slice(0, 2).join(' ')
+                            )}>
+                              <Icon size={24} />
                             </div>
-                          )}
-                          {isCurrent && !isPassed && (
-                            <div className="absolute top-4 right-4 text-[#1a3a5c] font-bold text-[10px] uppercase tracking-widest">
-                              Current
+                            <div>
+                              <div className="text-sm font-bold leading-tight">{rating.label}</div>
+                              <div className="text-[10px] opacity-60 mt-1">{rating.acs}</div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            {isSelected && (
+                              <div className="absolute top-2 right-2">
+                                <CheckCircle size={16} />
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </div>
+                </div>
+
+                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3 shrink-0">
+                  <button
+                    onClick={() => setIsNextRatingModalOpen(false)}
+                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-2xl transition-all"
+                  >
+                    Skip for now
+                  </button>
+                  <button
+                    onClick={() => selectedRatingCode && handleSelectNextRating(selectedRatingCode)}
+                    disabled={!selectedRatingCode}
+                    className={cn(
+                      "flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg",
+                      !selectedRatingCode ? "bg-[#dde3ec] cursor-not-allowed" : "bg-[#1a3a5c] hover:bg-[#2a5a8c]"
+                    )}
+                  >
+                    Confirm Next Rating
+                  </button>
                 </div>
               </motion.div>
             </div>
