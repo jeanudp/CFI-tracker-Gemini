@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabase';
 import { ALL_ACS, RATINGS } from '../constants';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion } from 'motion/react';
-import { ChevronDown, Save, Trash2, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, AlertCircle, HelpCircle, Loader2, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, AlertCircle, HelpCircle, Loader2, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { ACSStandardsModal } from './ACSStandardsModal';
+import ACSStandardsModal from './ACSStandardsModal';
 
 export default function GroundLesson() {
   const [studentName, setStudentName] = useState('');
@@ -16,6 +16,7 @@ export default function GroundLesson() {
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
@@ -92,7 +93,7 @@ export default function GroundLesson() {
     const current = grades[taskId] || '';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     
-    if (next === 'N') {
+    if (next === 'N' && rating?.code === 'ppl') {
       const task = groundTasks.find(t => t.id === taskId);
       if (task) {
         setActiveACSTask({ task, id: taskId, prevGrade: current });
@@ -111,7 +112,7 @@ export default function GroundLesson() {
     const taskId = activeACSTask.id;
     const newGrades = { ...grades, [taskId]: 'N' as Grade };
     
-    // Format the note
+    // Format the note: Failed standards: PA.I.A.R1 Proficiency versus currency, PA.I.A.R2 Personal minimums. Notes: Student had difficulty explaining the difference.
     const stdsText = selectedStds.map(s => `${s.code} ${s.description}`).join(', ');
     const formattedNote = `Failed standards: ${stdsText}.${acsNotes ? ` Notes: ${acsNotes}` : ''}`;
     
@@ -150,6 +151,10 @@ export default function GroundLesson() {
 
   const toggleExpand = (taskId: string) => {
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
+
+  const toggleNoteExpand = (taskId: string) => {
+    setExpandedNotes(prev => ({ ...prev, [taskId]: !prev[taskId] }));
   };
 
   const handleSave = async () => {
@@ -386,19 +391,40 @@ export default function GroundLesson() {
                     {g || '—'}
                   </button>
                 </div>
-                <div className="p-2 pt-3 pr-4">
+                <div className="p-2 pt-3 pr-4 relative group">
                   <textarea
                     value={n}
                     onChange={(e) => handleNoteChange(task.id, e.target.value)}
                     placeholder="Notes..."
-                    rows={1}
-                    className="w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none min-h-[32px]"
+                    rows={expandedNotes[task.id] ? undefined : 1}
+                    className={cn(
+                      "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
+                      expandedNotes[task.id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
+                    )}
                     onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = 'auto';
-                      target.style.height = target.scrollHeight + 'px';
+                      if (expandedNotes[task.id]) {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                      }
+                    }}
+                    ref={(el) => {
+                      if (el && expandedNotes[task.id]) {
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 'px';
+                      }
                     }}
                   />
+                  {!expandedNotes[task.id] && n.length > 0 && (
+                    <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
+                  )}
+                  <button
+                    onClick={() => toggleNoteExpand(task.id)}
+                    className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
+                    title={expandedNotes[task.id] ? "Collapse Notes" : "Expand Notes"}
+                  >
+                    {expandedNotes[task.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
                 </div>
               </div>
             );
@@ -425,7 +451,9 @@ export default function GroundLesson() {
 
       {activeACSTask && (
         <ACSStandardsModal 
-          task={activeACSTask.task}
+          isOpen={!!activeACSTask}
+          taskId={activeACSTask.task.code}
+          taskName={activeACSTask.task.name}
           onConfirm={handleACSConfirm}
           onCancel={handleACSCancel}
         />

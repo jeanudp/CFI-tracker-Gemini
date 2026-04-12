@@ -1,20 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { ALL_ACS } from '../constants';
 import { ACSTask, ACSStandard } from '../types';
-import { cn } from '../lib/utils';
 
 interface ACSStandardsModalProps {
-  task: ACSTask;
-  onConfirm: (selectedStds: ACSStandard[], notes: string) => void;
+  isOpen: boolean;
+  taskId: string;
+  taskName: string;
+  onConfirm: (selectedStandards: ACSStandard[], notes: string) => void;
   onCancel: () => void;
 }
 
-export const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
-  task,
+const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
+  isOpen,
+  taskId,
+  taskName,
   onConfirm,
   onCancel,
 }) => {
-  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [selectedStds, setSelectedStds] = useState<ACSStandard[]>([]);
   const [notes, setNotes] = useState('');
   const [expandedSections, setExpandedSections] = useState({
     K: true,
@@ -22,175 +27,290 @@ export const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
     S: true,
   });
 
-  const toggleStandard = (code: string) => {
-    setSelectedCodes(prev => 
-      prev.includes(code) 
-        ? prev.filter(c => c !== code) 
-        : [...prev, code]
+  // Find the task data in PPL ACS
+  const taskData = useMemo(() => {
+    for (const area of ALL_ACS.ppl || []) {
+      const task = area.tasks.find((t) => t.code === taskId);
+      if (task) return task;
+    }
+    return null;
+  }, [taskId]);
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedStds([]);
+      setNotes('');
+      setExpandedSections({ K: true, R: true, S: true });
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const toggleStandard = (std: ACSStandard) => {
+    setSelectedStds((prev) =>
+      prev.some(s => s.code === std.code) 
+        ? prev.filter((s) => s.code !== std.code) 
+        : [...prev, std]
     );
   };
 
-  const toggleSection = (section: 'K' | 'R' | 'S') => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  const toggleSection = (category: 'K' | 'R' | 'S') => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
   };
 
-  const handleConfirm = () => {
-    const selectedStds = task.stds.filter(s => selectedCodes.includes(s.code));
-    onConfirm(selectedStds, notes);
-  };
+  const knowledgeStds = taskData?.stds.filter((s) => s.category === 'K') || [];
+  const riskStds = taskData?.stds.filter((s) => s.category === 'R') || [];
+  const skillStds = taskData?.stds.filter((s) => s.category === 'S') || [];
 
-  const knowledgeStds = task.stds.filter(s => s.category === 'K');
-  const riskStds = task.stds.filter(s => s.category === 'R');
-  const skillStds = task.stds.filter(s => s.category === 'S');
-
-  const Section = ({ 
-    title, 
-    category, 
-    stds, 
-    borderColor 
-  }: { 
-    title: string; 
-    category: 'K' | 'R' | 'S'; 
-    stds: ACSStandard[]; 
-    borderColor: string;
-  }) => {
+  const renderSection = (
+    title: string,
+    category: 'K' | 'R' | 'S',
+    stds: ACSStandard[],
+    activeColor: string
+  ) => {
     if (stds.length === 0) return null;
+
     const isExpanded = expandedSections[category];
 
-    return (
-      <div className="mb-4">
-        <button 
-          onClick={() => toggleSection(category)}
-          className="w-full flex items-center justify-between p-3 bg-[#f4f5f7] rounded-lg border border-[#dde3ec] hover:bg-[#ebedf0] transition-colors"
+    // Group standards by parent code
+    const groupedStds: { parent: ACSStandard | null, children: ACSStandard[] }[] = [];
+    const processedCodes = new Set<string>();
+
+    stds.forEach(std => {
+      if (processedCodes.has(std.code)) return;
+
+      const isSub = /[a-z]$/.test(std.code);
+      const parentCode = isSub ? std.code.slice(0, -1) : std.code;
+      
+      if (!processedCodes.has(parentCode)) {
+        const parent = stds.find(s => s.code === parentCode) || null;
+        const children = stds.filter(s => s.code.startsWith(parentCode) && /[a-z]$/.test(s.code));
+        
+        if (children.length > 0) {
+          groupedStds.push({ parent, children });
+          processedCodes.add(parentCode);
+          children.forEach(c => processedCodes.add(c.code));
+        } else if (!isSub) {
+          groupedStds.push({ parent: std, children: [] });
+          processedCodes.add(std.code);
+        }
+      }
+    });
+
+    const renderStandardRow = (std: ACSStandard, isChild: boolean) => {
+      const isSelected = selectedStds.some(s => s.code === std.code);
+      return (
+        <button
+          key={std.code}
+          onClick={() => toggleStandard(std)}
+          className={`w-full flex items-start gap-3 p-4 text-left transition-colors min-h-[48px] border-l-4 ${
+            isSelected
+              ? `${activeColor} border-current`
+              : 'hover:bg-gray-50 border-transparent'
+          } ${isChild ? 'pl-8' : ''}`}
         >
-          <span className="text-sm font-bold text-[#1a3a5c]">{title}</span>
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {isExpanded && (
-          <div className="mt-2 space-y-2">
-            {stds.map(std => {
-              const isSelected = selectedCodes.includes(std.code);
-              return (
-                <div 
-                  key={std.code}
-                  onClick={() => toggleStandard(std.code)}
-                  className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all",
-                    isSelected 
-                      ? cn("bg-opacity-10 border-opacity-50", borderColor, category === 'K' ? "bg-blue-500 border-blue-500" : category === 'R' ? "bg-orange-500 border-orange-500" : "bg-green-500 border-green-500")
-                      : "bg-white border-[#dde3ec] hover:bg-[#f9fafb]"
-                  )}
-                >
-                  <div className={cn(
-                    "mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                    isSelected 
-                      ? "bg-red-500 border-red-500 text-white" 
-                      : "bg-white border-[#dde3ec]"
-                  )}>
-                    {isSelected && <Check size={12} strokeWidth={3} />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-[10px] font-bold text-[#6b7280] mb-0.5">{std.code}</div>
-                    <div className="text-sm text-[#1a3a5c] leading-tight">{std.description}</div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center ${
+            isSelected ? 'bg-current border-current' : 'border-gray-300 bg-white'
+          }`}>
+            {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
           </div>
-        )}
+          <div className="flex flex-col gap-2">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider w-fit ${
+              isSelected ? 'bg-white/50' : 'bg-gray-100 text-gray-500'
+            }`}>
+              {std.code}
+            </span>
+            <span className="text-sm text-gray-700 leading-relaxed">
+              {std.description}
+            </span>
+          </div>
+        </button>
+      );
+    };
+
+    return (
+      <div className="border-b border-gray-100 last:border-0">
+        <button
+          onClick={() => toggleSection(category)}
+          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+        >
+          <span className="font-semibold text-gray-700">{title}</span>
+          {isExpanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="pb-2">
+                {groupedStds.map(group => (
+                  <div key={group.parent?.code || group.children[0].code}>
+                    {group.children.length > 0 ? (
+                      <>
+                        {/* Parent Header */}
+                        <div className="px-6 py-3 bg-gray-50/50 border-y border-gray-100">
+                          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-2">
+                            {group.parent?.code || group.children[0].code.slice(0, -1)}
+                          </span>
+                          <span className="text-xs font-bold text-gray-600">
+                            {group.parent?.description || "General Knowledge"}
+                          </span>
+                        </div>
+                        {/* Children */}
+                        {group.children.map(child => renderStandardRow(child, true))}
+                      </>
+                    ) : (
+                      group.parent && renderStandardRow(group.parent, false)
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-[600px] max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onCancel}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      />
+
+      {/* Modal Panel */}
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        className="relative w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-[600px] bg-white sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+      >
         {/* Header */}
-        <div className="bg-red-600 p-4 flex items-center justify-between shrink-0">
-          <div className="text-white">
-            <div className="text-[10px] font-bold uppercase tracking-widest opacity-80">{task.code}</div>
-            <div className="text-lg font-bold leading-tight">{task.name}</div>
+        <div className="bg-red-600 px-6 py-4 flex items-center justify-between shrink-0">
+          <div className="flex flex-col">
+            <h2 className="text-white font-bold text-lg leading-tight">
+              {taskName}
+            </h2>
+            <span className="text-red-100 text-xs font-medium uppercase tracking-widest">
+              {taskId}
+            </span>
           </div>
-          <button 
+          <button
             onClick={onCancel}
-            className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
           >
-            <X size={20} />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-          {/* References & Objective */}
-          <div className="mb-6 space-y-4">
-            <div>
-              <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider mb-1">References</div>
-              <div className="text-sm text-[#1a3a5c] bg-[#f4f5f7] p-3 rounded-lg border border-[#dde3ec]">
-                {task.references}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto">
+          {taskData ? (
+            <div className="flex flex-col">
+              {/* References & Objective */}
+              <div className="p-6 bg-gray-50 space-y-4 border-b border-gray-200">
+                <div>
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5">
+                    References
+                  </h3>
+                  <p className="text-sm text-gray-600 font-medium italic">
+                    {taskData.references}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5">
+                    Objective
+                  </h3>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {taskData.objective}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider mb-1">Objective</div>
-              <div className="text-sm text-[#1a3a5c] bg-[#f4f5f7] p-3 rounded-lg border border-[#dde3ec]">
-                {task.objective}
-              </div>
-            </div>
-          </div>
 
-          {/* Standards Sections */}
-          {task.stds.length > 0 ? (
-            <>
-              <Section title="Knowledge" category="K" stds={knowledgeStds} borderColor="border-l-4 border-l-blue-500" />
-              <Section title="Risk Management" category="R" stds={riskStds} borderColor="border-l-4 border-l-orange-500" />
-              <Section title="Skills" category="S" stds={skillStds} borderColor="border-l-4 border-l-green-500" />
-            </>
+              {/* Standards Sections */}
+              <div className="flex flex-col">
+                {renderSection('Knowledge Standards', 'K', knowledgeStds, 'bg-blue-50 text-blue-600')}
+                {renderSection('Risk Management Standards', 'R', riskStds, 'bg-orange-50 text-orange-600')}
+                {renderSection('Skill Standards', 'S', skillStds, 'bg-green-50 text-green-600')}
+              </div>
+
+              {/* Additional Notes */}
+              <div className="p-6 border-t border-gray-100">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">
+                  Additional Notes
+                </h3>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Explain why this task was graded as 'N'..."
+                  className="w-full h-32 p-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                />
+              </div>
+            </div>
           ) : (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm mb-6">
-              ACS standards for this task will be added in a future update. Select N to record the failure and add notes manually.
+            <div className="p-12 text-center flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <X className="w-8 h-8 text-gray-400" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-gray-600 font-medium">
+                  ACS standards for this task are not yet available.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Please use the Additional Notes field below to document the deficiency.
+                </p>
+              </div>
+              <div className="w-full mt-4">
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Enter notes here..."
+                  className="w-full h-32 p-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                />
+              </div>
             </div>
           )}
-
-          {/* Additional Notes */}
-          <div className="mt-6">
-            <label className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider mb-1 block">Additional Notes</label>
-            <textarea 
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Enter details about the failure..."
-              className="w-full h-24 p-3 bg-white border border-[#dde3ec] rounded-lg text-sm focus:outline-none focus:border-red-500 transition-colors resize-none"
-            />
-          </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#f4f5f7] border-t border-[#dde3ec] flex flex-col gap-3 shrink-0">
-          {selectedCodes.length === 0 && task.stds.length > 0 && (
-            <div className="text-center text-xs font-bold text-red-600 animate-pulse">
-              Select at least one standard that the student failed.
-            </div>
-          )}
-          <div className="flex gap-3">
-            <button 
-              onClick={onCancel}
-              className="flex-1 h-12 bg-white border border-[#dde3ec] rounded-xl text-sm font-bold text-[#1a3a5c] hover:bg-[#f9fafb] transition-colors"
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={handleConfirm}
-              disabled={selectedCodes.length === 0 && task.stds.length > 0}
-              className={cn(
-                "flex-[2] h-12 rounded-xl text-sm font-bold text-white transition-all shadow-lg shadow-red-500/20",
-                selectedCodes.length === 0 && task.stds.length > 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-600 hover:bg-red-700 active:scale-[0.98]"
-              )}
-            >
-              Confirm
-            </button>
-          </div>
+        <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-3 shrink-0">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3.5 px-6 rounded-xl font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(selectedStds, notes)}
+            disabled={selectedStds.length === 0 && taskData !== null}
+            className={`flex-[2] py-3.5 px-6 rounded-xl font-semibold text-white shadow-lg active:scale-[0.98] transition-all ${
+              selectedStds.length > 0 || taskData === null
+                ? 'bg-red-600 hover:bg-red-700 shadow-red-200'
+                : 'bg-gray-300 cursor-not-allowed shadow-none'
+            }`}
+          >
+            Confirm Deficiency
+          </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
+
+export default ACSStandardsModal;

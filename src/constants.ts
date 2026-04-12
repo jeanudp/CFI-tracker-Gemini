@@ -36,8 +36,21 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with airworthiness requirements, including aircraft required certificates and documents.",
           stds: [
             { code: "PA.I.B.K1", category: "K", description: "General airworthiness requirements and compliance for an airplane" },
+            { code: "PA.I.B.K1a", category: "K", description: "Airworthiness certificate" },
+            { code: "PA.I.B.K1b", category: "K", description: "Registration certificate" },
+            { code: "PA.I.B.K1c", category: "K", description: "Operating limitations" },
+            { code: "PA.I.B.K1d", category: "K", description: "Weight and balance" },
+            { code: "PA.I.B.K1e", category: "K", description: "Compass deviation card" },
+            { code: "PA.I.B.K1f", category: "K", description: "External data plate" },
             { code: "PA.I.B.K2", category: "K", description: "Aircraft maintenance requirements" },
+            { code: "PA.I.B.K2a", category: "K", description: "Maintenance inspections" },
+            { code: "PA.I.B.K2b", category: "K", description: "Airworthiness Directives (ADs)" },
+            { code: "PA.I.B.K2c", category: "K", description: "Maintenance recordkeeping" },
             { code: "PA.I.B.K3", category: "K", description: "Procedures for operating with inoperative equipment" },
+            { code: "PA.I.B.K3a", category: "K", description: "14 CFR part 91.213" },
+            { code: "PA.I.B.K3b", category: "K", description: "Minimum Equipment List (MEL)" },
+            { code: "PA.I.B.K3c", category: "K", description: "Kinds of Operation Equipment List (KOEL)" },
+            { code: "PA.I.B.K3d", category: "K", description: "Required equipment for VFR flight" },
             { code: "PA.I.B.K4", category: "K", description: "Special flight permits" },
             { code: "PA.I.B.R1", category: "R", description: "Operating with inoperative equipment" },
             { code: "PA.I.B.R2", category: "R", description: "Flying an aircraft that is not airworthy" },
@@ -52,7 +65,20 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with weather information for a flight under VFR.",
           stds: [
             { code: "PA.I.C.K1", category: "K", description: "Sources of weather data" },
+            { code: "PA.I.C.K1a", category: "K", description: "Sources of weather data" },
+            { code: "PA.I.C.K1b", category: "K", description: "Weather products and charts" },
+            { code: "PA.I.C.K1c", category: "K", description: "Atmospheric composition and stability" },
             { code: "PA.I.C.K2", category: "K", description: "Weather products and charts" },
+            { code: "PA.I.C.K2a", category: "K", description: "METAR" },
+            { code: "PA.I.C.K2b", category: "K", description: "TAF" },
+            { code: "PA.I.C.K2c", category: "K", description: "Surface Analysis Chart" },
+            { code: "PA.I.C.K2d", category: "K", description: "Radar Summary Chart" },
+            { code: "PA.I.C.K2e", category: "K", description: "Winds and Temperatures Aloft" },
+            { code: "PA.I.C.K2f", category: "K", description: "Significant Weather Prognostic Charts" },
+            { code: "PA.I.C.K2g", category: "K", description: "AIRMETs" },
+            { code: "PA.I.C.K2h", category: "K", description: "SIGMETs" },
+            { code: "PA.I.C.K2i", category: "K", description: "PIREPs" },
+            { code: "PA.I.C.K2j", category: "K", description: "AWOS, ASOS, and ATIS" },
             { code: "PA.I.C.K3", category: "K", description: "Atmospheric composition and stability" },
             { code: "PA.I.C.R1", category: "R", description: "Weather-related hazards" },
             { code: "PA.I.C.R2", category: "R", description: "Personal minimums and go/no-go decision" },
@@ -81,7 +107,17 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with the National Airspace System (NAS).",
           stds: [
             { code: "PA.I.E.K1", category: "K", description: "Airspace classes, boundaries, and vertical limits" },
+            { code: "PA.I.E.K1a", category: "K", description: "Class A" },
+            { code: "PA.I.E.K1b", category: "K", description: "Class B" },
+            { code: "PA.I.E.K1c", category: "K", description: "Class C" },
+            { code: "PA.I.E.K1d", category: "K", description: "Class D" },
+            { code: "PA.I.E.K1e", category: "K", description: "Class E" },
+            { code: "PA.I.E.K1f", category: "K", description: "Class G" },
+            { code: "PA.I.E.K1g", category: "K", description: "Special use airspace" },
+            { code: "PA.I.E.K1h", category: "K", description: "Other airspace areas" },
             { code: "PA.I.E.K2", category: "K", description: "Weather minimums and equipment requirements" },
+            { code: "PA.I.E.K2a", category: "K", description: "VFR weather minimums" },
+            { code: "PA.I.E.K2b", category: "K", description: "Equipment requirements" },
             { code: "PA.I.E.R1", category: "R", description: "Operating in complex airspace" },
             { code: "PA.I.E.S1", category: "S", description: "Identify and explain airspace on a sectional chart" }
           ]
@@ -93,7 +129,15 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with performance and limitations.",
           stds: [
             { code: "PA.I.F.K1", category: "K", description: "Atmospheric conditions and aircraft performance" },
+            { code: "PA.I.F.K1a", category: "K", description: "Pressure altitude" },
+            { code: "PA.I.F.K1b", category: "K", description: "Density altitude" },
+            { code: "PA.I.F.K1c", category: "K", description: "Temperature" },
+            { code: "PA.I.F.K1d", category: "K", description: "Humidity" },
+            { code: "PA.I.F.K1e", category: "K", description: "Wind" },
             { code: "PA.I.F.K2", category: "K", description: "Weight and balance and center of gravity" },
+            { code: "PA.I.F.K2a", category: "K", description: "Weight and balance" },
+            { code: "PA.I.F.K2b", category: "K", description: "Center of gravity" },
+            { code: "PA.I.F.K2c", category: "K", description: "Performance data" },
             { code: "PA.I.F.R1", category: "R", description: "Operating near performance limits" },
             { code: "PA.I.F.S1", category: "S", description: "Calculate weight and balance and performance data" }
           ]
@@ -105,6 +149,18 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with the operation of systems.",
           stds: [
             { code: "PA.I.G.K1", category: "K", description: "Airplane systems and their operation" },
+            { code: "PA.I.G.K1a", category: "K", description: "Operation of primary flight controls" },
+            { code: "PA.I.G.K1b", category: "K", description: "Operation of secondary flight controls and trim" },
+            { code: "PA.I.G.K1c", category: "K", description: "Powerplant and propeller systems" },
+            { code: "PA.I.G.K1d", category: "K", description: "Landing gear systems" },
+            { code: "PA.I.G.K1e", category: "K", description: "Fuel metering systems including carburetors and fuel injection" },
+            { code: "PA.I.G.K1f", category: "K", description: "Fuel systems" },
+            { code: "PA.I.G.K1g", category: "K", description: "Electrical systems" },
+            { code: "PA.I.G.K1h", category: "K", description: "Hydraulic systems" },
+            { code: "PA.I.G.K1i", category: "K", description: "Cabin pressurization and environmental systems" },
+            { code: "PA.I.G.K1j", category: "K", description: "Ice protection systems" },
+            { code: "PA.I.G.K1k", category: "K", description: "Avionics and autopilot systems" },
+            { code: "PA.I.G.K1l", category: "K", description: "Environmental and deicing systems" },
             { code: "PA.I.G.R1", category: "R", description: "System malfunctions and failures" },
             { code: "PA.I.G.S1", category: "S", description: "Operate and monitor aircraft systems" }
           ]
@@ -116,7 +172,22 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with human factors.",
           stds: [
             { code: "PA.I.H.K1", category: "K", description: "Aeronautical decision-making and risk management" },
+            { code: "PA.I.H.K1a", category: "K", description: "Aeronautical decision-making" },
+            { code: "PA.I.H.K1b", category: "K", description: "Risk management" },
+            { code: "PA.I.H.K1c", category: "K", description: "Task management" },
+            { code: "PA.I.H.K1d", category: "K", description: "Situational awareness" },
+            { code: "PA.I.H.K1e", category: "K", description: "Controlled flight into terrain (CFIT)" },
             { code: "PA.I.H.K2", category: "K", description: "Physiological factors and aeromedical factors" },
+            { code: "PA.I.H.K2a", category: "K", description: "Hypoxia" },
+            { code: "PA.I.H.K2b", category: "K", description: "Hyperventilation" },
+            { code: "PA.I.H.K2c", category: "K", description: "Middle ear and sinus problems" },
+            { code: "PA.I.H.K2d", category: "K", description: "Spatial disorientation" },
+            { code: "PA.I.H.K2e", category: "K", description: "Motion sickness" },
+            { code: "PA.I.H.K2f", category: "K", description: "Carbon monoxide poisoning" },
+            { code: "PA.I.H.K2g", category: "K", description: "Stress and fatigue" },
+            { code: "PA.I.H.K2h", category: "K", description: "Dehydration and heatstroke" },
+            { code: "PA.I.H.K2i", category: "K", description: "Alcohol and drugs" },
+            { code: "PA.I.H.K2j", category: "K", description: "Scuba diving and altitude" },
             { code: "PA.I.H.R1", category: "R", description: "Personal health and fitness for flight" },
             { code: "PA.I.H.S1", category: "S", description: "Apply ADM and risk management principles" }
           ]
@@ -133,6 +204,12 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with preflight assessment.",
           stds: [
             { code: "PA.II.A.K1", category: "K", description: "Preflight inspection items and procedures" },
+            { code: "PA.II.A.K1a", category: "K", description: "Airplane certificates and documents" },
+            { code: "PA.II.A.K1b", category: "K", description: "Airworthiness requirements" },
+            { code: "PA.II.A.K1c", category: "K", description: "Airplane systems and equipment" },
+            { code: "PA.II.A.K1d", category: "K", description: "Fuel and oil" },
+            { code: "PA.II.A.K1e", category: "K", description: "Loading and weight and balance" },
+            { code: "PA.II.A.K1f", category: "K", description: "Performance and limitations" },
             { code: "PA.II.A.R1", category: "R", description: "Environmental factors and aircraft condition" },
             { code: "PA.II.A.S1", category: "S", description: "Perform a preflight inspection and determine airworthiness" }
           ]
@@ -144,6 +221,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with flight deck management.",
           stds: [
             { code: "PA.II.B.K1", category: "K", description: "Cockpit organization and resource management" },
+            { code: "PA.II.B.K1a", category: "K", description: "Cockpit organization" },
+            { code: "PA.II.B.K1b", category: "K", description: "Resource management" },
+            { code: "PA.II.B.K1c", category: "K", description: "Checklist usage" },
+            { code: "PA.II.B.K1d", category: "K", description: "Automation management" },
+            { code: "PA.II.B.K1e", category: "K", description: "Passenger briefing" },
             { code: "PA.II.B.R1", category: "R", description: "Distractions and task management" },
             { code: "PA.II.B.S1", category: "S", description: "Organize the flight deck and manage resources" }
           ]
@@ -155,6 +237,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with engine starting.",
           stds: [
             { code: "PA.II.C.K1", category: "K", description: "Engine starting procedures and safety" },
+            { code: "PA.II.C.K1a", category: "K", description: "Engine starting procedures" },
+            { code: "PA.II.C.K1b", category: "K", description: "Safety during engine start" },
+            { code: "PA.II.C.K1c", category: "K", description: "Hand propping safety" },
+            { code: "PA.II.C.K1d", category: "K", description: "Engine fire during start" },
+            { code: "PA.II.C.K1e", category: "K", description: "Monitoring engine parameters" },
             { code: "PA.II.C.R1", category: "R", description: "Propeller safety and engine fires" },
             { code: "PA.II.C.S1", category: "S", description: "Start the engine and monitor parameters" }
           ]
@@ -166,6 +253,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with the before takeoff check.",
           stds: [
             { code: "PA.II.E.K1", category: "K", description: "Before takeoff check items and procedures" },
+            { code: "PA.II.E.K1a", category: "K", description: "Before takeoff check items" },
+            { code: "PA.II.E.K1b", category: "K", description: "Checklist usage" },
+            { code: "PA.II.E.K1c", category: "K", description: "Distractions and task management" },
+            { code: "PA.II.E.K1d", category: "K", description: "Environmental factors" },
+            { code: "PA.II.E.K1e", category: "K", description: "Readiness for takeoff" },
             { code: "PA.II.E.R1", category: "R", description: "Checklist usage and distractions" },
             { code: "PA.II.E.S1", category: "S", description: "Perform the before takeoff check and verify readiness" }
           ]
@@ -182,7 +274,17 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with communications, light signals, and runway lighting systems.",
           stds: [
             { code: "PA.III.A.K1", category: "K", description: "Communication procedures and phraseology" },
+            { code: "PA.III.A.K1a", category: "K", description: "Communication procedures" },
+            { code: "PA.III.A.K1b", category: "K", description: "Phraseology" },
+            { code: "PA.III.A.K1c", category: "K", description: "Radio failure procedures" },
+            { code: "PA.III.A.K1d", category: "K", description: "Light signals" },
+            { code: "PA.III.A.K1e", category: "K", description: "Lost communication procedures" },
             { code: "PA.III.A.K2", category: "K", description: "ATC light signals and their meanings" },
+            { code: "PA.III.A.K2a", category: "K", description: "ATC light signals" },
+            { code: "PA.III.A.K2b", category: "K", description: "Meanings of light signals" },
+            { code: "PA.III.A.K2c", category: "K", description: "Runway lighting systems" },
+            { code: "PA.III.A.K2d", category: "K", description: "Airport signage" },
+            { code: "PA.III.A.K2e", category: "K", description: "Visual aids" },
             { code: "PA.III.A.R1", category: "R", description: "Communication failure and lost procedures" },
             { code: "PA.III.A.S1", category: "S", description: "Maintain radio communications and interpret signals" }
           ]
@@ -194,6 +296,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with traffic patterns.",
           stds: [
             { code: "PA.III.B.K1", category: "K", description: "Traffic pattern procedures and safety" },
+            { code: "PA.III.B.K1a", category: "K", description: "Traffic pattern procedures" },
+            { code: "PA.III.B.K1b", category: "K", description: "Standard traffic pattern" },
+            { code: "PA.III.B.K1c", category: "K", description: "Non-standard traffic pattern" },
+            { code: "PA.III.B.K1d", category: "K", description: "Collision avoidance" },
+            { code: "PA.III.B.K1e", category: "K", description: "Wake turbulence avoidance" },
             { code: "PA.III.B.R1", category: "R", description: "Collision avoidance and wake turbulence" },
             { code: "PA.III.B.S1", category: "S", description: "Follow traffic pattern procedures and maintain separation" }
           ]
@@ -205,6 +312,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with airport marking and signage.",
           stds: [
             { code: "PA.III.C.K1", category: "K", description: "Airport markings, signs, and lighting" },
+            { code: "PA.III.C.K1a", category: "K", description: "Airport markings" },
+            { code: "PA.III.C.K1b", category: "K", description: "Airport signs" },
+            { code: "PA.III.C.K1c", category: "K", description: "Airport lighting" },
+            { code: "PA.III.C.K1d", category: "K", description: "Runway incursions" },
+            { code: "PA.III.C.K1e", category: "K", description: "Surface movement safety" },
             { code: "PA.III.C.R1", category: "R", description: "Misinterpretation of markings and signs" },
             { code: "PA.III.C.S1", category: "S", description: "Identify and explain airport markings and signs" }
           ]
@@ -221,6 +333,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a normal takeoff and climb.",
           stds: [
             { code: "PA.IV.A.K1", category: "K", description: "Normal takeoff and climb procedures" },
+            { code: "PA.IV.A.K1a", category: "K", description: "Takeoff and climb procedures" },
+            { code: "PA.IV.A.K1b", category: "K", description: "Flap settings" },
+            { code: "PA.IV.A.K1c", category: "K", description: "Airspeed and pitch attitudes" },
+            { code: "PA.IV.A.K1d", category: "K", description: "Wind correction" },
+            { code: "PA.IV.A.K1e", category: "K", description: "Noise abatement procedures" },
             { code: "PA.IV.A.R1", category: "R", description: "Wind and surface conditions" },
             { code: "PA.IV.A.S1", category: "S", description: "Perform a normal takeoff and climb within standards" }
           ]
@@ -232,6 +349,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a normal approach and landing.",
           stds: [
             { code: "PA.IV.B.K1", category: "K", description: "Normal approach and landing procedures" },
+            { code: "PA.IV.B.K1a", category: "K", description: "Approach and landing procedures" },
+            { code: "PA.IV.B.K1b", category: "K", description: "Flap settings" },
+            { code: "PA.IV.B.K1c", category: "K", description: "Airspeed and pitch attitudes" },
+            { code: "PA.IV.B.K1d", category: "K", description: "Wind correction" },
+            { code: "PA.IV.B.K1e", category: "K", description: "Stabilized approach criteria" },
             { code: "PA.IV.B.R1", category: "R", description: "Stabilized approach and landing hazards" },
             { code: "PA.IV.B.S1", category: "S", description: "Perform a normal approach and landing within standards" }
           ]
@@ -243,6 +365,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a soft-field takeoff and climb.",
           stds: [
             { code: "PA.IV.C.K1", category: "K", description: "Soft-field takeoff and climb procedures" },
+            { code: "PA.IV.C.K1a", category: "K", description: "Soft-field takeoff and climb procedures" },
+            { code: "PA.IV.C.K1b", category: "K", description: "Surface considerations" },
+            { code: "PA.IV.C.K1c", category: "K", description: "Pitch attitudes" },
+            { code: "PA.IV.C.K1d", category: "K", description: "Ground effect usage" },
+            { code: "PA.IV.C.K1e", category: "K", description: "Flap settings" },
             { code: "PA.IV.C.R1", category: "R", description: "Surface conditions and ground effect" },
             { code: "PA.IV.C.S1", category: "S", description: "Perform a soft-field takeoff and climb within standards" }
           ]
@@ -254,6 +381,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a soft-field approach and landing.",
           stds: [
             { code: "PA.IV.D.K1", category: "K", description: "Soft-field approach and landing procedures" },
+            { code: "PA.IV.D.K1a", category: "K", description: "Soft-field approach and landing procedures" },
+            { code: "PA.IV.D.K1b", category: "K", description: "Surface considerations" },
+            { code: "PA.IV.D.K1c", category: "K", description: "Pitch attitudes" },
+            { code: "PA.IV.D.K1d", category: "K", description: "Power usage" },
+            { code: "PA.IV.D.K1e", category: "K", description: "Flap settings" },
             { code: "PA.IV.D.R1", category: "R", description: "Surface conditions and touchdown control" },
             { code: "PA.IV.D.S1", category: "S", description: "Perform a soft-field approach and landing within standards" }
           ]
@@ -265,6 +397,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a short-field takeoff and maximum performance climb.",
           stds: [
             { code: "PA.IV.E.K1", category: "K", description: "Short-field takeoff and climb procedures" },
+            { code: "PA.IV.E.K1a", category: "K", description: "Short-field takeoff and climb procedures" },
+            { code: "PA.IV.E.K1b", category: "K", description: "Obstacle clearance" },
+            { code: "PA.IV.E.K1c", category: "K", description: "Airspeed and pitch attitudes" },
+            { code: "PA.IV.E.K1d", category: "K", description: "Flap settings" },
+            { code: "PA.IV.E.K1e", category: "K", description: "Performance data" },
             { code: "PA.IV.E.R1", category: "R", description: "Obstacle clearance and performance limits" },
             { code: "PA.IV.E.S1", category: "S", description: "Perform a short-field takeoff and climb within standards" }
           ]
@@ -276,6 +413,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a short-field approach and landing.",
           stds: [
             { code: "PA.IV.F.K1", category: "K", description: "Short-field approach and landing procedures" },
+            { code: "PA.IV.F.K1a", category: "K", description: "Short-field approach and landing procedures" },
+            { code: "PA.IV.F.K1b", category: "K", description: "Obstacle clearance" },
+            { code: "PA.IV.F.K1c", category: "K", description: "Airspeed and pitch attitudes" },
+            { code: "PA.IV.F.K1d", category: "K", description: "Flap settings" },
+            { code: "PA.IV.F.K1e", category: "K", description: "Braking procedures" },
             { code: "PA.IV.F.R1", category: "R", description: "Obstacle clearance and touchdown accuracy" },
             { code: "PA.IV.F.S1", category: "S", description: "Perform a short-field approach and landing within standards" }
           ]
@@ -287,6 +429,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a forward slip to a landing.",
           stds: [
             { code: "PA.IV.G.K1", category: "K", description: "Forward slip procedures and purpose" },
+            { code: "PA.IV.G.K1a", category: "K", description: "Forward slip procedures" },
+            { code: "PA.IV.G.K1b", category: "K", description: "Purpose of forward slip" },
+            { code: "PA.IV.G.K1c", category: "K", description: "Airspeed and pitch attitudes" },
+            { code: "PA.IV.G.K1d", category: "K", description: "Crosswind correction" },
+            { code: "PA.IV.G.K1e", category: "K", description: "Recovery from slip" },
             { code: "PA.IV.G.R1", category: "R", description: "Airspeed control and crosswind factors" },
             { code: "PA.IV.G.S1", category: "S", description: "Perform a forward slip to a landing within standards" }
           ]
@@ -298,6 +445,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with a go-around/rejected landing.",
           stds: [
             { code: "PA.IV.H.K1", category: "K", description: "Go-around procedures and decision making" },
+            { code: "PA.IV.H.K1a", category: "K", description: "Go-around procedures" },
+            { code: "PA.IV.H.K1b", category: "K", description: "Decision making" },
+            { code: "PA.IV.H.K1c", category: "K", description: "Power application" },
+            { code: "PA.IV.H.K1d", category: "K", description: "Flap and gear retraction" },
+            { code: "PA.IV.H.K1e", category: "K", description: "Airspeed and pitch attitudes" },
             { code: "PA.IV.H.R1", category: "R", description: "Delayed decision and configuration changes" },
             { code: "PA.IV.H.S1", category: "S", description: "Perform a go-around within standards" }
           ]
@@ -314,6 +466,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with steep turns.",
           stds: [
             { code: "PA.V.A.K1", category: "K", description: "Steep turn procedures and aerodynamics" },
+            { code: "PA.V.A.K1a", category: "K", description: "Steep turn procedures" },
+            { code: "PA.V.A.K1b", category: "K", description: "Aerodynamics" },
+            { code: "PA.V.A.K1c", category: "K", description: "Overbanking tendency" },
+            { code: "PA.V.A.K1d", category: "K", description: "Structural limits" },
+            { code: "PA.V.A.K1e", category: "K", description: "Power settings" },
             { code: "PA.V.A.R1", category: "R", description: "Overbanking tendency and structural limits" },
             { code: "PA.V.A.S1", category: "S", description: "Perform a steep turn within standards" }
           ]
@@ -325,6 +482,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with ground reference maneuvers.",
           stds: [
             { code: "PA.V.B.K1", category: "K", description: "Ground reference maneuver procedures and wind correction" },
+            { code: "PA.V.B.K1a", category: "K", description: "Rectangular course" },
+            { code: "PA.V.B.K1b", category: "K", description: "S-turns" },
+            { code: "PA.V.B.K1c", category: "K", description: "Turns around a point" },
+            { code: "PA.V.B.K1d", category: "K", description: "Wind correction" },
+            { code: "PA.V.B.K1e", category: "K", description: "Altitude and airspeed control" },
             { code: "PA.V.B.R1", category: "R", description: "Collision avoidance and low-level hazards" },
             { code: "PA.V.B.S1", category: "S", description: "Perform ground reference maneuvers within standards" }
           ]
@@ -341,6 +503,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with pilotage and dead reckoning.",
           stds: [
             { code: "PA.VI.A.K1", category: "K", description: "Pilotage and dead reckoning procedures" },
+            { code: "PA.VI.A.K1a", category: "K", description: "Pilotage" },
+            { code: "PA.VI.A.K1b", category: "K", description: "Dead reckoning" },
+            { code: "PA.VI.A.K1c", category: "K", description: "Navigation charts" },
+            { code: "PA.VI.A.K1d", category: "K", description: "Magnetic compass" },
+            { code: "PA.VI.A.K1e", category: "K", description: "Lost procedures" },
             { code: "PA.VI.A.R1", category: "R", description: "Navigation errors and fuel management" },
             { code: "PA.VI.A.S1", category: "S", description: "Navigate using pilotage and dead reckoning within standards" }
           ]
@@ -352,6 +519,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with navigation systems and radar services.",
           stds: [
             { code: "PA.VI.B.K1", category: "K", description: "Navigation systems and radar services" },
+            { code: "PA.VI.B.K1a", category: "K", description: "VOR" },
+            { code: "PA.VI.B.K1b", category: "K", description: "GPS" },
+            { code: "PA.VI.B.K1c", category: "K", description: "Radar services" },
+            { code: "PA.VI.B.K1d", category: "K", description: "Transponder" },
+            { code: "PA.VI.B.K1e", category: "K", description: "ADS-B" },
             { code: "PA.VI.B.R1", category: "R", description: "System malfunctions and over-reliance on automation" },
             { code: "PA.VI.B.S1", category: "S", description: "Use navigation systems and radar services within standards" }
           ]
@@ -363,6 +535,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with diversion.",
           stds: [
             { code: "PA.VI.C.K1", category: "K", description: "Diversion procedures and decision making" },
+            { code: "PA.VI.C.K1a", category: "K", description: "Diversion procedures" },
+            { code: "PA.VI.C.K1b", category: "K", description: "Decision making" },
+            { code: "PA.VI.C.K1c", category: "K", description: "Fuel management" },
+            { code: "PA.VI.C.K1d", category: "K", description: "Navigation" },
+            { code: "PA.VI.C.K1e", category: "K", description: "Communication" },
             { code: "PA.VI.C.R1", category: "R", description: "Delayed decision and fuel management" },
             { code: "PA.VI.C.S1", category: "S", description: "Perform a diversion within standards" }
           ]
@@ -374,6 +551,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with lost procedures.",
           stds: [
             { code: "PA.VI.D.K1", category: "K", description: "Lost procedures and resources" },
+            { code: "PA.VI.D.K1a", category: "K", description: "Lost procedures" },
+            { code: "PA.VI.D.K1b", category: "K", description: "Resources" },
+            { code: "PA.VI.D.K1c", category: "K", description: "Communication" },
+            { code: "PA.VI.D.K1d", category: "K", description: "Navigation" },
+            { code: "PA.VI.D.K1e", category: "K", description: "Fuel management" },
             { code: "PA.VI.D.R1", category: "R", description: "Panic and fuel exhaustion" },
             { code: "PA.VI.D.S1", category: "S", description: "Perform lost procedures within standards" }
           ]
@@ -390,6 +572,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with maneuvering during slow flight.",
           stds: [
             { code: "PA.VII.A.K1", category: "K", description: "Slow flight procedures and aerodynamics" },
+            { code: "PA.VII.A.K1a", category: "K", description: "Slow flight procedures" },
+            { code: "PA.VII.A.K1b", category: "K", description: "Aerodynamics" },
+            { code: "PA.VII.A.K1c", category: "K", description: "Flight controls" },
+            { code: "PA.VII.A.K1d", category: "K", description: "Pitch and power" },
+            { code: "PA.VII.A.K1e", category: "K", description: "Configuration" },
             { code: "PA.VII.A.R1", category: "R", description: "Stall/spin awareness and altitude loss" },
             { code: "PA.VII.A.S1", category: "S", description: "Perform maneuvering during slow flight within standards" }
           ]
@@ -401,6 +588,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with power-off stalls.",
           stds: [
             { code: "PA.VII.B.K1", category: "K", description: "Power-off stall procedures and aerodynamics" },
+            { code: "PA.VII.B.K1a", category: "K", description: "Power-off stall procedures" },
+            { code: "PA.VII.B.K1b", category: "K", description: "Aerodynamics" },
+            { code: "PA.VII.B.K1c", category: "K", description: "Recovery procedures" },
+            { code: "PA.VII.B.K1d", category: "K", description: "Configuration" },
+            { code: "PA.VII.B.K1e", category: "K", description: "Pitch and power" },
             { code: "PA.VII.B.R1", category: "R", description: "Secondary stalls and spin awareness" },
             { code: "PA.VII.B.S1", category: "S", description: "Perform power-off stalls within standards" }
           ]
@@ -412,6 +604,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with power-on stalls.",
           stds: [
             { code: "PA.VII.C.K1", category: "K", description: "Power-on stall procedures and aerodynamics" },
+            { code: "PA.VII.C.K1a", category: "K", description: "Power-on stall procedures" },
+            { code: "PA.VII.C.K1b", category: "K", description: "Aerodynamics" },
+            { code: "PA.VII.C.K1c", category: "K", description: "Recovery procedures" },
+            { code: "PA.VII.C.K1d", category: "K", description: "Configuration" },
+            { code: "PA.VII.C.K1e", category: "K", description: "Pitch and power" },
             { code: "PA.VII.C.R1", category: "R", description: "Secondary stalls and spin awareness" },
             { code: "PA.VII.C.S1", category: "S", description: "Perform power-on stalls within standards" }
           ]
@@ -423,6 +620,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with spin awareness.",
           stds: [
             { code: "PA.VII.D.K1", category: "K", description: "Spin aerodynamics and recovery procedures" },
+            { code: "PA.VII.D.K1a", category: "K", description: "Spin aerodynamics" },
+            { code: "PA.VII.D.K1b", category: "K", description: "Spin recovery" },
+            { code: "PA.VII.D.K1c", category: "K", description: "Spin prevention" },
+            { code: "PA.VII.D.K1d", category: "K", description: "Factors affecting spins" },
+            { code: "PA.VII.D.K1e", category: "K", description: "Certification requirements" },
             { code: "PA.VII.D.R1", category: "R", description: "Stall/spin hazards and structural limits" },
             { code: "PA.VII.D.S1", category: "S", description: "Explain spin awareness and recovery procedures" }
           ]
@@ -439,6 +641,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with straight-and-level flight solely by reference to instruments.",
           stds: [
             { code: "PA.VIII.A.K1", category: "K", description: "Instrument flight procedures and scanning" },
+            { code: "PA.VIII.A.K1a", category: "K", description: "Instrument scan" },
+            { code: "PA.VIII.A.K1b", category: "K", description: "Pitch, bank, and power" },
+            { code: "PA.VIII.A.K1c", category: "K", description: "Trim" },
+            { code: "PA.VIII.A.K1d", category: "K", description: "Instrument interpretation" },
+            { code: "PA.VIII.A.K1e", category: "K", description: "Error correction" },
             { code: "PA.VIII.A.R1", category: "R", description: "Instrument failure and spatial disorientation" },
             { code: "PA.VIII.A.S1", category: "S", description: "Maintain straight-and-level flight within standards" }
           ]
@@ -450,6 +657,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with constant airspeed climbs solely by reference to instruments.",
           stds: [
             { code: "PA.VIII.B.K1", category: "K", description: "Constant airspeed climb procedures" },
+            { code: "PA.VIII.B.K1a", category: "K", description: "Instrument scan" },
+            { code: "PA.VIII.B.K1b", category: "K", description: "Pitch, bank, and power" },
+            { code: "PA.VIII.B.K1c", category: "K", description: "Trim" },
+            { code: "PA.VIII.B.K1d", category: "K", description: "Instrument interpretation" },
+            { code: "PA.VIII.B.K1e", category: "K", description: "Error correction" },
             { code: "PA.VIII.B.R1", category: "R", description: "Instrument failure and spatial disorientation" },
             { code: "PA.VIII.B.S1", category: "S", description: "Perform constant airspeed climbs within standards" }
           ]
@@ -461,6 +673,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with constant airspeed descents solely by reference to instruments.",
           stds: [
             { code: "PA.VIII.C.K1", category: "K", description: "Constant airspeed descent procedures" },
+            { code: "PA.VIII.C.K1a", category: "K", description: "Instrument scan" },
+            { code: "PA.VIII.C.K1b", category: "K", description: "Pitch, bank, and power" },
+            { code: "PA.VIII.C.K1c", category: "K", description: "Trim" },
+            { code: "PA.VIII.C.K1d", category: "K", description: "Instrument interpretation" },
+            { code: "PA.VIII.C.K1e", category: "K", description: "Error correction" },
             { code: "PA.VIII.C.R1", category: "R", description: "Instrument failure and spatial disorientation" },
             { code: "PA.VIII.C.S1", category: "S", description: "Perform constant airspeed descents within standards" }
           ]
@@ -472,6 +689,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with turns to headings solely by reference to instruments.",
           stds: [
             { code: "PA.VIII.D.K1", category: "K", description: "Turn procedures and instrument scanning" },
+            { code: "PA.VIII.D.K1a", category: "K", description: "Instrument scan" },
+            { code: "PA.VIII.D.K1b", category: "K", description: "Pitch, bank, and power" },
+            { code: "PA.VIII.D.K1c", category: "K", description: "Trim" },
+            { code: "PA.VIII.D.K1d", category: "K", description: "Instrument interpretation" },
+            { code: "PA.VIII.D.K1e", category: "K", description: "Error correction" },
             { code: "PA.VIII.D.R1", category: "R", description: "Instrument failure and spatial disorientation" },
             { code: "PA.VIII.D.S1", category: "S", description: "Perform turns to headings within standards" }
           ]
@@ -483,6 +705,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with recovery from unusual flight attitudes solely by reference to instruments.",
           stds: [
             { code: "PA.VIII.E.K1", category: "K", description: "Unusual attitude recovery procedures" },
+            { code: "PA.VIII.E.K1a", category: "K", description: "Recognition" },
+            { code: "PA.VIII.E.K1b", category: "K", description: "Recovery procedures" },
+            { code: "PA.VIII.E.K1c", category: "K", description: "Aerodynamics" },
+            { code: "PA.VIII.E.K1d", category: "K", description: "Instrument interpretation" },
+            { code: "PA.VIII.E.K1e", category: "K", description: "Pitch, bank, and power" },
             { code: "PA.VIII.E.R1", category: "R", description: "Spatial disorientation and structural limits" },
             { code: "PA.VIII.E.S1", category: "S", description: "Recover from unusual attitudes within standards" }
           ]
@@ -510,6 +737,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with emergency descent.",
           stds: [
             { code: "PA.IX.A.K1", category: "K", description: "Emergency descent procedures and purpose" },
+            { code: "PA.IX.A.K1a", category: "K", description: "Emergency descent procedures" },
+            { code: "PA.IX.A.K1b", category: "K", description: "Structural limits" },
+            { code: "PA.IX.A.K1c", category: "K", description: "Airspeed control" },
+            { code: "PA.IX.A.K1d", category: "K", description: "Configuration" },
+            { code: "PA.IX.A.K1e", category: "K", description: "ATC communication" },
             { code: "PA.IX.A.R1", category: "R", description: "Structural limits and collision avoidance" },
             { code: "PA.IX.A.S1", category: "S", description: "Perform an emergency descent within standards" }
           ]
@@ -521,6 +753,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with emergency approach and landing.",
           stds: [
             { code: "PA.IX.B.K1", category: "K", description: "Emergency approach and landing procedures" },
+            { code: "PA.IX.B.K1a", category: "K", description: "Emergency approach procedures" },
+            { code: "PA.IX.B.K1b", category: "K", description: "Landing site selection" },
+            { code: "PA.IX.B.K1c", category: "K", description: "Airspeed control" },
+            { code: "PA.IX.B.K1d", category: "K", description: "Configuration" },
+            { code: "PA.IX.B.K1e", category: "K", description: "Checklist usage" },
             { code: "PA.IX.B.R1", category: "R", description: "Landing site selection and configuration" },
             { code: "PA.IX.B.S1", category: "S", description: "Perform an emergency approach and landing within standards" }
           ]
@@ -532,6 +769,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with systems and equipment malfunctions.",
           stds: [
             { code: "PA.IX.C.K1", category: "K", description: "System malfunctions and recovery procedures" },
+            { code: "PA.IX.C.K1a", category: "K", description: "Engine malfunctions" },
+            { code: "PA.IX.C.K1b", category: "K", description: "Electrical malfunctions" },
+            { code: "PA.IX.C.K1c", category: "K", description: "Avionics malfunctions" },
+            { code: "PA.IX.C.K1d", category: "K", description: "Landing gear malfunctions" },
+            { code: "PA.IX.C.K1e", category: "K", description: "Other systems malfunctions" },
             { code: "PA.IX.C.R1", category: "R", description: "Distractions and task management" },
             { code: "PA.IX.C.S1", category: "S", description: "Identify and respond to system malfunctions" }
           ]
@@ -543,6 +785,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with emergency equipment and survival gear.",
           stds: [
             { code: "PA.IX.D.K1", category: "K", description: "Emergency equipment and survival gear" },
+            { code: "PA.IX.D.K1a", category: "K", description: "Emergency equipment" },
+            { code: "PA.IX.D.K1b", category: "K", description: "Survival gear" },
+            { code: "PA.IX.D.K1c", category: "K", description: "Location and usage" },
+            { code: "PA.IX.D.K1d", category: "K", description: "First aid" },
+            { code: "PA.IX.D.K1e", category: "K", description: "Signaling" },
             { code: "PA.IX.D.R1", category: "R", description: "Environmental hazards and survival" },
             { code: "PA.IX.D.S1", category: "S", description: "Identify and explain emergency equipment" }
           ]
@@ -559,6 +806,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with night preparation.",
           stds: [
             { code: "PA.XI.A.K1", category: "K", description: "Night flight procedures and equipment" },
+            { code: "PA.XI.A.K1a", category: "K", description: "Night vision" },
+            { code: "PA.XI.A.K1b", category: "K", description: "Night lighting" },
+            { code: "PA.XI.A.K1c", category: "K", description: "Airport lighting" },
+            { code: "PA.XI.A.K1d", category: "K", description: "Navigation" },
+            { code: "PA.XI.A.K1e", category: "K", description: "Emergency procedures" },
             { code: "PA.XI.A.R1", category: "R", description: "Night illusions and spatial disorientation" },
             { code: "PA.XI.A.S1", category: "S", description: "Prepare for night flight and explain procedures" }
           ]
@@ -575,6 +827,11 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with after landing, parking, and securing.",
           stds: [
             { code: "PA.XII.A.K1", category: "K", description: "Postflight procedures and securing the aircraft" },
+            { code: "PA.XII.A.K1a", category: "K", description: "After landing procedures" },
+            { code: "PA.XII.A.K1b", category: "K", description: "Parking and securing" },
+            { code: "PA.XII.A.K1c", category: "K", description: "Engine shutdown" },
+            { code: "PA.XII.A.K1d", category: "K", description: "Postflight inspection" },
+            { code: "PA.XII.A.K1e", category: "K", description: "Recordkeeping" },
             { code: "PA.XII.A.R1", category: "R", description: "Surface hazards and securing errors" },
             { code: "PA.XII.A.S1", category: "S", description: "Perform postflight procedures within standards" }
           ]

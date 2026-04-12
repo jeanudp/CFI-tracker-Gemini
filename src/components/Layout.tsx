@@ -81,6 +81,13 @@ export default function Layout({ children, user }: LayoutProps) {
           )}
           
           {/* Dynamic Navigation Buttons */}
+          {path.startsWith('/student/') && (
+            <Link to="/history" className={buttonClass}>
+              <ArrowLeft size={14} />
+              <span>Back to History</span>
+            </Link>
+          )}
+
           {path !== '/' && (
             <Link to="/" className={buttonClass}>
               <Users size={14} />

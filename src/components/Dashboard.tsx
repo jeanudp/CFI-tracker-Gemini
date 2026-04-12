@@ -339,9 +339,12 @@ export default function Dashboard() {
     const stats = getCumulativeStats(student.name);
     const rating = student.current_rating;
     const name = student.name;
+    const studentLessons = lessons.filter(l => l.student_name === name && l.meta?.rating_code === rating);
 
+    // Condition 1: All flight time hour requirements met
+    let allHoursMet = false;
     if (rating === 'ppl') {
-      return (
+      allHoursMet = (
         stats.totFlight >= 40 &&
         stats.totDual >= 20 &&
         stats.totXcDual >= 3 &&
@@ -353,26 +356,20 @@ export default function Dashboard() {
         stats.totSoloXc >= 5 &&
         getManualValue(name, 'soloXc150') >= 1 &&
         getManualValue(name, 'soloTowered') >= 3 &&
-        isEndorsementMet(name, 'ppl', 'A.1') &&
         isEndorsementMet(name, 'ppl', 'A.37')
       );
-    }
-
-    if (rating === 'ir') {
-      return (
+    } else if (rating === 'ir') {
+      allHoursMet = (
         stats.totXcPic >= 50 &&
         stats.totSim >= 40 &&
         stats.totInstDual >= 15 &&
         stats.recentInst >= 3 &&
         getManualValue(name, 'ifrXc250') >= 1 &&
         isEndorsementMet(name, 'ir', 'A.43') &&
-        isEndorsementMet(name, 'ir', 'A.44') &&
-        isEndorsementMet(name, 'ir', 'A.1')
+        isEndorsementMet(name, 'ir', 'A.44')
       );
-    }
-
-    if (rating === 'cpl') {
-      return (
+    } else if (rating === 'cpl') {
+      allHoursMet = (
         stats.totFlight >= 250 &&
         stats.picTime >= 100 &&
         stats.totXc >= 50 &&
@@ -384,45 +381,59 @@ export default function Dashboard() {
         stats.totSolo >= 10 &&
         getManualValue(name, 'nightSoloTowered') >= 1 &&
         getManualValue(name, 'soloXc300') >= 1 &&
-        isEndorsementMet(name, 'cpl', 'A.1') &&
         isEndorsementMet(name, 'cpl', 'A.39')
       );
-    }
-
-    if (rating === 'cfi') {
-      return (
+    } else if (rating === 'cfi') {
+      allHoursMet = (
         stats.picTime >= 15 &&
         getManualValue(name, 'commercialHeld') >= 1 &&
         getManualValue(name, 'foiPassed') >= 1 &&
         getManualValue(name, 'cfiPassed') >= 1 &&
         getManualValue(name, 'endorsement2mo') >= 1 &&
-        isEndorsementMet(name, 'cfi', 'A.1') &&
         isEndorsementMet(name, 'cfi', 'A.47') &&
         isEndorsementMet(name, 'cfi', 'A.49')
       );
-    }
-
-    if (rating === 'cfii') {
-      return (
+    } else if (rating === 'cfii') {
+      allHoursMet = (
         getManualValue(name, 'cfiHeld') >= 1 &&
         getManualValue(name, 'instrumentHeld') >= 1 &&
         getManualValue(name, 'instRecent') >= 1 &&
-        isEndorsementMet(name, 'cfii', 'A.1') &&
         isEndorsementMet(name, 'cfii', 'A.48')
       );
-    }
-
-    if (rating === 'mei') {
-      return (
+    } else if (rating === 'mei') {
+      allHoursMet = (
         getManualValue(name, 'cfiHeld') >= 1 &&
         getManualValue(name, 'multiengineHeld') >= 1 &&
         getManualValue(name, 'mePic') >= 5 &&
-        isEndorsementMet(name, 'mei', 'A.1') &&
         isEndorsementMet(name, 'mei', 'A.47')
       );
     }
 
-    return false;
+    // Condition 2: All tasks in all lessons graded Satisfactory
+    // We also need to check if all tasks in the ACS have been graded S at least once
+    const acsTasks = (ALL_ACS[rating] || ALL_ACS['ppl']).flatMap((area: any) => area.tasks);
+    const gradeableTasks = acsTasks.filter((t: any) => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+    
+    const masteredTasksCount = (ALL_ACS[rating] || ALL_ACS['ppl']).flatMap((area: any, ai: number) => 
+      area.tasks.map((_: any, ti: number) => `${ai}_${ti}`)
+    ).filter((id: string) => studentLessons.some(l => l.grades?.[id] === 'S')).length;
+
+    const allAcsCovered = masteredTasksCount >= gradeableTasks.length;
+    const noBadGrades = studentLessons.length > 0 && studentLessons.every(lesson => 
+      Object.values(lesson.grades || {}).every(grade => grade === 'S')
+    );
+
+    const allTasksSat = noBadGrades && allAcsCovered;
+
+    // Condition 3: A.1 endorsement given
+    const a1Given = isEndorsementMet(name, rating, 'A.1');
+
+    return {
+      allHoursMet,
+      allTasksSat,
+      a1Given,
+      canPassCheckride: allHoursMet && allTasksSat && a1Given
+    };
   };
 
   const handleUndoCheckride = async () => {
@@ -780,16 +791,16 @@ export default function Dashboard() {
                         );
                       }
 
-                      const requirementsMet = checkRequirements(student);
+                      const { canPassCheckride } = checkRequirements(student);
                       
                       return (
                         <div className="space-y-2">
                           <button
                             onClick={() => setIsCheckrideConfirmOpen(true)}
-                            disabled={!requirementsMet}
+                            disabled={!canPassCheckride}
                             className={cn(
                               "w-full font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm",
-                              requirementsMet 
+                              canPassCheckride 
                                 ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] animate-pulse shadow-[0_0_15px_rgba(45,122,79,0.4)]" 
                                 : "bg-[#dde3ec] text-[#6b7280] cursor-not-allowed"
                             )}
@@ -797,9 +808,9 @@ export default function Dashboard() {
                             <CheckCircle size={18} />
                             Checkride Passed
                           </button>
-                          {!requirementsMet && (
+                          {!canPassCheckride && (
                             <p className="text-[10px] text-center text-[#6b7280] font-medium">
-                              Requirements not yet met. View the <Link to="/history" className="text-[#1a3a5c] underline">Checkride tab</Link> to see what is missing.
+                              Requirements not yet met. Check the <Link to="/history" className="text-[#1a3a5c] underline">Checkride tab</Link> for details.
                             </p>
                           )}
                         </div>

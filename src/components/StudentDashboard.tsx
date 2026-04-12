@@ -258,14 +258,6 @@ export default function StudentDashboard() {
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link 
-            to="/history" 
-            className="flex items-center gap-2 px-6 py-3 bg-[#1a3a5c] text-white rounded-xl font-bold hover:bg-[#2a5a8c] transition-all shadow-md min-h-[44px] w-full sm:w-auto justify-center"
-          >
-            <ArrowLeft size={18} />
-            Back to History
-          </Link>
-
           {/* Overall Readiness Circle */}
           <div className="flex items-center gap-6 bg-white p-4 pr-8 rounded-3xl border border-[#dde3ec] shadow-sm">
             <div className="relative w-24 h-24">
