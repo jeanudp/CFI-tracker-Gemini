@@ -27,11 +27,14 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
     S: true,
   });
 
-  // Find the task data in PPL ACS
+  // Find the task data in all ACS ratings
   const taskData = useMemo(() => {
-    for (const area of ALL_ACS.ppl || []) {
-      const task = area.tasks.find((t) => t.code === taskId);
-      if (task) return task;
+    for (const ratingKey of Object.keys(ALL_ACS)) {
+      const ratingTasks = ALL_ACS[ratingKey as keyof typeof ALL_ACS] || [];
+      for (const area of ratingTasks) {
+        const task = area.tasks.find((t) => t.code === taskId);
+        if (task && task.stds && task.stds.length > 0) return task;
+      }
     }
     return null;
   }, [taskId]);

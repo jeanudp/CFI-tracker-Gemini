@@ -846,93 +846,337 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
         {
           name: "Pilot Qualifications",
           code: "IR.I.A",
-          references: "14 CFR part 61, AC 68-1, FAA-H-8083-2, FAA-H-8083-3, FAA-H-8083-15, FAA-H-8083-25",
-          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with requirements to act as pilot-in-command under instrument flight rules.",
+          references: "14 CFR part 61; AC 68-1; FAA-H-8083-2, FAA-H-8083-25",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with requirements to act as pilot-in-command (PIC) under instrument flight rules (IFR).",
           stds: [
-            { code: "IR.I.A.K1", category: "K", description: "Certification requirements, recency of experience, and recordkeeping" },
-            { code: "IR.I.A.K2", category: "K", description: "Privileges and limitations" },
-            { code: "IR.I.A.K3", category: "K", description: "Part 68 BasicMed privileges and limitations" },
-            { code: "IR.I.A.R1", category: "R", description: "Proficiency versus currency" },
-            { code: "IR.I.A.R2", category: "R", description: "Personal minimums" },
-            { code: "IR.I.A.R3", category: "R", description: "Fitness for flight and physiological factors that might affect the pilot's ability to fly under instrument conditions" },
-            { code: "IR.I.A.R4", category: "R", description: "Flying unfamiliar aircraft or operating with unfamiliar flight display systems and avionics" },
-            { code: "IR.I.A.S1", category: "S", description: "Apply requirements to act as pilot-in-command under Instrument Flight Rules in a scenario given by the evaluator" }
+            { code: "IR.I.A.K1", category: "K", description: "Certification requirements, recency of experience, and recordkeeping." },
+            { code: "IR.I.A.K1a", category: "K", description: "Certification requirements." },
+            { code: "IR.I.A.K1b", category: "K", description: "Recency of experience." },
+            { code: "IR.I.A.K1c", category: "K", description: "Recordkeeping." },
+            { code: "IR.I.A.K2", category: "K", description: "Privileges and limitations." },
+            { code: "IR.I.A.K3", category: "K", description: "Medical certificates: class, expiration, privileges, and temporary disqualifications." },
+            { code: "IR.I.A.K4", category: "K", description: "Documents required to exercise privileges." },
+            { code: "IR.I.A.R1", category: "R", description: "Proficiency versus currency." },
+            { code: "IR.I.A.R2", category: "R", description: "Personal minimums." },
+            { code: "IR.I.A.R3", category: "R", description: "Fitness for flight (IMSAFE)." },
+            { code: "IR.I.A.S1", category: "S", description: "Apply requirements to act as PIC under IFR in a scenario given by the evaluator." }
           ]
         },
-        createPlaceholderTask("Weather Information", "IR.I.B"),
-        createPlaceholderTask("Cross-Country Flight Planning", "IR.I.C"),
-        createPlaceholderTask("Instruments and Equipment", "IR.I.D"),
-        createPlaceholderTask("Regulations and Procedures", "IR.I.E")
+        {
+          name: "Weather Information",
+          code: "IR.I.B",
+          references: "14 CFR part 91; AC 91-92; FAA-H-8083-2, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with obtaining and analyzing weather information for an IFR flight.",
+          stds: [
+            { code: "IR.I.B.K1", category: "K", description: "Sources of weather data (e.g., FSS, NWS, FIS-B)." },
+            { code: "IR.I.B.K1a", category: "K", description: "Flight Service Station (FSS)." },
+            { code: "IR.I.B.K1b", category: "K", description: "National Weather Service (NWS)." },
+            { code: "IR.I.B.K1c", category: "K", description: "Flight Information Service-Broadcast (FIS-B)." },
+            { code: "IR.I.B.K2", category: "K", description: "Weather products (e.g., METAR, TAF, PIREP, AIRMET, SIGMET)." },
+            { code: "IR.I.B.K3", category: "K", description: "Icing, turbulence, and thunderstorm avoidance." },
+            { code: "IR.I.B.R1", category: "R", description: "Making a go/no-go decision based on weather." },
+            { code: "IR.I.B.R2", category: "R", description: "Operating in or near hazardous weather." },
+            { code: "IR.I.B.S1", category: "S", description: "Analyze weather data and determine if the flight can be conducted safely." }
+          ]
+        },
+        {
+          name: "Cross-Country Flight Planning",
+          code: "IR.I.C",
+          references: "14 CFR part 91; FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25; AIM; POH/AFM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with IFR cross-country flight planning.",
+          stds: [
+            { code: "IR.I.C.K1", category: "K", description: "Route selection, including airways and direct routing." },
+            { code: "IR.I.C.K2", category: "K", description: "Altitude selection based on MEA, MOCA, OROCA." },
+            { code: "IR.I.C.K3", category: "K", description: "Fuel requirements, including reserves and alternate requirements." },
+            { code: "IR.I.C.R1", category: "R", description: "Fuel planning and management." },
+            { code: "IR.I.C.R2", category: "R", description: "Selection of an alternate airport." },
+            { code: "IR.I.C.S1", category: "S", description: "Prepare an IFR flight plan and calculate fuel, time, and distance." }
+          ]
+        },
+        {
+          name: "Instruments and Equipment",
+          code: "IR.I.D",
+          references: "14 CFR part 91; FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25; POH/AFM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with IFR instruments and equipment.",
+          stds: [
+            { code: "IR.I.D.K1", category: "K", description: "Required instruments for IFR flight (§91.205)." },
+            { code: "IR.I.D.K2", category: "K", description: "Pitot-static system and associated instruments." },
+            { code: "IR.I.D.K3", category: "K", description: "Gyroscopic instruments and power sources." },
+            { code: "IR.I.D.R1", category: "R", description: "System and instrument malfunctions." },
+            { code: "IR.I.D.S1", category: "S", description: "Operate and manage the instruments and equipment during the flight." }
+          ]
+        },
+        {
+          name: "Regulations and Procedures",
+          code: "IR.I.E",
+          references: "14 CFR part 91; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with IFR regulations and procedures.",
+          stds: [
+            { code: "IR.I.E.K1", category: "K", description: "IFR regulatory requirements." },
+            { code: "IR.I.E.K2", category: "K", description: "ATC clearances and pilot responsibilities." },
+            { code: "IR.I.E.R1", category: "R", description: "Compliance with ATC clearances." },
+            { code: "IR.I.E.S1", category: "S", description: "Apply IFR regulations and procedures in a scenario given by the evaluator." }
+          ]
+        }
       ] 
     },
     { 
       area: "II. Preflight Procedures", 
       tasks: [
-        createPlaceholderTask("Preflight inspection for IFR flight", "IR.II.A"),
-        createPlaceholderTask("Cockpit management and automation setup", "IR.II.B"),
-        createPlaceholderTask("Engine starting and runup for IFR", "IR.II.C"),
-        createPlaceholderTask("Taxiing with instruments", "IR.II.D"),
-        createPlaceholderTask("Runup and before-takeoff checks for IFR", "IR.II.E")
+        {
+          name: "Preflight Inspection",
+          code: "IR.II.A",
+          references: "14 CFR part 91; FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25; POH/AFM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with preflight inspection for IFR flight.",
+          stds: [
+            { code: "IR.II.A.K1", category: "K", description: "IFR required equipment and instruments." },
+            { code: "IR.II.A.K2", category: "K", description: "Pitot-static system and associated instruments." },
+            { code: "IR.II.A.R1", category: "R", description: "Inoperative equipment and MEL procedures." },
+            { code: "IR.II.A.S1", category: "S", description: "Perform a preflight inspection and verify the aircraft is airworthy for IFR flight." }
+          ]
+        },
+        {
+          name: "Cockpit Management",
+          code: "IR.II.B",
+          references: "FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with cockpit management.",
+          stds: [
+            { code: "IR.II.B.K1", category: "K", description: "Organization of charts and flight materials." },
+            { code: "IR.II.B.R1", category: "R", description: "Distractions and task management." },
+            { code: "IR.II.B.S1", category: "S", description: "Organize the cockpit and manage tasks effectively during the flight." }
+          ]
+        },
+        {
+          name: "Engine Starting",
+          code: "IR.II.C",
+          references: "FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25; POH/AFM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with engine starting.",
+          stds: [
+            { code: "IR.II.C.K1", category: "K", description: "Engine starting procedures and limitations." },
+            { code: "IR.II.C.R1", category: "R", description: "Propeller safety and engine fire during start." },
+            { code: "IR.II.C.S1", category: "S", description: "Perform engine starting procedures according to the POH/AFM." }
+          ]
+        },
+        {
+          name: "Taxiing",
+          code: "IR.II.D",
+          references: "FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25; POH/AFM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with taxiing under IFR.",
+          stds: [
+            { code: "IR.II.D.K1", category: "K", description: "Airport markings, signs, and lighting." },
+            { code: "IR.II.D.R1", category: "R", description: "Runway incursions and surface hazards." },
+            { code: "IR.II.D.S1", category: "S", description: "Taxi the aircraft safely and verify instrument response during turns." }
+          ]
+        },
+        {
+          name: "Before Takeoff Check",
+          code: "IR.II.E",
+          references: "FAA-H-8083-2, FAA-H-8083-15, FAA-H-8083-25; POH/AFM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with the before takeoff check.",
+          stds: [
+            { code: "IR.II.E.K1", category: "K", description: "Required checks before takeoff for IFR flight." },
+            { code: "IR.II.E.R1", category: "R", description: "Checklist usage and distractions." },
+            { code: "IR.II.E.S1", category: "S", description: "Perform the before takeoff check and verify all systems are ready for IFR flight." }
+          ]
+        }
       ] 
     },
     { 
       area: "III. Air Traffic Control Clearances and Procedures", 
       tasks: [
-        createPlaceholderTask("Obtaining and reading back IFR clearances", "IR.III.A"),
-        createPlaceholderTask("Compliance with departure instructions", "IR.III.B"),
-        createPlaceholderTask("Holding instructions and entry procedures", "IR.III.C"),
-        createPlaceholderTask("Position reports", "IR.III.D"),
-        createPlaceholderTask("Lost communications procedures", "IR.III.E")
+        {
+          name: "Compliance with Departure, En Route, and Arrival Procedures and Clearances",
+          code: "IR.III.A",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with ATC clearances and procedures.",
+          stds: [
+            { code: "IR.III.A.K1", category: "K", description: "ATC clearances and pilot responsibilities." },
+            { code: "IR.III.A.K2", category: "K", description: "Departure, en route, and arrival procedures." },
+            { code: "IR.III.A.R1", category: "R", description: "Compliance with ATC clearances." },
+            { code: "IR.III.A.S1", category: "S", description: "Correctly copy and read back ATC clearances." },
+            { code: "IR.III.A.S2", category: "S", description: "Comply with ATC clearances and procedures." }
+          ]
+        },
+        {
+          name: "Holding Procedures",
+          code: "IR.III.B",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with holding procedures.",
+          stds: [
+            { code: "IR.III.B.K1", category: "K", description: "Holding instructions and procedures." },
+            { code: "IR.III.B.K2", category: "K", description: "Holding patterns and entries." },
+            { code: "IR.III.B.R1", category: "R", description: "Fuel management during holding." },
+            { code: "IR.III.B.S1", category: "S", description: "Enter and maintain a holding pattern as instructed by ATC." }
+          ]
+        }
       ] 
     },
     { 
       area: "IV. Flight by Reference to Instruments", 
       tasks: [
-        createPlaceholderTask("Straight and level flight by reference to instruments", "IR.IV.A"),
-        createPlaceholderTask("Turns to headings", "IR.IV.B"),
-        createPlaceholderTask("Recovery from unusual attitudes", "IR.IV.C"),
-        createPlaceholderTask("Magnetic compass turns", "IR.IV.D")
+        {
+          name: "Straight-and-Level Flight",
+          code: "IR.IV.A",
+          references: "FAA-H-8083-15",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with straight-and-level flight by reference to instruments.",
+          stds: [
+            { code: "IR.IV.A.K1", category: "K", description: "Instrument interpretation and aircraft control." },
+            { code: "IR.IV.A.R1", category: "R", description: "Fixation and omission during instrument scan." },
+            { code: "IR.IV.A.S1", category: "S", description: "Maintain straight-and-level flight within ±100 feet and ±10 degrees." }
+          ]
+        },
+        {
+          name: "Constant Airspeed Climbs and Descents",
+          code: "IR.IV.B",
+          references: "FAA-H-8083-15",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with constant airspeed climbs and descents.",
+          stds: [
+            { code: "IR.IV.B.K1", category: "K", description: "Pitch and power management." },
+            { code: "IR.IV.B.R1", category: "R", description: "Improper trim and control inputs." },
+            { code: "IR.IV.B.S1", category: "S", description: "Perform climbs and descents at a constant airspeed within ±10 knots." }
+          ]
+        },
+        {
+          name: "Turns to Headings",
+          code: "IR.IV.C",
+          references: "FAA-H-8083-15",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with turns to headings.",
+          stds: [
+            { code: "IR.IV.C.K1", category: "K", description: "Standard rate turns and lead points." },
+            { code: "IR.IV.C.R1", category: "R", description: "Over-banking and improper lead points." },
+            { code: "IR.IV.C.S1", category: "S", description: "Perform turns to headings within ±10 degrees." }
+          ]
+        },
+        {
+          name: "Recovery from Unusual Flight Attitudes",
+          code: "IR.IV.D",
+          references: "FAA-H-8083-15",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with recovery from unusual flight attitudes.",
+          stds: [
+            { code: "IR.IV.D.K1", category: "K", description: "Recognition and recovery procedures." },
+            { code: "IR.IV.D.R1", category: "R", description: "Improper control inputs during recovery." },
+            { code: "IR.IV.D.S1", category: "S", description: "Recover from unusual flight attitudes using appropriate procedures." }
+          ]
+        }
       ] 
     },
     { 
       area: "V. Navigation Systems", 
       tasks: [
-        createPlaceholderTask("VOR navigation and tracking", "IR.V.A"),
-        createPlaceholderTask("GPS navigation and RNAV", "IR.V.B"),
-        createPlaceholderTask("ILS localizer and glideslope tracking", "IR.V.C"),
-        createPlaceholderTask("DME arc procedures", "IR.V.D"),
-        createPlaceholderTask("Intercepting and tracking courses", "IR.V.E")
+        {
+          name: "Intercepting and Tracking Navigational Systems and DME Arcs",
+          code: "IR.V.A",
+          references: "FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with intercepting and tracking navigational systems and DME arcs.",
+          stds: [
+            { code: "IR.V.A.K1", category: "K", description: "Navigational systems and procedures." },
+            { code: "IR.V.A.R1", category: "R", description: "Improper interception and tracking." },
+            { code: "IR.V.A.S1", category: "S", description: "Intercept and track a course or DME arc within ±1 nautical mile." }
+          ]
+        }
       ] 
     },
     { 
       area: "VI. Instrument Approach Procedures", 
       tasks: [
-        createPlaceholderTask("ILS approach to minimums", "IR.VI.A"),
-        createPlaceholderTask("VOR approach", "IR.VI.B"),
-        createPlaceholderTask("RNAV GPS approach", "IR.VI.C"),
-        createPlaceholderTask("Localizer approach", "IR.VI.D"),
-        createPlaceholderTask("Circling approach", "IR.VI.E"),
-        createPlaceholderTask("Landing from instrument approach", "IR.VI.F"),
-        createPlaceholderTask("Missed approach procedure", "IR.VI.G")
+        {
+          name: "Non-precision Approach",
+          code: "IR.VI.A",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with non-precision approaches.",
+          stds: [
+            { code: "IR.VI.A.K1", category: "K", description: "Non-precision approach procedures and limitations." },
+            { code: "IR.VI.A.R1", category: "R", description: "Descent below MDA without required visual references." },
+            { code: "IR.VI.A.S1", category: "S", description: "Perform a non-precision approach within specified tolerances." }
+          ]
+        },
+        {
+          name: "Precision Approach",
+          code: "IR.VI.B",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with precision approaches.",
+          stds: [
+            { code: "IR.VI.B.K1", category: "K", description: "Precision approach procedures and limitations." },
+            { code: "IR.VI.B.R1", category: "R", description: "Descent below DA/DH without required visual references." },
+            { code: "IR.VI.B.S1", category: "S", description: "Perform a precision approach within specified tolerances." }
+          ]
+        },
+        {
+          name: "Missed Approach",
+          code: "IR.VI.C",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with missed approach procedures.",
+          stds: [
+            { code: "IR.VI.C.K1", category: "K", description: "Missed approach procedures and limitations." },
+            { code: "IR.VI.C.R1", category: "R", description: "Improper execution of missed approach." },
+            { code: "IR.VI.C.S1", category: "S", description: "Perform a missed approach procedure as published or instructed." }
+          ]
+        },
+        {
+          name: "Circling Approach",
+          code: "IR.VI.D",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with circling approaches.",
+          stds: [
+            { code: "IR.VI.D.K1", category: "K", description: "Circling approach procedures and limitations." },
+            { code: "IR.VI.D.R1", category: "R", description: "Loss of visual contact with the runway." },
+            { code: "IR.VI.D.S1", category: "S", description: "Perform a circling approach within specified tolerances." }
+          ]
+        },
+        {
+          name: "Landing from an Instrument Approach",
+          code: "IR.VI.E",
+          references: "14 CFR part 91; FAA-H-8083-15, FAA-H-8083-16, FAA-H-8083-25; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with landing from an instrument approach.",
+          stds: [
+            { code: "IR.VI.E.K1", category: "K", description: "Visual references required for landing (§91.175)." },
+            { code: "IR.VI.E.R1", category: "R", description: "Landing from an unstable approach." },
+            { code: "IR.VI.E.S1", category: "S", description: "Transition from instrument to visual flight and perform a safe landing." }
+          ]
+        }
       ] 
     },
     { 
       area: "VII. Emergency Operations", 
       tasks: [
-        createPlaceholderTask("Loss of communications", "IR.VII.A"),
-        createPlaceholderTask("Partial panel operations with failed instruments", "IR.VII.B"),
-        createPlaceholderTask("Spinning awareness", "IR.VII.C"),
-        createPlaceholderTask("Engine failure during IFR flight", "IR.VII.D"),
-        createPlaceholderTask("Unforecasted icing conditions", "IR.VII.E"),
-        createPlaceholderTask("Emergency descent", "IR.VII.F")
+        {
+          name: "Loss of Communications",
+          code: "IR.VII.A",
+          references: "14 CFR part 91; AIM",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with loss of communications.",
+          stds: [
+            { code: "IR.VII.A.K1", category: "K", description: "Lost communications procedures (§91.185)." },
+            { code: "IR.VII.A.R1", category: "R", description: "Improper execution of lost communications procedures." },
+            { code: "IR.VII.A.S1", category: "S", description: "Apply lost communications procedures in a scenario given by the evaluator." }
+          ]
+        },
+        {
+          name: "Approach with Loss of Primary Flight Instrument Indicator",
+          code: "IR.VII.D",
+          references: "FAA-H-8083-15",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with an approach with loss of primary flight instrument indicator.",
+          stds: [
+            { code: "IR.VII.D.K1", category: "K", description: "Partial panel approach procedures." },
+            { code: "IR.VII.D.R1", category: "R", description: "Improper instrument interpretation during partial panel." },
+            { code: "IR.VII.D.S1", category: "S", description: "Perform an instrument approach with loss of primary flight instrument indicator." }
+          ]
+        }
       ] 
     },
     { 
       area: "VIII. Postflight Procedures", 
       tasks: [
-        createPlaceholderTask("Checking and securing aircraft after IFR flight", "IR.VIII.A"),
-        createPlaceholderTask("Closing IFR flight plan", "IR.VIII.B"),
-        createPlaceholderTask("Logging instrument time correctly", "IR.VIII.C")
+        {
+          name: "Checking Instruments and Equipment",
+          code: "IR.VIII.A",
+          references: "FAA-H-8083-15",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with checking instruments and equipment after flight.",
+          stds: [
+            { code: "IR.VIII.A.K1", category: "K", description: "Postflight instrument and equipment checks." },
+            { code: "IR.VIII.A.R1", category: "R", description: "Failure to identify equipment malfunctions." },
+            { code: "IR.VIII.A.S1", category: "S", description: "Perform postflight checks and report any malfunctions." }
+          ]
+        }
       ] 
     }
   ],
