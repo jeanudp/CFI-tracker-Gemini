@@ -12,11 +12,12 @@ import {
 } from 'recharts';
 
 export default function StudentDashboard() {
-  const { studentName } = useParams<{ studentName: string }>();
+  const { studentName: rawStudentName } = useParams<{ studentName: string }>();
+  const studentName = rawStudentName ? decodeURIComponent(rawStudentName) : '';
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rating, setRating] = useState<any>(Object.values(RATINGS)[0]);
+  const [rating, setRating] = useState<any>({ ...Object.values(RATINGS)[0], code: Object.keys(RATINGS)[0] });
   const [student, setStudent] = useState<Student | null>(null);
   const navigate = useNavigate();
 
@@ -32,11 +33,13 @@ export default function StudentDashboard() {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching data for student:', studentName);
+      
       // Fetch student profile
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('*')
-        .eq('name', studentName)
+        .ilike('name', studentName.trim())
         .single();
       
       if (studentError && studentError.code !== 'PGRST116') throw studentError;
@@ -44,25 +47,30 @@ export default function StudentDashboard() {
       if (studentData) {
         setStudent(studentData);
         if (studentData.current_rating) {
-          setRating((RATINGS as any)[studentData.current_rating] || Object.values(RATINGS)[0]);
+          const rCode = studentData.current_rating;
+          const rData = (RATINGS as any)[rCode] || Object.values(RATINGS)[0];
+          setRating({ ...rData, code: rCode });
         }
       }
 
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select('*')
-        .eq('student_name', studentName)
+        .ilike('student_name', studentName.trim())
         .order('saved_at', { ascending: true });
       
       if (lessonsError) throw lessonsError;
       
+      console.log('allLessons count:', lessonsData?.length || 0);
       setLessons(lessonsData || []);
       
       // Fallback to localStorage if student profile doesn't have rating yet
       if (!studentData?.current_rating) {
         const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
         if (savedRating.code) {
-          setRating((RATINGS as any)[savedRating.code] || Object.values(RATINGS)[0]);
+          const rCode = savedRating.code;
+          const rData = (RATINGS as any)[rCode] || Object.values(RATINGS)[0];
+          setRating({ ...rData, code: rCode });
         }
       }
     } catch (err: any) {
@@ -105,15 +113,24 @@ export default function StudentDashboard() {
     );
   }
 
-  const studentLessons = lessons.filter(l => 
-    l.student_name === studentName && 
+  const filteredByStudent = lessons.filter(l => 
+    l.student_name.trim().toLowerCase() === studentName.trim().toLowerCase()
+  );
+
+  const ratingFilteredLessons = filteredByStudent.filter(l => 
     l.meta?.rating_code === rating.code
   );
+
+  const studentLessons = ratingFilteredLessons.length > 0 ? ratingFilteredLessons : filteredByStudent;
+
+  console.log('studentLessons count:', studentLessons.length);
 
   const acsData = ALL_ACS[rating.code] || ALL_ACS['ppl'];
 
   // Fix 3 — getMostRecentGrade returning wrong value
   const getMostRecentGrade = (lessons: Lesson[], taskId: string): string | null => {
+    if (!lessons || lessons.length === 0) return null;
+    
     const sortedLessons = [...lessons]
       .filter(l => l.grades && l.grades[taskId] !== undefined && l.grades[taskId] !== '')
       .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
@@ -206,10 +223,10 @@ export default function StudentDashboard() {
    .slice(0, 5);
 
   // 5. Readiness Score
-  // Fix 1 — Overall readiness score showing 100 percent with no lessons
   const overallReadiness = () => {
     const allLessons = studentLessons;
     if (allLessons.length === 0) return 0;
+    if (!acsData || acsData.length === 0) return 0;
     
     const allTaskIds = acsData.flatMap((area, ai) => 
       area.tasks.map((_, ti) => `${ai}_${ti}`)
@@ -262,6 +279,9 @@ export default function StudentDashboard() {
       fullArea: area.area
     };
   });
+
+  console.log('groundRadarData:', groundRadarData);
+  console.log('flightRadarData:', flightRadarData);
 
   // Summary Counts
   const getSummaryCounts = (areaIndices: number[]) => {
