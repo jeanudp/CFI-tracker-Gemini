@@ -27,12 +27,15 @@ export default function LessonType() {
       JSON.parse(localStorage.getItem('faa_student_info') || '{}').student || '';
     const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
 
+    console.log('studentName:', savedStudent);
+    console.log('rating:', savedRating);
+
     if (!savedStudent) {
       navigate('/');
       return;
     }
     if (!savedRating.code) {
-      navigate('/rating');
+      navigate('/');
       return;
     }
 
@@ -107,8 +110,8 @@ export default function LessonType() {
   };
 
   const acsData = rating ? (ALL_ACS as any)[rating.code] || [] : [];
-  const groundTasks = acsData.length > 0 ? acsData[0].tasks.filter((t: string) => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')) : [];
-  const flightTasks = acsData.slice(1).reduce((acc: number, area: any) => acc + area.tasks.filter((t: string) => !t.includes('N/A') && !t.includes('ASEL') && !t.includes('Seaplane') && !t.includes('Water')).length, 0);
+  const groundTasks = acsData.length > 0 ? acsData[0].tasks.filter((t: any) => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water')) : [];
+  const flightTasks = acsData.slice(1).reduce((acc: number, area: any) => acc + area.tasks.filter((t: any) => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water')).length, 0);
   const flightAreas = acsData.length > 1 ? acsData.length - 1 : 0;
 
   return (

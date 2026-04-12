@@ -210,6 +210,7 @@ export default function Dashboard() {
     const student = students.find(s => s.name === selectedStudent);
     if (!student) return;
 
+    localStorage.setItem('sb_selected_student', student.name);
     localStorage.setItem('selected_rating', JSON.stringify({
       code: student.current_rating,
       label: student.current_rating_label
