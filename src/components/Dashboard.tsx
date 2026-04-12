@@ -409,10 +409,10 @@ export default function Dashboard() {
 
   const checkRequirements = (student: Student) => {
     const a1Given = endorsements.some(e => 
-      e.endorsement_key === 'A1' && 
+      (e.endorsement_key === 'A1' || e.endorsement_key === 'A.1') && 
       e.completed === true && 
       e.student_name === student.name &&
-      e.rating === student.current_rating
+      e.rating?.toLowerCase() === student.current_rating?.toLowerCase()
     );
 
     return {

@@ -282,6 +282,42 @@ export default function FlightLesson() {
       return;
     }
 
+    const lessonMeta = {
+      date: meta.date,
+      aircraft: meta.aircraft,
+      instructor: instructorName,
+      route: meta.route,
+      totalFlight: meta.totalFlight,
+      dual: meta.dual,
+      solo: meta.solo,
+      pic: meta.pic,
+      sic: meta.sic,
+      xcDual: meta.xcDual,
+      xcSolo: meta.xcSolo,
+      xcPic: meta.xcPic,
+      simInst: meta.simInst,
+      imc: meta.imc,
+      atd: meta.atd,
+      atdInst: meta.atdInst,
+      atdSE: meta.atdSE,
+      ftd: meta.ftd,
+      ffs: meta.ffs,
+      nightDual: meta.nightDual,
+      nightSolo: meta.nightSolo,
+      nightPic: meta.nightPic,
+      nightTakeoffs: meta.nightTakeoffs,
+      nightTakeoffsPic: meta.nightTakeoffsPic,
+      nightLandingsPic: meta.nightLandingsPic,
+      ldgTotal: meta.ldgTotal,
+      ldgDay: meta.ldgDay,
+      ldgNight: meta.ldgNight,
+      rating_code: rating?.code || 'ppl',
+      rating_label: rating?.label || 'Private Pilot ASEL',
+      studentFlewSolo: meta.studentFlewSolo,
+      notes: meta.notes,
+      simDeviceType: meta.simDeviceType
+    };
+
     const lessonData: any = {
       user_id: session.user.id,
       student_name: studentName,
@@ -289,11 +325,7 @@ export default function FlightLesson() {
       instructor: instructorName,
       lesson_num: lessonNum,
       label: lessonLabel,
-      meta: {
-        ...meta,
-        rating_code: rating?.code || 'ppl',
-        rating_label: rating?.label || 'Private Pilot ASEL'
-      },
+      meta: lessonMeta,
       grades,
       notes
     };
@@ -498,7 +530,7 @@ export default function FlightLesson() {
                       className="w-full text-sm font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
                       <div className="flex items-center gap-2">
@@ -520,6 +552,19 @@ export default function FlightLesson() {
                           type="number"
                           value={meta.ldgTotal}
                           onChange={(e) => handleMetaChange('ldgTotal', e.target.value)}
+                          className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                          placeholder="0"
+                        />
+                        <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Day Landings</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={meta.ldgDay}
+                          onChange={(e) => handleMetaChange('ldgDay', e.target.value)}
                           className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
                           placeholder="0"
                         />
@@ -619,11 +664,18 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">PIC Time</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.pic} onChange={(e) => handleMetaChange('pic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">SIC Time</label>
+                            <div className="flex items-center gap-2">
+                              <input type="number" step="0.1" value={meta.sic} onChange={(e) => handleMetaChange('sic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -669,7 +721,7 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Dual Received</label>
                             <div className="flex items-center gap-2">
@@ -692,9 +744,16 @@ export default function FlightLesson() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Instrument</label>
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Inst.</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Actual IMC</label>
+                            <div className="flex items-center gap-2">
+                              <input type="number" step="0.1" value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -813,6 +872,13 @@ export default function FlightLesson() {
                             </div>
                           </div>
                           <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night T/O PIC (Count)</label>
+                            <div className="flex items-center gap-2">
+                              <input type="number" value={meta.nightTakeoffsPic} onChange={(e) => handleMetaChange('nightTakeoffsPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
+                              <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings</label>
                             <div className="flex items-center gap-2">
                               <input type="number" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
@@ -855,35 +921,11 @@ export default function FlightLesson() {
                         className="overflow-hidden bg-[#f8fafc]"
                       >
                         <div className="p-4 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Device Type</label>
-                              <select
-                                value={meta.simDeviceType}
-                                onChange={(e) => handleMetaChange('simDeviceType', e.target.value)}
-                                className="w-full text-sm font-bold border border-[#dde3ec] rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-[#2a5a8c] transition-all"
-                              >
-                                <option value="ATD">ATD (Aviation Training Device)</option>
-                                <option value="FTD">FTD (Flight Training Device)</option>
-                                <option value="FFS">FFS (Full Flight Sim)</option>
-                              </select>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Device Time</label>
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Total</label>
                               <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={meta.simDeviceType === 'ATD' ? meta.atd : meta.simDeviceType === 'FTD' ? meta.ftd : meta.ffs}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (meta.simDeviceType === 'ATD') handleMetaChange('atd', val);
-                                    else if (meta.simDeviceType === 'FTD') handleMetaChange('ftd', val);
-                                    else handleMetaChange('ffs', val);
-                                  }}
-                                  className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1"
-                                  placeholder="0.0"
-                                />
+                                <input type="number" step="0.1" value={meta.atd} onChange={(e) => handleMetaChange('atd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                 <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                               </div>
                             </div>
@@ -891,6 +933,27 @@ export default function FlightLesson() {
                               <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Instrument</label>
                               <div className="flex items-center gap-2">
                                 <input type="number" step="0.1" value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Single Engine</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.atdSE} onChange={(e) => handleMetaChange('atdSE', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Time</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Time</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                 <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                               </div>
                             </div>
