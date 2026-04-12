@@ -26,7 +26,6 @@ export default function FlightLesson() {
     groundSim: '',
     dual: '',
     cfi: '',
-    sic: '',
     pic: '',
     totalFlight: '',
     solo: '',
@@ -89,7 +88,6 @@ export default function FlightLesson() {
       groundSim: '',
       dual: '',
       cfi: '',
-      sic: '',
       pic: '',
       totalFlight: '',
       solo: '',
@@ -107,6 +105,7 @@ export default function FlightLesson() {
       ftd: '',
       ffs: '',
       atdSE: '',
+      simDeviceType: 'ATD',
       studentFlewSolo: false,
     });
     setFillState('');
@@ -291,7 +290,6 @@ export default function FlightLesson() {
       dual: meta.dual,
       solo: meta.solo,
       pic: meta.pic,
-      sic: meta.sic,
       xcDual: meta.xcDual,
       xcSolo: meta.xcSolo,
       xcPic: meta.xcPic,
@@ -367,7 +365,6 @@ export default function FlightLesson() {
       groundSim: '',
       dual: '',
       cfi: '',
-      sic: '',
       pic: '',
       totalFlight: '',
       solo: '',
@@ -385,6 +382,7 @@ export default function FlightLesson() {
       ftd: '',
       ffs: '',
       atdSE: '',
+      simDeviceType: 'ATD',
       studentFlewSolo: false,
     });
     localStorage.removeItem('faa_current_lesson_flight');
@@ -673,13 +671,6 @@ export default function FlightLesson() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">SIC Time</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.sic} onChange={(e) => handleMetaChange('sic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Cross Country PIC</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.xcPic} onChange={(e) => handleMetaChange('xcPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
@@ -920,44 +911,66 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Total</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.atd} onChange={(e) => handleMetaChange('atd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Instrument</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Single Engine</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.atdSE} onChange={(e) => handleMetaChange('atdSE', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Time</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Time</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
+                        <div className="p-4">
+                          <div className="flex gap-2 mb-4">
+                            {['ATD', 'FTD', 'FFS'].map(type => (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() => handleMetaChange('simDeviceType', type)}
+                                className={cn(
+                                  "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+                                  (meta.simDeviceType || 'ATD') === type 
+                                    ? "bg-[#1a3a5c] text-white shadow-sm" 
+                                    : "bg-[#e2e8f0] text-[#64748b] hover:bg-[#cbd5e1]"
+                                )}
+                              >
+                                {type}
+                              </button>
+                            ))}
                           </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {(meta.simDeviceType || 'ATD') === 'ATD' && (
+                              <>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Total Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={meta.atd} onChange={(e) => handleMetaChange('atd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Instrument Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            {meta.simDeviceType === 'FTD' && (
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="number" step="0.1" value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                            )}
+                            {meta.simDeviceType === 'FFS' && (
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="number" step="0.1" value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-[#6b7280] mt-4 italic">
+                            ATD = Aviation Training Device, FTD = Flight Training Device, FFS = Full Flight Simulator
+                          </p>
                         </div>
                       </motion.div>
                     )}

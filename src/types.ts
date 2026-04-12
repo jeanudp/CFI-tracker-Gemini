@@ -15,7 +15,6 @@ export interface LessonMeta {
   groundSim?: string;
   dual?: string;
   cfi?: string;
-  sic?: string;
   pic?: string;
   totalFlight?: string;
   solo?: string;

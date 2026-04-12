@@ -11,7 +11,6 @@ interface IacraTotals {
   dualReceived: number;
   soloTime: number;
   picTime: number;
-  sicTime: number;
   xcDual: number;
   xcSolo: number;
   xcPic: number;
@@ -57,7 +56,7 @@ export default function IACRASummary() {
 
   const calculateTotals = (): IacraTotals => {
     const totals: IacraTotals = {
-      totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0, sicTime: 0,
+      totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0,
       xcDual: 0, xcSolo: 0, xcPic: 0, instTotal: 0, atdInst: 0,
       nightDual: 0, nightTotal: 0, nightTakeoffs: 0, nightLandings: 0,
       nightPic: 0, nightTakeoffsPic: 0, nightLandingsPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
@@ -71,7 +70,6 @@ export default function IACRASummary() {
       totals.dualReceived += parseFloat(m.dual || '0') || 0;
       totals.soloTime += parseFloat(m.solo || '0') || 0;
       totals.picTime += parseFloat(m.pic || '0') || 0;
-      totals.sicTime += parseFloat(m.sic || '0') || 0;
       totals.xcDual += parseFloat(m.xcDual || '0') || 0;
       totals.xcSolo += parseFloat(m.xcSolo || '0') || 0;
       totals.xcPic += parseFloat(m.xcPic || '0') || 0;
@@ -101,12 +99,12 @@ export default function IACRASummary() {
   };
 
   const handleCopy = () => {
+    const ratingCode = lessons[0]?.meta?.rating_code || 'ppl';
     const text = `Aeronautical Experience Grid - ${studentName}\n\n` +
       `Total: ${totals.totalTime.toFixed(1)}\n` +
       `Instruction Received: ${totals.dualReceived.toFixed(1)}\n` +
       `Solo: ${totals.soloTime.toFixed(1)}\n` +
       `PIC: ${totals.picTime.toFixed(1)}\n` +
-      `SIC: ${totals.sicTime.toFixed(1)}\n` +
       `XC Instruction: ${totals.xcDual.toFixed(1)}\n` +
       `XC Solo: ${totals.xcSolo.toFixed(1)}\n` +
       `XC PIC: ${totals.xcPic.toFixed(1)}\n` +
@@ -114,7 +112,7 @@ export default function IACRASummary() {
       `Night Instruction: ${totals.nightDual.toFixed(1)}\n` +
       `Night T/O & Ldg: ${(totals.nightTakeoffs + totals.nightLandings)}\n` +
       `Night PIC: ${totals.nightPic.toFixed(1)}\n` +
-      `Night T/O & Ldg PIC: ${(totals.nightTakeoffsPic + totals.nightLandingsPic)}\n` +
+      `Night T/O & Ldg PIC: ${ratingCode === 'ppl' ? (totals.nightTakeoffsPic + totals.nightLandingsPic) : (totals.nightTakeoffs + totals.nightLandings)}\n` +
       `ATD Total: ${totals.atdTime.toFixed(1)}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -237,20 +235,14 @@ export default function IACRASummary() {
                 <Cell type="gray" />
                 <Cell type="gray" />
               </tr>
-              {/* Row 4: PIC and SIC */}
+              {/* Row 4: PIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">PIC and SIC</td>
-                <Cell className="p-0">
-                  <div className="border-b border-black p-1 text-right font-mono">{totals.picTime.toFixed(1)}</div>
-                  <div className="p-1 text-right font-mono">{totals.sicTime.toFixed(1)}</div>
-                </Cell>
+                <td className="border border-black p-2 font-bold text-[12px]">PIC</td>
+                <Cell className="text-right font-mono">{totals.picTime.toFixed(1)}</Cell>
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
-                <Cell type="light" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
+                <Cell type="light" />
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
@@ -279,20 +271,14 @@ export default function IACRASummary() {
                 <Cell type="gray" />
                 <Cell type="gray" />
               </tr>
-              {/* Row 7: XC PIC/SIC */}
+              {/* Row 7: XC PIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Cross Country PIC/SIC</td>
-                <Cell className="p-0">
-                  <div className="border-b border-black p-1 text-right font-mono">{totals.xcPic.toFixed(1)}</div>
-                  <div className="p-1 text-right font-mono">0.0</div>
-                </Cell>
+                <td className="border border-black p-2 font-bold text-[12px]">Cross Country PIC</td>
+                <Cell className="text-right font-mono">{totals.xcPic.toFixed(1)}</Cell>
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
-                <Cell type="light" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
+                <Cell type="light" />
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
@@ -333,48 +319,31 @@ export default function IACRASummary() {
                 <Cell type="gray" />
                 <Cell type="gray" />
               </tr>
-              {/* Row 11: Night PIC/SIC */}
+              {/* Row 11: Night PIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Night PIC/SIC</td>
-                <Cell className="p-0">
-                  <div className="border-b border-black p-1 text-right font-mono">{totals.nightPic.toFixed(1)}</div>
-                  <div className="p-1 text-right font-mono">0.0</div>
-                </Cell>
+                <td className="border border-black p-2 font-bold text-[12px]">Night PIC</td>
+                <Cell className="text-right font-mono">{totals.nightPic.toFixed(1)}</Cell>
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
-                <Cell type="light" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
-                <Cell type="light" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
-                <Cell type="light" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
+                <Cell type="light" />
+                <Cell type="light" />
+                <Cell type="light" />
                 <Cell type="gray" />
               </tr>
-              {/* Row 12: Night T/O / Ldg PIC/SIC */}
+              {/* Row 12: Night T/O / Ldg PIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Night Take-off / Landing PIC/SIC</td>
-                <Cell className="p-0">
-                  <div className="border-b border-black p-1 text-right font-mono">{(totals.nightTakeoffsPic + totals.nightLandingsPic)}</div>
-                  <div className="p-1 text-right font-mono">0</div>
+                <td className="border border-black p-2 font-bold text-[12px]">Night Take-off / Landing PIC</td>
+                <Cell className="text-right font-mono">
+                  {lessons[0]?.meta?.rating_code === 'ppl' 
+                    ? (totals.nightTakeoffsPic + totals.nightLandingsPic) 
+                    : (totals.nightTakeoffs + totals.nightLandings)}
                 </Cell>
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
-                <Cell type="white" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
-                <Cell type="white" className="p-0">
-                  <div className="border-b border-black h-[20px]"></div>
-                  <div className="h-[20px]"></div>
-                </Cell>
+                <Cell type="white" />
+                <Cell type="white" />
                 <Cell type="gray" />
                 <Cell type="gray" />
               </tr>
@@ -440,10 +409,10 @@ export default function IACRASummary() {
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL PIC:</div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES PIC:</div>
             {/* Row 2 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL SIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES SIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL SIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
             {/* Row 3 */}
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceived.toFixed(1)}</span></div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES Instruct Rcvd:</div>

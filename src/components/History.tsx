@@ -879,7 +879,6 @@ export default function History() {
                       <div className="space-y-1">
                         {[
                           ['PIC Time', selectedLesson.meta?.pic ? `${selectedLesson.meta.pic}h` : ''],
-                          ['SIC Time', selectedLesson.meta?.sic ? `${selectedLesson.meta.sic}h` : ''],
                           ['As CFI', selectedLesson.meta?.cfi ? `${selectedLesson.meta.cfi}h` : ''],
                         ].filter(d => d[1]).map(([label, val]) => (
                           <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
@@ -929,7 +928,7 @@ export default function History() {
                     <div>
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
                       <div className="space-y-1">
-                        {[
+                        {(lessonRating === 'ppl' ? [
                           ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
                           ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
                           ['Night PIC', selectedLesson.meta?.nightPic ? `${selectedLesson.meta.nightPic}h` : ''],
@@ -937,7 +936,12 @@ export default function History() {
                           ['Night Landings', selectedLesson.meta?.ldgNight],
                           ['Night TO PIC', selectedLesson.meta?.nightTakeoffsPic],
                           ['Night Ldg PIC', selectedLesson.meta?.nightLandingsPic],
-                        ].filter(d => d[1]).map(([label, val]) => (
+                        ] : [
+                          ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
+                          ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
+                          ['Night Takeoffs (PIC)', selectedLesson.meta?.nightTakeoffs],
+                          ['Night Landings (PIC)', selectedLesson.meta?.ldgNight],
+                        ]).filter(d => d[1]).map(([label, val]) => (
                           <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                             <span className="text-xs text-[#64748b]">{label}</span>
                             <span className="text-sm font-bold text-[#1e293b]">{val}</span>
@@ -1103,7 +1107,6 @@ export default function History() {
                             <div className="space-y-1">
                               {[
                                 ['PIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0).toFixed(1)}h`],
-                                ['SIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.sic || '0') || 0), 0).toFixed(1)}h`],
                                 ['As CFI', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.cfi || '0') || 0), 0).toFixed(1)}h`],
                               ].map(([label, val]) => (
                                 <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
@@ -1149,7 +1152,7 @@ export default function History() {
                           <div>
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
                             <div className="space-y-1">
-                              {[
+                              {(lessonRating === 'ppl' ? [
                                 ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
                                 ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
                                 ['Night PIC', `${stats.totNightPic.toFixed(1)}h`],
@@ -1157,7 +1160,12 @@ export default function History() {
                                 ['Night Landings', stats.totNightLdg],
                                 ['Night TO PIC', stats.totNightTakeoffsPic],
                                 ['Night Ldg PIC', stats.totNightLandingsPic],
-                              ].map(([label, val]) => (
+                              ] : [
+                                ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
+                                ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
+                                ['Night Takeoffs (PIC)', stats.totNightTakeoffs],
+                                ['Night Landings (PIC)', stats.totNightLdg],
+                              ]).map(([label, val]) => (
                                 <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
