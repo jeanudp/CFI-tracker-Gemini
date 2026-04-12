@@ -1324,25 +1324,31 @@ export default function History() {
                         { label: 'IFR Cross-Country Flight 250NM', ref: '§61.65(d)(5)', have: getManualValue('ifrXc250'), need: 1, unit: 'flight', mk: 'ifrXc250', note: 'One cross-country flight in actual or simulated IMC along airways or ATC routing with an instrument approach at each airport and three different kinds of approaches with a total distance of at least 250NM' }
                       ]}
                     ];
+                    ENDORSEMENTS = [
+                      { key: 'A.42', text: 'AC 61-65K A.42 — Aeronautical knowledge test §61.35(a)(1) and §61.65(a) and (b): I certify that [First name, MI, Last name] has received the required training of 14 CFR §61.65(b). I have determined that they are prepared for the Instrument–airplane knowledge test.' },
+                      { key: 'A.1', text: 'AC 61-65K A.1 — Prerequisites for practical test §61.39(a)(6)(i) and (ii): I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of Instrument Rating.' },
+                      { key: 'A.2', text: 'AC 61-65K A.2 — Review of deficiencies §61.39(a)(6)(iii) as required: I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the Instrument Rating airman knowledge test.' },
+                      { key: 'A.44', text: 'AC 61-65K A.44 — Prerequisites for instrument practical tests §61.39(a): I certify that [First name, MI, Last name] has received and logged the required flight time/training of 14 CFR §61.39(a) in preparation for the practical test within 2 calendar months preceding the date of the test and has satisfactory knowledge of the subject areas in which they were shown to be deficient by the FAA Airman Knowledge Test Report. I have determined they are prepared for the Instrument–airplane practical test.' },
+                      { key: 'A.43', text: 'AC 61-65K A.43 — Flight proficiency/practical test §61.65(a)(6): I certify that [First name, MI, Last name] has received the required training of 14 CFR §61.65(c) and (d). I have determined they are prepared for the Instrument–airplane practical test.' }
+                    ];
                     SOLO_OPTIONS = [
                       { 
-                        id: 'knowledge', 
-                        label: 'Knowledge Test', 
+                        id: '1', 
+                        label: 'Section 1 — Knowledge Test', 
                         description: 'Required before the FAA Instrument Rating knowledge test.', 
-                        endorsements: [
-                          { key: 'A.42', text: 'AC 61-65K A.42 — Aeronautical knowledge test §61.35(a)(1) and §61.65(a) and (b): I certify that [First name, MI, Last name] has received the required training of 14 CFR §61.65(b). I have determined that they are prepared for the Instrument–airplane knowledge test.' }
-                        ] 
+                        endorsements: [ENDORSEMENTS[0]] 
                       },
                       { 
-                        id: 'practical', 
-                        label: 'Practical Test', 
+                        id: '2', 
+                        label: 'Section 2 — Practical Test Prerequisites', 
                         description: 'Required before the FAA Instrument Rating practical test.', 
-                        endorsements: [
-                          { key: 'A.43', text: 'AC 61-65K A.43 — Flight proficiency/practical test §61.65(a)(6): I certify that [First name, MI, Last name] has received the required training of 14 CFR §61.65(c) and (d). I have determined they are prepared for the Instrument–airplane practical test.' },
-                          { key: 'A.44', text: 'AC 61-65K A.44 — Prerequisites for instrument practical tests §61.39(a): I certify that [First name, MI, Last name] has received and logged the required flight time/training of 14 CFR §61.39(a) in preparation for the practical test within 2 calendar months preceding the date of the test and has satisfactory knowledge of the subject areas in which they were shown to be deficient by the FAA Airman Knowledge Test Report. I have determined they are prepared for the Instrument–airplane practical test.' },
-                          { key: 'A.1', text: 'AC 61-65K A.1 — Prerequisites for practical test §61.39(a)(6)(i) and (ii): I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of Instrument Rating.' },
-                          { key: 'A.2', text: 'AC 61-65K A.2 — Review of deficiencies §61.39(a)(6)(iii) as required: I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the Instrument Rating airman knowledge test.' }
-                        ] 
+                        endorsements: [ENDORSEMENTS[1], ENDORSEMENTS[2], ENDORSEMENTS[3]] 
+                      },
+                      { 
+                        id: '3', 
+                        label: 'Section 3 — Practical Test Endorsement', 
+                        description: 'Required before the FAA Instrument Rating practical test with a DPE.', 
+                        endorsements: [ENDORSEMENTS[4]] 
                       }
                     ];
                   } else if (lessonRating === 'cpl') {
@@ -1867,42 +1873,161 @@ export default function History() {
                             })()}
                           </div>
                         ) : (
-                          <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden mb-6">
-                            <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f4f5f7]">
-                              <h3 className="text-sm font-bold text-[#1c2333]">Endorsements</h3>
-                              <p className="text-[10px] text-[#6b7280] font-mono">AC 61-65K</p>
-                            </div>
-                            <div className="divide-y divide-[#dde3ec]">
-                              {ENDORSEMENTS.map(e => {
-                                const met = isEndorsementMet(e.key);
-                                return (
-                                  <div 
-                                    key={e.key} 
-                                    onClick={() => handleToggleEndorsement(e.key, `AC 61-65K ${e.key}: ${e.text || e.label}`)}
-                                    className={cn("p-4 flex items-start gap-4 cursor-pointer transition-all", met ? "bg-[#fafffe]" : "hover:bg-[#f4f5f7]")}
+                          <div className="space-y-4">
+                            {SOLO_OPTIONS.map(section => {
+                              const isSectionComplete = (() => {
+                                if (section.id === '1') return isEndorsementMet('A.42');
+                                if (section.id === '2') return isEndorsementMet('A.1') && isEndorsementMet('A.44');
+                                if (section.id === '3') return isEndorsementMet('A.43');
+                                return false;
+                              })();
+
+                              const sectionEndorsementsMet = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).length;
+                              const isSectionInProgress = sectionEndorsementsMet > 0;
+                              const isOpen = selectedSoloOption === section.id;
+
+                              const headerBg = isSectionComplete ? "bg-[#f0fdf4]" : (!isSectionInProgress ? "bg-[#f4f5f7]" : "bg-[#1a3a5c]");
+                              const titleColor = isSectionComplete ? "text-[#166534]" : (!isSectionInProgress ? "text-[#1c2333]" : "text-white");
+                              const descColor = isSectionComplete ? "text-[#166534]/70" : (!isSectionInProgress ? "text-[#6b7280]" : "text-white/70");
+                              const iconBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white text-[#1a3a5c]";
+                              const badgeBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white/20 text-white";
+
+                              return (
+                                <div key={section.id} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                                  <button
+                                    onClick={() => setSelectedSoloOption(isOpen ? null : section.id)}
+                                    className={cn("w-full px-4 py-4 flex items-center justify-between transition-all", headerBg)}
                                   >
-                                    <div className="mt-0.5 shrink-0">
-                                      {met ? <CheckSquare size={18} className="text-[#2d7a4f]" /> : <Square size={18} className="text-[#dde3ec]" />}
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", iconBg)}>
+                                        {isSectionComplete ? <Check size={16} strokeWidth={3} /> : section.id}
+                                      </div>
+                                      <div className="text-left">
+                                        <h3 className={cn("text-sm font-bold", titleColor)}>
+                                          {section.label}
+                                        </h3>
+                                        <p className={cn("text-[10px] font-medium", descColor)}>{section.description}</p>
+                                      </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start gap-2">
-                                        <span className="text-[10px] font-mono font-bold bg-[#f1f5f9] text-[#475569] px-1.5 py-0.5 rounded border border-[#e2e8f0] shrink-0">
-                                          AC 61-65K {e.key}
-                                        </span>
-                                        <div className={cn("text-[13px] font-medium leading-relaxed", met ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
-                                          {e.text || e.label}
+                                    <div className="flex items-center gap-3">
+                                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", badgeBg)}>
+                                        {sectionEndorsementsMet}/{section.endorsements.length}
+                                      </span>
+                                      <ChevronRight size={16} className={cn(isSectionComplete || isSectionInProgress ? "text-white" : "text-[#6b7280]", "transition-transform", isOpen && "rotate-90")} />
+                                    </div>
+                                  </button>
+
+                                  <AnimatePresence>
+                                    {isOpen && (
+                                      <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: 'auto' }}
+                                        exit={{ height: 0 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="p-2 space-y-1 bg-white border-t border-[#dde3ec]">
+                                          {section.endorsements.map((e: any) => {
+                                            const met = isEndorsementMet(e.key);
+                                            return (
+                                              <div
+                                                key={e.key}
+                                                onClick={() => handleToggleEndorsement(e.key, `AC 61-65K ${e.key}: ${e.text}`)}
+                                                className={cn(
+                                                  "p-4 flex items-start gap-4 cursor-pointer transition-all rounded-xl",
+                                                  met ? "bg-[#fafffe]" : "hover:bg-[#f4f5f7]"
+                                                )}
+                                              >
+                                                <div className="mt-0.5 shrink-0">
+                                                  {met ? <CheckSquare size={18} className="text-[#2d7a4f]" /> : <Square size={18} className="text-[#dde3ec]" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-start gap-2">
+                                                    <span className="text-[10px] font-mono font-bold bg-[#f1f5f9] text-[#475569] px-1.5 py-0.5 rounded border border-[#e2e8f0] shrink-0">
+                                                      AC 61-65K {e.key}
+                                                    </span>
+                                                    <div className={cn("text-[13px] font-medium leading-relaxed", met ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
+                                                      {e.text}
+                                                    </div>
+                                                  </div>
+                                                  {met && (
+                                                    <div className="text-[10px] text-[#6b7280] mt-2 ml-14">
+                                                      Completed on {new Date(endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name)?.completed_date || '').toLocaleDateString()}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              );
+                            })}
+
+                            {/* Endorsement Summary */}
+                            {(() => {
+                              const summaryLabels: Record<string, string> = {
+                                '1': 'Knowledge Test',
+                                '2': 'Prerequisites',
+                                '3': 'Checkride'
+                              };
+
+                              const summarySections = SOLO_OPTIONS.map(section => {
+                                const givenInSection = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).map((e: any) => {
+                                  const record = endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name);
+                                  return {
+                                    ...e,
+                                    completed_date: record?.completed_date
+                                  };
+                                });
+                                return {
+                                  id: section.id,
+                                  label: summaryLabels[section.id] || section.label,
+                                  endorsements: givenInSection
+                                };
+                              }).filter(s => s.endorsements.length > 0);
+
+                              if (summarySections.length === 0) return null;
+
+                              return (
+                                <div className="mt-8 bg-white rounded-2xl border border-[#dde3ec] border-l-4 border-l-[#2d7a4f] shadow-sm overflow-hidden">
+                                  <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f8fafc]">
+                                    <h3 className="text-sm font-bold text-[#1a3a5c]">Endorsements Given</h3>
+                                  </div>
+                                  <div className="p-4 space-y-4">
+                                    {summarySections.map(s => (
+                                      <div key={s.id} className="space-y-1">
+                                        <div className="text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest ml-1">{s.label}</div>
+                                        <div className="space-y-1">
+                                          {s.endorsements.map(e => (
+                                            <div key={e.key} className="h-9 px-3 flex items-center justify-between bg-[#f8fafc] rounded-lg border border-[#f1f5f9]">
+                                              <div className="flex items-center gap-3 overflow-hidden">
+                                                <span className="text-[9px] font-bold bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded shrink-0">
+                                                  {e.key}
+                                                </span>
+                                                <span className="text-[11px] font-medium text-[#1c2333] truncate">
+                                                  {e.text.split(' — ')[1]?.split(': ')[0] || e.text.substring(0, 40) + '...'}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-3 shrink-0 ml-4">
+                                                <span className="text-[10px] text-[#6b7280] font-medium">
+                                                  {new Date(e.completed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                                </span>
+                                                <div className="w-4 h-4 rounded-full bg-[#2d7a4f]/10 flex items-center justify-center text-[#2d7a4f]">
+                                                  <Check size={10} strokeWidth={3} />
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
                                       </div>
-                                      {met && (
-                                        <div className="text-[10px] text-[#6b7280] mt-2 ml-14">
-                                          Completed on {new Date(endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name)?.completed_date || '').toLocaleDateString()}
-                                        </div>
-                                      )}
-                                    </div>
+                                    ))}
                                   </div>
-                                );
-                              })}
-                            </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>

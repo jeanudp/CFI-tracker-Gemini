@@ -118,7 +118,7 @@ export default function GroundLesson() {
     const current = grades[taskId] || '';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     
-    if (next === 'N' && rating?.code === 'ppl') {
+    if (next === 'N' && (rating?.code === 'ppl' || rating?.code === 'ir')) {
       const task = groundTasks.find(t => t.id === taskId);
       if (task) {
         setActiveACSTask({ task, id: taskId, prevGrade: current });
