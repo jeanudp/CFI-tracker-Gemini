@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation } from 'lucide-react';
+import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 
@@ -11,6 +11,7 @@ import { ALL_ACS, RATINGS } from '../constants';
 
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [archivedStudents, setArchivedStudents] = useState<Student[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [recentGround, setRecentGround] = useState<Lesson | null>(null);
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
   
   // Rating Selection Modal State
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -50,8 +52,24 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const { data: studentsData, error: studentsError } = await supabase.from('students').select('*').order('name');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .is('deleted_at', null)
+        .order('name');
       if (studentsError) throw studentsError;
+
+      const { data: archivedData, error: archivedError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+      if (archivedError) throw archivedError;
 
       const { data: lessonsData, error: lessonsError } = await supabase.from('lessons').select('*');
       if (lessonsError) throw lessonsError;
@@ -63,6 +81,7 @@ export default function Dashboard() {
       if (endorsementsError) throw endorsementsError;
 
       setStudents(studentsData || []);
+      setArchivedStudents(archivedData || []);
       setLessons(lessonsData || []);
       setManualHours(manualData || []);
       setEndorsements(endorsementsData || []);
@@ -210,39 +229,91 @@ export default function Dashboard() {
     const student = students.find(s => s.name === selectedStudent);
     if (!student) return;
 
+    localStorage.removeItem('faa_ground_grades');
+    localStorage.removeItem('faa_ground_notes');
+    localStorage.removeItem('faa_flight_grades');
+    localStorage.removeItem('faa_flight_notes');
+    localStorage.removeItem('current_lesson_id');
+
     localStorage.setItem('sb_selected_student', student.name);
     localStorage.setItem('selected_rating', JSON.stringify({
-      code: student.current_rating,
-      label: student.current_rating_label
+      code: student.current_rating || 'ppl',
+      label: student.current_rating_label || 'Private Pilot ASEL'
     }));
-    
+    localStorage.setItem('faa_student_info', JSON.stringify({ student: student.name }));
+
     navigate('/lesson-type');
   };
 
-  const [studentToDelete, setStudentToDelete] = useState<{ id: string, name: string } | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-  const handleDeleteStudent = async (id: string, name: string) => {
-    const { error: e1 } = await supabase.from('manual_hours').delete().eq('student_name', name);
-    if (e1) { setDeleteError('Failed to delete hours: ' + e1.message); return; }
+    if (!window.confirm(`Archive student ${studentName}? This will hide them from your active list. You can restore them later from the Archived Students section.`)) return;
     
-    const { error: e2 } = await supabase.from('lessons').delete().eq('student_name', name);
-    if (e2) { setDeleteError('Failed to delete lessons: ' + e2.message); return; }
+    const { error } = await supabase
+      .from('students')
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        deleted_by: session.user.email
+      })
+      .eq('id', studentId);
+      
+    if (error) {
+      window.alert('Failed to archive student: ' + error.message);
+      return;
+    }
     
-    const { error: e3 } = await supabase.from('students').delete().eq('id', id);
-    if (e3) { setDeleteError('Failed to delete student: ' + e3.message); return; }
-    
-    // Successfully deleted all
-    setStudents(prev => prev.filter(s => s.id !== id));
-    if (selectedStudent === name) {
+    setStudents(prev => prev.filter(s => s.id !== studentId));
+    if (selectedStudent === studentName) {
       setSelectedStudent(null);
       setRecentGround(null);
       setRecentFlight(null);
       localStorage.removeItem('sb_selected_student');
       localStorage.removeItem('faa_student_info');
     }
-    setStudentToDelete(null);
-    setDeleteError(null);
+    fetchData(); // Refresh both lists
+  };
+
+  const handleRestoreStudent = async (studentId: string) => {
+    const { error } = await supabase
+      .from('students')
+      .update({ 
+        deleted_at: null,
+        deleted_by: null
+      })
+      .eq('id', studentId);
+      
+    if (error) {
+      window.alert('Failed to restore student: ' + error.message);
+      return;
+    }
+    
+    fetchData();
+  };
+
+  const handlePermanentDelete = async (studentId: string, studentName: string) => {
+    if (!window.confirm(`Permanently delete ${studentName} and ALL their lessons? This cannot be undone.`)) return;
+
+    setProcessingCheckride(true);
+    try {
+      // Delete manual hours
+      await supabase.from('manual_hours').delete().eq('student_name', studentName);
+      // Delete endorsements
+      await supabase.from('endorsements').delete().eq('student_name', studentName);
+      // Delete lessons
+      await supabase.from('lessons').delete().eq('student_name', studentName);
+      // Delete student
+      const { error } = await supabase.from('students').delete().eq('id', studentId);
+      
+      if (error) throw error;
+      
+      fetchData();
+    } catch (err: any) {
+      window.alert('Failed to permanently delete student: ' + err.message);
+    } finally {
+      setProcessingCheckride(false);
+    }
   };
 
   const fetchRecentLessons = async (studentName: string) => {
@@ -337,103 +408,15 @@ export default function Dashboard() {
   };
 
   const checkRequirements = (student: Student) => {
-    const stats = getCumulativeStats(student.name);
-    const rating = student.current_rating;
-    const name = student.name;
-    const studentLessons = lessons.filter(l => l.student_name === name && l.meta?.rating_code === rating);
-
-    // Condition 1: All flight time hour requirements met
-    let allHoursMet = false;
-    if (rating === 'ppl') {
-      allHoursMet = (
-        stats.totFlight >= 40 &&
-        stats.totDual >= 20 &&
-        stats.totXcDual >= 3 &&
-        stats.totNightDual >= 3 &&
-        stats.totNightLdg >= 10 &&
-        stats.totSim >= 3 &&
-        stats.recentDual >= 3 &&
-        stats.totSolo >= 10 &&
-        stats.totSoloXc >= 5 &&
-        getManualValue(name, 'soloXc150') >= 1 &&
-        getManualValue(name, 'soloTowered') >= 3 &&
-        isEndorsementMet(name, 'ppl', 'A.37')
-      );
-    } else if (rating === 'ir') {
-      allHoursMet = (
-        stats.totXcPic >= 50 &&
-        stats.totSim >= 40 &&
-        stats.totInstDual >= 15 &&
-        stats.recentInst >= 3 &&
-        getManualValue(name, 'ifrXc250') >= 1 &&
-        isEndorsementMet(name, 'ir', 'A.43') &&
-        isEndorsementMet(name, 'ir', 'A.44')
-      );
-    } else if (rating === 'cpl') {
-      allHoursMet = (
-        stats.totFlight >= 250 &&
-        stats.picTime >= 100 &&
-        stats.totXc >= 50 &&
-        stats.totSim >= 10 &&
-        getManualValue(name, 'complex') >= 10 &&
-        getManualValue(name, 'dayXc100') >= 1 &&
-        getManualValue(name, 'nightXc100') >= 1 &&
-        stats.recentDual >= 3 &&
-        stats.totSolo >= 10 &&
-        getManualValue(name, 'nightSoloTowered') >= 1 &&
-        getManualValue(name, 'soloXc300') >= 1 &&
-        isEndorsementMet(name, 'cpl', 'A.39')
-      );
-    } else if (rating === 'cfi') {
-      allHoursMet = (
-        stats.picTime >= 15 &&
-        getManualValue(name, 'commercialHeld') >= 1 &&
-        getManualValue(name, 'foiPassed') >= 1 &&
-        getManualValue(name, 'cfiPassed') >= 1 &&
-        getManualValue(name, 'endorsement2mo') >= 1 &&
-        isEndorsementMet(name, 'cfi', 'A.47') &&
-        isEndorsementMet(name, 'cfi', 'A.49')
-      );
-    } else if (rating === 'cfii') {
-      allHoursMet = (
-        getManualValue(name, 'cfiHeld') >= 1 &&
-        getManualValue(name, 'instrumentHeld') >= 1 &&
-        getManualValue(name, 'instRecent') >= 1 &&
-        isEndorsementMet(name, 'cfii', 'A.48')
-      );
-    } else if (rating === 'mei') {
-      allHoursMet = (
-        getManualValue(name, 'cfiHeld') >= 1 &&
-        getManualValue(name, 'multiengineHeld') >= 1 &&
-        getManualValue(name, 'mePic') >= 5 &&
-        isEndorsementMet(name, 'mei', 'A.47')
-      );
-    }
-
-    // Condition 2: All tasks in all lessons graded Satisfactory
-    // We also need to check if all tasks in the ACS have been graded S at least once
-    const acsTasks = (ALL_ACS[rating] || ALL_ACS['ppl']).flatMap((area: any) => area.tasks);
-    const gradeableTasks = acsTasks.filter((t: any) => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
-    
-    const masteredTasksCount = (ALL_ACS[rating] || ALL_ACS['ppl']).flatMap((area: any, ai: number) => 
-      area.tasks.map((_: any, ti: number) => `${ai}_${ti}`)
-    ).filter((id: string) => studentLessons.some(l => l.grades?.[id] === 'S')).length;
-
-    const allAcsCovered = masteredTasksCount >= gradeableTasks.length;
-    const noBadGrades = studentLessons.length > 0 && studentLessons.every(lesson => 
-      Object.values(lesson.grades || {}).every(grade => grade === 'S')
+    const a1Given = endorsements.some(e => 
+      e.endorsement_key === 'A1' && 
+      e.completed === true && 
+      e.student_name === student.name &&
+      e.rating === student.current_rating
     );
 
-    const allTasksSat = noBadGrades && allAcsCovered;
-
-    // Condition 3: A.1 endorsement given
-    const a1Given = isEndorsementMet(name, rating, 'A.1');
-
     return {
-      allHoursMet,
-      allTasksSat,
-      a1Given,
-      canPassCheckride: allHoursMet && allTasksSat && a1Given
+      canPassCheckride: a1Given
     };
   };
 
@@ -666,15 +649,76 @@ export default function Dashboard() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setStudentToDelete({ id: student.id, name: student.name });
+                      handleDeleteStudent(student.id, student.name);
                     }}
-                    className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[#6b7280] hover:bg-[#fdecea] hover:text-[#c0392b] transition-all"
+                    title="Archive Student"
+                    className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[#6b7280] hover:bg-[#f4f5f7] hover:text-[#1a3a5c] transition-all"
                   >
-                    <Trash2 size={12} />
+                    <Archive size={12} />
                   </button>
                 </div>
               );
             })
+          )}
+
+          {/* Archived Students Section */}
+          {!loading && !error && (
+            <div className="mt-4 border-t border-[#dde3ec]">
+              <button
+                onClick={() => setArchivedExpanded(!archivedExpanded)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-colors"
+              >
+                <div className="flex items-center gap-2 text-[#6b7280]">
+                  <Archive size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Archived Students ({archivedStudents.length})</span>
+                </div>
+                <ChevronRight size={14} className={cn("text-[#6b7280] transition-transform", archivedExpanded && "rotate-90")} />
+              </button>
+              
+              <AnimatePresence>
+                {archivedExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden bg-[#f8fafc]/50"
+                  >
+                    {archivedStudents.length === 0 ? (
+                      <div className="px-6 py-4 text-[10px] text-[#94a3b8] italic text-center">
+                        No archived students.
+                      </div>
+                    ) : (
+                      archivedStudents.map(student => (
+                        <div key={student.id} className="px-4 py-3 border-b border-[#dde3ec] opacity-70">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-[#6b7280]">{student.name}</span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleRestoreStudent(student.id)}
+                                title="Restore Student"
+                                className="p-1 text-[#2d7a4f] hover:bg-[#e4f5ec] rounded transition-colors"
+                              >
+                                <RotateCcw size={12} />
+                              </button>
+                              <button
+                                onClick={() => handlePermanentDelete(student.id, student.name)}
+                                title="Permanently Delete"
+                                className="p-1 text-[#c0392b] hover:bg-[#fdecea] rounded transition-colors"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="text-[9px] text-[#94a3b8]">
+                            Archived {new Date(student.deleted_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
       </aside>
@@ -811,7 +855,7 @@ export default function Dashboard() {
                           </button>
                           {!canPassCheckride && (
                             <p className="text-[10px] text-center text-[#6b7280] font-medium">
-                              Requirements not yet met. Check the <Link to="/history" className="text-[#1a3a5c] underline">Checkride tab</Link> for details.
+                              Give A.1 endorsement in the Checkride tab to unlock.
                             </p>
                           )}
                         </div>
@@ -1137,49 +1181,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {studentToDelete && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6"
-              >
-                <div className="w-12 h-12 bg-[#fdecea] text-[#c0392b] rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <Trash2 size={24} />
-                </div>
-                <h3 className="text-lg font-bold text-[#1c2333] text-center mb-2">Delete Student?</h3>
-                <p className="text-sm text-[#6b7280] text-center mb-6">
-                  Are you sure you want to remove <strong>{studentToDelete.name}</strong> and all their lesson history? This action cannot be undone.
-                </p>
-                
-                {deleteError && (
-                  <div className="mb-4 p-3 bg-[#fdecea] text-[#c0392b] text-xs rounded-lg flex items-center gap-2">
-                    <AlertCircle size={14} />
-                    {deleteError}
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setStudentToDelete(null);
-                      setDeleteError(null);
-                    }}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-[#6b7280] hover:bg-[#f4f5f7] rounded-xl transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleDeleteStudent(studentToDelete.id, studentToDelete.name)}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[#c0392b] hover:bg-[#a93226] rounded-xl transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
         </AnimatePresence>
       </div>
     </main>

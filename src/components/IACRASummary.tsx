@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lesson } from '../types';
-import { motion } from 'motion/react';
-import { ArrowLeft, Printer, Copy, CheckCircle2, AlertCircle, FileText, ChevronRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, Copy, CheckCircle2, Loader2, Check, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface IacraTotals {
@@ -13,24 +12,22 @@ interface IacraTotals {
   soloTime: number;
   picTime: number;
   sicTime: number;
-  cfiTime: number;
-  xcTotal: number;
   xcDual: number;
   xcSolo: number;
   xcPic: number;
   instTotal: number;
   atdInst: number;
-  nightTotal: number;
   nightDual: number;
-  nightPic: number;
+  nightTotal: number;
   nightTakeoffs: number;
   nightLandings: number;
+  nightPic: number;
   nightTakeoffsPic: number;
   nightLandingsPic: number;
   ftdTime: number;
   ffsTime: number;
   atdSE: number;
-  nightSolo: number;
+  numFlights: number;
 }
 
 export default function IACRASummary() {
@@ -59,42 +56,38 @@ export default function IACRASummary() {
   }, [studentName]);
 
   const calculateTotals = (): IacraTotals => {
-    const pplLessons = lessons.filter(l => l.meta?.rating_code === 'ppl');
-    
     const totals: IacraTotals = {
-      totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0, sicTime: 0, cfiTime: 0,
-      xcTotal: 0, xcDual: 0, xcSolo: 0, xcPic: 0, instTotal: 0, atdInst: 0,
-      nightTotal: 0, nightDual: 0, nightPic: 0, nightTakeoffs: 0, nightLandings: 0,
-      nightTakeoffsPic: 0, nightLandingsPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
-      nightSolo: 0
+      totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0, sicTime: 0,
+      xcDual: 0, xcSolo: 0, xcPic: 0, instTotal: 0, atdInst: 0,
+      nightDual: 0, nightTotal: 0, nightTakeoffs: 0, nightLandings: 0,
+      nightPic: 0, nightTakeoffsPic: 0, nightLandingsPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
+      numFlights: 0
     };
 
-    pplLessons.forEach(l => {
+    lessons.forEach(l => {
       const m = l.meta || {};
       totals.totalTime += parseFloat(m.totalFlight || '0') || 0;
       totals.atdTime += parseFloat(m.atd || '0') || 0;
       totals.dualReceived += parseFloat(m.dual || '0') || 0;
       totals.soloTime += parseFloat(m.solo || '0') || 0;
-      totals.picTime += parseFloat(m.pic || '0') || (parseFloat(m.solo || '0') > 0 ? parseFloat(m.totalFlight || '0') : 0);
+      totals.picTime += parseFloat(m.pic || '0') || 0;
       totals.sicTime += parseFloat(m.sic || '0') || 0;
-      totals.cfiTime += parseFloat(m.cfi || '0') || 0;
-      totals.xcTotal += parseFloat(m.xc || '0') || 0;
       totals.xcDual += parseFloat(m.xcDual || '0') || 0;
       totals.xcSolo += parseFloat(m.xcSolo || '0') || 0;
       totals.xcPic += parseFloat(m.xcPic || '0') || 0;
-      totals.nightSolo += parseFloat(m.nightSolo || '0') || 0;
       totals.instTotal += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
       totals.atdInst += parseFloat(m.atdInst || '0') || 0;
-      totals.nightTotal += parseFloat(m.night || '0') || 0;
       totals.nightDual += parseFloat(m.nightDual || '0') || 0;
-      totals.nightPic += parseFloat(m.nightPic || '0') || 0;
+      totals.nightTotal += parseFloat(m.night || '0') || 0;
       totals.nightTakeoffs += parseInt(m.nightTakeoffs || '0') || 0;
       totals.nightLandings += parseInt(m.ldgNight || '0') || 0;
+      totals.nightPic += parseFloat(m.nightPic || '0') || 0;
       totals.nightTakeoffsPic += parseInt(m.nightTakeoffsPic || '0') || 0;
       totals.nightLandingsPic += parseInt(m.nightLandingsPic || '0') || 0;
       totals.ftdTime += parseFloat(m.ftd || '0') || 0;
       totals.ffsTime += parseFloat(m.ffs || '0') || 0;
       totals.atdSE += parseFloat(m.atdSE || '0') || 0;
+      totals.numFlights += 1;
     });
 
     return totals;
@@ -102,22 +95,27 @@ export default function IACRASummary() {
 
   const totals = calculateTotals();
 
-  const requirements = [
-    { label: 'Total Flight Time', have: totals.totalTime, need: 40, unit: 'hrs', ref: '§61.109(a)' },
-    { label: 'Dual Instruction', have: totals.dualReceived, need: 20, unit: 'hrs', ref: '§61.109(a)(1)' },
-    { label: 'Solo Flight Time', have: totals.soloTime, need: 10, unit: 'hrs', ref: '§61.109(a)(2)' },
-    { label: 'Dual XC', have: totals.xcDual, need: 3, unit: 'hrs', ref: '§61.109(a)(1)(i)' },
-    { label: 'Solo XC', have: totals.xcSolo, need: 5, unit: 'hrs', ref: '§61.109(a)(2)(i)' },
-    { label: 'Night Dual', have: totals.nightDual, need: 3, unit: 'hrs', ref: '§61.109(a)(1)(ii)' },
-    { label: 'Night Landings', have: totals.nightLandings, need: 10, unit: 'landings', ref: '§61.109(a)(1)(ii)' },
-    { label: 'Instrument Training', have: totals.instTotal, need: 3, unit: 'hrs', ref: '§61.109(a)(1)(iii)' },
-  ];
-
-  const overallProgress = Math.min(100, Math.round((requirements.filter(r => r.have >= r.need).length / requirements.length) * 100));
+  const checkMet = (val: number, min: number) => {
+    if (val >= min) return <Check size={12} className="text-green-600 inline ml-1" />;
+    return <X size={12} className="text-red-600 inline ml-1" />;
+  };
 
   const handleCopy = () => {
-    const text = `IACRA Summary for ${studentName}\n\n` +
-      requirements.map(r => `${r.label}: ${r.have.toFixed(1)} / ${r.need} ${r.unit} (${r.have >= r.need ? 'MET' : 'REMAINING: ' + (r.need - r.have).toFixed(1)})`).join('\n');
+    const text = `Aeronautical Experience Grid - ${studentName}\n\n` +
+      `Total: ${totals.totalTime.toFixed(1)}\n` +
+      `Instruction Received: ${totals.dualReceived.toFixed(1)}\n` +
+      `Solo: ${totals.soloTime.toFixed(1)}\n` +
+      `PIC: ${totals.picTime.toFixed(1)}\n` +
+      `SIC: ${totals.sicTime.toFixed(1)}\n` +
+      `XC Instruction: ${totals.xcDual.toFixed(1)}\n` +
+      `XC Solo: ${totals.xcSolo.toFixed(1)}\n` +
+      `XC PIC: ${totals.xcPic.toFixed(1)}\n` +
+      `Instrument: ${totals.instTotal.toFixed(1)}\n` +
+      `Night Instruction: ${totals.nightDual.toFixed(1)}\n` +
+      `Night T/O & Ldg: ${(totals.nightTakeoffs + totals.nightLandings)}\n` +
+      `Night PIC: ${totals.nightPic.toFixed(1)}\n` +
+      `Night T/O & Ldg PIC: ${(totals.nightTakeoffsPic + totals.nightLandingsPic)}\n` +
+      `ATD Total: ${totals.atdTime.toFixed(1)}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -130,200 +128,371 @@ export default function IACRASummary() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="animate-spin text-[#1a3a5c]" size={40} />
-        <p className="text-[#6b7280] font-medium">Calculating IACRA totals...</p>
+        <Loader2 className="animate-spin text-[#1a3a8c]" size={40} />
+        <p className="text-[#6b7280] font-medium">Loading IACRA Experience Grid...</p>
       </div>
     );
   }
 
+  const Cell = ({ children, className, type = 'white' }: { children?: React.ReactNode, className?: string, type?: 'white' | 'dark' | 'medium' | 'light' | 'gray' }) => {
+    const bgClass = {
+      white: 'bg-white',
+      dark: 'bg-[#003366]',
+      medium: 'bg-[#6699CC]',
+      light: 'bg-[#99CCFF]',
+      gray: 'bg-[#CCCCCC]'
+    }[type];
+
+    return (
+      <td className={cn("border border-black p-1 text-[12px] min-h-[24px]", bgClass, className)}>
+        {children}
+      </td>
+    );
+  };
+
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-8 print:p-0 print:space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white rounded-xl text-[#6b7280] transition-all border border-transparent hover:border-[#dde3ec]"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-2xl font-black text-[#1a3a5c]">IACRA Summary</h1>
-            <p className="text-sm text-[#6b7280]">{studentName} · Private Pilot ASEL</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
+    <div className="bg-white min-h-screen p-4 sm:p-8 font-sans text-black">
+      {/* Action Buttons */}
+      <div className="max-w-6xl mx-auto flex justify-between items-center mb-6 print:hidden">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[#6b7280] hover:text-[#1a3a8c] transition-colors"
+        >
+          <ArrowLeft size={18} />
+          Back to Dashboard
+        </button>
+        <div className="flex gap-3">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 border border-[#dde3ec] rounded-lg text-sm font-bold text-[#1a3a8c] hover:bg-[#f8fafc] transition-all"
           >
-            {copied ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
-            {copied ? 'Copied!' : 'Copy to Clipboard'}
+            {copied ? <CheckCircle2 size={16} className="text-green-500" /> : <Copy size={16} />}
+            {copied ? 'Copied' : 'Copy Values'}
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1a3a5c] rounded-xl text-xs font-bold text-white hover:bg-[#2a5a8c] transition-all shadow-md"
+            className="flex items-center gap-2 px-4 py-2 bg-[#1a3a8c] rounded-lg text-sm font-bold text-white hover:bg-[#2a5a8c] transition-all shadow-md"
           >
-            <Printer size={14} />
-            Print Summary
+            <Printer size={16} />
+            Print Grid
           </button>
         </div>
       </div>
 
-      {/* Progress Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:grid-cols-1">
-        <div className="md:col-span-1 bg-white rounded-3xl border border-[#dde3ec] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="relative w-32 h-32 mb-4">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="64"
-                cy="64"
-                r="58"
-                stroke="currentColor"
-                strokeWidth="10"
-                fill="transparent"
-                className="text-[#f1f5f9]"
-              />
-              <circle
-                cx="64"
-                cy="64"
-                r="58"
-                stroke="currentColor"
-                strokeWidth="10"
-                fill="transparent"
-                strokeDasharray={364.4}
-                strokeDashoffset={364.4 - (364.4 * overallProgress) / 100}
-                className="text-[#1a3a5c] transition-all duration-1000 ease-out"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-black text-[#1a3a5c]">{overallProgress}%</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Complete</span>
-            </div>
-          </div>
-          <h3 className="font-bold text-[#1a3a5c]">§61.109(a) Progress</h3>
-          <p className="text-xs text-[#6b7280] mt-1">Aeronautical Experience Requirements</p>
+      <div className="max-w-6xl mx-auto print:max-w-none">
+        <div className="text-center mb-4">
+          <p className="text-red-600 text-[11px] font-bold mb-1">* At least one field is required</p>
+          <h1 className="text-[#1a3a8c] text-xl font-bold uppercase tracking-tight">Aeronautical Experience Grid</h1>
         </div>
 
-        <div className="md:col-span-2 bg-white rounded-3xl border border-[#dde3ec] p-6 shadow-sm">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-4">Requirement Checklist</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-            {requirements.map((r, idx) => (
-              <div key={idx} className="flex items-center justify-between py-1 border-b border-[#f1f5f9] last:border-0">
-                <div className="flex items-center gap-2">
-                  {r.have >= r.need ? (
-                    <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                      <CheckCircle2 size={14} />
-                    </div>
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                      <AlertCircle size={14} />
-                    </div>
-                  )}
-                  <span className="text-xs font-medium text-[#1c2333]">{r.label}</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-[#1a3a5c]">{r.have.toFixed(1)} / {r.need}</div>
-                  {r.have < r.need && (
-                    <div className="text-[9px] font-bold text-amber-600">{(r.need - r.have).toFixed(1)} remaining</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* IACRA Grid */}
-      <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-lg overflow-hidden">
-        <div className="bg-[#1a3a5c] p-6 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <FileText size={24} />
-            <h2 className="text-xl font-black">Aeronautical Experience Grid</h2>
-          </div>
-          <p className="text-xs opacity-80">Values calculated from PPL flight lessons only. Verify against your logbook.</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto border-collapse">
+          <table className="w-full border-collapse border border-black">
             <thead>
-              <tr className="bg-[#f8fafc] border-b border-[#dde3ec]">
-                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] w-1/3">Category</th>
-                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] text-center">Airplanes</th>
-                <th className="p-4 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] text-center">ATD / Sim</th>
+              <tr className="bg-white">
+                <th className="border border-black p-2 w-[180px]"></th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase">Airplanes</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase">Rotorcraft</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase leading-tight">Powered<br/>Lift</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase">Gliders</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase leading-tight">Lighter<br/>than Air</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase">FTD</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase leading-tight">FFS<br/>(Simulator)</th>
+                <th className="border border-black p-2 text-[#1a3a8c] text-[11px] font-bold uppercase">ATD</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#dde3ec]">
-              {[
-                { label: 'Total Time', airplane: totals.totalTime, atd: totals.atdTime, min: 40, ref: '§61.109(a)' },
-                { label: 'Instruction Received', airplane: totals.dualReceived, atd: 0, min: 20, ref: '§61.109(a)(1)' },
-                { label: 'Solo', airplane: totals.soloTime, atd: 0, min: 10, ref: '§61.109(a)(2)' },
-                { label: 'Pilot in Command', airplane: totals.picTime, atd: 0 },
-                { label: 'Second in Command', airplane: totals.sicTime, atd: 0 },
-                { label: 'As Flight Instructor', airplane: totals.cfiTime, atd: 0 },
-                { label: 'Cross Country (Total)', airplane: totals.xcTotal, atd: 0 },
-                { label: 'Cross Country Instruction', airplane: totals.xcDual, atd: 0, min: 3, ref: '§61.109(a)(1)(i)' },
-                { label: 'Cross Country Solo', airplane: totals.xcSolo, atd: 0, min: 5, ref: '§61.109(a)(2)(i)' },
-                { label: 'Cross Country PIC', airplane: totals.xcPic, atd: 0 },
-                { label: 'Instrument (Total)', airplane: totals.instTotal, atd: totals.atdInst, min: 3, ref: '§61.109(a)(1)(iii)' },
-                { label: 'Night (Total)', airplane: totals.nightTotal, atd: 0 },
-                { label: 'Night Instruction', airplane: totals.nightDual, atd: 0, min: 3, ref: '§61.109(a)(1)(ii)' },
-                { label: 'Night Solo', airplane: totals.nightSolo, atd: 0 },
-                { label: 'Night PIC', airplane: totals.nightPic, atd: 0 },
-                { label: 'Night Takeoffs', airplane: totals.nightTakeoffs, atd: 0 },
-                { label: 'Night Landings', airplane: totals.nightLandings, atd: 0, min: 10, ref: '§61.109(a)(1)(ii)' },
-                { label: 'Night Takeoffs PIC', airplane: totals.nightTakeoffsPic, atd: 0 },
-                { label: 'Night Landings PIC', airplane: totals.nightLandingsPic, atd: 0 },
-              ].map((row, idx) => (
-                <tr key={idx} className="hover:bg-[#f8fafc] transition-colors">
-                  <td className="p-4">
-                    <div className="text-sm font-bold text-[#1c2333]">{row.label}</div>
-                    {row.ref && <div className="text-[10px] text-[#6b7280] font-medium mt-0.5">{row.ref} min: {row.min}</div>}
-                  </td>
-                  <td className={cn(
-                    "p-4 text-center font-mono text-sm font-bold",
-                    row.min !== undefined ? (row.airplane >= row.min ? "text-green-600 bg-green-50/30" : "text-amber-600 bg-amber-50/30") : "text-[#1a3a5c]"
-                  )}>
-                    {row.airplane.toFixed(1)}
-                  </td>
-                  <td className="p-4 text-center font-mono text-sm text-[#6b7280]">
-                    {row.atd.toFixed(1)}
-                  </td>
-                </tr>
-              ))}
+            <tbody>
+              {/* Row 1: Total */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Total</td>
+                <Cell className="text-right font-mono">{totals.totalTime.toFixed(1)}{checkMet(totals.totalTime, 40)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell className="text-right font-mono">{totals.ftdTime.toFixed(1)}</Cell>
+                <Cell className="text-right font-mono">{totals.ffsTime.toFixed(1)}</Cell>
+                <Cell className="text-right font-mono">{totals.atdTime.toFixed(1)}</Cell>
+              </tr>
+              {/* Row 2: Instruction Received */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Instruction Received</td>
+                <Cell className="text-right font-mono">{totals.dualReceived.toFixed(1)}{checkMet(totals.dualReceived, 20)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell className="text-right font-mono">{totals.atdTime.toFixed(1)}</Cell>
+              </tr>
+              {/* Row 3: Solo */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Solo</td>
+                <Cell className="text-right font-mono">{totals.soloTime.toFixed(1)}{checkMet(totals.soloTime, 10)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 4: PIC and SIC */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">PIC and SIC</td>
+                <Cell className="p-0">
+                  <div className="border-b border-black p-1 text-right font-mono">{totals.picTime.toFixed(1)}</div>
+                  <div className="p-1 text-right font-mono">{totals.sicTime.toFixed(1)}</div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="light" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 5: XC Instruction */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Cross Country Instruction Received</td>
+                <Cell className="text-right font-mono">{totals.xcDual.toFixed(1)}{checkMet(totals.xcDual, 3)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 6: XC Solo */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Cross Country Solo</td>
+                <Cell className="text-right font-mono">{totals.xcSolo.toFixed(1)}{checkMet(totals.xcSolo, 5)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 7: XC PIC/SIC */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Cross Country PIC/SIC</td>
+                <Cell className="p-0">
+                  <div className="border-b border-black p-1 text-right font-mono">{totals.xcPic.toFixed(1)}</div>
+                  <div className="p-1 text-right font-mono">0.0</div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="light" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 8: Instrument */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Instrument</td>
+                <Cell className="text-right font-mono">{totals.instTotal.toFixed(1)}{checkMet(totals.instTotal, 3)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell className="text-right font-mono">{totals.atdInst.toFixed(1)}</Cell>
+              </tr>
+              {/* Row 9: Night Instruction */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Night Instruction Received</td>
+                <Cell className="text-right font-mono">{totals.nightDual.toFixed(1)}{checkMet(totals.nightDual, 3)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 10: Night T/O / Ldg */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Night Take-off / Landing</td>
+                <Cell className="text-right font-mono">{(totals.nightTakeoffs + totals.nightLandings)}{checkMet(totals.nightTakeoffs + totals.nightLandings, 10)}</Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 11: Night PIC/SIC */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Night PIC/SIC</td>
+                <Cell className="p-0">
+                  <div className="border-b border-black p-1 text-right font-mono">{totals.nightPic.toFixed(1)}</div>
+                  <div className="p-1 text-right font-mono">0.0</div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="light" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="light" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="light" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="gray" />
+              </tr>
+              {/* Row 12: Night T/O / Ldg PIC/SIC */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Night Take-off / Landing PIC/SIC</td>
+                <Cell className="p-0">
+                  <div className="border-b border-black p-1 text-right font-mono">{(totals.nightTakeoffsPic + totals.nightLandingsPic)}</div>
+                  <div className="p-1 text-right font-mono">0</div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="white" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="white" className="p-0">
+                  <div className="border-b border-black h-[20px]"></div>
+                  <div className="h-[20px]"></div>
+                </Cell>
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 13: Number of Flights */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Number of Flights</td>
+                <Cell type="dark" className="text-right text-white font-mono">{totals.numFlights}</Cell>
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="gray" />
+                <Cell type="medium" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 14: Number of Aero-Tows */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Number of Aero-Tows</td>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="white" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 15: Number of Ground Launches */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Number of Ground Launches</td>
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="white" />
+                <Cell type="white" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
+              {/* Row 16: Number of Powered Launches */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px]">Number of Powered Launches</td>
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="gray" />
+                <Cell type="medium" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+                <Cell type="gray" />
+              </tr>
             </tbody>
           </table>
         </div>
+
+        {/* Class Hours Section */}
+        <div className="mt-8 border border-black p-4">
+          <h2 className="text-[#1a3a8c] text-center font-bold text-sm mb-4 uppercase">Class Hours</h2>
+          <div className="grid grid-cols-4 border-t border-l border-black">
+            {/* Row 1 */}
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL PIC: <span className="font-mono font-bold">{totals.picTime.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES PIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL PIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES PIC:</div>
+            {/* Row 2 */}
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES SIC:</div>
+            {/* Row 3 */}
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceived.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES Instruct Rcvd:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL Instruct Rcvd:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES Instruct Rcvd:</div>
+            {/* Row 4 */}
+            <div className="border-b border-r border-black p-1 text-[11px]">Rotorcraft - HEL:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Rotorcraft - GYRO:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            {/* Row 5 */}
+            <div className="border-b border-r border-black p-1 text-[11px]">LTA - Balloon:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">LTA - Airship:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            {/* Row 6 */}
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">FFS ME:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">FTD ME:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">ATD ME:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            {/* Row 7 */}
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">FFS SE:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">FTD SE:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">ATD SE: <span className="font-mono font-bold">{totals.atdSE.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+            {/* Row 8 */}
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">FFS HEL:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">FTD HEL:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#99CCFF]">ATD HEL:</div>
+            <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
+          </div>
+        </div>
+
+        {/* Disclaimer */}
+        <div className="mt-8 border border-black p-4 text-[11px] leading-relaxed italic">
+          Class hours entered will go to the appropriate Record of Pilot Time on the 8710-1. Failure to enter the appropriate hours, if required, will render the applicant not eligible for the certificate/rating sought and will result in a Correction Notice from the Airmen Certification Branch.
+        </div>
       </div>
 
-      {/* Device Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-4 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">FTD Time</div>
-          <div className="text-2xl font-black text-[#1a3a5c]">{totals.ftdTime.toFixed(1)}<span className="text-xs font-medium ml-1">hrs</span></div>
-        </div>
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-4 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">FFS Time</div>
-          <div className="text-2xl font-black text-[#1a3a5c]">{totals.ffsTime.toFixed(1)}<span className="text-xs font-medium ml-1">hrs</span></div>
-        </div>
-        <div className="bg-white rounded-2xl border border-[#dde3ec] p-4 shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">ATD SE</div>
-          <div className="text-2xl font-black text-[#1a3a5c]">{totals.atdSE.toFixed(1)}<span className="text-xs font-medium ml-1">hrs</span></div>
-        </div>
-      </div>
-
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex gap-4 print:bg-white print:border-gray-200">
-        <AlertCircle className="text-amber-600 shrink-0" size={24} />
-        <div>
-          <h4 className="text-sm font-bold text-amber-900">Important Disclaimer</h4>
-          <p className="text-xs text-amber-800 leading-relaxed mt-1">
-            This summary is automatically generated based on digital lesson logs. It is intended for planning purposes only. 
-            Before submitting your IACRA application, you <strong>MUST</strong> verify all totals against your official pilot logbook. 
-            The CFI and Student are responsible for the accuracy of all aeronautical experience reported to the FAA.
-          </p>
-        </div>
-      </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body { padding: 0; margin: 0; }
+          .print\\:hidden { display: none !important; }
+          table { width: 100% !important; border-collapse: collapse !important; }
+          th, td { border: 1px solid black !important; }
+          .max-w-6xl { max-width: none !important; }
+          @page { margin: 1cm; }
+        }
+      `}} />
     </div>
   );
 }

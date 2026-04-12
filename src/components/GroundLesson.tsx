@@ -22,7 +22,23 @@ export default function GroundLesson() {
   const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
   const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
+  const [lessonLabel, setLessonLabel] = useState('');
+  const [lessonNum, setLessonNum] = useState(1);
   const navigate = useNavigate();
+
+  const resetLessonState = () => {
+    setGrades({});
+    setNotes({});
+    setLessonNotes('');
+    setLessonDate(new Date().toISOString().split('T')[0]);
+    setFillState('');
+    
+    localStorage.removeItem('faa_ground_grades');
+    localStorage.removeItem('faa_ground_notes');
+    localStorage.removeItem('faa_flight_grades');
+    localStorage.removeItem('faa_flight_notes');
+    localStorage.removeItem('current_lesson_id');
+  };
 
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
@@ -50,16 +66,25 @@ export default function GroundLesson() {
       setLessonNotes(editLesson.meta?.notes || '');
       setLessonDate(editLesson.meta?.date || new Date().toISOString().split('T')[0]);
       setInstructorName(editLesson.instructor || '');
+      setLessonLabel(editLesson.label || '');
+      setLessonNum(editLesson.lesson_num || 1);
       // Clear edit lesson from storage so it doesn't persist on next new lesson
       localStorage.removeItem('faa_edit_lesson');
     } else {
-      const saved = JSON.parse(localStorage.getItem(`faa_current_lesson_${savedRating.code}`) || 'null');
-      if (saved) {
-        setGrades(saved.grades || {});
-        setNotes(saved.notes || {});
-        setLessonNotes(saved.meta?.notes || '');
-        setLessonDate(saved.meta?.date || new Date().toISOString().split('T')[0]);
-      }
+      resetLessonState();
+      
+      // Fetch next lesson number
+      supabase.from('lessons')
+        .select('lesson_num')
+        .eq('student_name', savedStudent)
+        .eq('type', 'ground')
+        .order('lesson_num', { ascending: false })
+        .limit(1)
+        .then(({ data: existing }) => {
+          const nextNum = existing && existing.length > 0 ? (existing[0].lesson_num || 0) + 1 : 1;
+          setLessonNum(nextNum);
+          setLessonLabel(`Ground Lesson ${nextNum}`);
+        });
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -168,38 +193,22 @@ export default function GroundLesson() {
       return;
     }
 
-    let groundNum = 1;
-    if (!editId) {
-      const { data: existing } = await supabase.from('lessons')
-        .select('lesson_num')
-        .eq('student_name', studentName)
-        .eq('type', 'ground')
-        .order('lesson_num', { ascending: false })
-        .limit(1);
-      groundNum = existing && existing.length > 0 ? (existing[0].lesson_num || 0) + 1 : 1;
-    }
-
-    const ratingInfo = JSON.parse(localStorage.getItem('selected_rating') || '{}');
-
     const lessonData: any = {
       user_id: session.user.id,
       student_name: studentName,
       type: 'ground',
       instructor: instructorName,
+      lesson_num: lessonNum,
+      label: lessonLabel,
       meta: {
         date: lessonDate,
         notes: lessonNotes,
-        rating_code: ratingInfo.code || 'ppl',
-        rating_label: ratingInfo.label || 'Private Pilot ASEL'
+        rating_code: rating?.code || 'ppl',
+        rating_label: rating?.label || 'Private Pilot ASEL'
       },
       grades,
       notes
     };
-
-    if (!editId) {
-      lessonData.lesson_num = groundNum;
-      lessonData.label = `Ground Lesson ${groundNum}`;
-    }
 
     let error;
     if (editId) {
@@ -213,7 +222,7 @@ export default function GroundLesson() {
     if (error) {
       alert('Save failed: ' + error.message);
     } else {
-      localStorage.removeItem(`faa_current_lesson_${ratingInfo.code}`);
+      localStorage.removeItem(`faa_current_lesson_${rating?.code}`);
       navigate('/history');
     }
     setSaving(false);
@@ -273,6 +282,16 @@ export default function GroundLesson() {
               value={studentName}
               readOnly
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 bg-[#f4f5f7] text-[#1c2333] cursor-not-allowed"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Label</label>
+            <input
+              type="text"
+              value={lessonLabel}
+              onChange={(e) => setLessonLabel(e.target.value)}
+              placeholder="e.g. Ground Lesson 1"
+              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />
           </div>
           <div className="space-y-1.5">

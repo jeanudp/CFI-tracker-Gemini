@@ -117,6 +117,15 @@ export default function StudentDashboard() {
     return null;
   };
 
+  const getTaskStruggleScore = (lessons: Lesson[], taskId: string) => {
+    const taskGrades = lessons
+      .filter(l => l.grades && l.grades[taskId])
+      .map(l => l.grades[taskId]);
+    if (taskGrades.length === 0) return 100;
+    const sGrades = taskGrades.filter(g => g === 'S').length;
+    return (sGrades / taskGrades.length) * 100;
+  };
+
   const getGradeColor = (grade: string | null) => {
     switch (grade) {
       case 'S': return 'bg-[#2d7a4f] text-white border-[#2d7a4f]';
@@ -195,27 +204,22 @@ export default function StudentDashboard() {
   };
 
   // 6. Radar Chart Data
-  const getMasteryValue = (grade: string | null) => {
-    if (grade === 'S') return 100;
-    return 0;
-  };
-
   // Ground Radar (Area I)
   const groundRadarData = acsData[0]?.tasks.map((task, ti) => {
-    const grade = getMostRecentGrade(0, ti);
+    const score = getTaskStruggleScore(lessons, `0_${ti}`);
     const { letter, name } = parseTask(task.name);
     return {
       subject: `${letter}. ${name.substring(0, 25)}${name.length > 25 ? '...' : ''}`,
       fullSubject: `${letter}. ${name}`,
-      value: getMasteryValue(grade),
-      grade: grade || 'None'
+      value: Math.round(score),
+      grade: getMostRecentGrade(0, ti) || 'None'
     };
   }) || [];
 
   // Flight Radar (Areas II-XII)
   const flightRadarData = acsData.slice(1).map((area, aiOffset) => {
     const ai = aiOffset + 1;
-    const scores = area.tasks.map((_, ti) => getMasteryValue(getMostRecentGrade(ai, ti)));
+    const scores = area.tasks.map((_, ti) => getTaskStruggleScore(lessons, `${ai}_${ti}`));
     const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     
     return {
@@ -338,6 +342,12 @@ export default function StudentDashboard() {
               <span className="px-4 py-1.5 bg-[#f4f5f7] text-[#6b7280] rounded-full text-xs font-bold border border-[#dde3ec]">{groundSummary.none} Not Graded</span>
             </div>
             
+            <div className="text-center">
+              <p className="text-[10px] text-[#6b7280] font-medium italic leading-relaxed max-w-xs mx-auto">
+                This chart shows overall performance throughout training. A lower spoke indicates an area where the student needed more practice. Check the Checkride tab to see current pass or fail status for each task.
+              </p>
+            </div>
+
             <div className="flex justify-center gap-6 pt-6 border-t border-[#f4f5f7]">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#2d7a4f]" />
@@ -403,10 +413,59 @@ export default function StudentDashboard() {
             </div>
             
             <div className="text-center">
-              <p className="text-[10px] text-[#6b7280] font-medium italic">Area scores averaged across all component tasks</p>
+              <p className="text-[10px] text-[#6b7280] font-medium italic leading-relaxed max-w-xs mx-auto">
+                This chart shows overall performance throughout training. A lower spoke indicates an area where the student needed more practice. Check the Checkride tab to see current pass or fail status for each task.
+              </p>
             </div>
           </div>
         </motion.div>
+      </div>
+
+      {/* Most Struggled Areas */}
+      <div className="mb-12">
+        <h3 className="text-lg font-bold text-[#1a3a5c] mb-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#fdecea] rounded-xl flex items-center justify-center text-[#c0392b]">
+            <AlertTriangle size={20} />
+          </div>
+          Most Struggled Areas
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {(() => {
+            const allAreaScores = acsData.map((area, ai) => {
+              const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+              if (tasks.length === 0) return null;
+              const scores = tasks.map((_, ti) => getTaskStruggleScore(lessons, `${ai}_${ti}`));
+              const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+              return { area: area.area, avg };
+            }).filter(Boolean) as { area: string, avg: number }[];
+
+            const topStruggles = [...allAreaScores]
+              .sort((a, b) => a.avg - b.avg)
+              .slice(0, 3);
+
+            if (topStruggles.length === 0) return <div className="col-span-3 text-sm text-[#6b7280] italic">No struggle data available yet.</div>;
+
+            return topStruggles.map((s, idx) => (
+              <div 
+                key={idx} 
+                className={cn(
+                  "p-6 rounded-2xl border shadow-sm",
+                  s.avg < 50 ? "bg-[#fdecea] border-[#f5c6cb] text-[#721c24]" : "bg-[#fff3cd] border-[#ffeeba] text-[#856404]"
+                )}
+              >
+                <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2">Area {idx + 1}</div>
+                <div className="text-sm font-bold mb-3 leading-tight">{s.area}</div>
+                <div className="flex items-end gap-2">
+                  <div className="text-2xl font-black">{Math.round(s.avg)}%</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">Struggle Score</div>
+                </div>
+                <div className="mt-4 w-full h-1.5 bg-black/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-current opacity-30 rounded-full" style={{ width: `${s.avg}%` }} />
+                </div>
+              </div>
+            ));
+          })()}
+        </div>
       </div>
 
       {/* Weak Areas & Recent Notes (Simplified) */}

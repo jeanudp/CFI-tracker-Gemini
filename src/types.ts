@@ -68,6 +68,8 @@ export interface Student {
   current_rating: string;
   current_rating_label: string;
   checkride_passed_ratings: PassedRating[];
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface ManualHoursEntry {

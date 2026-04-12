@@ -6,7 +6,7 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function History() {
@@ -26,6 +26,9 @@ export default function History() {
   const [editingDateKey, setEditingDateKey] = useState<string | null>(null);
   const [tempDate, setTempDate] = useState<string>('');
   const [newLogDates, setNewLogDates] = useState<Record<string, string>>({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [groundExpanded, setGroundExpanded] = useState(false);
+  const [flightExpanded, setFlightExpanded] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -260,6 +263,23 @@ export default function History() {
   const groundLessons = filteredLessons.filter(l => l.type === 'ground');
   const flightLessons = filteredLessons.filter(l => l.type === 'flight');
 
+  const getSectionGrades = (lessonList: Lesson[]) => {
+    let s = 0;
+    let n = 0;
+    lessonList.forEach(l => {
+      if (l.grades) {
+        Object.values(l.grades).forEach(g => {
+          if (g === 'S') s++;
+          if (g === 'N') n++;
+        });
+      }
+    });
+    return { s, n };
+  };
+
+  const groundGrades = getSectionGrades(groundLessons);
+  const flightGrades = getSectionGrades(flightLessons);
+
   const studentStats = studentName ? {
     count: studentLessons.length,
     hours: studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.totalFlight || '0') || 0), 0),
@@ -280,6 +300,13 @@ export default function History() {
 
   const rating = getRating();
   const acsData = ALL_ACS[rating.code] || ALL_ACS['ppl'];
+
+  const getMostRecentGrade = (lessons: Lesson[], taskId: string) => {
+    const sortedLessons = [...lessons]
+      .filter(l => l.grades && l.grades[taskId])
+      .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+    return sortedLessons.length > 0 ? sortedLessons[0].grades[taskId] : null;
+  };
 
   const getCumulativeStats = (lessonsToSum = studentLessons) => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
@@ -519,83 +546,149 @@ export default function History() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-[#f8fafc]">
+    <div className="flex h-full overflow-hidden bg-[#f8fafc] relative">
+      {/* Sidebar Toggle Tab */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] w-6 h-20 bg-[#1a3a5c] text-white flex items-center justify-center rounded-r-lg shadow-lg hover:bg-[#2a5a8c] transition-all duration-300"
+      >
+        {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+      </button>
+
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="w-[320px] bg-white border-r border-[#dde3ec] flex flex-col shrink-0 h-full shadow-sm z-20">
-        <div className="p-6 border-b border-[#dde3ec] space-y-4">
-          {studentName ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-[#1a3a5c] tracking-tight truncate pr-2">
-                  {studentName}
-                </h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <div className="bg-[#f0fdf4] text-[#166534] text-[10px] font-bold px-2 py-1 rounded-full border border-[#bbf7d0]">
-                  {studentStats?.count} Lessons
+      <aside 
+        className={cn(
+          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-white border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
+          sidebarOpen ? "w-[85%] md:w-[300px] translate-x-0" : "w-[85%] md:w-0 -translate-x-full md:translate-x-0"
+        )}
+      >
+        <div className="w-full min-w-[300px] h-full flex flex-col">
+          <div className="p-6 border-b border-[#dde3ec] space-y-4">
+            {studentName ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-black text-[#1a3a5c] tracking-tight truncate pr-2">
+                    {studentName}
+                  </h2>
                 </div>
-                <div className="bg-[#eff6ff] text-[#1e40af] text-[10px] font-bold px-2 py-1 rounded-full border border-[#bfdbfe]">
-                  {studentStats?.hours.toFixed(1)} Hours
-                </div>
-                <div className="bg-[#fdf2f8] text-[#9d174d] text-[10px] font-bold px-2 py-1 rounded-full border border-[#fbcfe8]">
-                  {studentStats?.sGrades} S Grades
+                <div className="flex flex-wrap gap-2">
+                  <div className="bg-[#f0fdf4] text-[#166534] text-[10px] font-bold px-2 py-1 rounded-full border border-[#bbf7d0]">
+                    {studentStats?.count} Lessons
+                  </div>
+                  <div className="bg-[#eff6ff] text-[#1e40af] text-[10px] font-bold px-2 py-1 rounded-full border border-[#bfdbfe]">
+                    {studentStats?.hours.toFixed(1)} Hours
+                  </div>
+                  <div className="bg-[#fdf2f8] text-[#9d174d] text-[10px] font-bold px-2 py-1 rounded-full border border-[#fbcfe8]">
+                    {studentStats?.sGrades} S Grades
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#1a3a5c] rounded-lg">
-                <HistoryIcon size={18} className="text-white" />
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-[#1a3a5c] rounded-lg">
+                  <HistoryIcon size={18} className="text-white" />
+                </div>
+                <h1 className="text-lg font-black tracking-tight text-[#1a3a5c] uppercase">History</h1>
               </div>
-              <h1 className="text-lg font-black tracking-tight text-[#1a3a5c] uppercase">History</h1>
-            </div>
-          )}
+            )}
 
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search lessons..."
-              className="w-full text-xs border border-[#dde3ec] rounded-xl pl-9 pr-3 py-2.5 bg-[#f4f5f7] focus:outline-none focus:border-[#1a3a5c] focus:bg-white transition-all shadow-inner"
-            />
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search lessons..."
+                className="w-full text-xs border border-[#dde3ec] rounded-xl pl-9 pr-3 py-2.5 bg-[#f4f5f7] focus:outline-none focus:border-[#1a3a5c] focus:bg-white transition-all shadow-inner"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {filteredLessons.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-4xl mb-4 opacity-10">🔍</div>
-              <p className="text-sm text-[#6b7280] font-medium">No lessons found.</p>
-            </div>
-          ) : (
-            <div className="pb-8">
-              {/* Ground Lessons Section */}
-              <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-2 border-b border-[#dde3ec] flex justify-between items-center">
-                <span className="text-[10px] font-black text-[#059669] uppercase tracking-widest">Ground Lessons ({groundLessons.length})</span>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {filteredLessons.length === 0 ? (
+              <div className="p-12 text-center">
+                <div className="text-4xl mb-4 opacity-10">🔍</div>
+                <p className="text-sm text-[#6b7280] font-medium">No lessons found.</p>
               </div>
-              <div className="divide-y divide-[#f1f5f9]">
-                {groundLessons.length === 0 ? (
-                  <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No ground lessons yet.</div>
-                ) : (
-                  groundLessons.map(l => renderLessonItem(l))
-                )}
-              </div>
+            ) : (
+              <div className="pb-8">
+                {/* Ground Lessons Section */}
+                <button 
+                  onClick={() => setGroundExpanded(!groundExpanded)}
+                  className="w-full sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-3 border-b border-[#dde3ec] flex justify-between items-center hover:bg-[#f8fafc] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {groundExpanded ? <ChevronDown size={14} className="text-[#6b7280]" /> : <ChevronRight size={14} className="text-[#6b7280]" />}
+                    <span className="text-[10px] font-black text-[#059669] uppercase tracking-widest">Ground Lessons ({groundLessons.length})</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {groundGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{groundGrades.s} S</span>}
+                    {groundGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{groundGrades.n} N</span>}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {groundExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden divide-y divide-[#f1f5f9] pl-2"
+                    >
+                      {groundLessons.length === 0 ? (
+                        <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No ground lessons yet.</div>
+                      ) : (
+                        groundLessons.map(l => renderLessonItem(l))
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              {/* Flight Lessons Section */}
-              <div className="sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-2 border-b border-[#dde3ec] border-t border-[#dde3ec] mt-4 flex justify-between items-center">
-                <span className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Flight Lessons ({flightLessons.length})</span>
+                {/* Flight Lessons Section */}
+                <button 
+                  onClick={() => setFlightExpanded(!flightExpanded)}
+                  className="w-full sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-3 border-b border-[#dde3ec] border-t border-[#dde3ec] mt-4 flex justify-between items-center hover:bg-[#f8fafc] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {flightExpanded ? <ChevronDown size={14} className="text-[#6b7280]" /> : <ChevronRight size={14} className="text-[#6b7280]" />}
+                    <span className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Flight Lessons ({flightLessons.length})</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {flightGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{flightGrades.s} S</span>}
+                    {flightGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{flightGrades.n} N</span>}
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {flightExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden divide-y divide-[#f1f5f9] pl-2"
+                    >
+                      {flightLessons.length === 0 ? (
+                        <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No flight lessons yet.</div>
+                      ) : (
+                        flightLessons.map(l => renderLessonItem(l))
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div className="divide-y divide-[#f1f5f9]">
-                {flightLessons.length === 0 ? (
-                  <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No flight lessons yet.</div>
-                ) : (
-                  flightLessons.map(l => renderLessonItem(l))
-                )}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </aside>
 
@@ -949,7 +1042,7 @@ export default function History() {
                     {acsData.map((area, ai) => {
                       const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
                       if (tasks.length === 0) return null;
-                      const sat = tasks.filter((_, ti) => studentLessons.some(l => l.grades?.[`${ai}_${ti}`] === 'S')).length;
+                      const sat = tasks.filter((_, ti) => getMostRecentGrade(studentLessons, `${ai}_${ti}`) === 'S').length;
                       const pct = Math.round((sat / tasks.length) * 100);
 
                       return (
@@ -1528,6 +1621,74 @@ export default function History() {
                         </div>
                       ))}
 
+                      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                        <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f4f5f7] flex justify-between items-center">
+                          <div>
+                            <h3 className="text-sm font-bold text-[#1c2333]">ACS Task Checklist</h3>
+                            <p className="text-[10px] text-[#6b7280] font-mono">Current Proficiency Status</p>
+                          </div>
+                          <div className="text-right">
+                            {(() => {
+                              const allTasks = acsData.flatMap((area, ai) => 
+                                area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'))
+                                  .map((_, ti) => `${ai}_${ti}`)
+                              );
+                              const completed = allTasks.filter(id => getMostRecentGrade(studentLessons, id) === 'S').length;
+                              const pct = Math.round((completed / allTasks.length) * 100);
+                              return (
+                                <>
+                                  <div className="text-xs font-bold text-[#1a3a5c]">{completed}/{allTasks.length}</div>
+                                  <div className="text-[9px] font-bold text-[#6b7280] uppercase tracking-widest">{pct}% Complete</div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                        <div className="divide-y divide-[#dde3ec] max-h-[400px] overflow-y-auto">
+                          {acsData.map((area, ai) => {
+                            const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+                            if (tasks.length === 0) return null;
+
+                            return (
+                              <div key={area.area} className="bg-white">
+                                <div className="bg-[#f8fafc] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec]">
+                                  {area.area}
+                                </div>
+                                {tasks.map((task, ti) => {
+                                  const taskId = `${ai}_${ti}`;
+                                  const grade = getMostRecentGrade(studentLessons, taskId);
+                                  const isComplete = grade === 'S';
+                                  
+                                  return (
+                                    <div key={taskId} className="px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all">
+                                      <div className="flex items-center gap-3">
+                                        <div className={cn(
+                                          "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+                                          isComplete ? "bg-[#2d7a4f] text-white" : "bg-[#f1f5f9] text-[#cbd5e1] border border-[#e2e8f0]"
+                                        )}>
+                                          {isComplete ? <Check size={12} strokeWidth={3} /> : <div className="w-1 h-1 bg-current rounded-full" />}
+                                        </div>
+                                        <span className={cn("text-xs font-medium", isComplete ? "text-[#1c2333]" : "text-[#64748b]")}>
+                                          {task.name}
+                                        </span>
+                                      </div>
+                                      {grade && !isComplete && (
+                                        <span className={cn(
+                                          "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter",
+                                          grade === 'N' ? "bg-[#fdecea] text-[#c0392b]" : "bg-[#fdf0d4] text-[#e8a020]"
+                                        )}>
+                                          {grade === 'N' ? 'Needs Impr.' : 'Incomplete'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <div className="space-y-4">
                         {/* Note */}
                         <div className="bg-[#fffbeb] border border-[#fef3c7] p-4 rounded-xl flex gap-3 mb-2">
@@ -1540,41 +1701,53 @@ export default function History() {
                         {lessonRating === 'ppl' ? (
                           <div className="space-y-4">
                             {SOLO_OPTIONS.map(section => {
+                              const isSectionComplete = (() => {
+                                if (section.id === '1') return isEndorsementMet('A.1');
+                                if (section.id === '2') return isEndorsementMet('A.3') && isEndorsementMet('A.4') && isEndorsementMet('A.6');
+                                if (section.id === '3') return isEndorsementMet('A.8') && isEndorsementMet('A.9') && isEndorsementMet('A.10');
+                                if (section.id === '4') return isEndorsementMet('A.12') || isEndorsementMet('A.13');
+                                if (section.id === '5') return isEndorsementMet('A.32');
+                                if (section.id === '6') return isEndorsementMet('A.33') && isEndorsementMet('A.34');
+                                return false;
+                              })();
+
                               const sectionEndorsementsMet = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).length;
-                              const isSectionComplete = sectionEndorsementsMet === section.endorsements.length;
+                              const isSectionInProgress = sectionEndorsementsMet > 0;
                               const isOpen = selectedSoloOption === section.id;
+
+                              const headerBg = isSectionComplete ? "bg-[#f0fdf4]" : (section.id === '4' && !isSectionInProgress ? "bg-[#f4f5f7]" : "bg-[#1a3a5c]");
+                              const titleColor = isSectionComplete ? "text-[#166534]" : (section.id === '4' && !isSectionInProgress ? "text-[#1c2333]" : "text-white");
+                              const descColor = isSectionComplete ? "text-[#166534]/70" : (section.id === '4' && !isSectionInProgress ? "text-[#6b7280]" : "text-white/70");
+                              const iconBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white text-[#1a3a5c]";
+                              const badgeBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white/20 text-white";
 
                               return (
                                 <div key={section.id} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                                   <button
                                     onClick={() => setSelectedSoloOption(isOpen ? null : section.id)}
-                                    className={cn(
-                                      "w-full px-4 py-4 flex items-center justify-between transition-all",
-                                      isSectionComplete ? "bg-[#f0fdf4]" : "bg-[#f4f5f7]"
-                                    )}
+                                    className={cn("w-full px-4 py-4 flex items-center justify-between transition-all", headerBg)}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <div className={cn(
-                                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                                        isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white text-[#1a3a5c] border border-[#dde3ec]"
-                                      )}>
-                                        {isSectionComplete ? <CheckCircle2 size={16} /> : section.id}
+                                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", iconBg)}>
+                                        {isSectionComplete ? <Check size={16} strokeWidth={3} /> : section.id}
                                       </div>
                                       <div className="text-left">
-                                        <h3 className={cn("text-sm font-bold", isSectionComplete ? "text-[#166534]" : "text-[#1c2333]")}>
-                                          {section.label}
-                                        </h3>
-                                        <p className="text-[10px] text-[#6b7280] font-medium">{section.description}</p>
+                                        <div className="flex items-center gap-2">
+                                          <h3 className={cn("text-sm font-bold", titleColor)}>
+                                            {section.label}
+                                          </h3>
+                                          {section.id === '4' && (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#dde3ec] text-[#6b7280] uppercase tracking-widest">Optional</span>
+                                          )}
+                                        </div>
+                                        <p className={cn("text-[10px] font-medium", descColor)}>{section.description}</p>
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <span className={cn(
-                                        "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                                        isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-[#dde3ec] text-[#6b7280]"
-                                      )}>
+                                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", badgeBg)}>
                                         {sectionEndorsementsMet}/{section.endorsements.length}
                                       </span>
-                                      <ChevronRight size={16} className={cn("text-[#6b7280] transition-transform", isOpen && "rotate-90")} />
+                                      <ChevronRight size={16} className={cn(isSectionComplete || (section.id !== '4' || isSectionInProgress) ? "text-white" : "text-[#6b7280]", "transition-transform", isOpen && "rotate-90")} />
                                     </div>
                                   </button>
 
@@ -1626,6 +1799,72 @@ export default function History() {
                                 </div>
                               );
                             })}
+
+                            {/* Endorsement Summary */}
+                            {(() => {
+                              const summaryLabels: Record<string, string> = {
+                                '1': 'Prerequisites',
+                                '2': 'Pre-Solo',
+                                '3': 'Cross-Country',
+                                '4': 'Class B',
+                                '5': 'Knowledge Test',
+                                '6': 'Checkride'
+                              };
+
+                              const summarySections = SOLO_OPTIONS.map(section => {
+                                const givenInSection = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).map((e: any) => {
+                                  const record = endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name);
+                                  return {
+                                    ...e,
+                                    completed_date: record?.completed_date
+                                  };
+                                });
+                                return {
+                                  id: section.id,
+                                  label: summaryLabels[section.id] || section.label,
+                                  endorsements: givenInSection
+                                };
+                              }).filter(s => s.endorsements.length > 0);
+
+                              if (summarySections.length === 0) return null;
+
+                              return (
+                                <div className="mt-8 bg-white rounded-2xl border border-[#dde3ec] border-l-4 border-l-[#2d7a4f] shadow-sm overflow-hidden">
+                                  <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f8fafc]">
+                                    <h3 className="text-sm font-bold text-[#1a3a5c]">Endorsements Given</h3>
+                                  </div>
+                                  <div className="p-4 space-y-4">
+                                    {summarySections.map(s => (
+                                      <div key={s.id} className="space-y-1">
+                                        <div className="text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest ml-1">{s.label}</div>
+                                        <div className="space-y-1">
+                                          {s.endorsements.map(e => (
+                                            <div key={e.key} className="h-9 px-3 flex items-center justify-between bg-[#f8fafc] rounded-lg border border-[#f1f5f9]">
+                                              <div className="flex items-center gap-3 overflow-hidden">
+                                                <span className="text-[9px] font-bold bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded shrink-0">
+                                                  {e.key.replace('A.', 'A.')}
+                                                </span>
+                                                <span className="text-[11px] font-medium text-[#1c2333] truncate">
+                                                  {e.text.split(' — ')[1]?.split(': ')[0] || e.text.substring(0, 40) + '...'}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-3 shrink-0 ml-4">
+                                                <span className="text-[10px] text-[#6b7280] font-medium">
+                                                  {new Date(e.completed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                                </span>
+                                                <div className="w-4 h-4 rounded-full bg-[#2d7a4f]/10 flex items-center justify-center text-[#2d7a4f]">
+                                                  <Check size={10} strokeWidth={3} />
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         ) : (
                           <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden mb-6">

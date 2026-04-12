@@ -67,7 +67,57 @@ export default function FlightLesson() {
   const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
   const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
+  const [lessonLabel, setLessonLabel] = useState('');
+  const [lessonNum, setLessonNum] = useState(1);
   const navigate = useNavigate();
+
+  const resetLessonState = () => {
+    setGrades({});
+    setNotes({});
+    setMeta({
+      date: new Date().toISOString().split('T')[0],
+      aircraft: '',
+      notes: '',
+      route: '',
+      ldgTotal: '',
+      ldgDay: '',
+      ldgNight: '',
+      xc: '',
+      night: '',
+      simInst: '',
+      imc: '',
+      groundSim: '',
+      dual: '',
+      cfi: '',
+      sic: '',
+      pic: '',
+      totalFlight: '',
+      solo: '',
+      soloXc: '',
+      atd: '',
+      xcDual: '',
+      xcSolo: '',
+      xcPic: '',
+      atdInst: '',
+      nightDual: '',
+      nightTakeoffs: '',
+      nightPic: '',
+      nightTakeoffsPic: '',
+      nightLandingsPic: '',
+      ftd: '',
+      ffs: '',
+      atdSE: '',
+      studentFlewSolo: false,
+    });
+    setFillState('');
+    setIsLogbookOpen(false);
+    
+    localStorage.removeItem('faa_ground_grades');
+    localStorage.removeItem('faa_ground_notes');
+    localStorage.removeItem('faa_flight_grades');
+    localStorage.removeItem('faa_flight_notes');
+    localStorage.removeItem('current_lesson_id');
+  };
 
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
@@ -94,20 +144,28 @@ export default function FlightLesson() {
       setNotes(editLesson.notes || {});
       setMeta(prev => ({ ...prev, ...editLesson.meta }));
       setInstructorName(editLesson.instructor || '');
+      setLessonLabel(editLesson.label || '');
+      setLessonNum(editLesson.lesson_num || 1);
       // Auto-open logbook if any field is filled
       const hasLogData = Object.entries(editLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v);
       if (hasLogData) setIsLogbookOpen(true);
       // Clear edit lesson from storage
       localStorage.removeItem('faa_edit_lesson');
     } else {
-      const saved = JSON.parse(localStorage.getItem(`faa_current_flight_lesson_${savedRating.code}`) || 'null');
-      if (saved) {
-        setGrades(saved.grades || {});
-        setNotes(saved.notes || {});
-        setMeta(prev => ({ ...prev, ...saved.meta }));
-        const hasLogData = Object.entries(saved.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v);
-        if (hasLogData) setIsLogbookOpen(true);
-      }
+      resetLessonState();
+      
+      // Fetch next lesson number
+      supabase.from('lessons')
+        .select('lesson_num')
+        .eq('student_name', savedStudent)
+        .eq('type', 'flight')
+        .order('lesson_num', { ascending: false })
+        .limit(1)
+        .then(({ data: existing }) => {
+          const nextNum = existing && existing.length > 0 ? (existing[0].lesson_num || 0) + 1 : 1;
+          setLessonNum(nextNum);
+          setLessonLabel(`Flight Lesson ${nextNum}`);
+        });
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -224,37 +282,21 @@ export default function FlightLesson() {
       return;
     }
 
-    let flightNum = 1;
-    if (!editId) {
-      const { data: existing } = await supabase.from('lessons')
-        .select('lesson_num')
-        .eq('student_name', studentName)
-        .eq('type', 'flight')
-        .order('lesson_num', { ascending: false })
-        .limit(1);
-      flightNum = existing && existing.length > 0 ? (existing[0].lesson_num || 0) + 1 : 1;
-    }
-
-    const ratingInfo = JSON.parse(localStorage.getItem('selected_rating') || '{}');
-
     const lessonData: any = {
       user_id: session.user.id,
       student_name: studentName,
       type: 'flight',
       instructor: instructorName,
+      lesson_num: lessonNum,
+      label: lessonLabel,
       meta: {
         ...meta,
-        rating_code: ratingInfo.code || 'ppl',
-        rating_label: ratingInfo.label || 'Private Pilot ASEL'
+        rating_code: rating?.code || 'ppl',
+        rating_label: rating?.label || 'Private Pilot ASEL'
       },
       grades,
       notes
     };
-
-    if (!editId) {
-      lessonData.lesson_num = flightNum;
-      lessonData.label = `Flight Lesson ${flightNum}`;
-    }
 
     let error;
     if (editId) {
@@ -268,7 +310,7 @@ export default function FlightLesson() {
     if (error) {
       alert('Save failed: ' + error.message);
     } else {
-      localStorage.removeItem(`faa_current_flight_lesson_${ratingInfo.code}`);
+      localStorage.removeItem(`faa_current_flight_lesson_${rating?.code}`);
       navigate('/history');
     }
     setSaving(false);
@@ -367,6 +409,16 @@ export default function FlightLesson() {
               value={studentName}
               readOnly
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 bg-[#f4f5f7] text-[#1c2333] cursor-not-allowed"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Label</label>
+            <input
+              type="text"
+              value={lessonLabel}
+              onChange={(e) => setLessonLabel(e.target.value)}
+              placeholder="e.g. Flight Lesson 1"
+              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />
           </div>
           <div className="space-y-1.5">
