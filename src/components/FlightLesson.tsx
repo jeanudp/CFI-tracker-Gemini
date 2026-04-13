@@ -47,6 +47,8 @@ export default function FlightLesson() {
     ftdInst: '',
     ffsInst: '',
     studentFlewSolo: false,
+    ratpSimInst: '',
+    ratpActualInst: '',
   });
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -58,7 +60,8 @@ export default function FlightLesson() {
     dual: false,
     xc: false,
     night: false,
-    sim: false
+    sim: false,
+    ratp: false
   });
   const [soloGroupExpanded, setSoloGroupExpanded] = useState(false);
   const [isLogbookOpen, setIsLogbookOpen] = useState(false);
@@ -71,6 +74,8 @@ export default function FlightLesson() {
   const [lessonNum, setLessonNum] = useState(1);
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
+  const [isAutoPopulated, setIsAutoPopulated] = useState(false);
+  const [recentAircraft, setRecentAircraft] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const resetLessonState = () => {
@@ -111,6 +116,8 @@ export default function FlightLesson() {
       ffsInst: '',
       simDeviceType: 'ATD',
       studentFlewSolo: false,
+      ratpSimInst: '',
+      ratpActualInst: '',
     });
     setFillState('');
     setIsLogbookOpen(false);
@@ -266,6 +273,70 @@ export default function FlightLesson() {
     saveToLocal(grades, notes, newMeta);
   };
 
+  // Auto-populate aircraft model from saved_aircraft table
+  useEffect(() => {
+    const lookupAircraft = async () => {
+      if (!meta.aircraft || meta.aircraft.length < 3) {
+        setIsAutoPopulated(false);
+        return;
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabase
+          .from('saved_aircraft')
+          .select('model, icao')
+          .eq('user_id', session.user.id)
+          .eq('tail_number', meta.aircraft.toUpperCase())
+          .single();
+
+        if (data && !error) {
+          setMeta(prev => ({
+            ...prev,
+            aircraftModel: data.model,
+            aircraftIcao: data.icao
+          }));
+          setIsAutoPopulated(true);
+        } else {
+          setIsAutoPopulated(false);
+        }
+      } catch (err) {
+        console.error('Error looking up aircraft:', err);
+        setIsAutoPopulated(false);
+      }
+    };
+
+    const timer = setTimeout(lookupAircraft, 500);
+    return () => clearTimeout(timer);
+  }, [meta.aircraft]);
+
+  // Fetch recent aircraft for pills
+  useEffect(() => {
+    const fetchRecent = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabase
+          .from('saved_aircraft')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('updated_at', { ascending: false })
+          .limit(5);
+
+        if (data && !error) {
+          setRecentAircraft(data);
+        }
+      } catch (err) {
+        console.error('Error fetching recent aircraft:', err);
+      }
+    };
+
+    fetchRecent();
+  }, []);
+
   const toggleExpand = (taskId: string) => {
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
   };
@@ -318,7 +389,9 @@ export default function FlightLesson() {
       rating_label: rating?.label || 'Private Pilot ASEL',
       studentFlewSolo: meta.studentFlewSolo,
       notes: meta.notes,
-      simDeviceType: meta.simDeviceType
+      simDeviceType: meta.simDeviceType,
+      ratpSimInst: meta.ratpSimInst,
+      ratpActualInst: meta.ratpActualInst
     };
 
     const lessonData: any = {
@@ -340,6 +413,18 @@ export default function FlightLesson() {
     } else {
       const { error: insertError } = await supabase.from('lessons').insert(lessonData);
       error = insertError;
+    }
+
+    if (!error && meta.aircraft && meta.aircraftModel) {
+      await supabase
+        .from('saved_aircraft')
+        .upsert({
+          user_id: session.user.id,
+          tail_number: meta.aircraft.toUpperCase(),
+          model: meta.aircraftModel,
+          icao: meta.aircraftIcao || '',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,tail_number' });
     }
 
     if (error) {
@@ -437,6 +522,31 @@ export default function FlightLesson() {
       </div>
 
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+        {recentAircraft.length > 0 && (
+          <div className="mb-6">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-2 block">Recent Aircraft</label>
+            <div className="flex flex-wrap gap-2">
+              {recentAircraft.map((ac, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setMeta(prev => ({
+                      ...prev,
+                      aircraft: ac.tail_number,
+                      aircraftModel: ac.model,
+                      aircraftIcao: ac.icao
+                    }));
+                    setIsAutoPopulated(true);
+                  }}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#f4f5f7] text-[#1a3a5c] border border-[#dde3ec] hover:border-[#1a3a5c] hover:bg-white transition-all flex items-center gap-1.5"
+                >
+                  <Plane size={10} className="opacity-50" />
+                  {ac.tail_number} — {ac.model}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Name</label>
@@ -476,8 +586,26 @@ export default function FlightLesson() {
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />
           </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Tail Number (N-Number)</label>
+            <input
+              type="text"
+              value={meta.aircraft}
+              onChange={(e) => handleMetaChange('aircraft', e.target.value.toUpperCase())}
+              placeholder="N12345"
+              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+            />
+          </div>
           <div className="space-y-1.5 relative">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
+              {isAutoPopulated && (
+                <div className="flex items-center gap-1 text-[9px] font-bold text-[#2d7a4f] bg-[#e4f5ec] px-1.5 py-0.5 rounded animate-in fade-in zoom-in duration-300">
+                  <CheckCircle2 size={10} />
+                  AUTO-FILLED
+                </div>
+              )}
+            </div>
             <input
               type="text"
               value={meta.aircraftModel || ''}
@@ -486,6 +614,7 @@ export default function FlightLesson() {
                 handleMetaChange('aircraftModel', val);
                 setAircraftSearch(val);
                 setShowAircraftDropdown(true);
+                setIsAutoPopulated(false); // Reset if manually changed
               }}
               onFocus={() => setShowAircraftDropdown(true)}
               placeholder="e.g. C-172, Cessna"
@@ -503,6 +632,7 @@ export default function FlightLesson() {
                       handleMetaChange('aircraftModel', model);
                       setAircraftSearch('');
                       setShowAircraftDropdown(false);
+                      setIsAutoPopulated(false);
                     }}
                   >
                     {model}
@@ -515,16 +645,6 @@ export default function FlightLesson() {
                 )}
               </div>
             )}
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Tail Number (N-Number)</label>
-            <input
-              type="text"
-              value={meta.aircraft}
-              onChange={(e) => handleMetaChange('aircraft', e.target.value.toUpperCase())}
-              placeholder="N12345"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-            />
           </div>
         </div>
         <div className="space-y-1.5">
@@ -794,6 +914,60 @@ export default function FlightLesson() {
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
+                        </div>
+                        <div className="px-4 pb-4">
+                          <p className="text-[9px] text-[#6b7280] leading-relaxed">
+                            <span className="font-bold">Simulated Instrument</span> — counts toward instrument time for Private Pilot and Instrument Rating requirements<br />
+                            <span className="font-bold">Actual IMC</span> — counts toward actual instrument time
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Restricted ATP Time */}
+                <div className="bg-white border-t border-[#f1f5f9]">
+                  <button
+                    onClick={() => setExpandedGroups(prev => ({ ...prev, ratp: !prev.ratp }))}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.ratp && "rotate-90")} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Restricted ATP Time</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-[#6b7280]">
+                      {((parseFloat(meta.ratpSimInst || '0') || 0) + (parseFloat(meta.ratpActualInst || '0') || 0)).toFixed(1)} hrs
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {expandedGroups.ratp && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-[#f8fafc]"
+                      >
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Instrument (R-ATP)</label>
+                            <div className="flex items-center gap-2">
+                              <input type="number" step="0.1" value={meta.ratpSimInst} onChange={(e) => handleMetaChange('ratpSimInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Actual Instrument (R-ATP)</label>
+                            <div className="flex items-center gap-2">
+                              <input type="number" step="0.1" value={meta.ratpActualInst} onChange={(e) => handleMetaChange('ratpActualInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="px-4 pb-4">
+                          <p className="text-[9px] text-[#6b7280] leading-relaxed italic">
+                            These fields track instrument time specifically toward Restricted ATP certificate requirements under §61.160.
+                          </p>
                         </div>
                       </motion.div>
                     )}

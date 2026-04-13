@@ -87,6 +87,7 @@ export default function History() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [groundExpanded, setGroundExpanded] = useState(false);
   const [flightExpanded, setFlightExpanded] = useState(false);
+  const [checklistExpanded, setChecklistExpanded] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -369,13 +370,13 @@ export default function History() {
   const getCumulativeStats = (lessonsToSum = studentLessons) => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
     let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
-    let totFtdInst = 0, totFfsInst = 0;
+    let totFtdInst = 0, totFfsInst = 0, totRatpSimInst = 0, totRatpActualInst = 0;
     
     lessonsToSum.forEach(l => {
       const m = l.meta || {};
       totFlight += parseFloat(m.totalFlight || '0') || 0;
       totDual += parseFloat(m.dual || '0') || 0;
-      totXc += parseFloat(m.xc || '0') || 0;
+      totXc += (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
       totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0) + (parseFloat(m.ftdInst || '0') || 0) + (parseFloat(m.ffsInst || '0') || 0);
@@ -398,13 +399,16 @@ export default function History() {
       totAtdSE += parseFloat(m.atdSE || '0') || 0;
       totFtdInst += parseFloat(m.ftdInst || '0') || 0;
       totFfsInst += parseFloat(m.ffsInst || '0') || 0;
+      totRatpSimInst += parseFloat(m.ratpSimInst || '0') || 0;
+      totRatpActualInst += parseFloat(m.ratpActualInst || '0') || 0;
     });
 
     const picTime = lessonsToSum.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
 
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
-      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime
+      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime,
+      totRatpSimInst, totRatpActualInst
     };
   };
 
@@ -1062,13 +1066,31 @@ export default function History() {
                       </div>
                     </div>
 
+                    {/* Restricted ATP */}
+                    {(selectedLesson.meta?.ratpSimInst || selectedLesson.meta?.ratpActualInst) && (
+                      <div>
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
+                        <div className="space-y-1">
+                          {[
+                            ['Simulated Instrument (R-ATP)', selectedLesson.meta?.ratpSimInst ? `${selectedLesson.meta.ratpSimInst}h` : ''],
+                            ['Actual Instrument (R-ATP)', selectedLesson.meta?.ratpActualInst ? `${selectedLesson.meta.ratpActualInst}h` : ''],
+                          ].filter(d => d[1]).map(([label, val]) => (
+                            <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                              <span className="text-xs text-[#64748b]">{label}</span>
+                              <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Other Details */}
                     <div>
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
                       <div className="space-y-1">
                         {[
                           ['Date', selectedLesson.meta?.date],
-                          ['Aircraft', selectedLesson.meta?.aircraftModel ? `${selectedLesson.meta.aircraftModel} (${selectedLesson.meta.aircraft})` : selectedLesson.meta?.aircraft],
+                          ['Aircraft', selectedLesson.meta?.aircraftModel ? `${selectedLesson.meta.aircraft} — ${selectedLesson.meta.aircraftModel}` : selectedLesson.meta?.aircraft],
                           ['Route', selectedLesson.meta?.route],
                           ['Total Landings', selectedLesson.meta?.ldgTotal],
                           ['Day Landings', selectedLesson.meta?.ldgDay],
@@ -1286,6 +1308,21 @@ export default function History() {
                           </div>
 
                           <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Simulated Instrument (R-ATP)', `${stats.totRatpSimInst.toFixed(1)}h`],
+                                ['Actual Instrument (R-ATP)', `${stats.totRatpActualInst.toFixed(1)}h`],
+                              ].map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
                             <div className="space-y-1">
                               {[
@@ -1460,7 +1497,7 @@ export default function History() {
                         { label: 'Total flight time', ref: '§61.129(a)(1)', have: stats.totFlight, need: 250, unit: 'hrs' },
                         { label: 'Powered aircraft time', ref: '§61.129(a)(2)', have: stats.totFlight, need: 100, unit: 'hrs' },
                         { label: 'PIC flight time', ref: '§61.129(a)(3)(i)', have: stats.picTime, need: 100, unit: 'hrs' },
-                        { label: 'Cross-country PIC', ref: '§61.129(a)(3)(ii)', have: stats.totXc, need: 50, unit: 'hrs' },
+                        { label: 'Cross-country PIC', ref: '§61.129(a)(3)(ii)', have: stats.totXcPic, need: 50, unit: 'hrs' },
                         { label: 'Instrument training', ref: '§61.129(a)(4)(i)', have: stats.totSim, need: 10, unit: 'hrs' },
                         { label: 'Complex or turbine aircraft', ref: '§61.129(a)(4)(ii)', have: getManualValue('complex'), need: 10, unit: 'hrs', mk: 'complex' },
                         { label: '2-hr Day XC > 100NM', ref: '§61.129(a)(4)(iii)', have: getManualValue('dayXc100'), need: 1, unit: 'flight', mk: 'dayXc100' },
@@ -1904,17 +1941,7 @@ export default function History() {
 
                             {/* Checkride Readiness Checklist (PPL Only) */}
                             {lessonRating === 'ppl' && (
-                              <div className="mt-12 space-y-6">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-[#1a3a5c] rounded-lg text-white">
-                                    <ClipboardList size={20} />
-                                  </div>
-                                  <div>
-                                    <h2 className="text-lg font-black text-[#1a3a5c] tracking-tight">Checkride Readiness Checklist</h2>
-                                    <p className="text-xs text-[#6b7280]">Verify all items before scheduling the practical test.</p>
-                                  </div>
-                                </div>
-
+                              <div className="mt-12">
                                 {(() => {
                                   const allChecklistItems = CHECKLIST_PPL.flatMap(g => g.items);
                                   const checkedCount = allChecklistItems.filter(item => {
@@ -1929,109 +1956,143 @@ export default function History() {
                                   const progressPct = Math.round((checkedCount / totalCount) * 100);
 
                                   return (
-                                    <div className="space-y-6">
-                                      <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
-                                        <div className="flex justify-between items-end mb-2">
-                                          <span className="text-xs font-bold text-[#1a3a5c] uppercase tracking-widest">{checkedCount} of {totalCount} complete</span>
-                                          <span className="text-xs font-bold text-[#1a3a5c]">{progressPct}%</span>
+                                    <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                                      <button
+                                        onClick={() => setChecklistExpanded(!checklistExpanded)}
+                                        className="w-full px-4 py-4 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div className="p-2 bg-[#1a3a5c] rounded-lg text-white">
+                                            <ClipboardList size={20} />
+                                          </div>
+                                          <div className="text-left">
+                                            <h2 className="text-sm font-bold text-[#1a3a5c] tracking-tight">Checkride Readiness Checklist</h2>
+                                            <p className="text-[10px] text-[#6b7280]">Verify all items before scheduling the practical test.</p>
+                                          </div>
                                         </div>
-                                        <div className="w-full h-2 bg-[#f4f5f7] rounded-full overflow-hidden">
-                                          <div 
-                                            className={cn("h-full rounded-full transition-all duration-500", progressPct === 100 ? "bg-[#2d7a4f]" : "bg-[#1a3a5c]")} 
-                                            style={{ width: `${progressPct}%` }} 
-                                          />
+                                        <div className="flex items-center gap-3">
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f1f5f9] text-[#1a3a5c]">
+                                            {checkedCount}/{totalCount}
+                                          </span>
+                                          <ChevronRight size={16} className={cn("text-[#6b7280] transition-transform", checklistExpanded && "rotate-90")} />
                                         </div>
-                                      </div>
+                                      </button>
 
-                                      <div className="space-y-4">
-                                        {CHECKLIST_PPL.map(group => {
-                                          const groupItems = group.items;
-                                          const groupCheckedCount = groupItems.filter(item => {
-                                            if (item.auto) {
-                                              if (item.key === 'checklist_ppl_endorsements') return item.auto(endorsements);
-                                              if (item.key === 'checklist_ppl_recency') return item.auto(stats);
-                                              return false;
-                                            }
-                                            return getManualValue(item.key) > 0;
-                                          }).length;
-                                          
-                                          const isGroupComplete = groupCheckedCount === groupItems.length;
-                                          const isGroupInProgress = groupCheckedCount > 0 && !isGroupComplete;
-                                          
-                                          const headerBg = isGroupComplete ? "bg-[#2d7a4f]" : (isGroupInProgress ? "bg-[#e8a020]" : "bg-[#1a3a5c]");
-
-                                          return (
-                                            <div key={group.title} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                                              <div className={cn("px-4 py-3 text-white text-[10px] font-bold uppercase tracking-widest", headerBg)}>
-                                                {group.title}
+                                      <AnimatePresence>
+                                        {checklistExpanded && (
+                                          <motion.div
+                                            initial={{ height: 0 }}
+                                            animate={{ height: 'auto' }}
+                                            exit={{ height: 0 }}
+                                            className="overflow-hidden border-t border-[#dde3ec]"
+                                          >
+                                            <div className="p-6 space-y-6 bg-[#f8fafc]">
+                                              <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
+                                                <div className="flex justify-between items-end mb-2">
+                                                  <span className="text-xs font-bold text-[#1a3a5c] uppercase tracking-widest">{checkedCount} of {totalCount} complete</span>
+                                                  <span className="text-xs font-bold text-[#1a3a5c]">{progressPct}%</span>
+                                                </div>
+                                                <div className="w-full h-2 bg-[#f4f5f7] rounded-full overflow-hidden">
+                                                  <div 
+                                                    className={cn("h-full rounded-full transition-all duration-500", progressPct === 100 ? "bg-[#2d7a4f]" : "bg-[#1a3a5c]")} 
+                                                    style={{ width: `${progressPct}%` }} 
+                                                  />
+                                                </div>
                                               </div>
-                                              <div className="divide-y divide-[#dde3ec]">
-                                                {groupItems.map(item => {
-                                                  const isAuto = !!item.auto;
-                                                  let isChecked = false;
-                                                  if (isAuto) {
-                                                    if (item.key === 'checklist_ppl_endorsements') isChecked = item.auto!(endorsements);
-                                                    if (item.key === 'checklist_ppl_recency') isChecked = item.auto!(stats);
-                                                  } else {
-                                                    isChecked = getManualValue(item.key) > 0;
-                                                  }
+
+                                              <div className="space-y-4">
+                                                {CHECKLIST_PPL.map(group => {
+                                                  const groupItems = group.items;
+                                                  const groupCheckedCount = groupItems.filter(item => {
+                                                    if (item.auto) {
+                                                      if (item.key === 'checklist_ppl_endorsements') return item.auto(endorsements);
+                                                      if (item.key === 'checklist_ppl_recency') return item.auto(stats);
+                                                      return false;
+                                                    }
+                                                    return getManualValue(item.key) > 0;
+                                                  }).length;
+                                                  
+                                                  const isGroupComplete = groupCheckedCount === groupItems.length;
+                                                  const isGroupInProgress = groupCheckedCount > 0 && !isGroupComplete;
+                                                  
+                                                  const headerBg = isGroupComplete ? "bg-[#2d7a4f]" : (isGroupInProgress ? "bg-[#e8a020]" : "bg-[#1a3a5c]");
 
                                                   return (
-                                                    <div 
-                                                      key={item.key}
-                                                      onClick={() => !isAuto && handleToggleChecklist(item.key, isChecked)}
-                                                      className={cn(
-                                                        "min-h-[44px] px-4 py-3 flex items-start gap-4 transition-all",
-                                                        !isAuto && "cursor-pointer hover:bg-[#f8fafc]",
-                                                        isChecked && "bg-[#fafffe]"
-                                                      )}
-                                                    >
-                                                      <div className="mt-0.5 shrink-0">
-                                                        {isChecked ? (
-                                                          <CheckCircle2 size={18} className="text-[#2d7a4f]" />
-                                                        ) : (
-                                                          <Square size={18} className="text-[#dde3ec]" />
-                                                        )}
+                                                    <div key={group.title} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                                                      <div className={cn("px-4 py-3 text-white text-[10px] font-bold uppercase tracking-widest", headerBg)}>
+                                                        {group.title}
                                                       </div>
-                                                      <div className="flex-1 min-w-0">
-                                                        <div className={cn("text-[13px] font-medium leading-tight", isChecked ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
-                                                          {item.label}
-                                                        </div>
-                                                        {isAuto && isChecked && (
-                                                          <div className="text-[9px] font-bold text-[#2d7a4f] mt-1 uppercase tracking-tighter">
-                                                            Auto-verified from app data
-                                                          </div>
-                                                        )}
+                                                      <div className="divide-y divide-[#dde3ec]">
+                                                        {groupItems.map(item => {
+                                                          const isAuto = !!item.auto;
+                                                          let isChecked = false;
+                                                          if (isAuto) {
+                                                            if (item.key === 'checklist_ppl_endorsements') isChecked = item.auto!(endorsements);
+                                                            if (item.key === 'checklist_ppl_recency') isChecked = item.auto!(stats);
+                                                          } else {
+                                                            isChecked = getManualValue(item.key) > 0;
+                                                          }
+
+                                                          return (
+                                                            <div 
+                                                              key={item.key}
+                                                              onClick={() => !isAuto && handleToggleChecklist(item.key, isChecked)}
+                                                              className={cn(
+                                                                "min-h-[44px] px-4 py-3 flex items-start gap-4 transition-all",
+                                                                !isAuto && "cursor-pointer hover:bg-[#f8fafc]",
+                                                                isChecked && "bg-[#fafffe]"
+                                                              )}
+                                                            >
+                                                              <div className="mt-0.5 shrink-0">
+                                                                {isChecked ? (
+                                                                  <CheckCircle2 size={18} className="text-[#2d7a4f]" />
+                                                                ) : (
+                                                                  <Square size={18} className="text-[#dde3ec]" />
+                                                                )}
+                                                              </div>
+                                                              <div className="flex-1 min-w-0">
+                                                                <div className={cn("text-[13px] font-medium leading-tight", isChecked ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
+                                                                  {item.label}
+                                                                </div>
+                                                                {isAuto && isChecked && (
+                                                                  <div className="text-[9px] font-bold text-[#2d7a4f] mt-1 uppercase tracking-tighter">
+                                                                    Auto-verified from app data
+                                                                  </div>
+                                                                )}
+                                                              </div>
+                                                            </div>
+                                                          );
+                                                        })}
                                                       </div>
                                                     </div>
                                                   );
                                                 })}
                                               </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
 
-                                      <div className="pt-4 space-y-3">
-                                        <button
-                                          disabled={checkedCount < totalCount}
-                                          onClick={() => navigate(`/iacra/${encodeURIComponent(selectedLesson.student_name || '')}`)}
-                                          className={cn(
-                                            "w-full py-4 rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2",
-                                            checkedCount === totalCount 
-                                              ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] shadow-[#2d7a4f]/20" 
-                                              : "bg-[#dde3ec] text-[#6b7280] cursor-not-allowed"
-                                          )}
-                                        >
-                                          <FileText size={18} />
-                                          Open IACRA Summary
-                                        </button>
-                                        {checkedCount < totalCount && (
-                                          <p className="text-[10px] text-center text-[#6b7280] font-medium">
-                                            Complete all checklist items to proceed to IACRA Summary.
-                                          </p>
+                                              <div className="pt-4 space-y-3">
+                                                <button
+                                                  disabled={checkedCount < totalCount}
+                                                  onClick={() => navigate(`/iacra/${encodeURIComponent(selectedLesson.student_name || '')}`)}
+                                                  className={cn(
+                                                    "w-full py-4 rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2",
+                                                    checkedCount === totalCount 
+                                                      ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] shadow-[#2d7a4f]/20" 
+                                                      : "bg-[#dde3ec] text-[#6b7280] cursor-not-allowed"
+                                                  )}
+                                                >
+                                                  <FileText size={18} />
+                                                  Open IACRA Summary
+                                                </button>
+                                                {checkedCount < totalCount && (
+                                                  <p className="text-[10px] text-center text-[#6b7280] font-medium">
+                                                    Complete all checklist items to proceed to IACRA Summary.
+                                                  </p>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </motion.div>
                                         )}
-                                      </div>
+                                      </AnimatePresence>
                                     </div>
                                   );
                                 })()}

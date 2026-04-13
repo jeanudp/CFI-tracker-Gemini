@@ -39,6 +39,8 @@ export interface LessonMeta {
   rating_label?: string;
   aircraftModel?: string;
   aircraftIcao?: string;
+  ratpSimInst?: string;
+  ratpActualInst?: string;
 }
 
 export interface Lesson {
