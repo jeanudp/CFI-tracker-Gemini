@@ -5,9 +5,33 @@ import { ALL_ACS, RATINGS } from '../constants';
 import { AIRCRAFT_MODELS } from '../constants/aircraft';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, Loader2, Check, Search, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ACSStandardsModal from './ACSStandardsModal';
+
+const APPROACH_TYPES = [
+  { code: 'ILS', label: 'ILS — Instrument Landing System' },
+  { code: 'ILS/DME', label: 'ILS/DME — ILS with DME' },
+  { code: 'PAR', label: 'PAR — Precision Approach Radar' },
+  { code: 'GLS', label: 'GLS — GBAS Landing System' },
+  { code: 'LPV', label: 'LPV — Localizer Performance with Vertical Guidance' },
+  { code: 'LNAV/VNAV', label: 'LNAV/VNAV — Lateral Navigation/Vertical Navigation' },
+  { code: 'LP', label: 'LP — Localizer Performance' },
+  { code: 'LNAV', label: 'LNAV — Lateral Navigation' },
+  { code: 'RNAV (GPS)', label: 'RNAV (GPS) — Area Navigation GPS' },
+  { code: 'VOR', label: 'VOR — VHF Omnidirectional Range' },
+  { code: 'VOR/DME', label: 'VOR/DME — VOR with DME' },
+  { code: 'NDB', label: 'NDB — Non-Directional Beacon' },
+  { code: 'NDB/DME', label: 'NDB/DME — NDB with DME' },
+  { code: 'LOC', label: 'LOC — Localizer' },
+  { code: 'LOC/DME', label: 'LOC/DME — Localizer with DME' },
+  { code: 'LOC BC', label: 'LOC BC — Localizer Back Course' },
+  { code: 'SDF', label: 'SDF — Simplified Directional Facility' },
+  { code: 'LDA', label: 'LDA — Localizer Type Directional Aid' },
+  { code: 'LDA/DME', label: 'LDA/DME — LDA with DME' },
+  { code: 'ASR', label: 'ASR — Airport Surveillance Radar' },
+  { code: 'TACAN', label: 'TACAN — Tactical Air Navigation' }
+];
 
 export default function FlightLesson() {
   const [studentName, setStudentName] = useState('');
@@ -20,17 +44,13 @@ export default function FlightLesson() {
     ldgTotal: '',
     ldgDay: '',
     ldgNight: '',
-    xc: '',
     night: '',
     simInst: '',
     imc: '',
-    groundSim: '',
     dual: '',
-    cfi: '',
     pic: '',
     totalFlight: '',
     solo: '',
-    soloXc: '',
     atd: '',
     xcDual: '',
     xcSolo: '',
@@ -39,16 +59,18 @@ export default function FlightLesson() {
     nightDual: '',
     nightTakeoffs: '',
     nightPic: '',
-    nightSolo: '',
     simDeviceType: 'ATD',
     ftd: '',
     ffs: '',
-    atdSE: '',
     ftdInst: '',
     ffsInst: '',
     studentFlewSolo: false,
     ratpSimInst: '',
     ratpActualInst: '',
+    nightSolo: '',
+    approachCount: '',
+    approachTypes: '[]',
+    holdPerformed: false,
   });
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -58,11 +80,13 @@ export default function FlightLesson() {
     solo: false,
     pic: false,
     dual: false,
+    instrument: false,
+    approachesHolds: false,
     xc: false,
     night: false,
-    sim: false,
-    ratp: false
+    sim: false
   });
+  const [approachSearch, setApproachSearch] = useState('');
   const [soloGroupExpanded, setSoloGroupExpanded] = useState(false);
   const [isLogbookOpen, setIsLogbookOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -90,17 +114,13 @@ export default function FlightLesson() {
       ldgTotal: '',
       ldgDay: '',
       ldgNight: '',
-      xc: '',
       night: '',
       simInst: '',
       imc: '',
-      groundSim: '',
       dual: '',
-      cfi: '',
       pic: '',
       totalFlight: '',
       solo: '',
-      soloXc: '',
       atd: '',
       xcDual: '',
       xcSolo: '',
@@ -111,13 +131,16 @@ export default function FlightLesson() {
       nightPic: '',
       ftd: '',
       ffs: '',
-      atdSE: '',
       ftdInst: '',
       ffsInst: '',
       simDeviceType: 'ATD',
       studentFlewSolo: false,
       ratpSimInst: '',
       ratpActualInst: '',
+      nightSolo: '',
+      approachCount: '',
+      approachTypes: '[]',
+      holdPerformed: false,
     });
     setFillState('');
     setIsLogbookOpen(false);
@@ -366,9 +389,11 @@ export default function FlightLesson() {
       dual: meta.dual,
       solo: meta.solo,
       pic: meta.pic,
+      xc: meta.xc,
       xcDual: meta.xcDual,
       xcSolo: meta.xcSolo,
       xcPic: meta.xcPic,
+      soloXc: meta.soloXc,
       simInst: meta.simInst,
       imc: meta.imc,
       atd: meta.atd,
@@ -378,6 +403,7 @@ export default function FlightLesson() {
       ftdInst: meta.ftdInst,
       ffs: meta.ffs,
       ffsInst: meta.ffsInst,
+      night: meta.night,
       nightDual: meta.nightDual,
       nightSolo: meta.nightSolo,
       nightPic: meta.nightPic,
@@ -385,13 +411,18 @@ export default function FlightLesson() {
       ldgTotal: meta.ldgTotal,
       ldgDay: meta.ldgDay,
       ldgNight: meta.ldgNight,
+      groundSim: meta.groundSim,
+      cfi: meta.cfi,
       rating_code: rating?.code || 'ppl',
       rating_label: rating?.label || 'Private Pilot ASEL',
       studentFlewSolo: meta.studentFlewSolo,
       notes: meta.notes,
       simDeviceType: meta.simDeviceType,
       ratpSimInst: meta.ratpSimInst,
-      ratpActualInst: meta.ratpActualInst
+      ratpActualInst: meta.ratpActualInst,
+      approachCount: meta.approachCount,
+      approachTypes: meta.approachTypes,
+      holdPerformed: meta.holdPerformed
     };
 
     const lessonData: any = {
@@ -449,17 +480,13 @@ export default function FlightLesson() {
       ldgTotal: '',
       ldgDay: '',
       ldgNight: '',
-      xc: '',
       night: '',
       simInst: '',
       imc: '',
-      groundSim: '',
       dual: '',
-      cfi: '',
       pic: '',
       totalFlight: '',
       solo: '',
-      soloXc: '',
       atd: '',
       xcDual: '',
       xcSolo: '',
@@ -470,11 +497,16 @@ export default function FlightLesson() {
       nightPic: '',
       ftd: '',
       ffs: '',
-      atdSE: '',
       ftdInst: '',
       ffsInst: '',
       simDeviceType: 'ATD',
       studentFlewSolo: false,
+      ratpSimInst: '',
+      ratpActualInst: '',
+      nightSolo: '',
+      approachCount: '',
+      approachTypes: '[]',
+      holdPerformed: false,
     });
     localStorage.removeItem('faa_current_lesson_flight');
   };
@@ -793,13 +825,6 @@ export default function FlightLesson() {
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Solo Night</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.nightSolo} onChange={(e) => handleMetaChange('nightSolo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -878,7 +903,7 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Dual Received</label>
                             <div className="flex items-center gap-2">
@@ -900,74 +925,182 @@ export default function FlightLesson() {
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Inst.</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Actual IMC</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="px-4 pb-4">
-                          <p className="text-[9px] text-[#6b7280] leading-relaxed">
-                            <span className="font-bold">Simulated Instrument</span> — counts toward instrument time for Private Pilot and Instrument Rating requirements<br />
-                            <span className="font-bold">Actual IMC</span> — counts toward actual instrument time
-                          </p>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
-                {/* Restricted ATP Time */}
+                {/* Instrument */}
                 <div className="bg-white border-t border-[#f1f5f9]">
                   <button
-                    onClick={() => setExpandedGroups(prev => ({ ...prev, ratp: !prev.ratp }))}
+                    onClick={() => setExpandedGroups(prev => ({ ...prev, instrument: !prev.instrument }))}
                     className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
                   >
                     <div className="flex items-center gap-2">
-                      <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.ratp && "rotate-90")} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Restricted ATP Time</span>
+                      <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.instrument && "rotate-90")} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Instrument</span>
                     </div>
                     <div className="text-[10px] font-mono text-[#6b7280]">
-                      {((parseFloat(meta.ratpSimInst || '0') || 0) + (parseFloat(meta.ratpActualInst || '0') || 0)).toFixed(1)} hrs
+                      {(parseFloat(meta.simInst||'0') + parseFloat(meta.imc||'0') + parseFloat(meta.atdInst||'0')).toFixed(1)} hrs
                     </div>
                   </button>
                   <AnimatePresence>
-                    {expandedGroups.ratp && (
+                    {expandedGroups.instrument && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Instrument (R-ATP)</label>
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Instrument</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.ratpSimInst} onChange={(e) => handleMetaChange('ratpSimInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
+                            <p className="text-[8px] text-[#6b7280] italic">Foggles or view limiting device in actual aircraft</p>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Actual Instrument (R-ATP)</label>
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Actual Instrument</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.ratpActualInst} onChange={(e) => handleMetaChange('ratpActualInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
+                            <p className="text-[8px] text-[#6b7280] italic">Flight in actual IMC conditions</p>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Instrument on Simulator</label>
+                            <div className="flex items-center gap-2">
+                              <input type="number" step="0.1" value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                            </div>
+                            <p className="text-[8px] text-[#6b7280] italic">Instrument procedures in ATD FTD or FFS</p>
                           </div>
                         </div>
-                        <div className="px-4 pb-4">
-                          <p className="text-[9px] text-[#6b7280] leading-relaxed italic">
-                            These fields track instrument time specifically toward Restricted ATP certificate requirements under §61.160.
-                          </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Approaches and Holds */}
+                <div className="bg-white border-t border-[#f1f5f9]">
+                  <button
+                    onClick={() => setExpandedGroups(prev => ({ ...prev, approachesHolds: !prev.approachesHolds }))}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.approachesHolds && "rotate-90")} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Approaches and Holds</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-[#6b7280]">
+                      {meta.approachCount || '0'} app / {meta.holdPerformed ? '1' : '0'} hold
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {expandedGroups.approachesHolds && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-[#f8fafc]"
+                      >
+                        <div className="p-4 space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Number of Approaches</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="number" 
+                                  value={meta.approachCount} 
+                                  onChange={(e) => handleMetaChange('approachCount', e.target.value)} 
+                                  className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                  placeholder="0" 
+                                />
+                                <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1 flex flex-col justify-end">
+                              <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={meta.holdPerformed}
+                                    onChange={(e) => handleMetaChange('holdPerformed', e.target.checked)}
+                                    className="peer sr-only"
+                                  />
+                                  <div className="w-4 h-4 border-2 border-[#dde3ec] rounded bg-white peer-checked:bg-[#1a3a5c] peer-checked:border-[#1a3a5c] transition-all" />
+                                  <Check size={10} className="absolute left-0.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Holding procedure performed this lesson</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Approach Types</label>
+                            
+                            {/* Selected Tags */}
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {JSON.parse(meta.approachTypes || '[]').map((type: string) => (
+                                <span key={type} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#1a3a5c] text-white text-[10px] font-bold rounded-full">
+                                  {type}
+                                  <button
+                                    onClick={() => {
+                                      const current = JSON.parse(meta.approachTypes || '[]');
+                                      handleMetaChange('approachTypes', JSON.stringify(current.filter((t: string) => t !== type)));
+                                    }}
+                                    className="hover:text-red-300 transition-colors"
+                                  >
+                                    <X size={10} />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Search Input */}
+                            <div className="relative">
+                              <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
+                              <input
+                                type="text"
+                                value={approachSearch}
+                                onChange={(e) => setApproachSearch(e.target.value)}
+                                placeholder="Search approach types..."
+                                className="w-full text-xs border border-[#dde3ec] rounded-lg pl-8 pr-3 py-2 bg-white focus:outline-none focus:border-[#1a3a5c] transition-all"
+                              />
+                            </div>
+
+                            {/* Options List */}
+                            <div className="max-h-40 overflow-y-auto border border-[#dde3ec] rounded-lg bg-white divide-y divide-[#f1f5f9] custom-scrollbar">
+                              {APPROACH_TYPES.filter(t => 
+                                t.label.toLowerCase().includes(approachSearch.toLowerCase()) || 
+                                t.code.toLowerCase().includes(approachSearch.toLowerCase())
+                              ).map(type => {
+                                const isSelected = JSON.parse(meta.approachTypes || '[]').includes(type.code);
+                                return (
+                                  <button
+                                    key={type.code}
+                                    onClick={() => {
+                                      const current = JSON.parse(meta.approachTypes || '[]');
+                                      if (isSelected) {
+                                        handleMetaChange('approachTypes', JSON.stringify(current.filter((t: string) => t !== type.code)));
+                                      } else {
+                                        handleMetaChange('approachTypes', JSON.stringify([...current, type.code]));
+                                      }
+                                    }}
+                                    className={cn(
+                                      "w-full px-3 py-2 text-left text-[11px] transition-colors flex items-center justify-between",
+                                      isSelected ? "bg-[#f0f9ff] text-[#1a3a5c]" : "hover:bg-[#f8fafc] text-[#64748b]"
+                                    )}
+                                  >
+                                    <span>{type.label}</span>
+                                    {isSelected && <Check size={12} className="text-[#1a3a5c]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </motion.div>
                     )}
@@ -985,7 +1118,7 @@ export default function FlightLesson() {
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Group 4 — Cross Country</span>
                     </div>
                     <div className="text-[10px] font-mono text-[#6b7280]">
-                      {meta.xc || '0.0'} hrs
+                      {(parseFloat(meta.xcDual||'0') + parseFloat(meta.xcSolo||'0') + parseFloat(meta.xcPic||'0')).toFixed(1)} hrs
                     </div>
                   </button>
                   <AnimatePresence>
@@ -996,14 +1129,7 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC (Total)</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xc} onChange={(e) => handleMetaChange('xc', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC Dual</label>
                             <div className="flex items-center gap-2">
@@ -1053,25 +1179,11 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night (Total)</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Dual</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night T/O PIC</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.nightPic} onChange={(e) => handleMetaChange('nightPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -1089,6 +1201,9 @@ export default function FlightLesson() {
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>
+                        </div>
+                        <div className="px-4 pb-4">
+                          <p className="text-[9px] text-[#6b7280] italic">Night Dual is logged in the Dual Instruction group above.</p>
                         </div>
                       </motion.div>
                     )}

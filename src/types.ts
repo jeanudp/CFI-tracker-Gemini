@@ -41,6 +41,9 @@ export interface LessonMeta {
   aircraftIcao?: string;
   ratpSimInst?: string;
   ratpActualInst?: string;
+  approachCount?: string;
+  approachTypes?: string;
+  holdPerformed?: boolean;
 }
 
 export interface Lesson {

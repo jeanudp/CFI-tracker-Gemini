@@ -371,6 +371,8 @@ export default function History() {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
     let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
     let totFtdInst = 0, totFfsInst = 0, totRatpSimInst = 0, totRatpActualInst = 0;
+    let totApproachCount = 0, totHoldPerformed = 0;
+    const approachTypesFreq: Record<string, number> = {};
     
     lessonsToSum.forEach(l => {
       const m = l.meta || {};
@@ -401,6 +403,20 @@ export default function History() {
       totFfsInst += parseFloat(m.ffsInst || '0') || 0;
       totRatpSimInst += parseFloat(m.ratpSimInst || '0') || 0;
       totRatpActualInst += parseFloat(m.ratpActualInst || '0') || 0;
+
+      totApproachCount += parseInt(m.approachCount || '0') || 0;
+      if (m.holdPerformed) totHoldPerformed += 1;
+      
+      try {
+        const types = JSON.parse(m.approachTypes || '[]');
+        if (Array.isArray(types)) {
+          types.forEach(t => {
+            approachTypesFreq[t] = (approachTypesFreq[t] || 0) + 1;
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing approach types', e);
+      }
     });
 
     const picTime = lessonsToSum.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
@@ -408,7 +424,7 @@ export default function History() {
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
       totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime,
-      totRatpSimInst, totRatpActualInst
+      totRatpSimInst, totRatpActualInst, totApproachCount, totHoldPerformed, approachTypesFreq
     };
   };
 
@@ -1084,6 +1100,41 @@ export default function History() {
                       </div>
                     )}
 
+                    {/* Approaches and Holds */}
+                    {(selectedLesson.meta?.approachCount || selectedLesson.meta?.holdPerformed || (selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]')) && (
+                      <div>
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                            <span className="text-xs text-[#64748b]">Number of Approaches</span>
+                            <span className="text-sm font-bold text-[#1e293b]">{selectedLesson.meta?.approachCount || '0'}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                            <span className="text-xs text-[#64748b]">Holding Performed</span>
+                            {selectedLesson.meta?.holdPerformed ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#dcfce7] text-[#166534] text-[10px] font-bold rounded-full">
+                                <Check size={10} /> Performed
+                              </span>
+                            ) : (
+                              <span className="text-sm font-bold text-[#1e293b]">No</span>
+                            )}
+                          </div>
+                          {selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]' && (
+                            <div className="py-1">
+                              <span className="text-xs text-[#64748b] block mb-1.5">Approach Types</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {JSON.parse(selectedLesson.meta.approachTypes).map((type: string) => (
+                                  <span key={type} className="px-2 py-0.5 bg-[#f1f5f9] text-[#475569] text-[10px] font-bold rounded-md border border-[#e2e8f0]">
+                                    {type}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Other Details */}
                     <div>
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
@@ -1319,6 +1370,34 @@ export default function History() {
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
                               ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                <span className="text-xs text-[#64748b]">Total Approaches</span>
+                                <span className="text-sm font-bold text-[#1e293b]">{stats.totApproachCount}</span>
+                              </div>
+                              <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                <span className="text-xs text-[#64748b]">Lessons with Holding</span>
+                                <span className="text-sm font-bold text-[#1e293b]">{stats.totHoldPerformed}</span>
+                              </div>
+                              {Object.keys(stats.approachTypesFreq).length > 0 && (
+                                <div className="py-1">
+                                  <span className="text-xs text-[#64748b] block mb-1.5">Approach Type Frequency</span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {Object.entries(stats.approachTypesFreq)
+                                      .sort((a, b) => b[1] - a[1])
+                                      .map(([type, count]) => (
+                                        <span key={type} className="px-2 py-0.5 bg-[#f1f5f9] text-[#475569] text-[10px] font-bold rounded-md border border-[#e2e8f0]">
+                                          {type}: {count}
+                                        </span>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
 
