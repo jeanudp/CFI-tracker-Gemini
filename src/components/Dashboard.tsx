@@ -496,6 +496,7 @@ export default function Dashboard() {
             </div>
             <p className="text-[10px] text-[#6b7280] mt-0.5">
               {new Date(lesson.saved_at).toLocaleDateString()} · {lesson.instructor}
+              {lesson.meta?.aircraft && ` · ${lesson.meta.aircraftModel ? `${lesson.meta.aircraftModel} (${lesson.meta.aircraft})` : lesson.meta.aircraft}`}
             </p>
           </div>
           {type === 'flight' && lesson.meta?.totalFlight && (

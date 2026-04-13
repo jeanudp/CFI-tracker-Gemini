@@ -1068,7 +1068,7 @@ export default function History() {
                       <div className="space-y-1">
                         {[
                           ['Date', selectedLesson.meta?.date],
-                          ['Aircraft', selectedLesson.meta?.aircraft],
+                          ['Aircraft', selectedLesson.meta?.aircraftModel ? `${selectedLesson.meta.aircraftModel} (${selectedLesson.meta.aircraft})` : selectedLesson.meta?.aircraft],
                           ['Route', selectedLesson.meta?.route],
                           ['Total Landings', selectedLesson.meta?.ldgTotal],
                           ['Day Landings', selectedLesson.meta?.ldgDay],

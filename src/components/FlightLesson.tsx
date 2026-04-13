@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_ACS, RATINGS } from '../constants';
+import { AIRCRAFT_MODELS } from '../constants/aircraft';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, Loader2 } from 'lucide-react';
@@ -68,6 +69,8 @@ export default function FlightLesson() {
   const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
   const [lessonLabel, setLessonLabel] = useState('');
   const [lessonNum, setLessonNum] = useState(1);
+  const [aircraftSearch, setAircraftSearch] = useState('');
+  const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
   const navigate = useNavigate();
 
   const resetLessonState = () => {
@@ -76,6 +79,7 @@ export default function FlightLesson() {
     setMeta({
       date: new Date().toISOString().split('T')[0],
       aircraft: '',
+      aircraftModel: '',
       notes: '',
       route: '',
       ldgTotal: '',
@@ -284,6 +288,7 @@ export default function FlightLesson() {
     const lessonMeta = {
       date: meta.date,
       aircraft: meta.aircraft,
+      aircraftModel: meta.aircraftModel,
       instructor: instructorName,
       route: meta.route,
       totalFlight: meta.totalFlight,
@@ -353,6 +358,7 @@ export default function FlightLesson() {
     setMeta({
       date: new Date().toISOString().split('T')[0],
       aircraft: '',
+      aircraftModel: '',
       notes: '',
       route: '',
       ldgTotal: '',
@@ -470,12 +476,52 @@ export default function FlightLesson() {
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />
           </div>
+          <div className="space-y-1.5 relative">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
+            <input
+              type="text"
+              value={meta.aircraftModel || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                handleMetaChange('aircraftModel', val);
+                setAircraftSearch(val);
+                setShowAircraftDropdown(true);
+              }}
+              onFocus={() => setShowAircraftDropdown(true)}
+              placeholder="e.g. C-172, Cessna"
+              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+            />
+            {showAircraftDropdown && aircraftSearch && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-[#dde3ec] rounded-lg shadow-lg max-h-60 overflow-auto">
+                {AIRCRAFT_MODELS.filter(m => 
+                  m.toLowerCase().includes(aircraftSearch.toLowerCase())
+                ).slice(0, 50).map((model, idx) => (
+                  <div
+                    key={idx}
+                    className="px-3 py-2 text-sm hover:bg-[#f4f5f7] cursor-pointer text-[#1c2333]"
+                    onClick={() => {
+                      handleMetaChange('aircraftModel', model);
+                      setAircraftSearch('');
+                      setShowAircraftDropdown(false);
+                    }}
+                  >
+                    {model}
+                  </div>
+                ))}
+                {AIRCRAFT_MODELS.filter(m => 
+                  m.toLowerCase().includes(aircraftSearch.toLowerCase())
+                ).length === 0 && (
+                  <div className="px-3 py-2 text-sm text-[#6b7280] italic">No matching models found</div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft N-Number</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Tail Number (N-Number)</label>
             <input
               type="text"
               value={meta.aircraft}
-              onChange={(e) => handleMetaChange('aircraft', e.target.value)}
+              onChange={(e) => handleMetaChange('aircraft', e.target.value.toUpperCase())}
               placeholder="N12345"
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />

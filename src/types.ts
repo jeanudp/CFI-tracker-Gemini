@@ -37,6 +37,8 @@ export interface LessonMeta {
   studentFlewSolo?: boolean;
   rating_code?: string;
   rating_label?: string;
+  aircraftModel?: string;
+  aircraftIcao?: string;
 }
 
 export interface Lesson {
