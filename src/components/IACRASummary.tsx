@@ -16,13 +16,13 @@ interface IacraTotals {
   xcPic: number;
   instTotal: number;
   atdInst: number;
+  ftdInst: number;
+  ffsInst: number;
   nightDual: number;
   nightTotal: number;
   nightTakeoffs: number;
   nightLandings: number;
   nightPic: number;
-  nightTakeoffsPic: number;
-  nightLandingsPic: number;
   ftdTime: number;
   ffsTime: number;
   atdSE: number;
@@ -58,8 +58,9 @@ export default function IACRASummary() {
     const totals: IacraTotals = {
       totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0,
       xcDual: 0, xcSolo: 0, xcPic: 0, instTotal: 0, atdInst: 0,
+      ftdInst: 0, ffsInst: 0,
       nightDual: 0, nightTotal: 0, nightTakeoffs: 0, nightLandings: 0,
-      nightPic: 0, nightTakeoffsPic: 0, nightLandingsPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
+      nightPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
       numFlights: 0
     };
 
@@ -75,13 +76,13 @@ export default function IACRASummary() {
       totals.xcPic += parseFloat(m.xcPic || '0') || 0;
       totals.instTotal += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
       totals.atdInst += parseFloat(m.atdInst || '0') || 0;
+      totals.ftdInst += parseFloat(m.ftdInst || '0') || 0;
+      totals.ffsInst += parseFloat(m.ffsInst || '0') || 0;
       totals.nightDual += parseFloat(m.nightDual || '0') || 0;
       totals.nightTotal += parseFloat(m.night || '0') || 0;
       totals.nightTakeoffs += parseInt(m.nightTakeoffs || '0') || 0;
       totals.nightLandings += parseInt(m.ldgNight || '0') || 0;
       totals.nightPic += parseFloat(m.nightPic || '0') || 0;
-      totals.nightTakeoffsPic += parseInt(m.nightTakeoffsPic || '0') || 0;
-      totals.nightLandingsPic += parseInt(m.nightLandingsPic || '0') || 0;
       totals.ftdTime += parseFloat(m.ftd || '0') || 0;
       totals.ffsTime += parseFloat(m.ffs || '0') || 0;
       totals.atdSE += parseFloat(m.atdSE || '0') || 0;
@@ -112,7 +113,7 @@ export default function IACRASummary() {
       `Night Instruction: ${totals.nightDual.toFixed(1)}\n` +
       `Night T/O & Ldg: ${(totals.nightTakeoffs + totals.nightLandings)}\n` +
       `Night PIC: ${totals.nightPic.toFixed(1)}\n` +
-      `Night T/O & Ldg PIC: ${ratingCode === 'ppl' ? (totals.nightTakeoffsPic + totals.nightLandingsPic) : (totals.nightTakeoffs + totals.nightLandings)}\n` +
+      `Night T/O & Ldg PIC: ${(totals.nightTakeoffs + totals.nightLandings)}\n` +
       `ATD Total: ${totals.atdTime.toFixed(1)}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -291,8 +292,8 @@ export default function IACRASummary() {
                 <Cell type="gray" />
                 <Cell type="gray" />
                 <Cell type="gray" />
-                <Cell type="gray" />
-                <Cell type="gray" />
+                <Cell className="text-right font-mono">{totals.ftdInst.toFixed(1)}</Cell>
+                <Cell className="text-right font-mono">{totals.ffsInst.toFixed(1)}</Cell>
                 <Cell className="text-right font-mono">{totals.atdInst.toFixed(1)}</Cell>
               </tr>
               {/* Row 9: Night Instruction */}
@@ -335,9 +336,7 @@ export default function IACRASummary() {
               <tr>
                 <td className="border border-black p-2 font-bold text-[12px]">Night Take-off / Landing PIC</td>
                 <Cell className="text-right font-mono">
-                  {lessons[0]?.meta?.rating_code === 'ppl' 
-                    ? (totals.nightTakeoffsPic + totals.nightLandingsPic) 
-                    : (totals.nightTakeoffs + totals.nightLandings)}
+                  {(totals.nightTakeoffs + totals.nightLandings)}
                 </Cell>
                 <Cell type="gray" />
                 <Cell type="gray" />

@@ -6,8 +6,66 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+const CHECKLIST_PPL = [
+  {
+    title: "Student Documents",
+    items: [
+      { key: "checklist_ppl_medicalCert", label: "FAA Medical Certificate (valid and appropriate class)" },
+      { key: "checklist_ppl_studentCert", label: "Student Pilot Certificate or Pilot Certificate" },
+      { key: "checklist_ppl_photoId", label: "Government-issued Photo ID" },
+      { key: "checklist_ppl_knowledgeTest", label: "FAA Knowledge Test Report (passing score, not expired)" },
+      { key: "checklist_ppl_iacraApp", label: "Completed FAA Form 8710-1 or IACRA application" },
+    ]
+  },
+  {
+    title: "Instructor Requirements",
+    items: [
+      { 
+        key: "checklist_ppl_endorsements", 
+        label: "All required endorsements given", 
+        auto: (data: any) => {
+          const endorsements = data as any[];
+          const required = ['A.1', 'A.33', 'A.34'];
+          return required.every(k => endorsements.some(e => e.endorsement_key === k && e.completed));
+        },
+        autoText: "Auto-verified from app data"
+      },
+      { key: "checklist_ppl_logbookReviewed", label: "Logbook reviewed and all flight time verified" },
+      { 
+        key: "checklist_ppl_recency", 
+        label: "60-day recency requirement met §61.39", 
+        auto: (data: any) => {
+          const stats = data as any;
+          return stats.recentDual >= 3;
+        },
+        autoText: "Auto-verified from app data"
+      },
+      { key: "checklist_ppl_deficienciesReviewed", label: "Knowledge test deficiencies reviewed if applicable (A.2 endorsement)" },
+    ]
+  },
+  {
+    title: "Aircraft Documents (AROW)",
+    items: [
+      { key: "checklist_ppl_airworthiness", label: "Airworthiness Certificate" },
+      { key: "checklist_ppl_registration", label: "Registration Certificate" },
+      { key: "checklist_ppl_poh", label: "Operating Limitations (POH)" },
+      { key: "checklist_ppl_weightBalance", label: "Weight and Balance data current" },
+    ]
+  },
+  {
+    title: "IACRA and Examiner Preparation",
+    items: [
+      { key: "checklist_ppl_hoursVerified", label: "Flight hours verified against logbook" },
+      { key: "checklist_ppl_iacraStarted", label: "IACRA application started" },
+      { key: "checklist_ppl_dpeScheduled", label: "Designated Pilot Examiner (DPE) scheduled" },
+      { key: "checklist_ppl_examinerFee", label: "Examiner fee arranged" },
+      { key: "checklist_ppl_briefed", label: "Student briefed on checkride procedures" },
+    ]
+  }
+];
 
 export default function History() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -310,7 +368,8 @@ export default function History() {
 
   const getCumulativeStats = (lessonsToSum = studentLessons) => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
-    let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totNightTakeoffsPic = 0, totNightLandingsPic = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
+    let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
+    let totFtdInst = 0, totFfsInst = 0;
     
     lessonsToSum.forEach(l => {
       const m = l.meta || {};
@@ -319,7 +378,7 @@ export default function History() {
       totXc += parseFloat(m.xc || '0') || 0;
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
-      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0);
+      totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0) + (parseFloat(m.ftdInst || '0') || 0) + (parseFloat(m.ffsInst || '0') || 0);
       totSolo += parseFloat(m.solo || '0') || 0;
       totSoloXc += parseFloat(m.xcSolo || '0') || 0;
       totLdg += parseInt(m.ldgTotal || '0') || 0;
@@ -334,18 +393,18 @@ export default function History() {
       totNightDual += parseFloat(m.nightDual || '0') || 0;
       totNightPic += parseFloat(m.nightPic || '0') || 0;
       totNightTakeoffs += parseInt(m.nightTakeoffs || '0') || 0;
-      totNightTakeoffsPic += parseInt(m.nightTakeoffsPic || '0') || 0;
-      totNightLandingsPic += parseInt(m.nightLandingsPic || '0') || 0;
       totFtd += parseFloat(m.ftd || '0') || 0;
       totFfs += parseFloat(m.ffs || '0') || 0;
       totAtdSE += parseFloat(m.atdSE || '0') || 0;
+      totFtdInst += parseFloat(m.ftdInst || '0') || 0;
+      totFfsInst += parseFloat(m.ffsInst || '0') || 0;
     });
 
     const picTime = lessonsToSum.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
 
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
-      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totNightTakeoffsPic, totNightLandingsPic, totFtd, totFfs, totAtdSE, picTime
+      totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime
     };
   };
 
@@ -476,6 +535,42 @@ export default function History() {
       
       if (!error && data) {
         setEndorsements(prev => [...prev, data]);
+      }
+    }
+  };
+
+  const handleToggleChecklist = async (key: string, currentVal: boolean) => {
+    if (!selectedLesson) return;
+    const studentName = selectedLesson.student_name;
+    const newVal = !currentVal;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const existing = manualHours.find(m => m.student_name === studentName && m.field_key === key);
+    
+    if (existing) {
+      const { error } = await supabase
+        .from('manual_hours')
+        .update({ total: newVal ? 1 : 0, updated_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (!error) {
+        setManualHours(prev => prev.map(m => m.id === existing.id ? { ...m, total: newVal ? 1 : 0 } : m));
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('manual_hours')
+        .insert({ 
+          user_id: session.user.id, 
+          student_name: studentName, 
+          field_key: key, 
+          total: newVal ? 1 : 0,
+          entries: [{ val: newVal ? 1 : 0, date: new Date().toLocaleDateString() }]
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        setManualHours(prev => [...prev, data]);
       }
     }
   };
@@ -915,6 +1010,8 @@ export default function History() {
                           ['Simulated Instrument', selectedLesson.meta?.simInst ? `${selectedLesson.meta.simInst}h` : ''],
                           ['Actual IMC', selectedLesson.meta?.imc ? `${selectedLesson.meta.imc}h` : ''],
                           ['ATD Instrument', selectedLesson.meta?.atdInst ? `${selectedLesson.meta.atdInst}h` : ''],
+                          ['FTD Instrument', selectedLesson.meta?.ftdInst ? `${selectedLesson.meta.ftdInst}h` : ''],
+                          ['FFS Instrument', selectedLesson.meta?.ffsInst ? `${selectedLesson.meta.ffsInst}h` : ''],
                         ].filter(d => d[1]).map(([label, val]) => (
                           <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                             <span className="text-xs text-[#64748b]">{label}</span>
@@ -934,13 +1031,11 @@ export default function History() {
                           ['Night PIC', selectedLesson.meta?.nightPic ? `${selectedLesson.meta.nightPic}h` : ''],
                           ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
                           ['Night Landings', selectedLesson.meta?.ldgNight],
-                          ['Night TO PIC', selectedLesson.meta?.nightTakeoffsPic],
-                          ['Night Ldg PIC', selectedLesson.meta?.nightLandingsPic],
                         ] : [
                           ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
                           ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
-                          ['Night Takeoffs (PIC)', selectedLesson.meta?.nightTakeoffs],
-                          ['Night Landings (PIC)', selectedLesson.meta?.ldgNight],
+                          ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
+                          ['Night Landings', selectedLesson.meta?.ldgNight],
                         ]).filter(d => d[1]).map(([label, val]) => (
                           <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                             <span className="text-xs text-[#64748b]">{label}</span>
@@ -1140,6 +1235,8 @@ export default function History() {
                               {[
                                 ['Instrument (Total)', `${stats.totSim.toFixed(1)}h`],
                                 ['ATD Instrument', `${stats.totAtdInst.toFixed(1)}h`],
+                                ['FTD Instrument', `${stats.totFtdInst.toFixed(1)}h`],
+                                ['FFS Instrument', `${stats.totFfsInst.toFixed(1)}h`],
                               ].map(([label, val]) => (
                                 <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
@@ -1158,13 +1255,11 @@ export default function History() {
                                 ['Night PIC', `${stats.totNightPic.toFixed(1)}h`],
                                 ['Night Takeoffs', stats.totNightTakeoffs],
                                 ['Night Landings', stats.totNightLdg],
-                                ['Night TO PIC', stats.totNightTakeoffsPic],
-                                ['Night Ldg PIC', stats.totNightLandingsPic],
                               ] : [
                                 ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
                                 ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
-                                ['Night Takeoffs (PIC)', stats.totNightTakeoffs],
-                                ['Night Landings (PIC)', stats.totNightLdg],
+                                ['Night Takeoffs', stats.totNightTakeoffs],
+                                ['Night Landings', stats.totNightLdg],
                               ]).map(([label, val]) => (
                                 <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
@@ -1476,16 +1571,11 @@ export default function History() {
                         </motion.div>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="bg-white rounded-xl border border-[#dde3ec] p-4 shadow-sm text-center">
                           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Flight Requirements</div>
                           <div className={cn("text-2xl font-mono font-bold", metCount === allRows.length ? "text-[#2d7a4f]" : "text-[#e8a020]")}>{metCount}/{allRows.length}</div>
                           <div className="text-[9px] text-[#6b7280] mt-1">met</div>
-                        </div>
-                        <div className="bg-white rounded-xl border border-[#dde3ec] p-4 shadow-sm text-center">
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Endorsements</div>
-                          <div className={cn("text-2xl font-mono font-bold", endorsementsMet === ENDORSEMENTS.length ? "text-[#2d7a4f]" : "text-[#e8a020]")}>{endorsementsMet}/{ENDORSEMENTS.length}</div>
-                          <div className="text-[9px] text-[#6b7280] mt-1">completed</div>
                         </div>
                         <div className="bg-white rounded-xl border border-[#dde3ec] p-4 shadow-sm text-center">
                           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Total Time</div>
@@ -1634,74 +1724,6 @@ export default function History() {
                           </div>
                         </div>
                       ))}
-
-                      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                        <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f4f5f7] flex justify-between items-center">
-                          <div>
-                            <h3 className="text-sm font-bold text-[#1c2333]">ACS Task Checklist</h3>
-                            <p className="text-[10px] text-[#6b7280] font-mono">Current Proficiency Status</p>
-                          </div>
-                          <div className="text-right">
-                            {(() => {
-                              const allTasks = acsData.flatMap((area, ai) => 
-                                area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'))
-                                  .map((_, ti) => `${ai}_${ti}`)
-                              );
-                              const completed = allTasks.filter(id => getMostRecentGrade(studentLessons, id) === 'S').length;
-                              const pct = Math.round((completed / allTasks.length) * 100);
-                              return (
-                                <>
-                                  <div className="text-xs font-bold text-[#1a3a5c]">{completed}/{allTasks.length}</div>
-                                  <div className="text-[9px] font-bold text-[#6b7280] uppercase tracking-widest">{pct}% Complete</div>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        </div>
-                        <div className="divide-y divide-[#dde3ec] max-h-[400px] overflow-y-auto">
-                          {acsData.map((area, ai) => {
-                            const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
-                            if (tasks.length === 0) return null;
-
-                            return (
-                              <div key={area.area} className="bg-white">
-                                <div className="bg-[#f8fafc] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec]">
-                                  {area.area}
-                                </div>
-                                {tasks.map((task, ti) => {
-                                  const taskId = `${ai}_${ti}`;
-                                  const grade = getMostRecentGrade(studentLessons, taskId);
-                                  const isComplete = grade === 'S';
-                                  
-                                  return (
-                                    <div key={taskId} className="px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all">
-                                      <div className="flex items-center gap-3">
-                                        <div className={cn(
-                                          "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
-                                          isComplete ? "bg-[#2d7a4f] text-white" : "bg-[#f1f5f9] text-[#cbd5e1] border border-[#e2e8f0]"
-                                        )}>
-                                          {isComplete ? <Check size={12} strokeWidth={3} /> : <div className="w-1 h-1 bg-current rounded-full" />}
-                                        </div>
-                                        <span className={cn("text-xs font-medium", isComplete ? "text-[#1c2333]" : "text-[#64748b]")}>
-                                          {task.name}
-                                        </span>
-                                      </div>
-                                      {grade && !isComplete && (
-                                        <span className={cn(
-                                          "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter",
-                                          grade === 'N' ? "bg-[#fdecea] text-[#c0392b]" : "bg-[#fdf0d4] text-[#e8a020]"
-                                        )}>
-                                          {grade === 'N' ? 'Needs Impr.' : 'Incomplete'}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
 
                       <div className="space-y-4">
                         {/* Note */}
@@ -1879,6 +1901,142 @@ export default function History() {
                                 </div>
                               );
                             })()}
+
+                            {/* Checkride Readiness Checklist (PPL Only) */}
+                            {lessonRating === 'ppl' && (
+                              <div className="mt-12 space-y-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-[#1a3a5c] rounded-lg text-white">
+                                    <ClipboardList size={20} />
+                                  </div>
+                                  <div>
+                                    <h2 className="text-lg font-black text-[#1a3a5c] tracking-tight">Checkride Readiness Checklist</h2>
+                                    <p className="text-xs text-[#6b7280]">Verify all items before scheduling the practical test.</p>
+                                  </div>
+                                </div>
+
+                                {(() => {
+                                  const allChecklistItems = CHECKLIST_PPL.flatMap(g => g.items);
+                                  const checkedCount = allChecklistItems.filter(item => {
+                                    if (item.auto) {
+                                      if (item.key === 'checklist_ppl_endorsements') return item.auto(endorsements);
+                                      if (item.key === 'checklist_ppl_recency') return item.auto(stats);
+                                      return false;
+                                    }
+                                    return getManualValue(item.key) > 0;
+                                  }).length;
+                                  const totalCount = allChecklistItems.length;
+                                  const progressPct = Math.round((checkedCount / totalCount) * 100);
+
+                                  return (
+                                    <div className="space-y-6">
+                                      <div className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm">
+                                        <div className="flex justify-between items-end mb-2">
+                                          <span className="text-xs font-bold text-[#1a3a5c] uppercase tracking-widest">{checkedCount} of {totalCount} complete</span>
+                                          <span className="text-xs font-bold text-[#1a3a5c]">{progressPct}%</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-[#f4f5f7] rounded-full overflow-hidden">
+                                          <div 
+                                            className={cn("h-full rounded-full transition-all duration-500", progressPct === 100 ? "bg-[#2d7a4f]" : "bg-[#1a3a5c]")} 
+                                            style={{ width: `${progressPct}%` }} 
+                                          />
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-4">
+                                        {CHECKLIST_PPL.map(group => {
+                                          const groupItems = group.items;
+                                          const groupCheckedCount = groupItems.filter(item => {
+                                            if (item.auto) {
+                                              if (item.key === 'checklist_ppl_endorsements') return item.auto(endorsements);
+                                              if (item.key === 'checklist_ppl_recency') return item.auto(stats);
+                                              return false;
+                                            }
+                                            return getManualValue(item.key) > 0;
+                                          }).length;
+                                          
+                                          const isGroupComplete = groupCheckedCount === groupItems.length;
+                                          const isGroupInProgress = groupCheckedCount > 0 && !isGroupComplete;
+                                          
+                                          const headerBg = isGroupComplete ? "bg-[#2d7a4f]" : (isGroupInProgress ? "bg-[#e8a020]" : "bg-[#1a3a5c]");
+
+                                          return (
+                                            <div key={group.title} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                                              <div className={cn("px-4 py-3 text-white text-[10px] font-bold uppercase tracking-widest", headerBg)}>
+                                                {group.title}
+                                              </div>
+                                              <div className="divide-y divide-[#dde3ec]">
+                                                {groupItems.map(item => {
+                                                  const isAuto = !!item.auto;
+                                                  let isChecked = false;
+                                                  if (isAuto) {
+                                                    if (item.key === 'checklist_ppl_endorsements') isChecked = item.auto!(endorsements);
+                                                    if (item.key === 'checklist_ppl_recency') isChecked = item.auto!(stats);
+                                                  } else {
+                                                    isChecked = getManualValue(item.key) > 0;
+                                                  }
+
+                                                  return (
+                                                    <div 
+                                                      key={item.key}
+                                                      onClick={() => !isAuto && handleToggleChecklist(item.key, isChecked)}
+                                                      className={cn(
+                                                        "min-h-[44px] px-4 py-3 flex items-start gap-4 transition-all",
+                                                        !isAuto && "cursor-pointer hover:bg-[#f8fafc]",
+                                                        isChecked && "bg-[#fafffe]"
+                                                      )}
+                                                    >
+                                                      <div className="mt-0.5 shrink-0">
+                                                        {isChecked ? (
+                                                          <CheckCircle2 size={18} className="text-[#2d7a4f]" />
+                                                        ) : (
+                                                          <Square size={18} className="text-[#dde3ec]" />
+                                                        )}
+                                                      </div>
+                                                      <div className="flex-1 min-w-0">
+                                                        <div className={cn("text-[13px] font-medium leading-tight", isChecked ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
+                                                          {item.label}
+                                                        </div>
+                                                        {isAuto && isChecked && (
+                                                          <div className="text-[9px] font-bold text-[#2d7a4f] mt-1 uppercase tracking-tighter">
+                                                            Auto-verified from app data
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+
+                                      <div className="pt-4 space-y-3">
+                                        <button
+                                          disabled={checkedCount < totalCount}
+                                          onClick={() => navigate(`/iacra/${encodeURIComponent(selectedLesson.student_name || '')}`)}
+                                          className={cn(
+                                            "w-full py-4 rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2",
+                                            checkedCount === totalCount 
+                                              ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] shadow-[#2d7a4f]/20" 
+                                              : "bg-[#dde3ec] text-[#6b7280] cursor-not-allowed"
+                                          )}
+                                        >
+                                          <FileText size={18} />
+                                          Open IACRA Summary
+                                        </button>
+                                        {checkedCount < totalCount && (
+                                          <p className="text-[10px] text-center text-[#6b7280] font-medium">
+                                            Complete all checklist items to proceed to IACRA Summary.
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="space-y-4">

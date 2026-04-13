@@ -14,8 +14,7 @@ export default function Dashboard() {
   const [archivedStudents, setArchivedStudents] = useState<Student[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
-  const [recentGround, setRecentGround] = useState<Lesson | null>(null);
-  const [recentFlight, setRecentFlight] = useState<Lesson | null>(null);
+  const [recentLesson, setRecentLesson] = useState<Lesson | null>(null);
   const [newStudentName, setNewStudentName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -267,8 +266,7 @@ export default function Dashboard() {
     setStudents(prev => prev.filter(s => s.id !== studentId));
     if (selectedStudent === studentName) {
       setSelectedStudent(null);
-      setRecentGround(null);
-      setRecentFlight(null);
+      setRecentLesson(null);
       localStorage.removeItem('sb_selected_student');
       localStorage.removeItem('faa_student_info');
     }
@@ -317,24 +315,14 @@ export default function Dashboard() {
   };
 
   const fetchRecentLessons = async (studentName: string) => {
-    const { data: groundData } = await supabase
+    const { data } = await supabase
       .from('lessons')
       .select('*')
       .eq('student_name', studentName)
-      .eq('type', 'ground')
       .order('saved_at', { ascending: false })
       .limit(1);
 
-    const { data: flightData } = await supabase
-      .from('lessons')
-      .select('*')
-      .eq('student_name', studentName)
-      .eq('type', 'flight')
-      .order('saved_at', { ascending: false })
-      .limit(1);
-
-    setRecentGround(groundData?.[0] || null);
-    setRecentFlight(flightData?.[0] || null);
+    setRecentLesson(data?.[0] || null);
   };
 
   const handleSelectStudent = (name: string) => {
@@ -807,12 +795,8 @@ export default function Dashboard() {
                   )}
 
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Ground Lesson</h3>
-                    <LessonSummary lesson={recentGround} type="ground" />
-                  </div>
-                  <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Flight Lesson</h3>
-                    <LessonSummary lesson={recentFlight} type="flight" />
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Lesson</h3>
+                    <LessonSummary lesson={recentLesson} type={recentLesson?.type === 'ground' ? 'ground' : 'flight'} />
                   </div>
 
                   <div className="pt-2">
@@ -873,13 +857,7 @@ export default function Dashboard() {
                   <Plane size={20} />
                   Start New Lesson →
                 </button>
-                <Link
-                  to="/history"
-                  className="w-full bg-white text-[#6b7280] font-medium py-3 rounded-xl border-2 border-[#dde3ec] hover:bg-[#f4f5f7] hover:text-[#1c2333] transition-all flex items-center justify-center gap-2"
-                >
-                  <History size={18} />
-                  View Full Lesson History
-                </Link>
+
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent)}`}
                   className="w-full bg-white text-[#1a3a5c] font-bold py-3 rounded-xl border-2 border-[#1a3a5c]/20 hover:bg-[#1a3a5c]/5 transition-all flex items-center justify-center gap-2"

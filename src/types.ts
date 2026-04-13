@@ -29,10 +29,10 @@ export interface LessonMeta {
   nightPic?: string;
   nightSolo?: string;
   simDeviceType?: string;
-  nightTakeoffsPic?: string;
-  nightLandingsPic?: string;
   ftd?: string;
   ffs?: string;
+  ftdInst?: string;
+  ffsInst?: string;
   atdSE?: string;
   studentFlewSolo?: boolean;
   rating_code?: string;

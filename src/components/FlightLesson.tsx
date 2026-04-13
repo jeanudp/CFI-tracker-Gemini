@@ -40,11 +40,11 @@ export default function FlightLesson() {
     nightPic: '',
     nightSolo: '',
     simDeviceType: 'ATD',
-    nightTakeoffsPic: '',
-    nightLandingsPic: '',
     ftd: '',
     ffs: '',
     atdSE: '',
+    ftdInst: '',
+    ffsInst: '',
     studentFlewSolo: false,
   });
   const [grades, setGrades] = useState<Record<string, Grade>>({});
@@ -100,11 +100,11 @@ export default function FlightLesson() {
       nightDual: '',
       nightTakeoffs: '',
       nightPic: '',
-      nightTakeoffsPic: '',
-      nightLandingsPic: '',
       ftd: '',
       ffs: '',
       atdSE: '',
+      ftdInst: '',
+      ffsInst: '',
       simDeviceType: 'ATD',
       studentFlewSolo: false,
     });
@@ -299,13 +299,13 @@ export default function FlightLesson() {
       atdInst: meta.atdInst,
       atdSE: meta.atdSE,
       ftd: meta.ftd,
+      ftdInst: meta.ftdInst,
       ffs: meta.ffs,
+      ffsInst: meta.ffsInst,
       nightDual: meta.nightDual,
       nightSolo: meta.nightSolo,
       nightPic: meta.nightPic,
       nightTakeoffs: meta.nightTakeoffs,
-      nightTakeoffsPic: meta.nightTakeoffsPic,
-      nightLandingsPic: meta.nightLandingsPic,
       ldgTotal: meta.ldgTotal,
       ldgDay: meta.ldgDay,
       ldgNight: meta.ldgNight,
@@ -377,11 +377,11 @@ export default function FlightLesson() {
       nightDual: '',
       nightTakeoffs: '',
       nightPic: '',
-      nightTakeoffsPic: '',
-      nightLandingsPic: '',
       ftd: '',
       ffs: '',
       atdSE: '',
+      ftdInst: '',
+      ffsInst: '',
       simDeviceType: 'ATD',
       studentFlewSolo: false,
     });
@@ -863,23 +863,9 @@ export default function FlightLesson() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night T/O PIC (Count)</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" value={meta.nightTakeoffsPic} onChange={(e) => handleMetaChange('nightTakeoffsPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">count</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings</label>
                             <div className="flex items-center gap-2">
                               <input type="number" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">count</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings PIC</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" value={meta.nightLandingsPic} onChange={(e) => handleMetaChange('nightLandingsPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>
@@ -950,22 +936,40 @@ export default function FlightLesson() {
                               </>
                             )}
                             {meta.simDeviceType === 'FTD' && (
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Time</label>
-                                <div className="flex items-center gap-2">
-                                  <input type="number" step="0.1" value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              <>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
                                 </div>
-                              </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Instrument Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={meta.ftdInst} onChange={(e) => handleMetaChange('ftdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                </div>
+                              </>
                             )}
                             {meta.simDeviceType === 'FFS' && (
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Time</label>
-                                <div className="flex items-center gap-2">
-                                  <input type="number" step="0.1" value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              <>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
                                 </div>
-                              </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Instrument Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={meta.ffsInst} onChange={(e) => handleMetaChange('ffsInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                </div>
+                              </>
                             )}
                           </div>
                           <p className="text-[10px] text-[#6b7280] mt-4 italic">
