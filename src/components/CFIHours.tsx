@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { GraduationCap, Search, Calendar, Clock, Plane, MapPin, Download, ChevronRight, Loader2, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import ExportButton from './ExportButton';
 
 export default function CFIHours() {
   const [loading, setLoading] = useState(true);
@@ -128,13 +129,10 @@ export default function CFIHours() {
           </h1>
           <p className="text-sm text-[#64748b]">Cumulative flight hours as an instructor</p>
         </div>
-        <button
-          onClick={exportToMyFlightBook}
-          className="flex items-center justify-center gap-2 bg-[#2a5a8c] text-white px-4 py-2 rounded-lg hover:bg-[#1e446e] transition-all shadow-sm text-sm font-medium"
-        >
-          <Download size={16} />
-          Export CFI Hours to MyFlightBook
-        </button>
+        <ExportButton 
+          onExportCSV={exportToMyFlightBook}
+          buttonText="Export CFI Hours"
+        />
       </div>
 
       {/* Summary Cards */}

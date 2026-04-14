@@ -67,7 +67,7 @@ export default function FlightLesson() {
     studentFlewSolo: false,
     ratpSimInst: '',
     ratpActualInst: '',
-    ratpXC: false,
+    ratpXCEligible: false,
     ratpXCTime: '',
     nightSolo: '',
     approachCount: '',
@@ -143,7 +143,7 @@ export default function FlightLesson() {
       studentFlewSolo: false,
       ratpSimInst: '',
       ratpActualInst: '',
-      ratpXC: false,
+      ratpXCEligible: false,
       ratpXCTime: '',
       nightSolo: '',
       approachCount: '',
@@ -430,7 +430,7 @@ export default function FlightLesson() {
       simDeviceType: meta.simDeviceType,
       ratpSimInst: meta.ratpSimInst,
       ratpActualInst: meta.ratpActualInst,
-      ratpXC: meta.ratpXC,
+      ratpXCEligible: meta.ratpXCEligible,
       ratpXCTime: meta.ratpXCTime,
       approachCount: meta.approachCount,
       approachTypes: meta.approachTypes,
@@ -542,6 +542,8 @@ export default function FlightLesson() {
       studentFlewSolo: false,
       ratpSimInst: '',
       ratpActualInst: '',
+      ratpXCEligible: false,
+      ratpXCTime: '',
       nightSolo: '',
       approachCount: '',
       approachTypes: '[]',
@@ -1309,52 +1311,70 @@ export default function FlightLesson() {
                           </div>
                         </div>
 
-                        {/* R-ATP XC Question */}
-                        {(() => {
-                          const hasXCTime = parseFloat(meta.xcDual||'0') > 0 || parseFloat(meta.xcSolo||'0') > 0 || parseFloat(meta.xcPic||'0') > 0;
-                          if (!hasXCTime) return null;
-
-                          return (
-                            <>
-                              <div className="h-px bg-[#dde3ec] mx-4 mb-4" />
-                              <div className="mx-4 mb-4 p-3 bg-[#f0f9ff] border border-[#bae6fd] rounded-lg">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-bold text-[#0369a1]">Was this an R-ATP eligible cross country?</span>
-                                <div className="group relative">
-                                  <HelpCircle size={14} className="text-[#0ea5e9] cursor-help" />
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-[#1e293b] text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                    R-ATP XC requires the flight to include a point more than 50NM straight line distance from the original point of departure. A landing at that point is not required per §61.160.
-                                  </div>
-                                </div>
+                        <div className="h-px bg-[#dde3ec] mx-4 mb-4" />
+                        <div className="mx-4 mb-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed]">R-ATP Cross Country — §61.160</span>
+                          </div>
+                          
+                          <div className="space-y-4 p-4 bg-[#f5f3ff] border border-[#ddd6fe] rounded-xl">
+                            <div className="flex items-start gap-3">
+                              <div className="flex items-center h-5">
+                                <input
+                                  id="ratpXCEligible"
+                                  type="checkbox"
+                                  checked={meta.ratpXCEligible}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    handleMetaChange('ratpXCEligible', checked);
+                                    if (!checked) handleMetaChange('ratpXCTime', '');
+                                  }}
+                                  className="w-4 h-4 text-[#7c3aed] border-[#ddd6fe] rounded focus:ring-[#7c3aed]"
+                                />
                               </div>
-                              <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={meta.ratpXC} 
-                                    onChange={(e) => {
-                                      const checked = e.target.checked;
-                                      const xcTotal = (parseFloat(meta.xcDual||'0') + parseFloat(meta.xcSolo||'0') + parseFloat(meta.xcPic||'0')).toFixed(1);
-                                      setMeta(prev => ({
-                                        ...prev,
-                                        ratpXC: checked,
-                                        ratpXCTime: checked ? xcTotal : ''
-                                      }));
-                                    }}
-                                    className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
-                                  />
-                                  <span className="text-[11px] text-[#334155]">Yes — this flight included a point more than 50NM from the original departure airport</span>
-                                </label>
-                                {meta.ratpXC && (
-                                  <div className="text-[10px] font-medium text-[#0369a1] bg-[#e0f2fe] px-2 py-1 rounded inline-block">
-                                    R-ATP XC Time: {meta.ratpXCTime} hrs — auto-calculated from XC fields above
+                              <div className="flex-1">
+                                <label htmlFor="ratpXCEligible" className="flex items-center gap-2 text-xs font-semibold text-[#1e1b4b] cursor-pointer">
+                                  This flight included a point more than 50NM from the original departure airport
+                                  <div className="group relative">
+                                    <HelpCircle size={14} className="text-[#7c3aed] cursor-help" />
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-[#1e293b] text-white text-[10px] rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
+                                      R-ATP XC does not require a landing at the distant point. The flight only needs to include a point more than 50NM straight line distance from the original point of departure per §61.160. This is different from regular cross country which requires a full stop landing more than 50NM away.
+                                    </div>
                                   </div>
-                                )}
+                                </label>
                               </div>
                             </div>
-                          </>
-                        );
-                      })()}
+
+                            <AnimatePresence>
+                              {meta.ratpXCEligible && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden space-y-3 pt-2 border-t border-[#ddd6fe]"
+                                >
+                                  <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">R-ATP Cross Country Time</label>
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        step="0.1"
+                                        value={meta.ratpXCTime}
+                                        onChange={(e) => handleMetaChange('ratpXCTime', e.target.value)}
+                                        placeholder="0.0"
+                                        className="w-32 text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all"
+                                      />
+                                      <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                    </div>
+                                    <p className="text-[10px] text-[#6b7280] italic">
+                                      Enter the total flight time for this flight. This will be tracked separately from regular XC hours toward the R-ATP 200 hour cross country requirement.
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>

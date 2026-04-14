@@ -8,6 +8,7 @@ import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
 import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
+import ExportButton from './ExportButton';
 
 const CHECKLIST_PPL = [
   {
@@ -391,14 +392,17 @@ export default function History() {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
     let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
     let totFtdInst = 0, totFfsInst = 0, totRatpSimInst = 0, totRatpActualInst = 0;
-    let totApproachCount = 0, totHoldPerformed = 0, totRatpXC = 0;
+    let totApproachCount = 0, totHoldPerformed = 0, totRatpXC = 0, totIacraXC = 0;
     const approachTypesFreq: Record<string, number> = {};
     
     lessonsToSum.forEach(l => {
       const m = l.meta || {};
+      const regXC = (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
+      const rXCTime = parseFloat(m.ratpXCTime || '0') || 0;
+
       totFlight += parseFloat(m.totalFlight || '0') || 0;
       totDual += parseFloat(m.dual || '0') || 0;
-      totXc += (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
+      totXc += regXC;
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
       totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0) + (parseFloat(m.ftdInst || '0') || 0) + (parseFloat(m.ffsInst || '0') || 0);
@@ -423,7 +427,8 @@ export default function History() {
       totFfsInst += parseFloat(m.ffsInst || '0') || 0;
       totRatpSimInst += parseFloat(m.ratpSimInst || '0') || 0;
       totRatpActualInst += parseFloat(m.ratpActualInst || '0') || 0;
-      totRatpXC += parseFloat(m.ratpXCTime || '0') || 0;
+      totRatpXC += rXCTime;
+      totIacraXC += Math.max(regXC, rXCTime);
 
       totApproachCount += parseInt(m.approachCount || '0') || 0;
       if (m.holdPerformed) totHoldPerformed += 1;
@@ -469,11 +474,17 @@ export default function History() {
     totFtd += getPriorValue('ftd');
     totFfs += getPriorValue('ffs');
     totApproachCount += getPriorValue('approachCount');
+    
+    const priorRatpXC = getPriorValue('ratpXC');
+    totRatpXC += priorRatpXC;
+    
+    const priorRegXC = getPriorValue('xcDual') + getPriorValue('xcSolo') + getPriorValue('xcPic');
+    totIacraXC += Math.max(priorRegXC, priorRatpXC);
 
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
       totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime,
-      totRatpSimInst, totRatpActualInst, totApproachCount, totHoldPerformed, approachTypesFreq, totRatpXC
+      totRatpSimInst, totRatpActualInst, totApproachCount, totHoldPerformed, approachTypesFreq, totRatpXC, totIacraXC
     };
   };
 
@@ -1284,8 +1295,8 @@ export default function History() {
                   <div className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
                     Cumulative — {selectedLesson.student_name}
                   </div>
-                  <button
-                    onClick={() => {
+                  <ExportButton
+                    onExportCSV={() => {
                       const toHHMM = (decimal: string | number): string => {
                         const val = parseFloat(String(decimal)) || 0;
                         const hours = Math.floor(val);
@@ -1352,14 +1363,10 @@ export default function History() {
                       const filename = `MyFlightBook-${selectedLesson.student_name.replace(/\s+/g, '-')}-${dateStr}.csv`;
                       downloadCSV(rows, filename);
                     }}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[#2a5a8c] text-white rounded-lg hover:bg-[#1e446e] transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm"
-                  >
-                    <Download size={14} />
-                    Export to MyFlightBook
-                  </button>
+                  />
                 </div>
 
-                {/* R-ATP XC Progress Card */}
+                {/* R-ATP Cross Country Progress Card */}
                 {(() => {
                   const stats = getCumulativeStats();
                   const ratpXCPct = Math.min(100, (stats.totRatpXC / 200) * 100);
@@ -1368,7 +1375,7 @@ export default function History() {
                       <div className="px-4 py-3 flex items-center justify-between border-b border-[#ddd6fe]">
                         <div className="flex items-center gap-2">
                           <Sparkles size={16} className="text-[#7c3aed]" />
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-[#5b21b6]">R-ATP XC Progress</h3>
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-[#5b21b6]">R-ATP Cross Country Progress</h3>
                         </div>
                         <span className="text-sm font-bold text-[#7c3aed]">{stats.totRatpXC.toFixed(1)} / 200h</span>
                       </div>
@@ -1633,16 +1640,29 @@ export default function History() {
                                       ));
                                     })()}
                                     <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-xs text-[#7c3aed] font-medium">R-ATP Eligible XC</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs text-[#7c3aed] font-bold">R-ATP Eligible XC</span>
+                                        <span className="px-1.5 py-0.5 bg-[#f5f3ff] text-[#7c3aed] text-[9px] font-bold rounded border border-[#ddd6fe]">R-ATP</span>
                                         <div className="group relative">
                                           <HelpCircle size={10} className="text-[#7c3aed] cursor-help" />
                                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#1e293b] text-white text-[9px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                            Total cross country time eligible toward Restricted ATP requirements under §61.160
+                                            Total cross country time eligible toward Restricted ATP requirements under §61.160. Does not require a landing.
                                           </div>
                                         </div>
                                       </div>
                                       <span className="text-sm font-bold text-[#7c3aed]">{stats.totRatpXC.toFixed(1)}h</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs text-[#1a3a5c] font-bold">Total XC for IACRA</span>
+                                        <div className="group relative">
+                                          <HelpCircle size={10} className="text-[#1a3a5c] cursor-help" />
+                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#1e293b] text-white text-[9px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                            Combined total of regular cross country and R-ATP eligible cross country time, ensuring no double counting.
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <span className="text-sm font-bold text-[#1a3a5c]">{stats.totIacraXC.toFixed(1)}h</span>
                                     </div>
                                   </div>
                                 </div>

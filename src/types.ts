@@ -40,7 +40,7 @@ export interface LessonMeta {
   aircraftIcao?: string;
   ratpSimInst?: string;
   ratpActualInst?: string;
-  ratpXC?: boolean;
+  ratpXCEligible?: boolean;
   ratpXCTime?: string;
   approachCount?: string;
   approachTypes?: string;

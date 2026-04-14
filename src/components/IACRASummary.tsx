@@ -27,6 +27,8 @@ interface IacraTotals {
   ffsTime: number;
   atdSE: number;
   numFlights: number;
+  ratpXC: number;
+  iacraXC: number;
 }
 
 export default function IACRASummary() {
@@ -71,11 +73,14 @@ export default function IACRASummary() {
       ftdInst: 0, ffsInst: 0,
       nightDual: 0, nightTotal: 0, nightTakeoffs: 0, nightLandings: 0,
       nightPic: 0, ftdTime: 0, ffsTime: 0, atdSE: 0,
-      numFlights: 0
+      numFlights: 0, ratpXC: 0, iacraXC: 0
     };
 
     lessons.forEach(l => {
       const m = l.meta || {};
+      const regXC = (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
+      const rXCTime = parseFloat(m.ratpXCTime || '0') || 0;
+
       totals.totalTime += parseFloat(m.totalFlight || '0') || 0;
       totals.atdTime += parseFloat(m.atd || '0') || 0;
       totals.dualReceived += parseFloat(m.dual || '0') || 0;
@@ -84,6 +89,8 @@ export default function IACRASummary() {
       totals.xcDual += parseFloat(m.xcDual || '0') || 0;
       totals.xcSolo += parseFloat(m.xcSolo || '0') || 0;
       totals.xcPic += parseFloat(m.xcPic || '0') || 0;
+      totals.ratpXC += rXCTime;
+      totals.iacraXC += Math.max(regXC, rXCTime);
       totals.instTotal += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.imc || '0') || 0);
       totals.atdInst += parseFloat(m.atdInst || '0') || 0;
       totals.ftdInst += parseFloat(m.ftdInst || '0') || 0;
@@ -111,6 +118,8 @@ export default function IACRASummary() {
     totals.xcDual += getPriorValue('xcDual');
     totals.xcSolo += getPriorValue('xcSolo');
     totals.xcPic += getPriorValue('xcPic');
+    totals.ratpXC += getPriorValue('ratpXC');
+    totals.iacraXC += Math.max(getPriorValue('xcDual') + getPriorValue('xcSolo') + getPriorValue('xcPic'), getPriorValue('ratpXC'));
     totals.instTotal += getPriorValue('simInst') + getPriorValue('atdInst');
     totals.atdInst += getPriorValue('atdInst');
     totals.nightDual += getPriorValue('nightDual');
@@ -370,6 +379,30 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="medium" picSic />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+              </tr>
+              {/* Row 7.1: R-ATP Eligible XC */}
+              <tr>
+                <td className="border border-black p-2 font-bold text-[12px] text-[#7c3aed]">R-ATP Eligible XC (§61.160)</td>
+                <Cell className="font-mono text-[#7c3aed]">{totals.ratpXC.toFixed(1)}</Cell>
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+              </tr>
+              {/* Row 7.2: Total XC for IACRA */}
+              <tr className="bg-[#f8fafc]">
+                <td className="border border-black p-2 font-bold text-[12px] text-[#1a3a8c]">Total XC for IACRA</td>
+                <Cell className="font-mono text-[#1a3a8c] font-bold">{totals.iacraXC.toFixed(1)}</Cell>
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />

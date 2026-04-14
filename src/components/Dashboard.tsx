@@ -1660,6 +1660,30 @@ export default function Dashboard() {
                           </div>
                         ))}
                       </div>
+
+                      {/* R-ATP Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed] border-b border-[#ddd6fe] pb-1">R-ATP (§61.160)</h3>
+                        {[
+                          { key: 'prior_ratpXC', label: 'R-ATP Eligible XC', unit: 'hrs' },
+                          { key: 'prior_ratpSimInst', label: 'R-ATP Sim Instrument', unit: 'hrs' },
+                          { key: 'prior_ratpActualInst', label: 'R-ATP Actual Instrument', unit: 'hrs' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#6d28d9]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#ddd6fe] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7c3aed]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#a78bfa]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
