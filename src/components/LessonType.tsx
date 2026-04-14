@@ -203,7 +203,7 @@ export default function LessonType() {
       </div>
 
       <Link to="/" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
-        ← Back to Students
+        ← Back to Home
       </Link>
 
       {/* AI Modal */}

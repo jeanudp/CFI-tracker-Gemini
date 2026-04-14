@@ -114,7 +114,7 @@ export default function GroundLesson() {
   };
 
   const handleGradeCycle = (taskId: string) => {
-    const cycle: Grade[] = ['', 'S', 'N', 'I'];
+    const cycle: Grade[] = ['', 'S', 'N'];
     const current = grades[taskId] || '';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     
@@ -159,7 +159,7 @@ export default function GroundLesson() {
   };
 
   const handleFillAll = () => {
-    const cycle: Grade[] = ['', 'S', 'N', 'I'];
+    const cycle: Grade[] = ['', 'S', 'N'];
     const next = cycle[(cycle.indexOf(fillState) + 1) % cycle.length];
     setFillState(next);
     const newGrades = { ...grades };
@@ -240,7 +240,6 @@ export default function GroundLesson() {
   const counts = {
     s: Object.values(grades).filter(v => v === 'S').length,
     n: Object.values(grades).filter(v => v === 'N').length,
-    i: Object.values(grades).filter(v => v === 'I').length,
   };
 
   return (
@@ -249,7 +248,7 @@ export default function GroundLesson() {
         <div className="flex flex-col gap-4">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
-            <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Students</Link>
+            <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
             <ChevronRight size={10} />
             <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
             <ChevronRight size={10} />
@@ -326,7 +325,7 @@ export default function GroundLesson() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
           <div className="text-2xl font-mono font-bold text-[#2d7a4f]">{counts.s}</div>
           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Satisfactory</div>
@@ -334,10 +333,6 @@ export default function GroundLesson() {
         <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
           <div className="text-2xl font-mono font-bold text-[#c0392b]">{counts.n}</div>
           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Needs Impr.</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
-          <div className="text-2xl font-mono font-bold text-[#e8a020]">{counts.i}</div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Incomplete</div>
         </div>
       </div>
 
@@ -355,7 +350,6 @@ export default function GroundLesson() {
                 "w-12 h-6 rounded border font-mono text-[11px] transition-all",
                 fillState === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
                 fillState === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
-                fillState === 'I' ? "bg-[#e8a020] border-[#e8a020] text-white" :
                 "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
               )}
             >
@@ -403,7 +397,6 @@ export default function GroundLesson() {
                       "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all",
                       g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
                       g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
-                      g === 'I' ? "bg-[#e8a020] border-[#e8a020] text-white" :
                       "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
                     )}
                   >

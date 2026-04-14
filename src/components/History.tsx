@@ -6,7 +6,7 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const CHECKLIST_PPL = [
@@ -88,6 +88,11 @@ export default function History() {
   const [groundExpanded, setGroundExpanded] = useState(false);
   const [flightExpanded, setFlightExpanded] = useState(false);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
+  const [isFlightLogOpen, setIsFlightLogOpen] = useState(false);
+  const [isACSCoverageOpen, setIsACSCoverageOpen] = useState(false);
+  const [isHoursSummaryOpen, setIsHoursSummaryOpen] = useState(false);
+  const [isFlightReqOpen, setIsFlightReqOpen] = useState(false);
+  const [showFullTaskList, setShowFullTaskList] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -141,6 +146,10 @@ export default function History() {
     if (isNaN(date.getTime())) return dateStr;
     return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
+
+  useEffect(() => {
+    setIsFlightLogOpen(false);
+  }, [selectedLessonId]);
 
   const handleSpecialLog = async (row: any, date: string, count: number) => {
     if (!selectedLesson) return;
@@ -367,11 +376,22 @@ export default function History() {
     return sortedLessons.length > 0 ? sortedLessons[0].grades[taskId] : null;
   };
 
+  const getMostRecentGradeInfo = (lessons: Lesson[], taskId: string) => {
+    const sortedLessons = [...lessons]
+      .filter(l => l.grades && l.grades[taskId])
+      .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+    if (sortedLessons.length === 0) return null;
+    return {
+      grade: sortedLessons[0].grades[taskId],
+      date: sortedLessons[0].saved_at
+    };
+  };
+
   const getCumulativeStats = (lessonsToSum = studentLessons) => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
     let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
     let totFtdInst = 0, totFfsInst = 0, totRatpSimInst = 0, totRatpActualInst = 0;
-    let totApproachCount = 0, totHoldPerformed = 0;
+    let totApproachCount = 0, totHoldPerformed = 0, totRatpXC = 0;
     const approachTypesFreq: Record<string, number> = {};
     
     lessonsToSum.forEach(l => {
@@ -403,6 +423,7 @@ export default function History() {
       totFfsInst += parseFloat(m.ffsInst || '0') || 0;
       totRatpSimInst += parseFloat(m.ratpSimInst || '0') || 0;
       totRatpActualInst += parseFloat(m.ratpActualInst || '0') || 0;
+      totRatpXC += parseFloat(m.ratpXCTime || '0') || 0;
 
       totApproachCount += parseInt(m.approachCount || '0') || 0;
       if (m.holdPerformed) totHoldPerformed += 1;
@@ -421,10 +442,38 @@ export default function History() {
 
     const picTime = lessonsToSum.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
 
+    const getPriorValue = (key: string) => {
+      const m = manualHours.find(h =>
+        h.student_name === studentName &&
+        h.field_key === `prior_${key}`
+      );
+      return m ? m.total : 0;
+    };
+
+    totFlight += getPriorValue('totalFlight');
+    totDual += getPriorValue('dual');
+    totSolo += getPriorValue('solo');
+    totXcDual += getPriorValue('xcDual');
+    totXcSolo += getPriorValue('xcSolo');
+    totXcPic += getPriorValue('xcPic');
+    totNight += getPriorValue('night');
+    totNightDual += getPriorValue('nightDual');
+    totNightPic += getPriorValue('nightPic');
+    totSim += getPriorValue('simInst') + getPriorValue('atdInst');
+    totAtdInst += getPriorValue('atdInst');
+    totLdg += getPriorValue('ldgTotal');
+    totLdgDay += getPriorValue('ldgDay');
+    totLdgNight += getPriorValue('ldgNight');
+    totNightTakeoffs += getPriorValue('nightTakeoffs');
+    totAtd += getPriorValue('atd');
+    totFtd += getPriorValue('ftd');
+    totFfs += getPriorValue('ffs');
+    totApproachCount += getPriorValue('approachCount');
+
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
       totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime,
-      totRatpSimInst, totRatpActualInst, totApproachCount, totHoldPerformed, approachTypesFreq
+      totRatpSimInst, totRatpActualInst, totApproachCount, totHoldPerformed, approachTypesFreq, totRatpXC
     };
   };
 
@@ -716,7 +765,7 @@ export default function History() {
                 <div className="p-2 bg-[#1a3a5c] rounded-lg">
                   <HistoryIcon size={18} className="text-white" />
                 </div>
-                <h1 className="text-lg font-black tracking-tight text-[#1a3a5c] uppercase">History</h1>
+                <h1 className="text-lg font-black tracking-tight text-[#1a3a5c] uppercase">Student Progress</h1>
               </div>
             )}
 
@@ -816,7 +865,7 @@ export default function History() {
             </div>
             <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">Select a lesson</h3>
             <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed">
-              Choose a lesson from the sidebar to view detailed performance metrics and history.
+              Choose a lesson from the sidebar to view detailed performance metrics and student progress.
             </p>
           </div>
         ) : (
@@ -917,7 +966,7 @@ export default function History() {
                   {selectedLesson.student_name} · CFI: {selectedLesson.instructor || '—'}
                 </p>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Satisfactory</div>
                     <div className="text-xl font-mono font-bold text-[#2d7a4f]">{Object.values(selectedLesson.grades || {}).filter(v => v === 'S').length || '—'}</div>
@@ -927,21 +976,6 @@ export default function History() {
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Needs Impr.</div>
                     <div className="text-xl font-mono font-bold text-[#c0392b]">{Object.values(selectedLesson.grades || {}).filter(v => v === 'N').length || '—'}</div>
                     <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
-                  </div>
-                  <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Incomplete</div>
-                    <div className="text-xl font-mono font-bold text-[#e8a020]">{Object.values(selectedLesson.grades || {}).filter(v => v === 'I').length || '—'}</div>
-                    <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
-                  </div>
-                  <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Flight Time</div>
-                    <div className="text-xl font-mono font-bold text-[#1a3a5c]">{selectedLesson.meta?.totalFlight || '—'}</div>
-                    <div className="text-[9px] text-[#6b7280] mt-1">hours</div>
-                  </div>
-                  <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Landings</div>
-                    <div className="text-xl font-mono font-bold text-[#1a3a5c]">{selectedLesson.meta?.ldgTotal || '—'}</div>
-                    <div className="text-[9px] text-[#6b7280] mt-1">total</div>
                   </div>
                 </div>
 
@@ -953,211 +987,253 @@ export default function History() {
                 )}
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                  <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">Flight Time Log</div>
-                  <div className="p-4 space-y-6">
-                    {/* Group 1 — Total Time */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['Total Flight Time', selectedLesson.meta?.totalFlight ? `${selectedLesson.meta.totalFlight}h` : ''],
-                          ['ATD Time', selectedLesson.meta?.atd ? `${selectedLesson.meta.atd}h` : ''],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
+                  <button
+                    onClick={() => setIsFlightLogOpen(!isFlightLogOpen)}
+                    className="w-full bg-[#f4f5f7] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} className="text-[#6b7280]" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                        {selectedLesson.label || 'Flight Time Log'}
+                      </span>
                     </div>
-
-                    {/* Group 2 — Instruction and Solo */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['Dual Instruction', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''],
-                          ['Solo Flight Time', selectedLesson.meta?.solo ? `${selectedLesson.meta.solo}h` : ''],
-                          ['Solo XC', selectedLesson.meta?.soloXc ? `${selectedLesson.meta.soloXc}h` : ''],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex items-center gap-3">
+                      {!isFlightLogOpen && selectedLesson.meta?.totalFlight && (
+                        <span className="text-[10px] font-bold font-mono text-[#1a3a5c] bg-white px-2 py-0.5 rounded border border-[#dde3ec]">
+                          {selectedLesson.meta.totalFlight} hrs
+                        </span>
+                      )}
+                      <ChevronRight 
+                        size={14} 
+                        className={cn("text-[#6b7280] transition-transform duration-200", isFlightLogOpen && "rotate-90")} 
+                      />
                     </div>
+                  </button>
 
-                    {/* Group 3 — Pilot in Command */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['PIC Time', selectedLesson.meta?.pic ? `${selectedLesson.meta.pic}h` : ''],
-                          ['As CFI', selectedLesson.meta?.cfi ? `${selectedLesson.meta.cfi}h` : ''],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Group 4 — Cross Country */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['XC (Total)', selectedLesson.meta?.xc ? `${selectedLesson.meta.xc}h` : ''],
-                          ['XC Dual', selectedLesson.meta?.xcDual ? `${selectedLesson.meta.xcDual}h` : ''],
-                          ['XC Solo', selectedLesson.meta?.xcSolo ? `${selectedLesson.meta.xcSolo}h` : ''],
-                          ['XC PIC', selectedLesson.meta?.xcPic ? `${selectedLesson.meta.xcPic}h` : ''],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Group 5 — Instrument */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['Simulated Instrument', selectedLesson.meta?.simInst ? `${selectedLesson.meta.simInst}h` : ''],
-                          ['Actual IMC', selectedLesson.meta?.imc ? `${selectedLesson.meta.imc}h` : ''],
-                          ['ATD Instrument', selectedLesson.meta?.atdInst ? `${selectedLesson.meta.atdInst}h` : ''],
-                          ['FTD Instrument', selectedLesson.meta?.ftdInst ? `${selectedLesson.meta.ftdInst}h` : ''],
-                          ['FFS Instrument', selectedLesson.meta?.ffsInst ? `${selectedLesson.meta.ffsInst}h` : ''],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Group 6 — Night */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
-                      <div className="space-y-1">
-                        {(lessonRating === 'ppl' ? [
-                          ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
-                          ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
-                          ['Night PIC', selectedLesson.meta?.nightPic ? `${selectedLesson.meta.nightPic}h` : ''],
-                          ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
-                          ['Night Landings', selectedLesson.meta?.ldgNight],
-                        ] : [
-                          ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
-                          ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
-                          ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
-                          ['Night Landings', selectedLesson.meta?.ldgNight],
-                        ]).filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Group 7 — Simulator and Device */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['FTD Time', selectedLesson.meta?.ftd ? `${selectedLesson.meta.ftd}h` : ''],
-                          ['FFS Time', selectedLesson.meta?.ffs ? `${selectedLesson.meta.ffs}h` : ''],
-                          ['ATD SE', selectedLesson.meta?.atdSE ? `${selectedLesson.meta.atdSE}h` : ''],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Restricted ATP */}
-                    {(selectedLesson.meta?.ratpSimInst || selectedLesson.meta?.ratpActualInst) && (
-                      <div>
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
-                        <div className="space-y-1">
-                          {[
-                            ['Simulated Instrument (R-ATP)', selectedLesson.meta?.ratpSimInst ? `${selectedLesson.meta.ratpSimInst}h` : ''],
-                            ['Actual Instrument (R-ATP)', selectedLesson.meta?.ratpActualInst ? `${selectedLesson.meta.ratpActualInst}h` : ''],
-                          ].filter(d => d[1]).map(([label, val]) => (
-                            <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                              <span className="text-xs text-[#64748b]">{label}</span>
-                              <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                  <AnimatePresence>
+                    {isFlightLogOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-4 space-y-6">
+                          {/* Group 1 — Total Time */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Total Flight Time', selectedLesson.meta?.totalFlight ? `${selectedLesson.meta.totalFlight}h` : ''],
+                                ['ATD Time', selectedLesson.meta?.atd ? `${selectedLesson.meta.atd}h` : ''],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </div>
 
-                    {/* Approaches and Holds */}
-                    {(selectedLesson.meta?.approachCount || selectedLesson.meta?.holdPerformed || (selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]')) && (
-                      <div>
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
-                            <span className="text-xs text-[#64748b]">Number of Approaches</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{selectedLesson.meta?.approachCount || '0'}</span>
+                          {/* Group 2 — Instruction and Solo */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Dual Instruction', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''],
+                                ['Solo Flight Time', selectedLesson.meta?.solo ? `${selectedLesson.meta.solo}h` : ''],
+                                ['Solo XC', selectedLesson.meta?.soloXc ? `${selectedLesson.meta.soloXc}h` : ''],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
-                            <span className="text-xs text-[#64748b]">Holding Performed</span>
-                            {selectedLesson.meta?.holdPerformed ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#dcfce7] text-[#166534] text-[10px] font-bold rounded-full">
-                                <Check size={10} /> Performed
-                              </span>
-                            ) : (
-                              <span className="text-sm font-bold text-[#1e293b]">No</span>
-                            )}
+
+                          {/* Group 3 — Pilot in Command */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['PIC Time', selectedLesson.meta?.pic ? `${selectedLesson.meta.pic}h` : ''],
+                                ['As CFI', selectedLesson.meta?.cfi ? `${selectedLesson.meta.cfi}h` : ''],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          {selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]' && (
-                            <div className="py-1">
-                              <span className="text-xs text-[#64748b] block mb-1.5">Approach Types</span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {JSON.parse(selectedLesson.meta.approachTypes).map((type: string) => (
-                                  <span key={type} className="px-2 py-0.5 bg-[#f1f5f9] text-[#475569] text-[10px] font-bold rounded-md border border-[#e2e8f0]">
-                                    {type}
-                                  </span>
+
+                          {/* Group 4 — Cross Country */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['XC (Total)', (parseFloat(selectedLesson.meta?.xcDual || '0') + parseFloat(selectedLesson.meta?.xcSolo || '0') + parseFloat(selectedLesson.meta?.xcPic || '0')) > 0 ? `${(parseFloat(selectedLesson.meta?.xcDual || '0') + parseFloat(selectedLesson.meta?.xcSolo || '0') + parseFloat(selectedLesson.meta?.xcPic || '0')).toFixed(1)}h` : ''],
+                                ['XC Dual', selectedLesson.meta?.xcDual ? `${selectedLesson.meta.xcDual}h` : ''],
+                                ['XC Solo', selectedLesson.meta?.xcSolo ? `${selectedLesson.meta.xcSolo}h` : ''],
+                                ['XC PIC', selectedLesson.meta?.xcPic ? `${selectedLesson.meta.xcPic}h` : ''],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                              {selectedLesson.meta?.ratpXCTime && (
+                                <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-[#64748b]">R-ATP XC Time</span>
+                                    <span className="px-1.5 py-0.5 bg-[#f5f3ff] text-[#7c3aed] text-[9px] font-bold rounded border border-[#ddd6fe]">R-ATP</span>
+                                  </div>
+                                  <span className="text-sm font-bold text-[#1e293b]">{selectedLesson.meta.ratpXCTime}h</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Group 5 — Instrument */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Simulated Instrument', selectedLesson.meta?.simInst ? `${selectedLesson.meta.simInst}h` : ''],
+                                ['Actual IMC', selectedLesson.meta?.imc ? `${selectedLesson.meta.imc}h` : ''],
+                                ['ATD Instrument', selectedLesson.meta?.atdInst ? `${selectedLesson.meta.atdInst}h` : ''],
+                                ['FTD Instrument', selectedLesson.meta?.ftdInst ? `${selectedLesson.meta.ftdInst}h` : ''],
+                                ['FFS Instrument', selectedLesson.meta?.ffsInst ? `${selectedLesson.meta.ffsInst}h` : ''],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Group 6 — Night */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
+                            <div className="space-y-1">
+                              {(lessonRating === 'ppl' ? [
+                                ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
+                                ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
+                                ['Night PIC', selectedLesson.meta?.nightPic ? `${selectedLesson.meta.nightPic}h` : ''],
+                                ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
+                                ['Night Landings', selectedLesson.meta?.ldgNight],
+                              ] : [
+                                ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
+                                ['Night Dual', selectedLesson.meta?.nightDual ? `${selectedLesson.meta.nightDual}h` : ''],
+                                ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
+                                ['Night Landings', selectedLesson.meta?.ldgNight],
+                              ]).filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Group 7 — Simulator and Device */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['FTD Time', selectedLesson.meta?.ftd ? `${selectedLesson.meta.ftd}h` : ''],
+                                ['FFS Time', selectedLesson.meta?.ffs ? `${selectedLesson.meta.ffs}h` : ''],
+                                ['ATD SE', selectedLesson.meta?.atdSE ? `${selectedLesson.meta.atdSE}h` : ''],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Restricted ATP */}
+                          {(selectedLesson.meta?.ratpSimInst || selectedLesson.meta?.ratpActualInst) && (
+                            <div>
+                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
+                              <div className="space-y-1">
+                                {[
+                                  ['Simulated Instrument (R-ATP)', selectedLesson.meta?.ratpSimInst ? `${selectedLesson.meta.ratpSimInst}h` : ''],
+                                  ['Actual Instrument (R-ATP)', selectedLesson.meta?.ratpActualInst ? `${selectedLesson.meta.ratpActualInst}h` : ''],
+                                ].filter(d => d[1]).map(([label, val]) => (
+                                  <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                    <span className="text-xs text-[#64748b]">{label}</span>
+                                    <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                  </div>
                                 ))}
                               </div>
                             </div>
                           )}
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Other Details */}
-                    <div>
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
-                      <div className="space-y-1">
-                        {[
-                          ['Date', selectedLesson.meta?.date],
-                          ['Aircraft', selectedLesson.meta?.aircraftModel ? `${selectedLesson.meta.aircraft} — ${selectedLesson.meta.aircraftModel}` : selectedLesson.meta?.aircraft],
-                          ['Route', selectedLesson.meta?.route],
-                          ['Total Landings', selectedLesson.meta?.ldgTotal],
-                          ['Day Landings', selectedLesson.meta?.ldgDay],
-                        ].filter(d => d[1]).map(([label, val]) => (
-                          <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                            <span className="text-xs text-[#64748b]">{label}</span>
-                            <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                          {/* Approaches and Holds */}
+                          {(selectedLesson.meta?.approachCount || selectedLesson.meta?.holdPerformed || (selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]')) && (
+                            <div>
+                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                  <span className="text-xs text-[#64748b]">Number of Approaches</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{selectedLesson.meta?.approachCount || '0'}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                  <span className="text-xs text-[#64748b]">Holding Performed</span>
+                                  {selectedLesson.meta?.holdPerformed ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#dcfce7] text-[#166534] text-[10px] font-bold rounded-full">
+                                      <Check size={10} /> Performed
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm font-bold text-[#1e293b]">No</span>
+                                  )}
+                                </div>
+                                {selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]' && (
+                                  <div className="py-1">
+                                    <span className="text-xs text-[#64748b] block mb-1.5">Approach Types</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {JSON.parse(selectedLesson.meta.approachTypes).map((type: string) => (
+                                        <span key={type} className="px-2 py-0.5 bg-[#f1f5f9] text-[#475569] text-[10px] font-bold rounded-md border border-[#e2e8f0]">
+                                          {type}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Other Details */}
+                          <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
+                            <div className="space-y-1">
+                              {[
+                                ['Date', selectedLesson.meta?.date],
+                                ['Aircraft', selectedLesson.meta?.aircraftModel ? `${selectedLesson.meta.aircraft} — ${selectedLesson.meta.aircraftModel}` : selectedLesson.meta?.aircraft],
+                                ['Route', selectedLesson.meta?.route],
+                                ['Total Landings', selectedLesson.meta?.ldgTotal],
+                                ['Day Landings', selectedLesson.meta?.ldgDay],
+                              ].filter(d => d[1]).map(([label, val]) => (
+                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <span className="text-xs text-[#64748b]">{label}</span>
+                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
 
-                    {!Object.entries(selectedLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v) && (
-                      <div className="text-sm text-[#6b7280] italic">No flight log data.</div>
+                          {!Object.entries(selectedLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v) && (
+                            <div className="text-sm text-[#6b7280] italic">No flight log data.</div>
+                          )}
+                        </div>
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
@@ -1183,9 +1259,9 @@ export default function History() {
                                 <span className={cn(
                                   "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white",
                                   selectedLesson.grades[t.id] === 'S' ? "bg-[#2d7a4f]" :
-                                  selectedLesson.grades[t.id] === 'N' ? "bg-[#c0392b]" : "bg-[#e8a020]"
+                                  selectedLesson.grades[t.id] === 'N' ? "bg-[#c0392b]" : ""
                                 )}>
-                                  {selectedLesson.grades[t.id]}
+                                  {(selectedLesson.grades[t.id] as any) === 'I' ? '' : selectedLesson.grades[t.id]}
                                 </span>
                               </div>
                               <div className="px-4 py-2 text-[11px] text-[#6b7280] italic">{selectedLesson.notes?.[t.id] || ''}</div>
@@ -1204,221 +1280,493 @@ export default function History() {
 
             {activeTab === 'cumulative' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <div className="text-xs font-bold uppercase tracking-widest text-[#6b7280] mb-4">
-                  Cumulative — {selectedLesson.student_name}
-                </div>
-
-                <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                  <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">ACS Coverage (all lessons)</div>
-                  <div className="p-4 space-y-3">
-                    {acsData.map((area, ai) => {
-                      const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
-                      if (tasks.length === 0) return null;
-                      const sat = tasks.filter((_, ti) => getMostRecentGrade(studentLessons, `${ai}_${ti}`) === 'S').length;
-                      const pct = Math.round((sat / tasks.length) * 100);
-
-                      return (
-                        <div key={area.area} className="space-y-1.5">
-                          <div className="flex justify-between items-center text-[11px] font-medium">
-                            <span className="truncate max-w-[200px]" title={area.area}>{area.area}</span>
-                            <span className="font-mono text-[#6b7280]">{sat}/{tasks.length}</span>
-                          </div>
-                          <div className="h-1.5 bg-[#f4f5f7] rounded-full overflow-hidden">
-                            <div className="h-full bg-[#2a5a8c] rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
+                    Cumulative — {selectedLesson.student_name}
                   </div>
+                  <button
+                    onClick={() => {
+                      const toHHMM = (decimal: string | number): string => {
+                        const val = parseFloat(String(decimal)) || 0;
+                        const hours = Math.floor(val);
+                        const minutes = Math.round((val - hours) * 60);
+                        return `${hours}:${String(minutes).padStart(2, '0')}`;
+                      };
+
+                      const downloadCSV = (rows: string[][], filename: string) => {
+                        const csvContent = rows.map(row =>
+                          row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+                        ).join('\n');
+                        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = filename;
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      };
+
+                      const headers = [
+                        "Date", "Flight ID", "Model", "ICAO Model", "Tail Number", "Display Tail", "Aircraft ID", "Category/Class", "Approaches", "Hold", "Landings", "FS Night Landings", "FS Day Landings", "X-Country", "Night", "IMC", "Simulated Instrument", "Ground Simulator", "Dual Received", "CFI", "SIC", "PIC", "Total Flight Time", "CFI Time (HH:MM)", "SIC Time (HH:MM)", "PIC (HH:MM)", "Total Flight Time (HH:MM)", "Route", "Flight Properties", "Comments", "Hobbs Start", "Hobbs End", "Engine Start", "Engine End", "Engine Time", "Flight Start", "Flight End", "Flying Time", "Complex", "Controllable pitch prop", "Flaps", "Retract", "Tailwheel", "High Performance", "Turbine", "TAA", "Signature State", "Date of Signature", "CFI Comment", "CFI Certificate", "CFI Name", "CFI Email", "CFI Expiration", "Public", "Approach Name(s)", "Approaches - ILS", "Approaches - Localizer", "Approaches - RNAV/GPS (LNAV)", "Approaches - RNAV/GPS (LPV)", "Checkride - Certified Flight Instructor", "Checkride - ATP", "Checkride - Commercial", "Checkride - Instrument", "Checkride - New Category/Class/Type", "Pilot Flying Time", "Pilot Monitoring Time", "Simulator/Training Device Identifier", "Solo Time", "Takeoffs (any)"
+                      ];
+
+                      const flightLessons = studentLessons.filter(l => l.type === 'flight' && (parseFloat(l.meta?.totalFlight || '0') > 0 || parseFloat(l.meta?.atd || '0') > 0));
+                      const rows = [headers];
+
+                      flightLessons.forEach(l => {
+                        const m = l.meta || {};
+                        const xc = parseFloat(m.xcDual || '0') + parseFloat(m.xcSolo || '0') + parseFloat(m.xcPic || '0');
+                        const catClass = (lessonRating === 'ppl' || lessonRating === 'cpl' || lessonRating === 'ir') ? 'ASEL' : '';
+                        
+                        const row = new Array(headers.length).fill('');
+                        row[0] = m.date || '';
+                        row[2] = m.aircraftModel || '';
+                        row[4] = m.aircraft || '';
+                        row[5] = m.aircraft || '';
+                        row[7] = catClass;
+                        row[8] = m.approachCount || '';
+                        row[9] = m.holdPerformed ? 'Yes' : '';
+                        row[10] = m.ldgTotal || '';
+                        row[11] = m.ldgNight || '';
+                        row[12] = m.ldgDay || '';
+                        row[13] = xc > 0 ? xc.toFixed(1) : '';
+                        row[14] = m.night || '';
+                        row[15] = m.imc || '';
+                        row[16] = m.simInst || '';
+                        row[17] = m.atd || '';
+                        row[18] = m.dual || '';
+                        row[19] = m.dual || '';
+                        row[21] = m.pic || '';
+                        row[22] = m.totalFlight || '';
+                        row[23] = toHHMM(m.dual);
+                        row[25] = toHHMM(m.pic);
+                        row[26] = toHHMM(m.totalFlight);
+                        row[27] = m.route || '';
+                        row[29] = `${l.label}${m.notes ? ': ' + m.notes : ''}`;
+                        row[67] = m.solo || '';
+                        row[68] = m.ldgTotal || '';
+                        rows.push(row);
+                      });
+
+                      const dateStr = new Date().toISOString().split('T')[0];
+                      const filename = `MyFlightBook-${selectedLesson.student_name.replace(/\s+/g, '-')}-${dateStr}.csv`;
+                      downloadCSV(rows, filename);
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#2a5a8c] text-white rounded-lg hover:bg-[#1e446e] transition-all text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                  >
+                    <Download size={14} />
+                    Export to MyFlightBook
+                  </button>
                 </div>
 
+                {/* R-ATP XC Progress Card */}
+                {(() => {
+                  const stats = getCumulativeStats();
+                  const ratpXCPct = Math.min(100, (stats.totRatpXC / 200) * 100);
+                  return (
+                    <div className="bg-[#f5f3ff] rounded-2xl border border-[#ddd6fe] shadow-sm overflow-hidden">
+                      <div className="px-4 py-3 flex items-center justify-between border-b border-[#ddd6fe]">
+                        <div className="flex items-center gap-2">
+                          <Sparkles size={16} className="text-[#7c3aed]" />
+                          <h3 className="text-xs font-bold uppercase tracking-widest text-[#5b21b6]">R-ATP XC Progress</h3>
+                        </div>
+                        <span className="text-sm font-bold text-[#7c3aed]">{stats.totRatpXC.toFixed(1)} / 200h</span>
+                      </div>
+                      <div className="p-4">
+                        <div className="h-3 bg-[#ede9fe] rounded-full overflow-hidden mb-2">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${ratpXCPct}%` }}
+                            className="h-full bg-[#7c3aed] rounded-full"
+                          />
+                        </div>
+                        <p className="text-[10px] text-[#6d28d9] font-medium">
+                          Required for R-ATP certificate under §61.160
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                  <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">Hours Summary</div>
-                  <div className="p-4 space-y-6">
-                    {(() => {
-                      const stats = getCumulativeStats();
-                      return (
-                        <>
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['Total Flight Time', `${stats.totFlight.toFixed(1)}h`],
-                                ['ATD Time', `${stats.totAtd.toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                  <button
+                    onClick={() => setIsACSCoverageOpen(!isACSCoverageOpen)}
+                    className="w-full bg-[#f4f5f7] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-[#6b7280]" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                        ACS Coverage — All Lessons
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {!isACSCoverageOpen && (
+                        <span className="text-[10px] font-bold text-[#2a5a8c] bg-white px-2 py-0.5 rounded border border-[#dde3ec]">
+                          {(() => {
+                            const totalTasks = acsData.reduce((sum, area) => {
+                              const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+                              return sum + tasks.length;
+                            }, 0);
+                            const totalSat = acsData.reduce((sum, area, ai) => {
+                              const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+                              const sat = tasks.filter((_, ti) => getMostRecentGrade(studentLessons, `${ai}_${ti}`) === 'S').length;
+                              return sum + sat;
+                            }, 0);
+                            return totalTasks > 0 ? Math.round((totalSat / totalTasks) * 100) : 0;
+                          })()}% Complete
+                        </span>
+                      )}
+                      <ChevronRight 
+                        size={14} 
+                        className={cn("text-[#6b7280] transition-transform duration-200", isACSCoverageOpen && "rotate-90")} 
+                      />
+                    </div>
+                  </button>
 
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['Dual Instruction', `${stats.totDual.toFixed(1)}h`],
-                                ['Solo Flight Time', `${stats.totSolo.toFixed(1)}h`],
-                                ['Solo XC', `${stats.totSoloXc.toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                  <AnimatePresence>
+                    {isACSCoverageOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-4 space-y-4">
+                          <div className="space-y-3">
+                            {acsData.map((area, ai) => {
+                              const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+                              if (tasks.length === 0) return null;
+                              const sat = tasks.filter((_, ti) => getMostRecentGrade(studentLessons, `${ai}_${ti}`) === 'S').length;
+                              const pct = Math.round((sat / tasks.length) * 100);
 
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['PIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0).toFixed(1)}h`],
-                                ['As CFI', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.cfi || '0') || 0), 0).toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['XC (Total)', `${stats.totXc.toFixed(1)}h`],
-                                ['XC Dual', `${stats.totXcDual.toFixed(1)}h`],
-                                ['XC Solo', `${stats.totXcSolo.toFixed(1)}h`],
-                                ['XC PIC', `${stats.totXcPic.toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['Instrument (Total)', `${stats.totSim.toFixed(1)}h`],
-                                ['ATD Instrument', `${stats.totAtdInst.toFixed(1)}h`],
-                                ['FTD Instrument', `${stats.totFtdInst.toFixed(1)}h`],
-                                ['FFS Instrument', `${stats.totFfsInst.toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
-                            <div className="space-y-1">
-                              {(lessonRating === 'ppl' ? [
-                                ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
-                                ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
-                                ['Night PIC', `${stats.totNightPic.toFixed(1)}h`],
-                                ['Night Takeoffs', stats.totNightTakeoffs],
-                                ['Night Landings', stats.totNightLdg],
-                              ] : [
-                                ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
-                                ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
-                                ['Night Takeoffs', stats.totNightTakeoffs],
-                                ['Night Landings', stats.totNightLdg],
-                              ]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['FTD Time', `${stats.totFtd.toFixed(1)}h`],
-                                ['FFS Time', `${stats.totFfs.toFixed(1)}h`],
-                                ['ATD SE', `${stats.totAtdSE.toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['Simulated Instrument (R-ATP)', `${stats.totRatpSimInst.toFixed(1)}h`],
-                                ['Actual Instrument (R-ATP)', `${stats.totRatpActualInst.toFixed(1)}h`],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
-                                <span className="text-xs text-[#64748b]">Total Approaches</span>
-                                <span className="text-sm font-bold text-[#1e293b]">{stats.totApproachCount}</span>
-                              </div>
-                              <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
-                                <span className="text-xs text-[#64748b]">Lessons with Holding</span>
-                                <span className="text-sm font-bold text-[#1e293b]">{stats.totHoldPerformed}</span>
-                              </div>
-                              {Object.keys(stats.approachTypesFreq).length > 0 && (
-                                <div className="py-1">
-                                  <span className="text-xs text-[#64748b] block mb-1.5">Approach Type Frequency</span>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {Object.entries(stats.approachTypesFreq)
-                                      .sort((a, b) => b[1] - a[1])
-                                      .map(([type, count]) => (
-                                        <span key={type} className="px-2 py-0.5 bg-[#f1f5f9] text-[#475569] text-[10px] font-bold rounded-md border border-[#e2e8f0]">
-                                          {type}: {count}
-                                        </span>
-                                      ))}
+                              return (
+                                <div key={area.area} className="space-y-1.5">
+                                  <div className="flex justify-between items-center text-[11px] font-medium">
+                                    <span className="truncate max-w-[200px]" title={area.area}>{area.area}</span>
+                                    <span className="font-mono text-[#6b7280]">{sat}/{tasks.length}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-[#f4f5f7] rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#2a5a8c] rounded-full" style={{ width: `${pct}%` }} />
                                   </div>
                                 </div>
-                              )}
-                            </div>
+                              );
+                            })}
                           </div>
 
-                          <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
-                            <div className="space-y-1">
-                              {[
-                                ['Total Landings', stats.totLdg],
-                                ['Day Landings', stats.totLdgDay],
-                              ].map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                  <span className="text-xs text-[#64748b]">{label}</span>
-                                  <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="pt-2">
+                            <button
+                              onClick={() => setShowFullTaskList(!showFullTaskList)}
+                              className="w-full py-2 px-4 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl text-[10px] font-bold uppercase tracking-widest text-[#475569] transition-colors flex items-center justify-center gap-2"
+                            >
+                              {showFullTaskList ? 'Hide Full Task List' : 'Show Full Task List'}
+                            </button>
                           </div>
-                        </>
-                      );
-                    })()}
-                  </div>
+
+                          <AnimatePresence>
+                            {showFullTaskList && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-4 border-t border-[#f1f5f9] space-y-6">
+                                  {/* Legend */}
+                                  <div className="flex flex-wrap gap-4 px-1">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 rounded bg-[#2d7a4f]" />
+                                      <span className="text-[10px] font-medium text-[#64748b]">Satisfactory</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 rounded bg-[#c0392b]" />
+                                      <span className="text-[10px] font-medium text-[#64748b]">Needs Improvement</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 rounded bg-[#94a3b8]" />
+                                      <span className="text-[10px] font-medium text-[#64748b]">Not Yet Covered</span>
+                                    </div>
+                                  </div>
+
+                                  {acsData.map((area, ai) => {
+                                    const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
+                                    if (tasks.length === 0) return null;
+                                    return (
+                                      <div key={area.area} className="space-y-2">
+                                        <div className="text-[10px] font-bold text-[#1a3a5c] uppercase tracking-wider opacity-60">
+                                          {area.area}
+                                        </div>
+                                        <div className="space-y-1">
+                                          {tasks.map((task, ti) => {
+                                            const info = getMostRecentGradeInfo(studentLessons, `${ai}_${ti}`);
+                                            return (
+                                              <div key={task.name} className="flex justify-between items-start py-2 border-b border-[#f1f5f9] last:border-0 gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="text-xs text-[#1e293b] font-medium leading-tight">{task.name}</div>
+                                                  {info?.date && (
+                                                    <div className="text-[10px] text-[#64748b] mt-0.5">
+                                                      Last graded: {new Date(info.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                <span className={cn(
+                                                  "inline-flex items-center justify-center px-2 py-0.5 rounded text-[9px] font-bold font-mono text-white shrink-0 min-w-[24px]",
+                                                  info?.grade === 'S' ? "bg-[#2d7a4f]" :
+                                                  info?.grade === 'N' ? "bg-[#c0392b]" : "bg-[#94a3b8]"
+                                                )}>
+                                                  {info?.grade || 'Not Yet Covered'}
+                                                </span>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setIsHoursSummaryOpen(!isHoursSummaryOpen)}
+                    className="w-full bg-[#f4f5f7] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} className="text-[#6b7280]" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                        Hours Summary
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {!isHoursSummaryOpen && (
+                        <span className="text-[10px] font-bold font-mono text-[#1a3a5c] bg-white px-2 py-0.5 rounded border border-[#dde3ec]">
+                          {getCumulativeStats().totFlight.toFixed(1)} hrs total
+                        </span>
+                      )}
+                      <ChevronRight 
+                        size={14} 
+                        className={cn("text-[#6b7280] transition-transform duration-200", isHoursSummaryOpen && "rotate-90")} 
+                      />
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {isHoursSummaryOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-4 space-y-6">
+                          {(() => {
+                            const stats = getCumulativeStats();
+                            return (
+                              <>
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['Total Flight Time', `${stats.totFlight.toFixed(1)}h`],
+                                      ['ATD Time', `${stats.totAtd.toFixed(1)}h`],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['Dual Instruction', `${stats.totDual.toFixed(1)}h`],
+                                      ['Solo Flight Time', `${stats.totSolo.toFixed(1)}h`],
+                                      ['Solo XC', `${stats.totSoloXc.toFixed(1)}h`],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['PIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0).toFixed(1)}h`],
+                                      ['As CFI', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.cfi || '0') || 0), 0).toFixed(1)}h`],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
+                                  <div className="space-y-1">
+                                    {(() => {
+                                      const xcTotal = stats.totXcDual + stats.totXcSolo + stats.totXcPic;
+                                      return [
+                                        ['XC (Total)', `${xcTotal.toFixed(1)}h`],
+                                        ['XC Dual', `${stats.totXcDual.toFixed(1)}h`],
+                                        ['XC Solo', `${stats.totXcSolo.toFixed(1)}h`],
+                                        ['XC PIC', `${stats.totXcPic.toFixed(1)}h`],
+                                      ].map(([label, val]) => (
+                                        <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                          <span className="text-xs text-[#64748b]">{label}</span>
+                                          <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                        </div>
+                                      ));
+                                    })()}
+                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-xs text-[#7c3aed] font-medium">R-ATP Eligible XC</span>
+                                        <div className="group relative">
+                                          <HelpCircle size={10} className="text-[#7c3aed] cursor-help" />
+                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#1e293b] text-white text-[9px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                            Total cross country time eligible toward Restricted ATP requirements under §61.160
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <span className="text-sm font-bold text-[#7c3aed]">{stats.totRatpXC.toFixed(1)}h</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['Instrument (Total)', `${stats.totSim.toFixed(1)}h`],
+                                      ['ATD Instrument', `${stats.totAtdInst.toFixed(1)}h`],
+                                      ['FTD Instrument', `${stats.totFtdInst.toFixed(1)}h`],
+                                      ['FFS Instrument', `${stats.totFfsInst.toFixed(1)}h`],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
+                                  <div className="space-y-1">
+                                    {(lessonRating === 'ppl' ? [
+                                      ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
+                                      ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
+                                      ['Night PIC', `${stats.totNightPic.toFixed(1)}h`],
+                                      ['Night Takeoffs', stats.totNightTakeoffs],
+                                      ['Night Landings', stats.totNightLdg],
+                                    ] : [
+                                      ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
+                                      ['Night Dual', `${stats.totNightDual.toFixed(1)}h`],
+                                      ['Night Takeoffs', stats.totNightTakeoffs],
+                                      ['Night Landings', stats.totNightLdg],
+                                    ]).map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['FTD Time', `${stats.totFtd.toFixed(1)}h`],
+                                      ['FFS Time', `${stats.totFfs.toFixed(1)}h`],
+                                      ['ATD SE', `${stats.totAtdSE.toFixed(1)}h`],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['Simulated Instrument (R-ATP)', `${stats.totRatpSimInst.toFixed(1)}h`],
+                                      ['Actual Instrument (R-ATP)', `${stats.totRatpActualInst.toFixed(1)}h`],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                      <span className="text-xs text-[#64748b]">Total Approaches</span>
+                                      <span className="text-sm font-bold text-[#1e293b]">{stats.totApproachCount}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                      <span className="text-xs text-[#64748b]">Lessons with Holding</span>
+                                      <span className="text-sm font-bold text-[#1e293b]">{stats.totHoldPerformed}</span>
+                                    </div>
+                                    {Object.keys(stats.approachTypesFreq).length > 0 && (
+                                      <div className="py-1">
+                                        <span className="text-xs text-[#64748b] block mb-1.5">Approach Type Frequency</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {Object.entries(stats.approachTypesFreq)
+                                            .sort((a, b) => b[1] - a[1])
+                                            .map(([type, count]) => (
+                                              <span key={type} className="px-2 py-0.5 bg-[#f1f5f9] text-[#475569] text-[10px] font-bold rounded-md border border-[#e2e8f0]">
+                                                {type}: {count}
+                                              </span>
+                                            ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
+                                  <div className="space-y-1">
+                                    {[
+                                      ['Total Landings', stats.totLdg],
+                                      ['Day Landings', stats.totLdgDay],
+                                    ].map(([label, val]) => (
+                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <span className="text-xs text-[#64748b]">{label}</span>
+                                        <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
@@ -1670,6 +2018,16 @@ export default function History() {
                     setCelebrated(prev => ({ ...prev, [`${selectedLesson.student_name}_${lessonRating}`]: true }));
                   }
 
+                  const getFlightReqLabel = (ratingCode: string) => {
+                    if (ratingCode === 'ppl') return 'Flight Time Requirements — §61.109(a)';
+                    if (ratingCode === 'ir') return 'Flight Time Requirements — §61.65(d)';
+                    if (ratingCode === 'cpl') return 'Flight Time Requirements — §61.129(a)';
+                    if (ratingCode === 'cfi') return 'Flight Time Requirements — §61.183';
+                    if (ratingCode === 'cfii') return 'Flight Time Requirements — §61.187(b)';
+                    if (ratingCode === 'mei') return 'Flight Time Requirements — §61.195(h)';
+                    return 'Flight Time Requirements';
+                  };
+
                   return (
                     <div className="space-y-6">
                       {allMet && (
@@ -1700,146 +2058,178 @@ export default function History() {
                         </div>
                       </div>
 
-                      {REQS.map(section => (
-                        <div key={section.section} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                          <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f4f5f7]">
-                            <h3 className="text-sm font-bold text-[#1c2333]">{section.section}</h3>
-                            <p className="text-[10px] text-[#6b7280] font-mono">{section.ref} — FAR Part 61</p>
+                      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                        <button
+                          onClick={() => setIsFlightReqOpen(!isFlightReqOpen)}
+                          className="w-full bg-[#f4f5f7] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={16} className="text-[#6b7280]" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                              {getFlightReqLabel(lessonRating)}
+                            </span>
                           </div>
-                          <div className="divide-y divide-[#dde3ec]">
-                            {section.rows.map(row => {
-                              const met = row.have >= row.need;
-                              const pct = Math.min(100, Math.round((row.have / row.need) * 100));
-                              return (
-                                <div key={row.label} className={cn("p-4 flex items-start gap-4", met && "bg-[#fafffe]")}>
-                                  <div className="mt-0.5 shrink-0">
-                                    {met ? <CheckCircle2 size={18} className="text-[#2d7a4f]" /> : <XCircle size={18} className="text-[#c0392b]" />}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] font-bold font-mono text-[#6b7280] bg-[#f4f5f7] px-1.5 py-0.5 rounded">{row.ref}</span>
-                                      <div className="text-[13px] font-medium text-[#1c2333] leading-tight">{row.label}</div>
-                                    </div>
-                                    {row.note && <div className="text-[11px] text-[#6b7280] mt-1 italic">{row.note}</div>}
-                                    <div className="mt-3 space-y-1.5">
-                                      <div className="flex justify-between items-end">
-                                        <div className="flex items-baseline gap-1">
-                                          <span className={cn("text-lg font-mono font-bold", met ? "text-[#2d7a4f]" : "text-[#c0392b]")}>
-                                            {row.unit === 'landings' || row.unit === 'flight' ? row.have : (row.have || 0).toFixed(1)}
-                                          </span>
-                                          <span className="text-xs text-[#6b7280] font-mono">/ {row.need} {row.unit}</span>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-[#6b7280]">{pct}%</span>
-                                      </div>
-                                      <div className="w-full h-1.5 bg-[#f4f5f7] rounded-full overflow-hidden">
-                                        <div className={cn("h-full rounded-full transition-all duration-500", met ? "bg-[#2d7a4f]" : "bg-[#2a5a8c]")} style={{ width: `${pct}%` }} />
-                                      </div>
-                                    </div>
-                                  </div>
-                                  {row.mk && (
-                                    <div className="shrink-0">
-                                      {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' || row.mk === 'ifrXc250' ? (
-                                        met ? (
-                                          <div className="flex flex-col items-end gap-1">
-                                            <div className="flex items-center gap-2 text-[#2d7a4f] font-bold text-[11px]">
-                                              <CheckCircle2 size={14} />
-                                              {row.mk === 'soloTowered' ? `${row.have} of ${row.need} landings — ` : ''}
-                                              Completed on {formatDate(getManualDate(row.mk))}
-                                            </div>
-                                            {editingDateKey === row.mk ? (
-                                              <div className="flex items-center gap-2 mt-1">
-                                                <input 
-                                                  type="date"
-                                                  value={tempDate}
-                                                  onChange={(e) => setTempDate(e.target.value)}
-                                                  className="h-[44px] border border-[#dde3ec] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#2a5a8c]"
-                                                />
-                                                <button 
-                                                  onClick={() => {
-                                                    saveManualDate(row.mk!, tempDate);
-                                                    setEditingDateKey(null);
-                                                  }}
-                                                  className="text-[10px] font-bold text-[#2d7a4f] hover:underline"
-                                                >
-                                                  Save
-                                                </button>
-                                                <button 
-                                                  onClick={() => setEditingDateKey(null)}
-                                                  className="text-[10px] font-bold text-[#6b7280] hover:underline"
-                                                >
-                                                  Cancel
-                                                </button>
-                                              </div>
-                                            ) : (
-                                              <button 
-                                                onClick={() => {
-                                                  setEditingDateKey(row.mk!);
-                                                  setTempDate(getManualDate(row.mk!));
-                                                }}
-                                                className="flex items-center gap-1 text-[10px] font-bold text-[#1a3a5c] hover:underline"
-                                              >
-                                                <Pencil size={10} />
-                                                Edit Date
-                                              </button>
-                                            )}
+                          <div className="flex items-center gap-3">
+                            {!isFlightReqOpen && (
+                              <span className="text-[10px] font-bold text-[#2a5a8c] bg-white px-2 py-0.5 rounded border border-[#dde3ec]">
+                                {metCount}/{allRows.length} Met
+                              </span>
+                            )}
+                            <ChevronRight 
+                              size={14} 
+                              className={cn("text-[#6b7280] transition-transform duration-200", isFlightReqOpen && "rotate-90")} 
+                            />
+                          </div>
+                        </button>
+
+                        <AnimatePresence>
+                          {isFlightReqOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="divide-y divide-[#dde3ec]">
+                                {REQS.map(section => (
+                                  <div key={section.section}>
+                                    {section.rows.map(row => {
+                                      const met = row.have >= row.need;
+                                      const pct = Math.min(100, Math.round((row.have / row.need) * 100));
+                                      return (
+                                        <div key={row.label} className={cn("p-4 flex items-start gap-4", met && "bg-[#fafffe]")}>
+                                          <div className="mt-0.5 shrink-0">
+                                            {met ? <CheckCircle2 size={18} className="text-[#2d7a4f]" /> : <XCircle size={18} className="text-[#c0392b]" />}
                                           </div>
-                                        ) : (
-                                          <div className="flex flex-col gap-2 min-w-[160px]">
-                                            {row.mk === 'soloTowered' && (
-                                              <div className="flex flex-col gap-1">
-                                                <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">Landings Count</label>
-                                                <input 
-                                                  type="number"
-                                                  min="0"
-                                                  max="3"
-                                                  defaultValue={row.have}
-                                                  id={`count-${row.mk}`}
-                                                  className="h-[44px] w-full border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
-                                                />
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-[10px] font-bold font-mono text-[#6b7280] bg-[#f4f5f7] px-1.5 py-0.5 rounded">{row.ref}</span>
+                                              <div className="text-[13px] font-medium text-[#1c2333] leading-tight">{row.label}</div>
+                                            </div>
+                                            {row.note && <div className="text-[11px] text-[#6b7280] mt-1 italic">{row.note}</div>}
+                                            <div className="mt-3 space-y-1.5">
+                                              <div className="flex justify-between items-end">
+                                                <div className="flex items-baseline gap-1">
+                                                  <span className={cn("text-lg font-mono font-bold", met ? "text-[#2d7a4f]" : "text-[#c0392b]")}>
+                                                    {row.unit === 'landings' || row.unit === 'flight' ? row.have : (row.have || 0).toFixed(1)}
+                                                  </span>
+                                                  <span className="text-xs text-[#6b7280] font-mono">/ {row.need} {row.unit}</span>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-[#6b7280]">{pct}%</span>
                                               </div>
-                                            )}
-                                            <div className="flex flex-col gap-1">
-                                              <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">
-                                                {row.mk === 'soloTowered' ? 'Date of Last Landing' : 'Date Completed'}
-                                              </label>
-                                              <div className="flex items-center gap-2">
-                                                <input 
-                                                  type="date"
-                                                  id={`date-${row.mk}`}
-                                                  defaultValue={new Date().toISOString().split('T')[0]}
-                                                  className="h-[44px] flex-1 border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
-                                                />
+                                              <div className="w-full h-1.5 bg-[#f4f5f7] rounded-full overflow-hidden">
+                                                <div className={cn("h-full rounded-full transition-all duration-500", met ? "bg-[#2d7a4f]" : "bg-[#2a5a8c]")} style={{ width: `${pct}%` }} />
+                                              </div>
+                                            </div>
+                                          </div>
+                                          {row.mk && (
+                                            <div className="shrink-0">
+                                              {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' || row.mk === 'ifrXc250' ? (
+                                                met ? (
+                                                  <div className="flex flex-col items-end gap-1">
+                                                    <div className="flex items-center gap-2 text-[#2d7a4f] font-bold text-[11px]">
+                                                      <CheckCircle2 size={14} />
+                                                      {row.mk === 'soloTowered' ? `${row.have} of ${row.need} landings — ` : ''}
+                                                      Completed on {formatDate(getManualDate(row.mk))}
+                                                    </div>
+                                                    {editingDateKey === row.mk ? (
+                                                      <div className="flex items-center gap-2 mt-1">
+                                                        <input 
+                                                          type="date"
+                                                          value={tempDate}
+                                                          onChange={(e) => setTempDate(e.target.value)}
+                                                          className="h-[44px] border border-[#dde3ec] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#2a5a8c]"
+                                                        />
+                                                        <button 
+                                                          onClick={() => {
+                                                            saveManualDate(row.mk!, tempDate);
+                                                            setEditingDateKey(null);
+                                                          }}
+                                                          className="text-[10px] font-bold text-[#2d7a4f] hover:underline"
+                                                        >
+                                                          Save
+                                                        </button>
+                                                        <button 
+                                                          onClick={() => setEditingDateKey(null)}
+                                                          className="text-[10px] font-bold text-[#6b7280] hover:underline"
+                                                        >
+                                                          Cancel
+                                                        </button>
+                                                      </div>
+                                                    ) : (
+                                                      <button 
+                                                        onClick={() => {
+                                                          setEditingDateKey(row.mk!);
+                                                          setTempDate(getManualDate(row.mk!));
+                                                        }}
+                                                        className="flex items-center gap-1 text-[10px] font-bold text-[#1a3a5c] hover:underline"
+                                                      >
+                                                        <Pencil size={10} />
+                                                        Edit Date
+                                                      </button>
+                                                    )}
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex flex-col gap-2 min-w-[160px]">
+                                                    {row.mk === 'soloTowered' && (
+                                                      <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">Landings Count</label>
+                                                        <input 
+                                                          type="number"
+                                                          min="0"
+                                                          max="3"
+                                                          defaultValue={row.have}
+                                                          id={`count-${row.mk}`}
+                                                          className="h-[44px] w-full border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
+                                                        />
+                                                      </div>
+                                                    )}
+                                                    <div className="flex flex-col gap-1">
+                                                      <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">
+                                                        {row.mk === 'soloTowered' ? 'Date of Last Landing' : 'Date Completed'}
+                                                      </label>
+                                                      <div className="flex items-center gap-2">
+                                                        <input 
+                                                          type="date"
+                                                          id={`date-${row.mk}`}
+                                                          defaultValue={new Date().toISOString().split('T')[0]}
+                                                          className="h-[44px] flex-1 border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
+                                                        />
+                                                        <button
+                                                          onClick={() => {
+                                                            const dateVal = (document.getElementById(`date-${row.mk}`) as HTMLInputElement).value;
+                                                            const countVal = row.mk === 'soloTowered' ? parseInt((document.getElementById(`count-${row.mk}`) as HTMLInputElement).value) : 1;
+                                                            handleSpecialLog(row, dateVal, countVal);
+                                                          }}
+                                                          className="h-[44px] px-4 rounded-lg bg-[#1a3a5c] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#2a5a8c] transition-all"
+                                                        >
+                                                          Log
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                )
+                                              ) : (
                                                 <button
-                                                  onClick={() => {
-                                                    const dateVal = (document.getElementById(`date-${row.mk}`) as HTMLInputElement).value;
-                                                    const countVal = row.mk === 'soloTowered' ? parseInt((document.getElementById(`count-${row.mk}`) as HTMLInputElement).value) : 1;
-                                                    handleSpecialLog(row, dateVal, countVal);
-                                                  }}
-                                                  className="h-[44px] px-4 rounded-lg bg-[#1a3a5c] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#2a5a8c] transition-all"
+                                                  onClick={() => openModal(row.mk!, row.label, row.need, row.unit)}
+                                                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] bg-white text-[#1a3a5c] hover:bg-[#f4f5f7] transition-all text-[10px] font-bold uppercase tracking-wider"
                                                 >
+                                                  <Plus size={12} />
                                                   Log
                                                 </button>
-                                              </div>
+                                              )}
                                             </div>
-                                          </div>
-                                        )
-                                      ) : (
-                                        <button
-                                          onClick={() => openModal(row.mk!, row.label, row.need, row.unit)}
-                                          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] bg-white text-[#1a3a5c] hover:bg-[#f4f5f7] transition-all text-[10px] font-bold uppercase tracking-wider"
-                                        >
-                                          <Plus size={12} />
-                                          Log
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
                       <div className="space-y-4">
                         {/* Note */}
@@ -1852,6 +2242,24 @@ export default function History() {
 
                         {lessonRating === 'ppl' ? (
                           <div className="space-y-4">
+                            <div className="mb-2">
+                              <button
+                                onClick={() => navigate('/presolo-test')}
+                                className="w-full flex items-center justify-between p-4 bg-white border border-[#dde3ec] rounded-2xl shadow-sm hover:border-[#1a3a5c] hover:shadow-md transition-all group"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-[#f1f5f9] text-[#1a3a5c] rounded-xl flex items-center justify-center group-hover:bg-[#1a3a5c] group-hover:text-white transition-colors">
+                                    <FileText size={24} />
+                                  </div>
+                                  <div className="text-left">
+                                    <h3 className="text-sm font-bold text-[#1e293b]">Pre-Solo Knowledge Test</h3>
+                                    <p className="text-xs text-[#64748b]">Aeronautical knowledge test required by §61.87(b)</p>
+                                  </div>
+                                </div>
+                                <ChevronRight size={18} className="text-[#cbd5e1] group-hover:text-[#1a3a5c] transition-colors" />
+                              </button>
+                            </div>
+
                             {SOLO_OPTIONS.map(section => {
                               const isSectionComplete = (() => {
                                 if (section.id === '1') return isEndorsementMet('A.1');

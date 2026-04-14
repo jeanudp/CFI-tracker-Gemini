@@ -1,4 +1,4 @@
-export type Grade = '' | 'S' | 'N' | 'I';
+export type Grade = '' | 'S' | 'N';
 
 export interface LessonMeta {
   date?: string;
@@ -8,7 +8,6 @@ export interface LessonMeta {
   ldgTotal?: string;
   ldgDay?: string;
   ldgNight?: string;
-  xc?: string;
   night?: string;
   simInst?: string;
   imc?: string;
@@ -41,9 +40,14 @@ export interface LessonMeta {
   aircraftIcao?: string;
   ratpSimInst?: string;
   ratpActualInst?: string;
+  ratpXC?: boolean;
+  ratpXCTime?: string;
   approachCount?: string;
   approachTypes?: string;
   holdPerformed?: boolean;
+  cfiDidLandings?: boolean;
+  cfiDayLandings?: string;
+  cfiNightLandings?: string;
 }
 
 export interface Lesson {

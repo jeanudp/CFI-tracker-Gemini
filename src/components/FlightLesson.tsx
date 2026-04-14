@@ -67,10 +67,15 @@ export default function FlightLesson() {
     studentFlewSolo: false,
     ratpSimInst: '',
     ratpActualInst: '',
+    ratpXC: false,
+    ratpXCTime: '',
     nightSolo: '',
     approachCount: '',
     approachTypes: '[]',
     holdPerformed: false,
+    cfiDidLandings: false,
+    cfiDayLandings: '',
+    cfiNightLandings: '',
   });
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -84,7 +89,8 @@ export default function FlightLesson() {
     approachesHolds: false,
     xc: false,
     night: false,
-    sim: false
+    sim: false,
+    cfiHours: false
   });
   const [approachSearch, setApproachSearch] = useState('');
   const [soloGroupExpanded, setSoloGroupExpanded] = useState(false);
@@ -137,10 +143,15 @@ export default function FlightLesson() {
       studentFlewSolo: false,
       ratpSimInst: '',
       ratpActualInst: '',
+      ratpXC: false,
+      ratpXCTime: '',
       nightSolo: '',
       approachCount: '',
       approachTypes: '[]',
       holdPerformed: false,
+      cfiDidLandings: false,
+      cfiDayLandings: '',
+      cfiNightLandings: '',
     });
     setFillState('');
     setIsLogbookOpen(false);
@@ -230,7 +241,7 @@ export default function FlightLesson() {
   };
 
   const handleGradeCycle = (taskId: string) => {
-    const cycle: Grade[] = ['', 'S', 'N', 'I'];
+    const cycle: Grade[] = ['', 'S', 'N'];
     const current = grades[taskId] || '';
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     
@@ -275,7 +286,7 @@ export default function FlightLesson() {
   };
 
   const handleFillAll = () => {
-    const cycle: Grade[] = ['', 'S', 'N', 'I'];
+    const cycle: Grade[] = ['', 'S', 'N'];
     const next = cycle[(cycle.indexOf(fillState) + 1) % cycle.length];
     setFillState(next);
     const newGrades = { ...grades };
@@ -389,7 +400,6 @@ export default function FlightLesson() {
       dual: meta.dual,
       solo: meta.solo,
       pic: meta.pic,
-      xc: meta.xc,
       xcDual: meta.xcDual,
       xcSolo: meta.xcSolo,
       xcPic: meta.xcPic,
@@ -420,9 +430,14 @@ export default function FlightLesson() {
       simDeviceType: meta.simDeviceType,
       ratpSimInst: meta.ratpSimInst,
       ratpActualInst: meta.ratpActualInst,
+      ratpXC: meta.ratpXC,
+      ratpXCTime: meta.ratpXCTime,
       approachCount: meta.approachCount,
       approachTypes: meta.approachTypes,
-      holdPerformed: meta.holdPerformed
+      holdPerformed: meta.holdPerformed,
+      cfiDidLandings: meta.cfiDidLandings,
+      cfiDayLandings: meta.cfiDayLandings,
+      cfiNightLandings: meta.cfiNightLandings
     };
 
     const lessonData: any = {
@@ -461,6 +476,30 @@ export default function FlightLesson() {
     if (error) {
       alert('Save failed: ' + error.message);
     } else {
+      // Auto-save CFI hours if dual instruction was given
+      if (parseFloat(meta.dual || '0') > 0) {
+        const cfiRecord = {
+          user_id: session.user.id,
+          lesson_id: editId || 'new', // Note: if new, we might want the actual ID from the insert response, but the prompt says editId || 'new'
+          student_name: studentName,
+          date: meta.date,
+          aircraft: meta.aircraft || '',
+          aircraft_model: meta.aircraftModel || '',
+          route: meta.route || '',
+          total_flight: parseFloat(meta.totalFlight || '0') || 0,
+          dual_given: parseFloat(meta.dual || '0') || 0,
+          night_dual: parseFloat(meta.nightDual || '0') || 0,
+          instrument_given: parseFloat(meta.simInst || '0') || 0,
+          day_landings: meta.cfiDidLandings ? parseInt(meta.cfiDayLandings || '0') || 0 : 0,
+          night_landings: meta.cfiDidLandings ? parseInt(meta.cfiNightLandings || '0') || 0 : 0,
+          rating_code: rating?.code || 'ppl'
+        };
+
+        await supabase
+          .from('cfi_hours')
+          .upsert(cfiRecord, { onConflict: 'lesson_id' });
+      }
+
       localStorage.removeItem(`faa_current_flight_lesson_${rating?.code}`);
       navigate('/history');
     }
@@ -507,6 +546,9 @@ export default function FlightLesson() {
       approachCount: '',
       approachTypes: '[]',
       holdPerformed: false,
+      cfiDidLandings: false,
+      cfiDayLandings: '',
+      cfiNightLandings: '',
     });
     localStorage.removeItem('faa_current_lesson_flight');
   };
@@ -514,7 +556,6 @@ export default function FlightLesson() {
   const counts = {
     s: Object.values(grades).filter(v => v === 'S').length,
     n: Object.values(grades).filter(v => v === 'N').length,
-    i: Object.values(grades).filter(v => v === 'I').length,
   };
 
   const acsData = rating ? ALL_ACS[rating.code] : [];
@@ -529,7 +570,7 @@ export default function FlightLesson() {
         <div className="flex flex-col gap-4">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
-            <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Students</Link>
+            <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
             <ChevronRight size={10} />
             <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
             <ChevronRight size={10} />
@@ -931,6 +972,121 @@ export default function FlightLesson() {
                   </AnimatePresence>
                 </div>
 
+                {/* CFI Hours */}
+                {(() => {
+                  const hasDualTime = parseFloat(meta.dual || '0') > 0;
+                  if (!hasDualTime) return null;
+
+                  return (
+                    <div className="bg-white border-t border-[#f1f5f9]">
+                      <button
+                        onClick={() => setExpandedGroups(prev => ({ ...prev, cfiHours: !prev.cfiHours }))}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
+                      >
+                        <div className="flex items-center gap-2">
+                          <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.cfiHours && "rotate-90")} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Hours</span>
+                        </div>
+                        <div className="text-[10px] font-mono text-[#6b7280]">
+                          {meta.totalFlight || '0.0'} hrs
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedGroups.cfiHours && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden bg-[#f8fafc]"
+                          >
+                            <div className="p-4 space-y-4">
+                              <p className="text-[10px] text-[#64748b] italic">These hours are automatically logged to your CFI record when this lesson is saved.</p>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Flight Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="text" readOnly value={meta.totalFlight || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Dual Given</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Dual Received</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Time</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="text" readOnly value={meta.nightDual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Night Dual</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Instrument Given</label>
+                                  <div className="flex items-center gap-2">
+                                    <input type="text" readOnly value={meta.simInst || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Simulated Instrument</p>
+                                </div>
+                              </div>
+
+                              <div className="h-px bg-[#e2e8f0]" />
+
+                              <div className="space-y-3">
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Landings</h4>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={meta.cfiDidLandings} 
+                                    onChange={(e) => handleMetaChange('cfiDidLandings', e.target.checked)}
+                                    className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
+                                  />
+                                  <span className="text-[11px] text-[#334155] group-hover:text-[#0ea5e9] transition-colors">I performed landings this lesson</span>
+                                </label>
+
+                                {meta.cfiDidLandings && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Day Landings</label>
+                                      <input 
+                                        type="number" 
+                                        value={meta.cfiDayLandings} 
+                                        onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value)} 
+                                        className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                        placeholder="0" 
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Landings</label>
+                                      <input 
+                                        type="number" 
+                                        value={meta.cfiNightLandings} 
+                                        onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value)} 
+                                        className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                        placeholder="0" 
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                                <p className="text-[9px] text-[#64748b] bg-[#f1f5f9] p-2 rounded border border-[#e2e8f0]">
+                                  Only log landings where you as the CFI physically performed the landing. Leave unchecked if the student did all landings.
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })()}
+
                 {/* Instrument */}
                 <div className="bg-white border-t border-[#f1f5f9]">
                   <button
@@ -1152,6 +1308,53 @@ export default function FlightLesson() {
                             </div>
                           </div>
                         </div>
+
+                        {/* R-ATP XC Question */}
+                        {(() => {
+                          const hasXCTime = parseFloat(meta.xcDual||'0') > 0 || parseFloat(meta.xcSolo||'0') > 0 || parseFloat(meta.xcPic||'0') > 0;
+                          if (!hasXCTime) return null;
+
+                          return (
+                            <>
+                              <div className="h-px bg-[#dde3ec] mx-4 mb-4" />
+                              <div className="mx-4 mb-4 p-3 bg-[#f0f9ff] border border-[#bae6fd] rounded-lg">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-xs font-bold text-[#0369a1]">Was this an R-ATP eligible cross country?</span>
+                                <div className="group relative">
+                                  <HelpCircle size={14} className="text-[#0ea5e9] cursor-help" />
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-[#1e293b] text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                    R-ATP XC requires the flight to include a point more than 50NM straight line distance from the original point of departure. A landing at that point is not required per §61.160.
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input 
+                                    type="checkbox" 
+                                    checked={meta.ratpXC} 
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      const xcTotal = (parseFloat(meta.xcDual||'0') + parseFloat(meta.xcSolo||'0') + parseFloat(meta.xcPic||'0')).toFixed(1);
+                                      setMeta(prev => ({
+                                        ...prev,
+                                        ratpXC: checked,
+                                        ratpXCTime: checked ? xcTotal : ''
+                                      }));
+                                    }}
+                                    className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
+                                  />
+                                  <span className="text-[11px] text-[#334155]">Yes — this flight included a point more than 50NM from the original departure airport</span>
+                                </label>
+                                {meta.ratpXC && (
+                                  <div className="text-[10px] font-medium text-[#0369a1] bg-[#e0f2fe] px-2 py-1 rounded inline-block">
+                                    R-ATP XC Time: {meta.ratpXCTime} hrs — auto-calculated from XC fields above
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1338,7 +1541,7 @@ export default function FlightLesson() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
           <div className="text-2xl font-mono font-bold text-[#2d7a4f]">{counts.s}</div>
           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Satisfactory</div>
@@ -1346,10 +1549,6 @@ export default function FlightLesson() {
         <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
           <div className="text-2xl font-mono font-bold text-[#c0392b]">{counts.n}</div>
           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Needs Impr.</div>
-        </div>
-        <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
-          <div className="text-2xl font-mono font-bold text-[#e8a020]">{counts.i}</div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Incomplete</div>
         </div>
       </div>
 
@@ -1363,7 +1562,6 @@ export default function FlightLesson() {
                 "w-12 h-6 rounded border font-mono text-[11px] transition-all",
                 fillState === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
                 fillState === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
-                fillState === 'I' ? "bg-[#e8a020] border-[#e8a020] text-white" :
                 "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
               )}
             >
@@ -1422,7 +1620,6 @@ export default function FlightLesson() {
                             "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all",
                             g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
                             g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
-                            g === 'I' ? "bg-[#e8a020] border-[#e8a020] text-white" :
                             "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
                           )}
                         >

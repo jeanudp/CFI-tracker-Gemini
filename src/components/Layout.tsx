@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -84,16 +84,21 @@ export default function Layout({ children, user }: LayoutProps) {
           {path.startsWith('/student/') && (
             <Link to="/history" className={buttonClass}>
               <ArrowLeft size={14} />
-              <span>Back to History</span>
+              <span>Back to Student Progress</span>
             </Link>
           )}
 
           {path !== '/' && (
             <Link to="/" className={buttonClass}>
               <Users size={14} />
-              <span>Students</span>
+              <span>Home</span>
             </Link>
           )}
+
+          <Link to="/cfi-hours" className={buttonClass}>
+            <GraduationCap size={14} />
+            <span>My Hours</span>
+          </Link>
 
           {path === '/rating' && (
             <button onClick={handleSignOut} className={buttonClass}>
@@ -121,7 +126,7 @@ export default function Layout({ children, user }: LayoutProps) {
               </Link>
               <Link to="/history" className={buttonClass}>
                 <HistoryIcon size={14} />
-                <span>History</span>
+                <span>Student Progress</span>
               </Link>
               <button onClick={handleSignOut} className={buttonClass}>
                 <LogOut size={14} />
@@ -142,7 +147,7 @@ export default function Layout({ children, user }: LayoutProps) {
               </Link>
               <Link to="/history" className={buttonClass}>
                 <HistoryIcon size={14} />
-                <span>History</span>
+                <span>Student Progress</span>
               </Link>
               <button onClick={handleSignOut} className={buttonClass}>
                 <LogOut size={14} />

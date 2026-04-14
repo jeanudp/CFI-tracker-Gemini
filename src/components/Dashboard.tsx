@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw } from 'lucide-react';
+import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 
@@ -33,6 +33,9 @@ export default function Dashboard() {
   const [manualHours, setManualHours] = useState<any[]>([]);
   const [endorsements, setEndorsements] = useState<any[]>([]);
   const [isUndoConfirmOpen, setIsUndoConfirmOpen] = useState(false);
+  const [isPriorHoursModalOpen, setIsPriorHoursModalOpen] = useState(false);
+  const [priorHoursForm, setPriorHoursForm] = useState<Record<string, string>>({});
+  const [savingPrior, setSavingPrior] = useState(false);
   const [ratingToUndo, setRatingToUndo] = useState<PassedRating | null>(null);
   const [undoSuccess, setUndoSuccess] = useState<string | null>(null);
 
@@ -342,7 +345,7 @@ export default function Dashboard() {
       const m = l.meta || {};
       totFlight += parseFloat(m.totalFlight || '0') || 0;
       totDual += parseFloat(m.dual || '0') || 0;
-      totXc += parseFloat(m.xc || '0') || 0;
+      totXc += (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
       totNight += parseFloat(m.night || '0') || 0;
       totNightLdg += parseInt(m.ldgNight || '0') || 0;
       totSim += (parseFloat(m.simInst || '0') || 0) + (parseFloat(m.atdInst || '0') || 0);
@@ -446,6 +449,77 @@ export default function Dashboard() {
     }
   };
 
+  const savePriorHours = async () => {
+    if (!selectedStudent) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    setSavingPrior(true);
+    try {
+      const fieldKeys = [
+        'prior_totalFlight', 'prior_ldgTotal', 'prior_ldgDay', 'prior_ldgNight',
+        'prior_solo', 'prior_xcSolo', 'prior_nightSolo',
+        'prior_pic', 'prior_xcPic', 'prior_nightPic',
+        'prior_dual', 'prior_xcDual', 'prior_nightDual',
+        'prior_simInst', 'prior_imc', 'prior_atdInst',
+        'prior_night', 'prior_nightTakeoffs',
+        'prior_approachCount',
+        'prior_atd', 'prior_ftd', 'prior_ffs'
+      ];
+
+      for (const key of fieldKeys) {
+        const value = parseFloat(priorHoursForm[key] || '0') || 0;
+        const existing = manualHours.find(m =>
+          m.student_name === selectedStudent &&
+          m.field_key === key
+        );
+
+        if (existing) {
+          await supabase
+            .from('manual_hours')
+            .update({ total: value, updated_at: new Date().toISOString() })
+            .eq('id', existing.id);
+        } else if (value > 0) {
+          await supabase
+            .from('manual_hours')
+            .insert({
+              user_id: session.user.id,
+              student_name: selectedStudent,
+              field_key: key,
+              entries: [{ val: value, date: 'Prior logbook' }],
+              total: value
+            });
+        }
+      }
+      await fetchData(); // Refresh local state
+      setIsPriorHoursModalOpen(false);
+    } catch (err) {
+      console.error('Save prior hours error:', err);
+    } finally {
+      setSavingPrior(false);
+    }
+  };
+
+  const openPriorHoursModal = () => {
+    const initialForm: Record<string, string> = {};
+    const fieldKeys = [
+      'prior_totalFlight', 'prior_ldgTotal', 'prior_ldgDay', 'prior_ldgNight',
+      'prior_solo', 'prior_xcSolo', 'prior_nightSolo',
+      'prior_pic', 'prior_xcPic', 'prior_nightPic',
+      'prior_dual', 'prior_xcDual', 'prior_nightDual',
+      'prior_simInst', 'prior_imc', 'prior_atdInst',
+      'prior_night', 'prior_nightTakeoffs',
+      'prior_approachCount',
+      'prior_atd', 'prior_ftd', 'prior_ffs'
+    ];
+    fieldKeys.forEach(key => {
+      const val = getManualValue(selectedStudent!, key);
+      initialForm[key] = val > 0 ? val.toString() : '';
+    });
+    setPriorHoursForm(initialForm);
+    setIsPriorHoursModalOpen(true);
+  };
+
   const getStudentStats = (name: string) => {
     const studentLessons = lessons.filter(l => l.student_name === name);
     let s = 0, n = 0, hrs = 0;
@@ -457,6 +531,46 @@ export default function Dashboard() {
       hrs += parseFloat(l.meta?.totalFlight || '0') || 0;
     });
     return { count: studentLessons.length, s, n, hrs: hrs.toFixed(1) };
+  };
+
+  const calculateCurrency = (studentLessons: Lesson[], studentName: string, isNight = false) => {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+   
+    const recentLessons = studentLessons
+      .filter(l =>
+        l.student_name === studentName &&
+        l.type === 'flight' &&
+        new Date(l.saved_at) >= ninetyDaysAgo
+      )
+      .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+
+    const totalTakeoffs = recentLessons.reduce((sum, l) =>
+      sum + (parseInt((isNight ? l.meta?.nightTakeoffs : l.meta?.ldgTotal) || '0') || 0), 0);
+    const totalLandings = recentLessons.reduce((sum, l) =>
+      sum + (parseInt((isNight ? l.meta?.ldgNight : l.meta?.ldgTotal) || '0') || 0), 0);
+
+    const isCurrent = totalTakeoffs >= 3 && totalLandings >= 3;
+   
+    const mostRecentLesson = recentLessons.find(l => 
+      parseInt((isNight ? l.meta?.nightTakeoffs : l.meta?.ldgTotal) || '0') > 0 || 
+      parseInt((isNight ? l.meta?.ldgNight : l.meta?.ldgTotal) || '0') > 0
+    );
+    const lastFlightDate = mostRecentLesson ? new Date(mostRecentLesson.saved_at) : null;
+    const expiryDate = lastFlightDate ? new Date(lastFlightDate) : null;
+    if (expiryDate) expiryDate.setDate(expiryDate.getDate() + 90);
+   
+    const daysUntilExpiry = expiryDate ?
+      Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+    return {
+      isCurrent,
+      totalTakeoffs,
+      totalLandings,
+      daysUntilExpiry,
+      expiryDate,
+      lastFlightDate
+    };
   };
 
   const selectedStats = selectedStudent ? getStudentStats(selectedStudent) : null;
@@ -480,7 +594,7 @@ export default function Dashboard() {
     }
 
     const niTasks = Object.entries(lesson.grades)
-      .filter(([_, grade]) => grade === 'N' || grade === 'I')
+      .filter(([_, grade]) => grade === 'N')
       .map(([id, grade]) => ({ id, grade, name: getTaskName(lesson.meta?.rating_code || 'ppl', id) }))
       .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'));
 
@@ -509,12 +623,12 @@ export default function Dashboard() {
 
         {niTasks.length > 0 ? (
           <div className="mt-3 space-y-1.5">
-            <div className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b]">Focus Areas (N/I)</div>
+            <div className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b]">Focus Areas (N)</div>
             {niTasks.map(task => (
               <div key={task.id} className="flex items-start gap-2 text-[11px] leading-tight">
                 <span className={cn(
                   "shrink-0 w-3 h-3 rounded-full flex items-center justify-center text-[8px] font-bold text-white mt-0.5",
-                  task.grade === 'N' ? "bg-[#c0392b]" : "bg-[#e8a020]"
+                  "bg-[#c0392b]"
                 )}>
                   {task.grade}
                 </span>
@@ -537,7 +651,7 @@ export default function Dashboard() {
       {/* Roster Sidebar */}
       <aside className="w-72 bg-white border-r border-[#dde3ec] flex flex-col shrink-0">
         <div className="p-4 border-bottom border-[#dde3ec]">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">My Students</h2>
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Home</h2>
           <form onSubmit={handleAddStudent} className="flex gap-2">
             <input
               type="text"
@@ -716,7 +830,7 @@ export default function Dashboard() {
       <main className="flex-1 bg-[#eef2f8] p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-6">
-            <span className="text-[#1a3a5c]">Students</span>
+            <span className="text-[#1a3a5c]">Home</span>
           </div>
 
           <AnimatePresence mode="wait">
@@ -798,6 +912,172 @@ export default function Dashboard() {
                   <div>
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Lesson</h3>
                     <LessonSummary lesson={recentLesson} type={recentLesson?.type === 'ground' ? 'ground' : 'flight'} />
+                  </div>
+
+                  {/* Currency Tracker */}
+                  {selectedStudent && (
+                    <div className="space-y-4">
+                      {(() => {
+                        const studentLessons = lessons.filter(l => l.student_name === selectedStudent);
+                        const currency = calculateCurrency(studentLessons, selectedStudent);
+                        const hasNightLandings = studentLessons.some(l => parseInt(l.meta?.ldgNight || '0') > 0);
+                        const nightCurrency = hasNightLandings ? calculateCurrency(studentLessons, selectedStudent, true) : null;
+
+                        const getBorderColor = (curr: any) => {
+                          if (!curr.isCurrent) return 'border-[#c0392b]';
+                          if (curr.daysUntilExpiry < 15) return 'border-[#e8a020]';
+                          return 'border-[#2d7a4f]';
+                        };
+
+                        return (
+                          <>
+                            <div className={cn(
+                              "bg-white rounded-xl border-2 p-4 shadow-sm transition-all",
+                              getBorderColor(currency)
+                            )}>
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                  <Shield size={16} className={cn(
+                                    currency.isCurrent ? "text-[#2d7a4f]" : "text-[#c0392b]"
+                                  )} />
+                                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">
+                                    Passenger Currency §61.57(a)
+                                  </h3>
+                                </div>
+                                <span className={cn(
+                                  "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest",
+                                  currency.isCurrent ? "bg-[#e4f5ec] text-[#2d7a4f]" : "bg-[#fdecea] text-[#c0392b]"
+                                )}>
+                                  {currency.isCurrent ? 'Current' : 'Not Current'}
+                                </span>
+                              </div>
+
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-[#6b7280]">Takeoffs (past 90 days)</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold">{currency.totalTakeoffs}</span>
+                                    {currency.totalTakeoffs >= 3 ? 
+                                      <CheckCircle2 size={12} className="text-[#2d7a4f]" /> : 
+                                      <XCircle size={12} className="text-[#c0392b]" />
+                                    }
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-[#6b7280]">Landings (past 90 days)</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold">{currency.totalLandings}</span>
+                                    {currency.totalLandings >= 3 ? 
+                                      <CheckCircle2 size={12} className="text-[#2d7a4f]" /> : 
+                                      <XCircle size={12} className="text-[#c0392b]" />
+                                    }
+                                  </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-[#dde3ec] space-y-1">
+                                  {currency.lastFlightDate && (
+                                    <div className="flex justify-between text-[10px]">
+                                      <span className="text-[#6b7280]">Last flight date</span>
+                                      <span className="font-medium text-[#1c2333]">
+                                        {currency.lastFlightDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {currency.isCurrent && currency.expiryDate && (
+                                    <div className="flex justify-between text-[10px]">
+                                      <span className="text-[#6b7280]">Currency expires on</span>
+                                      <span className="font-medium text-[#1c2333]">
+                                        {currency.expiryDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {!currency.isCurrent ? (
+                                  <div className="mt-2 p-2 bg-[#fdecea] rounded-lg flex items-start gap-2">
+                                    <AlertCircle size={12} className="text-[#c0392b] shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-[#c0392b] font-medium leading-tight">
+                                      Student needs 3 takeoffs and 3 landings within 90 days to carry passengers.
+                                    </p>
+                                  </div>
+                                ) : currency.daysUntilExpiry < 15 ? (
+                                  <div className="mt-2 p-2 bg-[#fffbeb] rounded-lg flex items-start gap-2">
+                                    <AlertCircle size={12} className="text-[#e8a020] shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-[#92400e] font-medium leading-tight">
+                                      Currency expires in {currency.daysUntilExpiry} days. Schedule a flight soon.
+                                    </p>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            {nightCurrency && (
+                              <div className={cn(
+                                "bg-white rounded-xl border p-3 shadow-sm transition-all",
+                                getBorderColor(nightCurrency)
+                              )}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Shield size={14} className={cn(
+                                      nightCurrency.isCurrent ? "text-[#2d7a4f]" : "text-[#c0392b]"
+                                    )} />
+                                    <h3 className="text-[9px] font-bold uppercase tracking-widest text-[#1a3a5c]">
+                                      Night Currency §61.57(b)
+                                    </h3>
+                                  </div>
+                                  <span className={cn(
+                                    "text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest",
+                                    nightCurrency.isCurrent ? "bg-[#e4f5ec] text-[#2d7a4f]" : "bg-[#fdecea] text-[#c0392b]"
+                                  )}>
+                                    {nightCurrency.isCurrent ? 'Current' : 'Not Current'}
+                                  </span>
+                                </div>
+                                <div className="flex gap-4 text-[10px]">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[#6b7280]">TO:</span>
+                                    <span className="font-mono font-bold">{nightCurrency.totalTakeoffs}</span>
+                                    {nightCurrency.totalTakeoffs >= 3 ? 
+                                      <CheckCircle2 size={10} className="text-[#2d7a4f]" /> : 
+                                      <XCircle size={10} className="text-[#c0392b]" />
+                                    }
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[#6b7280]">LDG:</span>
+                                    <span className="font-mono font-bold">{nightCurrency.totalLandings}</span>
+                                    {nightCurrency.totalLandings >= 3 ? 
+                                      <CheckCircle2 size={10} className="text-[#2d7a4f]" /> : 
+                                      <XCircle size={10} className="text-[#c0392b]" />
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={openPriorHoursModal}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-[#dde3ec] rounded-xl hover:bg-[#f4f5f7] transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-[#f4f5f7] rounded-lg flex items-center justify-center text-[#1a3a5c] group-hover:bg-white transition-colors">
+                          <BookOpen size={16} />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs font-bold text-[#1c2333]">Prior Logbook Hours</div>
+                          <div className="text-[10px] text-[#6b7280]">Import totals from physical logbook</div>
+                        </div>
+                      </div>
+                      {manualHours.some(m => m.student_name === selectedStudent && m.field_key.startsWith('prior_')) && (
+                        <span className="text-[8px] font-bold uppercase tracking-widest bg-[#e4f5ec] text-[#2d7a4f] px-2 py-0.5 rounded-full">
+                          Prior hours on file
+                        </span>
+                      )}
+                    </button>
                   </div>
 
                   <div className="pt-2">
@@ -1154,6 +1434,249 @@ export default function Dashboard() {
                     )}
                   >
                     Confirm Next Rating
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {isPriorHoursModalOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4 overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="bg-[#f8fafc] w-full h-full sm:h-auto sm:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              >
+                <div className="p-6 bg-white border-b border-[#dde3ec] flex justify-between items-center shrink-0">
+                  <div>
+                    <h2 className="text-xl font-black text-[#1a3a5c]">Prior Logbook Hours</h2>
+                    <p className="text-xs text-[#6b7280] mt-1">Enter totals from the student's existing logbook for {selectedStudent}</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsPriorHoursModalOpen(false)}
+                    className="p-2 hover:bg-[#f4f5f7] rounded-full transition-all"
+                  >
+                    <X size={20} className="text-[#6b7280]" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 sm:p-8">
+                  <div className="max-w-2xl mx-auto space-y-8">
+                    <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-xl p-4 flex items-start gap-3">
+                      <AlertCircle size={18} className="text-[#d97706] shrink-0 mt-0.5" />
+                      <p className="text-xs text-[#92400e] leading-relaxed">
+                        <strong>Note:</strong> These hours will be added to all logged lesson totals throughout the app including the Checkride tab IACRA Summary and Cumulative tab. Only enter hours not already logged in this app.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Totals Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Totals</h3>
+                        {[
+                          { key: 'prior_totalFlight', label: 'Total Flight Time', unit: 'hrs' },
+                          { key: 'prior_ldgTotal', label: 'Total Landings', unit: 'count' },
+                          { key: 'prior_ldgDay', label: 'Day Landings', unit: 'count' },
+                          { key: 'prior_ldgNight', label: 'Night Landings', unit: 'count' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Solo Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Solo</h3>
+                        {[
+                          { key: 'prior_solo', label: 'Solo Flight Time', unit: 'hrs' },
+                          { key: 'prior_xcSolo', label: 'Solo Cross Country', unit: 'hrs' },
+                          { key: 'prior_nightSolo', label: 'Night Solo', unit: 'hrs' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* PIC Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">PIC</h3>
+                        {[
+                          { key: 'prior_pic', label: 'PIC Time', unit: 'hrs' },
+                          { key: 'prior_xcPic', label: 'Cross Country PIC', unit: 'hrs' },
+                          { key: 'prior_nightPic', label: 'Night PIC', unit: 'hrs' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Dual Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Dual</h3>
+                        {[
+                          { key: 'prior_dual', label: 'Dual Received', unit: 'hrs' },
+                          { key: 'prior_xcDual', label: 'Cross Country Dual', unit: 'hrs' },
+                          { key: 'prior_nightDual', label: 'Night Dual', unit: 'hrs' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Instrument Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Instrument</h3>
+                        {[
+                          { key: 'prior_simInst', label: 'Simulated Instrument', unit: 'hrs' },
+                          { key: 'prior_imc', label: 'Actual Instrument', unit: 'hrs' },
+                          { key: 'prior_atdInst', label: 'Instrument on Simulator', unit: 'hrs' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Night Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Night</h3>
+                        {[
+                          { key: 'prior_night', label: 'Night Total', unit: 'hrs' },
+                          { key: 'prior_nightTakeoffs', label: 'Night Takeoffs', unit: 'count' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Approaches Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Approaches</h3>
+                        {[
+                          { key: 'prior_approachCount', label: 'Number of Approaches', unit: 'count' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Simulator Group */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Simulator</h3>
+                        {[
+                          { key: 'prior_atd', label: 'ATD Time', unit: 'hrs' },
+                          { key: 'prior_ftd', label: 'FTD Time', unit: 'hrs' },
+                          { key: 'prior_ffs', label: 'FFS Time', unit: 'hrs' }
+                        ].map(f => (
+                          <div key={f.key} className="flex items-center justify-between gap-4">
+                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <div className="relative w-24">
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={priorHoursForm[f.key] || ''}
+                                onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                              />
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3 shrink-0">
+                  <button
+                    onClick={() => setIsPriorHoursModalOpen(false)}
+                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-2xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={savePriorHours}
+                    disabled={savingPrior}
+                    className="flex-[2] py-4 bg-[#1a3a5c] text-white font-bold rounded-2xl hover:bg-[#2a5a8c] transition-all shadow-lg disabled:opacity-50"
+                  >
+                    {savingPrior ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Save Prior Hours'}
                   </button>
                 </div>
               </motion.div>

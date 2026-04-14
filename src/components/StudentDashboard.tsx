@@ -180,8 +180,9 @@ export default function StudentDashboard() {
       {/* Header & Rating Filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div className="flex items-center gap-4">
-          <Link to="/" className="p-2 rounded-xl bg-white border border-[#dde3ec] text-[#6b7280] hover:text-[#1a3a5c] hover:border-[#1a3a5c] transition-all shadow-sm">
-            <ArrowLeft size={20} />
+          <Link to="/history" className="flex items-center gap-2 px-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-[#6b7280] hover:text-[#1a3a5c] hover:border-[#1a3a5c] transition-all shadow-sm font-bold text-xs uppercase tracking-widest">
+            <ArrowLeft size={16} />
+            <span>Back to Student Progress</span>
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Proficiency Analytics</h1>
