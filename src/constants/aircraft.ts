@@ -595,3 +595,19 @@ export const AIRCRAFT_MODELS = [
   "R-44, Robinson R44",
   "R-66, Robinson R66"
 ];
+
+export const AMEL_AIRCRAFT_MODELS = [
+  'PA-44', 'PA-34', 'PA-30', 'PA-39', 'PA-23',
+  'BE-76', 'BE-58', 'BE-55', 'BE-50', 'BE-60', 'BE-65', 'BE-70', 'BE-80', 'BE-95',
+  'C-310', 'C-337', 'C-340', 'C-402', 'C-404', 'C-414', 'C-421',
+  'DA-42', 'DA-62',
+  'SR-22T', 'P-68',
+  'Seminole', 'Seneca', 'Twin Comanche', 'Duchess', 'Baron', 'Bonanza',
+  'AMEL', 'Multi', 'Twin'
+];
+
+export const isAMEL = (modelName: string): boolean => {
+  if (!modelName) return false;
+  const upper = modelName.toUpperCase();
+  return AMEL_AIRCRAFT_MODELS.some(m => upper.includes(m.toUpperCase()));
+};

@@ -6,7 +6,7 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
 
@@ -89,6 +89,7 @@ export default function History() {
   const [groundExpanded, setGroundExpanded] = useState(false);
   const [flightExpanded, setFlightExpanded] = useState(false);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
+  const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
   const [isFlightLogOpen, setIsFlightLogOpen] = useState(false);
   const [isACSCoverageOpen, setIsACSCoverageOpen] = useState(false);
   const [isHoursSummaryOpen, setIsHoursSummaryOpen] = useState(false);
@@ -295,6 +296,25 @@ export default function History() {
   };
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
+
+  useEffect(() => {
+    if (selectedLesson?.student_name) {
+      const fetchTestResult = async () => {
+        const { data } = await supabase
+          .from('student_tests')
+          .select('*')
+          .eq('student_name', selectedLesson.student_name)
+          .eq('test_type', 'pre_solo')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        setPreSoloTestResult(data);
+      };
+      fetchTestResult();
+    } else {
+      setPreSoloTestResult(null);
+    }
+  }, [selectedLesson?.student_name]);
   const studentName = selectedLesson?.student_name;
   const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
 
@@ -1366,35 +1386,6 @@ export default function History() {
                   />
                 </div>
 
-                {/* R-ATP Cross Country Progress Card */}
-                {(() => {
-                  const stats = getCumulativeStats();
-                  const ratpXCPct = Math.min(100, (stats.totRatpXC / 200) * 100);
-                  return (
-                    <div className="bg-[#f5f3ff] rounded-2xl border border-[#ddd6fe] shadow-sm overflow-hidden">
-                      <div className="px-4 py-3 flex items-center justify-between border-b border-[#ddd6fe]">
-                        <div className="flex items-center gap-2">
-                          <Sparkles size={16} className="text-[#7c3aed]" />
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-[#5b21b6]">R-ATP Cross Country Progress</h3>
-                        </div>
-                        <span className="text-sm font-bold text-[#7c3aed]">{stats.totRatpXC.toFixed(1)} / 200h</span>
-                      </div>
-                      <div className="p-4">
-                        <div className="h-3 bg-[#ede9fe] rounded-full overflow-hidden mb-2">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${ratpXCPct}%` }}
-                            className="h-full bg-[#7c3aed] rounded-full"
-                          />
-                        </div>
-                        <p className="text-[10px] text-[#6d28d9] font-medium">
-                          Required for R-ATP certificate under §61.160
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <button
                     onClick={() => setIsACSCoverageOpen(!isACSCoverageOpen)}
@@ -1626,31 +1617,32 @@ export default function History() {
                                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
                                   <div className="space-y-1">
                                     {(() => {
-                                      const xcTotal = stats.totXcDual + stats.totXcSolo + stats.totXcPic;
-                                      return [
-                                        ['XC (Total)', `${xcTotal.toFixed(1)}h`],
-                                        ['XC Dual', `${stats.totXcDual.toFixed(1)}h`],
-                                        ['XC Solo', `${stats.totXcSolo.toFixed(1)}h`],
-                                        ['XC PIC', `${stats.totXcPic.toFixed(1)}h`],
-                                      ].map(([label, val]) => (
-                                        <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
-                                          <span className="text-xs text-[#64748b]">{label}</span>
-                                          <span className="text-sm font-bold text-[#1e293b]">{val}</span>
-                                        </div>
-                                      ));
+                                      const xcTotal = stats.totXcDual + stats.totXcSolo + stats.totXcPic + stats.totRatpXC;
+                                      return (
+                                        <>
+                                          <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                            <span className="text-xs text-[#64748b]">XC (Total)</span>
+                                            <span className="text-sm font-bold text-[#1e293b]">{xcTotal.toFixed(1)}h</span>
+                                          </div>
+                                          <div className="text-[9px] text-[#94a3b8] mb-2">Includes regular XC and R-ATP XC combined.</div>
+                                          {[
+                                            ['XC Dual', `${stats.totXcDual.toFixed(1)}h`],
+                                            ['XC Solo', `${stats.totXcSolo.toFixed(1)}h`],
+                                            ['XC PIC', `${stats.totXcPic.toFixed(1)}h`],
+                                          ].map(([label, val]) => (
+                                            <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                              <span className="text-xs text-[#64748b]">{label}</span>
+                                              <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                            </div>
+                                          ))}
+                                        </>
+                                      );
                                     })()}
                                     <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-xs text-[#7c3aed] font-bold">R-ATP Eligible XC</span>
-                                        <span className="px-1.5 py-0.5 bg-[#f5f3ff] text-[#7c3aed] text-[9px] font-bold rounded border border-[#ddd6fe]">R-ATP</span>
-                                        <div className="group relative">
-                                          <HelpCircle size={10} className="text-[#7c3aed] cursor-help" />
-                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#1e293b] text-white text-[9px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                            Total cross country time eligible toward Restricted ATP requirements under §61.160. Does not require a landing.
-                                          </div>
-                                        </div>
+                                        <span className="text-xs text-[#1e293b] font-bold">R-ATP XC</span>
                                       </div>
-                                      <span className="text-sm font-bold text-[#7c3aed]">{stats.totRatpXC.toFixed(1)}h</span>
+                                      <span className="text-sm font-bold text-[#1e293b]">{stats.totRatpXC.toFixed(1)}h</span>
                                     </div>
                                     <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                       <div className="flex items-center gap-1.5">
@@ -1790,32 +1782,65 @@ export default function History() {
                 </div>
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                  <div className="bg-[#f4f5f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] border-b border-[#dde3ec]">All Needs-Improvement Grades</div>
+                  <div className="bg-[#f4f5f7] px-4 py-2 border-b border-[#dde3ec]">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Current Needs-Improvement Grades</div>
+                    <div className="text-[9px] text-[#94a3b8] font-medium">Only showing tasks where the most recent grade is N. Tasks improved to S are removed automatically.</div>
+                  </div>
                   <div className="p-4 space-y-2">
                     {(() => {
                       const niGrades: any[] = [];
-                      studentLessons.forEach(l => {
-                        acsData.forEach((area, ai) => {
-                          area.tasks
-                            .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
-                            .forEach((task, ti) => {
-                              if (l.grades?.[`${ai}_${ti}`] === 'N') {
-                                niGrades.push({ task, area: area.area, lesson: l.label, date: new Date(l.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
+
+                      acsData.forEach((area, ai) => {
+                        area.tasks
+                          .filter(task =>
+                            !task.name.includes('N/A') &&
+                            !task.name.includes('ASEL') &&
+                            !task.name.includes('Seaplane') &&
+                            !task.name.includes('Water')
+                          )
+                          .forEach((task, ti) => {
+                            const taskId = `${ai}_${ti}`;
+                            const mostRecentGrade = getMostRecentGrade(studentLessons, taskId);
+                       
+                            if (mostRecentGrade === 'N') {
+                              // Find the most recent lesson where this task was graded N
+                              const mostRecentNLesson = [...studentLessons]
+                                .filter(l => l.grades && l.grades[taskId] === 'N')
+                                .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime())[0];
+                       
+                              if (mostRecentNLesson) {
+                                niGrades.push({
+                                  task,
+                                  area: area.area,
+                                  lesson: mostRecentNLesson.label,
+                                  date: new Date(mostRecentNLesson.saved_at).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  }),
+                                  notes: mostRecentNLesson.notes?.[taskId] || ''
+                                });
                               }
-                            });
-                        });
+                            }
+                          });
                       });
 
                       if (niGrades.length === 0) return <div className="text-sm text-[#6b7280] italic">No N grades yet.</div>;
 
                       return niGrades.map((g, idx) => (
-                        <div key={idx} className="flex gap-3 py-2 border-b border-[#dde3ec] last:border-0">
-                          <span className="bg-[#fdecea] text-[#c0392b] text-[9px] font-bold px-2 py-0.5 rounded h-fit whitespace-nowrap">
-                            N · {g.lesson} · {g.date}
-                          </span>
-                          <span className="text-xs">
-                            <strong className="text-[#1c2333]">{g.task.name}</strong> <span className="text-[#6b7280]">({g.area})</span>
-                          </span>
+                        <div key={idx} className="flex flex-col gap-1 py-2 border-b border-[#dde3ec] last:border-0">
+                          <div className="flex gap-3">
+                            <span className="bg-[#fdecea] text-[#c0392b] text-[9px] font-bold px-2 py-0.5 rounded h-fit whitespace-nowrap">
+                              N · {g.lesson} · {g.date}
+                            </span>
+                            <span className="text-xs">
+                              <strong className="text-[#1c2333]">{g.task.name}</strong> <span className="text-[#6b7280]">({g.area})</span>
+                            </span>
+                          </div>
+                          {g.notes && (
+                            <div className="ml-[70px] text-[11px] text-[#64748b] italic leading-relaxed">
+                              "{g.notes}"
+                            </div>
+                          )}
                         </div>
                       ));
                     })()}
@@ -2265,20 +2290,72 @@ export default function History() {
                             <div className="mb-2">
                               <button
                                 onClick={() => navigate('/presolo-test')}
-                                className="w-full flex items-center justify-between p-4 bg-white border border-[#dde3ec] rounded-2xl shadow-sm hover:border-[#1a3a5c] hover:shadow-md transition-all group"
+                                className="w-full flex items-center justify-between p-4 bg-[#e8a020] border border-[#e8a020] rounded-2xl shadow-sm hover:bg-[#e8a020]/90 transition-all group"
                               >
                                 <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 bg-[#f1f5f9] text-[#1a3a5c] rounded-xl flex items-center justify-center group-hover:bg-[#1a3a5c] group-hover:text-white transition-colors">
+                                  <div className="w-12 h-12 bg-white/20 text-white rounded-xl flex items-center justify-center transition-colors">
                                     <FileText size={24} />
                                   </div>
                                   <div className="text-left">
-                                    <h3 className="text-sm font-bold text-[#1e293b]">Pre-Solo Knowledge Test</h3>
-                                    <p className="text-xs text-[#64748b]">Aeronautical knowledge test required by §61.87(b)</p>
+                                    <h3 className="text-sm font-bold text-white">Pre-Solo Knowledge Test</h3>
+                                    <p className="text-xs text-white/80">Aeronautical knowledge test required by §61.87(b)</p>
                                   </div>
                                 </div>
-                                <ChevronRight size={18} className="text-[#cbd5e1] group-hover:text-[#1a3a5c] transition-colors" />
+                                <ChevronRight size={18} className="text-white transition-colors" />
                               </button>
                             </div>
+
+                            {preSoloTestResult ? (
+                              <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                                <div className="p-4 flex items-center justify-between border-b border-[#f1f5f9]">
+                                  <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                                      preSoloTestResult.passed ? "bg-[#f0fdf4] text-[#2d7a4f]" : "bg-[#fef2f2] text-[#991b1b]"
+                                    )}>
+                                      <FileText size={20} />
+                                    </div>
+                                    <div>
+                                      <h3 className="text-sm font-bold text-[#1e293b]">Pre-Solo Knowledge Test Result</h3>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <span className={cn(
+                                          "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider",
+                                          preSoloTestResult.passed ? "bg-[#2d7a4f] text-white" : "bg-[#991b1b] text-white"
+                                        )}>
+                                          {preSoloTestResult.passed ? 'Passed' : 'Failed'}
+                                        </span>
+                                        <span className="text-[10px] text-[#64748b] font-medium">
+                                          Score: {preSoloTestResult.correct_answers} out of {preSoloTestResult.total_questions} — {preSoloTestResult.score}%
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => navigate('/presolo-test')}
+                                    className="px-3 py-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
+                                  >
+                                    Retake Test
+                                  </button>
+                                </div>
+                                <div className="px-4 py-3 bg-[#f8fafc] grid grid-cols-2 gap-4">
+                                  <div>
+                                    <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">Date Taken</div>
+                                    <div className="text-[11px] font-bold text-[#1e293b]">{new Date(preSoloTestResult.date).toLocaleDateString()}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">CFI Signed Off</div>
+                                    <div className="text-[11px] font-bold text-[#1e293b]">{new Date(preSoloTestResult.cfi_signoff_date).toLocaleDateString()}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mb-6 px-4 py-3 bg-[#f1f5f9] rounded-xl border border-[#dde3ec] border-dashed flex items-center gap-2">
+                                <Info size={14} className="text-[#64748b]" />
+                                <p className="text-[10px] text-[#64748b] font-medium">
+                                  No test on record. Click Pre-Solo Knowledge Test to administer the test.
+                                </p>
+                              </div>
+                            )}
 
                             {SOLO_OPTIONS.map(section => {
                               const isSectionComplete = (() => {
@@ -2466,22 +2543,22 @@ export default function History() {
                                     <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                                       <button
                                         onClick={() => setChecklistExpanded(!checklistExpanded)}
-                                        className="w-full px-4 py-4 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
+                                        className="w-full px-4 py-4 flex items-center justify-between bg-[#2d7a4f] hover:bg-[#2d7a4f]/90 transition-all"
                                       >
                                         <div className="flex items-center gap-3">
-                                          <div className="p-2 bg-[#1a3a5c] rounded-lg text-white">
+                                          <div className="p-2 bg-white/20 rounded-lg text-white">
                                             <ClipboardList size={20} />
                                           </div>
                                           <div className="text-left">
-                                            <h2 className="text-sm font-bold text-[#1a3a5c] tracking-tight">Checkride Readiness Checklist</h2>
-                                            <p className="text-[10px] text-[#6b7280]">Verify all items before scheduling the practical test.</p>
+                                            <h2 className="text-sm font-bold text-white tracking-tight">Checkride Readiness Checklist</h2>
+                                            <p className="text-[10px] text-white/80">Verify all items before scheduling the practical test.</p>
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#f1f5f9] text-[#1a3a5c]">
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">
                                             {checkedCount}/{totalCount}
                                           </span>
-                                          <ChevronRight size={16} className={cn("text-[#6b7280] transition-transform", checklistExpanded && "rotate-90")} />
+                                          <ChevronRight size={16} className={cn("text-white transition-transform", checklistExpanded && "rotate-90")} />
                                         </div>
                                       </button>
 

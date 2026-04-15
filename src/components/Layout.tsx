@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -75,9 +75,14 @@ export default function Layout({ children, user }: LayoutProps) {
             </div>
           )}
           {user && (
-            <span className="hidden lg:inline-block text-[10px] text-white/50 uppercase tracking-widest mr-2">
-              {user.user_metadata?.full_name || user.email}
-            </span>
+            <Link 
+              to="/cfi-hours" 
+              title="My Hours"
+              className="hidden lg:flex items-center gap-1.5 text-[10px] text-white/50 uppercase tracking-widest mr-4 hover:text-white hover:underline transition-all cursor-pointer"
+            >
+              <BarChart3 size={12} />
+              <span>{user.user_metadata?.full_name || user.email}</span>
+            </Link>
           )}
           
           {/* Dynamic Navigation Buttons */}
@@ -94,11 +99,6 @@ export default function Layout({ children, user }: LayoutProps) {
               <span>Home</span>
             </Link>
           )}
-
-          <Link to="/cfi-hours" className={buttonClass}>
-            <GraduationCap size={14} />
-            <span>My Hours</span>
-          </Link>
 
           {path === '/rating' && (
             <button onClick={handleSignOut} className={buttonClass}>

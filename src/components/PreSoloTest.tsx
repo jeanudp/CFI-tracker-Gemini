@@ -15,6 +15,7 @@ export default function PreSoloTest() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [reviewed, setReviewed] = useState<Record<number, boolean>>({});
   const [cfiNotes, setCfiNotes] = useState('');
+  const [cfiName, setCfiName] = useState('');
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
@@ -39,66 +40,46 @@ export default function PreSoloTest() {
   const passed = percentage >= PRE_SOLO_TEST_CONFIG.passingScore;
 
   const handleSignOff = async () => {
+    if (!cfiName.trim()) {
+      alert('Please enter your name for the sign off.');
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Save score
-      const { data: existingScore } = await supabase
-        .from('manual_hours')
-        .select('*')
-        .eq('student_name', studentName)
-        .eq('field_key', 'presolo_test_score');
+      const incorrectIds = PRE_SOLO_TEST_QUESTIONS
+        .filter(q => answers[q.id] !== q.correct)
+        .map(q => q.id);
 
-      const existingScoreDoc = existingScore?.[0];
-
-      if (existingScoreDoc) {
-        await supabase.from('manual_hours').update({
-          entries: [{ val: percentage, date: new Date().toISOString() }],
-          total: percentage,
-          updated_at: new Date().toISOString()
-        }).eq('id', existingScoreDoc.id);
-      } else {
-        await supabase.from('manual_hours').insert({
+      const { error } = await supabase
+        .from('student_tests')
+        .insert({
           user_id: session.user.id,
           student_name: studentName,
-          field_key: 'presolo_test_score',
-          entries: [{ val: percentage, date: new Date().toISOString() }],
-          total: percentage
+          test_type: 'pre_solo',
+          date: date,
+          score: percentage,
+          passing_score: 80,
+          passed: percentage >= 80,
+          total_questions: PRE_SOLO_TEST_QUESTIONS.length,
+          correct_answers: score,
+          incorrect_question_ids: incorrectIds,
+          cfi_review_notes: cfiNotes,
+          cfi_signed_off: true,
+          cfi_signoff_date: new Date().toISOString().split('T')[0],
+          cfi_name: cfiName
         });
-      }
 
-      // Save passed status
-      const { data: existingPassed } = await supabase
-        .from('manual_hours')
-        .select('*')
-        .eq('student_name', studentName)
-        .eq('field_key', 'presolo_test_passed');
-
-      const existingPassedDoc = existingPassed?.[0];
-
-      if (existingPassedDoc) {
-        await supabase.from('manual_hours').update({
-          entries: [{ val: passed ? 1 : 0, date: new Date().toISOString() }],
-          total: passed ? 1 : 0,
-          updated_at: new Date().toISOString()
-        }).eq('id', existingPassedDoc.id);
-      } else {
-        await supabase.from('manual_hours').insert({
-          user_id: session.user.id,
-          student_name: studentName,
-          field_key: 'presolo_test_passed',
-          entries: [{ val: passed ? 1 : 0, date: new Date().toISOString() }],
-          total: passed ? 1 : 0
-        });
-      }
+      if (error) throw error;
 
       alert('Test result signed off successfully!');
       navigate('/history');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error signing off test:', err);
-      alert('Failed to sign off test.');
+      alert('Failed to sign off test: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
@@ -394,14 +375,26 @@ export default function PreSoloTest() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Notes</label>
-                  <textarea 
-                    value={cfiNotes}
-                    onChange={(e) => setCfiNotes(e.target.value)}
-                    className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-medium text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all min-h-[100px]"
-                    placeholder="Enter review notes..."
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Notes</label>
+                    <textarea 
+                      value={cfiNotes}
+                      onChange={(e) => setCfiNotes(e.target.value)}
+                      className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-medium text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all min-h-[100px]"
+                      placeholder="Enter review notes..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Name (Sign Off)</label>
+                    <input 
+                      type="text"
+                      value={cfiName}
+                      onChange={(e) => setCfiName(e.target.value)}
+                      className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-bold text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all"
+                      placeholder="Enter your full name..."
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-center">

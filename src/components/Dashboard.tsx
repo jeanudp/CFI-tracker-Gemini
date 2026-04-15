@@ -3,11 +3,88 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, User, Trash2, ChevronRight, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle } from 'lucide-react';
+import { Plus, User, Trash2, ChevronRight, ChevronDown, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 
 import { ALL_ACS, RATINGS } from '../constants';
+
+const CurrencyRow = ({ 
+  title, 
+  reference, 
+  isCurrent, 
+  isNotApplicable, 
+  classBadge,
+  children, 
+  isExpanded, 
+  onToggle 
+}: { 
+  title: string, 
+  reference: string, 
+  isCurrent: boolean, 
+  isNotApplicable?: boolean, 
+  classBadge?: 'ASEL' | 'AMEL',
+  children: React.ReactNode, 
+  isExpanded: boolean, 
+  onToggle: () => void 
+}) => {
+  return (
+    <div className="flex flex-col">
+      <button
+        onClick={onToggle}
+        className="w-full p-4 flex items-center justify-between hover:bg-[#f8fafc] transition-colors"
+      >
+        <div className="flex flex-col items-start">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#1c2333]">{title}</span>
+            {classBadge && (
+              <span className={cn(
+                "text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter text-white",
+                classBadge === 'AMEL' ? "bg-[#7c3aed]" : "bg-[#1a3a5c]"
+              )}>
+                {classBadge}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-[#6b7280]">{reference}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {isNotApplicable ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500 uppercase tracking-widest">
+              Not Applicable
+            </span>
+          ) : (
+            <span className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest",
+              isCurrent ? "bg-[#e4f5ec] text-[#2d7a4f]" : "bg-[#fdecea] text-[#c0392b]"
+            )}>
+              {isCurrent ? 'Current' : 'Not Current'}
+            </span>
+          )}
+          <ChevronRight 
+            size={16} 
+            className={cn(
+              "text-[#6b7280] transition-transform duration-200",
+              isExpanded ? "rotate-90" : "rotate-0"
+            )} 
+          />
+        </div>
+      </button>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -20,6 +97,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [archivedExpanded, setArchivedExpanded] = useState(false);
+  const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
   
   // Rating Selection Modal State
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -38,6 +116,9 @@ export default function Dashboard() {
   const [savingPrior, setSavingPrior] = useState(false);
   const [ratingToUndo, setRatingToUndo] = useState<PassedRating | null>(null);
   const [undoSuccess, setUndoSuccess] = useState<string | null>(null);
+  const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
+  const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
+  const [isSavingIfrTracking, setIsSavingIfrTracking] = useState(false);
 
   const navigate = useNavigate();
 
@@ -47,6 +128,7 @@ export default function Dashboard() {
     if (saved) {
       setSelectedStudent(saved);
       fetchRecentLessons(saved);
+      fetchTestResult(saved);
     }
   }, []);
 
@@ -334,6 +416,19 @@ export default function Dashboard() {
     localStorage.setItem('sb_selected_student', name);
     localStorage.setItem('faa_student_info', JSON.stringify({ student: name }));
     fetchRecentLessons(name);
+    fetchTestResult(name);
+  };
+
+  const fetchTestResult = async (studentName: string) => {
+    const { data } = await supabase
+      .from('student_tests')
+      .select('*')
+      .eq('student_name', studentName)
+      .eq('test_type', 'pre_solo')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    setPreSoloTestResult(data);
   };
 
   const getCumulativeStats = (studentName: string) => {
@@ -533,44 +628,38 @@ export default function Dashboard() {
     return { count: studentLessons.length, s, n, hrs: hrs.toFixed(1) };
   };
 
-  const calculateCurrency = (studentLessons: Lesson[], studentName: string, isNight = false) => {
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-   
-    const recentLessons = studentLessons
-      .filter(l =>
-        l.student_name === studentName &&
-        l.type === 'flight' &&
-        new Date(l.saved_at) >= ninetyDaysAgo
-      )
-      .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+  const handleToggleIfrTracking = async (studentName: string, currentVal: boolean) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-    const totalTakeoffs = recentLessons.reduce((sum, l) =>
-      sum + (parseInt((isNight ? l.meta?.nightTakeoffs : l.meta?.ldgTotal) || '0') || 0), 0);
-    const totalLandings = recentLessons.reduce((sum, l) =>
-      sum + (parseInt((isNight ? l.meta?.ldgNight : l.meta?.ldgTotal) || '0') || 0), 0);
+    setIsSavingIfrTracking(true);
+    try {
+      const key = `ifr_currency_tracking_${studentName}`;
+      const existing = manualHours.find(m => m.student_name === studentName && m.field_key === key);
+      const newVal = !currentVal;
 
-    const isCurrent = totalTakeoffs >= 3 && totalLandings >= 3;
-   
-    const mostRecentLesson = recentLessons.find(l => 
-      parseInt((isNight ? l.meta?.nightTakeoffs : l.meta?.ldgTotal) || '0') > 0 || 
-      parseInt((isNight ? l.meta?.ldgNight : l.meta?.ldgTotal) || '0') > 0
-    );
-    const lastFlightDate = mostRecentLesson ? new Date(mostRecentLesson.saved_at) : null;
-    const expiryDate = lastFlightDate ? new Date(lastFlightDate) : null;
-    if (expiryDate) expiryDate.setDate(expiryDate.getDate() + 90);
-   
-    const daysUntilExpiry = expiryDate ?
-      Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
-
-    return {
-      isCurrent,
-      totalTakeoffs,
-      totalLandings,
-      daysUntilExpiry,
-      expiryDate,
-      lastFlightDate
-    };
+      if (existing) {
+        await supabase
+          .from('manual_hours')
+          .update({ total: newVal ? 1 : 0, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('manual_hours')
+          .insert({
+            user_id: session.user.id,
+            student_name: studentName,
+            field_key: key,
+            entries: [{ val: newVal ? 1 : 0, date: new Date().toISOString() }],
+            total: newVal ? 1 : 0
+          });
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Error toggling IFR tracking:', err);
+    } finally {
+      setIsSavingIfrTracking(false);
+    }
   };
 
   const selectedStats = selectedStudent ? getStudentStats(selectedStudent) : null;
@@ -914,145 +1003,433 @@ export default function Dashboard() {
                     <LessonSummary lesson={recentLesson} type={recentLesson?.type === 'ground' ? 'ground' : 'flight'} />
                   </div>
 
+                  {preSoloTestResult && (
+                    <div className="flex items-center gap-2 h-8">
+                      {preSoloTestResult.passed ? (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#e4f5ec] text-[#2d7a4f] rounded-full border border-[#bcf0da]">
+                          <CheckCircle2 size={12} strokeWidth={3} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Passed — {new Date(preSoloTestResult.date).toLocaleDateString()}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fdecea] text-[#c0392b] rounded-full border border-[#fecaca]">
+                          <XCircle size={12} strokeWidth={3} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Failed — Retest Required</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Currency Tracker */}
                   {selectedStudent && (
                     <div className="space-y-4">
                       {(() => {
                         const studentLessons = lessons.filter(l => l.student_name === selectedStudent);
-                        const currency = calculateCurrency(studentLessons, selectedStudent);
-                        const hasNightLandings = studentLessons.some(l => parseInt(l.meta?.ldgNight || '0') > 0);
-                        const nightCurrency = hasNightLandings ? calculateCurrency(studentLessons, selectedStudent, true) : null;
+                        
+                        // Day Currency
+                        const ninetyDaysAgo = new Date();
+                        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+                        const recentFlights = studentLessons.filter(l =>
+                          l.student_name === selectedStudent &&
+                          l.type === 'flight' &&
+                          new Date(l.saved_at) >= ninetyDaysAgo
+                        ).sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+                        
+                        const recentTakeoffs = recentFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgTotal || '0') || 0), 0);
+                        const recentLandings = recentFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgTotal || '0') || 0), 0);
+                        const isDayCurrent = recentTakeoffs >= 3 && recentLandings >= 3;
+                        const lastDayFlight = recentFlights.find(l => (parseInt(l.meta?.ldgTotal || '0') || 0) > 0);
+                        const dayExpiryDate = lastDayFlight ? new Date(new Date(lastDayFlight.saved_at).getTime() + 90 * 24 * 60 * 60 * 1000) : null;
+                        const dayDaysUntilExpiry = dayExpiryDate ? Math.ceil((dayExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-                        const getBorderColor = (curr: any) => {
-                          if (!curr.isCurrent) return 'border-[#c0392b]';
-                          if (curr.daysUntilExpiry < 15) return 'border-[#e8a020]';
-                          return 'border-[#2d7a4f]';
-                        };
+                        // Passenger Currency (Day) - ASEL
+                        const hasEverLoggedASEL = studentLessons.some(l => l.meta?.aircraftClass === 'ASEL');
+                        const aselFlights = recentFlights.filter(l => l.meta?.aircraftClass === 'ASEL');
+                        const aselTakeoffs = aselFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgDay || '0') || 0) + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                        const aselLandings = aselFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgDay || '0') || 0) + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                        const isDayCurrentASEL = aselTakeoffs >= 3 && aselLandings >= 3;
+                        const lastDayFlightASEL = aselFlights[0];
+                        const dayExpiryDateASEL = lastDayFlightASEL ? new Date(new Date(lastDayFlightASEL.saved_at).getTime() + 90 * 24 * 60 * 60 * 1000) : null;
+                        const dayDaysUntilExpiryASEL = dayExpiryDateASEL ? Math.ceil((dayExpiryDateASEL.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+                        // Passenger Currency (Day) - AMEL
+                        const hasEverLoggedAMEL = studentLessons.some(l => l.meta?.aircraftClass === 'AMEL');
+                        const amelFlights = recentFlights.filter(l => l.meta?.aircraftClass === 'AMEL');
+                        const amelTakeoffs = amelFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgDay || '0') || 0) + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                        const amelLandings = amelFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgDay || '0') || 0) + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                        const isDayCurrentAMEL = amelTakeoffs >= 3 && amelLandings >= 3;
+                        const lastDayFlightAMEL = amelFlights[0];
+                        const dayExpiryDateAMEL = lastDayFlightAMEL ? new Date(new Date(lastDayFlightAMEL.saved_at).getTime() + 90 * 24 * 60 * 60 * 1000) : null;
+                        const dayDaysUntilExpiryAMEL = dayExpiryDateAMEL ? Math.ceil((dayExpiryDateAMEL.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+                        // Night Currency - ASEL
+                        const hasEverLoggedNightASEL = studentLessons.some(l => l.meta?.aircraftClass === 'ASEL' && (parseInt(l.meta?.ldgNight || '0') || 0) > 0);
+                        const recentNightFlightsASEL = aselFlights.filter(l => (parseInt(l.meta?.ldgNight || '0') || 0) > 0 || (parseInt(l.meta?.nightTakeoffs || '0') || 0) > 0);
+                        const recentNightTakeoffsASEL = recentNightFlightsASEL.reduce((sum, l) => sum + (parseInt(l.meta?.nightTakeoffs || '0') || 0), 0);
+                        const recentNightLandingsASEL = recentNightFlightsASEL.reduce((sum, l) => sum + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                        const isNightCurrentASEL = recentNightTakeoffsASEL >= 3 && recentNightLandingsASEL >= 3;
+                        const lastNightFlightASEL = recentNightFlightsASEL[0];
+                        const nightExpiryDateASEL = lastNightFlightASEL ? new Date(new Date(lastNightFlightASEL.saved_at).getTime() + 90 * 24 * 60 * 60 * 1000) : null;
+                        const nightDaysUntilExpiryASEL = nightExpiryDateASEL ? Math.ceil((nightExpiryDateASEL.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+                        // Night Currency - AMEL
+                        const hasEverLoggedNightAMEL = studentLessons.some(l => l.meta?.aircraftClass === 'AMEL' && (parseInt(l.meta?.ldgNight || '0') || 0) > 0);
+                        const recentNightFlightsAMEL = amelFlights.filter(l => (parseInt(l.meta?.ldgNight || '0') || 0) > 0 || (parseInt(l.meta?.nightTakeoffs || '0') || 0) > 0);
+                        const recentNightTakeoffsAMEL = recentNightFlightsAMEL.reduce((sum, l) => sum + (parseInt(l.meta?.nightTakeoffs || '0') || 0), 0);
+                        const recentNightLandingsAMEL = recentNightFlightsAMEL.reduce((sum, l) => sum + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                        const isNightCurrentAMEL = recentNightTakeoffsAMEL >= 3 && recentNightLandingsAMEL >= 3;
+                        const lastNightFlightAMEL = recentNightFlightsAMEL[0];
+                        const nightExpiryDateAMEL = lastNightFlightAMEL ? new Date(new Date(lastNightFlightAMEL.saved_at).getTime() + 90 * 24 * 60 * 60 * 1000) : null;
+                        const nightDaysUntilExpiryAMEL = nightExpiryDateAMEL ? Math.ceil((nightExpiryDateAMEL.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+                        // IFR Currency
+                        const sixMonthsAgo = new Date();
+                        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+                        const recentIFRLessons = studentLessons.filter(l =>
+                          l.student_name === selectedStudent &&
+                          l.type === 'flight' &&
+                          new Date(l.saved_at) >= sixMonthsAgo
+                        ).sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+                        
+                        const hasEverLoggedApproaches = studentLessons.some(l => (parseInt(l.meta?.approachCount || '0') || 0) > 0);
+                        const totalApproaches = recentIFRLessons.reduce((sum, l) => sum + (parseInt(l.meta?.approachCount || '0') || 0), 0);
+                        const holdPerformed = recentIFRLessons.some(l => l.meta?.holdPerformed === true);
+                        const ifrTrackingKey = `ifr_currency_tracking_${selectedStudent}`;
+                        const ifrTrackingVal = getManualValue(selectedStudent, ifrTrackingKey) === 1;
+                        const isIFRCurrent = totalApproaches >= 6 && holdPerformed && ifrTrackingVal;
+                        const lastIFRFlight = recentIFRLessons.find(l => (parseInt(l.meta?.approachCount || '0') || 0) > 0 || l.meta?.holdPerformed);
+                        const ifrExpiryDate = lastIFRFlight ? new Date(new Date(lastIFRFlight.saved_at).setMonth(new Date(lastIFRFlight.saved_at).getMonth() + 6)) : null;
+                        const ifrDaysUntilExpiry = ifrExpiryDate ? Math.ceil((ifrExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+                        // Summary
+                        let totalCurrencies = 1; // IFR is always counted if logged
+                        let currentCount = (hasEverLoggedApproaches && isIFRCurrent ? 1 : 0);
+                        
+                        if (hasEverLoggedASEL) {
+                          totalCurrencies += 1;
+                          if (isDayCurrentASEL) currentCount += 1;
+                          if (hasEverLoggedNightASEL) {
+                            totalCurrencies += 1;
+                            if (isNightCurrentASEL) currentCount += 1;
+                          }
+                        }
+                        
+                        if (hasEverLoggedAMEL) {
+                          totalCurrencies += 1;
+                          if (isDayCurrentAMEL) currentCount += 1;
+                          if (hasEverLoggedNightAMEL) {
+                            totalCurrencies += 1;
+                            if (isNightCurrentAMEL) currentCount += 1;
+                          }
+                        }
+
+                        const allApplicableCurrent = currentCount === totalCurrencies;
+                        const noneCurrent = currentCount === 0;
 
                         return (
-                          <>
-                            <div className={cn(
-                              "bg-white rounded-xl border-2 p-4 shadow-sm transition-all",
-                              getBorderColor(currency)
-                            )}>
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                  <Shield size={16} className={cn(
-                                    currency.isCurrent ? "text-[#2d7a4f]" : "text-[#c0392b]"
-                                  )} />
-                                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">
-                                    Passenger Currency §61.57(a)
-                                  </h3>
-                                </div>
-                                <span className={cn(
-                                  "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest",
-                                  currency.isCurrent ? "bg-[#e4f5ec] text-[#2d7a4f]" : "bg-[#fdecea] text-[#c0392b]"
+                          <div className={cn(
+                            "rounded-xl border-2 overflow-hidden transition-all shadow-sm",
+                            allApplicableCurrent ? "border-[#2d7a4f]" : noneCurrent ? "border-[#c0392b]" : "border-[#e8a020]"
+                          )}>
+                            {/* Header */}
+                            <button
+                              onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
+                              className={cn(
+                                "w-full p-4 flex items-center justify-between transition-colors",
+                                allApplicableCurrent ? "bg-[#e4f5ec]" : noneCurrent ? "bg-[#fdecea]" : "bg-[#fffbeb]"
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Shield size={18} className={cn(
+                                  allApplicableCurrent ? "text-[#2d7a4f]" : noneCurrent ? "text-[#c0392b]" : "text-[#e8a020]"
+                                )} />
+                                <h3 className={cn(
+                                  "text-sm font-bold",
+                                  allApplicableCurrent ? "text-[#166534]" : noneCurrent ? "text-[#991b1b]" : "text-[#92400e]"
                                 )}>
-                                  {currency.isCurrent ? 'Current' : 'Not Current'}
+                                  Currency Status
+                                </h3>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className={cn(
+                                  "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest",
+                                  allApplicableCurrent ? "bg-[#2d7a4f] text-white" : noneCurrent ? "bg-[#c0392b] text-white" : "bg-[#e8a020] text-white"
+                                )}>
+                                  {currentCount}/{totalCurrencies} Current
                                 </span>
+                                <ChevronDown 
+                                  size={18} 
+                                  className={cn(
+                                    "transition-transform duration-200",
+                                    isCurrencyExpanded ? "rotate-180" : "rotate-0",
+                                    allApplicableCurrent ? "text-[#2d7a4f]" : noneCurrent ? "text-[#c0392b]" : "text-[#e8a020]"
+                                  )} 
+                                />
                               </div>
+                            </button>
 
-                              <div className="space-y-3">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-[#6b7280]">Takeoffs (past 90 days)</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-mono font-bold">{currency.totalTakeoffs}</span>
-                                    {currency.totalTakeoffs >= 3 ? 
-                                      <CheckCircle2 size={12} className="text-[#2d7a4f]" /> : 
-                                      <XCircle size={12} className="text-[#c0392b]" />
-                                    }
-                                  </div>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-[#6b7280]">Landings (past 90 days)</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-mono font-bold">{currency.totalLandings}</span>
-                                    {currency.totalLandings >= 3 ? 
-                                      <CheckCircle2 size={12} className="text-[#2d7a4f]" /> : 
-                                      <XCircle size={12} className="text-[#c0392b]" />
-                                    }
-                                  </div>
-                                </div>
-
-                                <div className="pt-2 border-t border-[#dde3ec] space-y-1">
-                                  {currency.lastFlightDate && (
-                                    <div className="flex justify-between text-[10px]">
-                                      <span className="text-[#6b7280]">Last flight date</span>
-                                      <span className="font-medium text-[#1c2333]">
-                                        {currency.lastFlightDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                      </span>
-                                    </div>
+                            {/* Collapsible Content */}
+                            <AnimatePresence>
+                              {isCurrencyExpanded && (
+                                <motion.div
+                                  initial={{ height: 0 }}
+                                  animate={{ height: 'auto' }}
+                                  exit={{ height: 0 }}
+                                  className="bg-white divide-y divide-[#dde3ec]"
+                                >
+                                  {/* Day Currency Row - ASEL */}
+                                  {hasEverLoggedASEL && (
+                                    <CurrencyRow 
+                                      title="Passenger Currency Day"
+                                      reference="§61.57(a)"
+                                      isCurrent={isDayCurrentASEL}
+                                      classBadge="ASEL"
+                                      isExpanded={expandedCurrencyRow === 'day_asel'}
+                                      onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_asel' ? null : 'day_asel')}
+                                    >
+                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Takeoffs (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{aselTakeoffs}</span>
+                                            {aselTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Landings (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{aselLandings}</span>
+                                            {aselLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Last flight date</span>
+                                            <span className="font-medium">{lastDayFlightASEL ? new Date(lastDayFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Currency expires on</span>
+                                            <span className="font-medium">{dayExpiryDateASEL ? dayExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          {dayDaysUntilExpiryASEL > 0 && dayDaysUntilExpiryASEL < 15 && (
+                                            <div className="text-right font-bold text-[#e8a020]">
+                                              Expires in {dayDaysUntilExpiryASEL} days
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </CurrencyRow>
                                   )}
-                                  {currency.isCurrent && currency.expiryDate && (
-                                    <div className="flex justify-between text-[10px]">
-                                      <span className="text-[#6b7280]">Currency expires on</span>
-                                      <span className="font-medium text-[#1c2333]">
-                                        {currency.expiryDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                      </span>
-                                    </div>
+
+                                  {/* Day Currency Row - AMEL */}
+                                  {hasEverLoggedAMEL && (
+                                    <CurrencyRow 
+                                      title="Passenger Currency Day"
+                                      reference="§61.57(a)"
+                                      isCurrent={isDayCurrentAMEL}
+                                      classBadge="AMEL"
+                                      isExpanded={expandedCurrencyRow === 'day_amel'}
+                                      onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_amel' ? null : 'day_amel')}
+                                    >
+                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Takeoffs (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{amelTakeoffs}</span>
+                                            {amelTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Landings (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{amelLandings}</span>
+                                            {amelLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Last flight date</span>
+                                            <span className="font-medium">{lastDayFlightAMEL ? new Date(lastDayFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Currency expires on</span>
+                                            <span className="font-medium">{dayExpiryDateAMEL ? dayExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          {dayDaysUntilExpiryAMEL > 0 && dayDaysUntilExpiryAMEL < 15 && (
+                                            <div className="text-right font-bold text-[#e8a020]">
+                                              Expires in {dayDaysUntilExpiryAMEL} days
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </CurrencyRow>
                                   )}
-                                </div>
 
-                                {!currency.isCurrent ? (
-                                  <div className="mt-2 p-2 bg-[#fdecea] rounded-lg flex items-start gap-2">
-                                    <AlertCircle size={12} className="text-[#c0392b] shrink-0 mt-0.5" />
-                                    <p className="text-[10px] text-[#c0392b] font-medium leading-tight">
-                                      Student needs 3 takeoffs and 3 landings within 90 days to carry passengers.
-                                    </p>
-                                  </div>
-                                ) : currency.daysUntilExpiry < 15 ? (
-                                  <div className="mt-2 p-2 bg-[#fffbeb] rounded-lg flex items-start gap-2">
-                                    <AlertCircle size={12} className="text-[#e8a020] shrink-0 mt-0.5" />
-                                    <p className="text-[10px] text-[#92400e] font-medium leading-tight">
-                                      Currency expires in {currency.daysUntilExpiry} days. Schedule a flight soon.
-                                    </p>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
+                                  {/* Night Currency Row - ASEL */}
+                                  {hasEverLoggedNightASEL && (
+                                    <CurrencyRow 
+                                      title="Passenger Currency Night"
+                                      reference="§61.57(b)"
+                                      isCurrent={isNightCurrentASEL}
+                                      classBadge="ASEL"
+                                      isExpanded={expandedCurrencyRow === 'night_asel'}
+                                      onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_asel' ? null : 'night_asel')}
+                                    >
+                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Night takeoffs (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{recentNightTakeoffsASEL}</span>
+                                            {recentNightTakeoffsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Night landings (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{recentNightLandingsASEL}</span>
+                                            {recentNightLandingsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Last night flight</span>
+                                            <span className="font-medium">{lastNightFlightASEL ? new Date(lastNightFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Currency expires on</span>
+                                            <span className="font-medium">{nightExpiryDateASEL ? nightExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          {nightDaysUntilExpiryASEL > 0 && nightDaysUntilExpiryASEL < 15 && (
+                                            <div className="text-right font-bold text-[#e8a020]">
+                                              Expires in {nightDaysUntilExpiryASEL} days
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </CurrencyRow>
+                                  )}
 
-                            {nightCurrency && (
-                              <div className={cn(
-                                "bg-white rounded-xl border p-3 shadow-sm transition-all",
-                                getBorderColor(nightCurrency)
-                              )}>
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <Shield size={14} className={cn(
-                                      nightCurrency.isCurrent ? "text-[#2d7a4f]" : "text-[#c0392b]"
-                                    )} />
-                                    <h3 className="text-[9px] font-bold uppercase tracking-widest text-[#1a3a5c]">
-                                      Night Currency §61.57(b)
-                                    </h3>
-                                  </div>
-                                  <span className={cn(
-                                    "text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest",
-                                    nightCurrency.isCurrent ? "bg-[#e4f5ec] text-[#2d7a4f]" : "bg-[#fdecea] text-[#c0392b]"
-                                  )}>
-                                    {nightCurrency.isCurrent ? 'Current' : 'Not Current'}
-                                  </span>
-                                </div>
-                                <div className="flex gap-4 text-[10px]">
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-[#6b7280]">TO:</span>
-                                    <span className="font-mono font-bold">{nightCurrency.totalTakeoffs}</span>
-                                    {nightCurrency.totalTakeoffs >= 3 ? 
-                                      <CheckCircle2 size={10} className="text-[#2d7a4f]" /> : 
-                                      <XCircle size={10} className="text-[#c0392b]" />
-                                    }
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-[#6b7280]">LDG:</span>
-                                    <span className="font-mono font-bold">{nightCurrency.totalLandings}</span>
-                                    {nightCurrency.totalLandings >= 3 ? 
-                                      <CheckCircle2 size={10} className="text-[#2d7a4f]" /> : 
-                                      <XCircle size={10} className="text-[#c0392b]" />
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </>
+                                  {/* Night Currency Row - AMEL */}
+                                  {hasEverLoggedNightAMEL && (
+                                    <CurrencyRow 
+                                      title="Passenger Currency Night"
+                                      reference="§61.57(b)"
+                                      isCurrent={isNightCurrentAMEL}
+                                      classBadge="AMEL"
+                                      isExpanded={expandedCurrencyRow === 'night_amel'}
+                                      onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_amel' ? null : 'night_amel')}
+                                    >
+                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Night takeoffs (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{recentNightTakeoffsAMEL}</span>
+                                            {recentNightTakeoffsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[#6b7280]">Night landings (past 90 days)</span>
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-mono font-bold">{recentNightLandingsAMEL}</span>
+                                            {recentNightLandingsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Last night flight</span>
+                                            <span className="font-medium">{lastNightFlightAMEL ? new Date(lastNightFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-[#6b7280]">Currency expires on</span>
+                                            <span className="font-medium">{nightExpiryDateAMEL ? nightExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
+                                          </div>
+                                          {nightDaysUntilExpiryAMEL > 0 && nightDaysUntilExpiryAMEL < 15 && (
+                                            <div className="text-right font-bold text-[#e8a020]">
+                                              Expires in {nightDaysUntilExpiryAMEL} days
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </CurrencyRow>
+                                  )}
+
+                                  {/* IFR Currency Row */}
+                                  <CurrencyRow 
+                                    title="IFR Currency"
+                                    reference="§61.57(c)"
+                                    isCurrent={isIFRCurrent}
+                                    isNotApplicable={!hasEverLoggedApproaches}
+                                    isExpanded={expandedCurrencyRow === 'ifr'}
+                                    onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'ifr' ? null : 'ifr')}
+                                  >
+                                    <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-[#6b7280]">Instrument approaches (past 6 months)</span>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-mono font-bold">{totalApproaches}</span>
+                                          {totalApproaches >= 6 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-[#6b7280]">Holding performed (past 6 months)</span>
+                                        <div className="flex items-center gap-1.5">
+                                          {holdPerformed ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-[#6b7280]">Intercepting and tracking</span>
+                                        <button
+                                          onClick={() => handleToggleIfrTracking(selectedStudent, ifrTrackingVal)}
+                                          disabled={isSavingIfrTracking}
+                                          className="flex items-center gap-2"
+                                        >
+                                          <div className={cn(
+                                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                                            ifrTrackingVal ? "bg-[#2d7a4f] border-[#2d7a4f]" : "bg-white border-[#dde3ec]"
+                                          )}>
+                                            {ifrTrackingVal && <CheckCircle size={10} className="text-white" />}
+                                          </div>
+                                          <span className="text-[10px] font-medium text-[#1c2333]">Completed within 6 months</span>
+                                        </button>
+                                      </div>
+
+                                      <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                        <div className="flex justify-between">
+                                          <span className="text-[#6b7280]">Last IFR flight date</span>
+                                          <span className="font-medium">{lastIFRFlight ? new Date(lastIFRFlight.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-[#6b7280]">Currency expires on</span>
+                                          <span className="font-medium">{ifrExpiryDate ? ifrExpiryDate.toLocaleDateString() : 'N/A'}</span>
+                                        </div>
+                                        {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
+                                          <div className="text-right font-bold text-[#e8a020]">
+                                            Expires in {ifrDaysUntilExpiry} days
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {isIFRCurrent ? (
+                                        <div className="mt-2 p-2 bg-[#e4f5ec] rounded-lg text-[10px] text-[#2d7a4f] font-medium leading-tight">
+                                          IFR Current — valid until {ifrExpiryDate?.toLocaleDateString()}
+                                        </div>
+                                      ) : hasEverLoggedApproaches ? (
+                                        <div className="mt-2 p-2 bg-[#fdecea] rounded-lg text-[10px] text-[#c0392b] font-medium leading-tight">
+                                          IFR currency lapsed. Student must complete an IPC with a CFII before acting as PIC under IFR
+                                        </div>
+                                      ) : null}
+                                      
+                                      {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
+                                        <div className="mt-2 p-2 bg-[#fffbeb] rounded-lg text-[10px] text-[#92400e] font-medium leading-tight">
+                                          IFR currency expires in {ifrDaysUntilExpiry} days. Schedule approaches soon.
+                                        </div>
+                                      )}
+                                    </div>
+                                  </CurrencyRow>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         );
                       })()}
                     </div>

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_ACS, RATINGS } from '../constants';
-import { AIRCRAFT_MODELS } from '../constants/aircraft';
+import { AIRCRAFT_MODELS, isAMEL } from '../constants/aircraft';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, Loader2, Check, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, ChevronLeft, Loader2, Check, Search, X, Plus, ClipboardList, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ACSStandardsModal from './ACSStandardsModal';
 
@@ -76,6 +76,10 @@ export default function FlightLesson() {
     cfiDidLandings: false,
     cfiDayLandings: '',
     cfiNightLandings: '',
+    aircraftClass: 'ASEL',
+    mePic: '',
+    meDual: '',
+    meNight: '',
   });
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -106,7 +110,36 @@ export default function FlightLesson() {
   const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
   const [isAutoPopulated, setIsAutoPopulated] = useState(false);
   const [recentAircraft, setRecentAircraft] = useState<any[]>([]);
+  const [showClassToggle, setShowClassToggle] = useState(false);
+  const [showAddAircraftModal, setShowAddAircraftModal] = useState(false);
+  const [newAircraftModel, setNewAircraftModel] = useState('');
+  const [newAircraftIcao, setNewAircraftIcao] = useState('');
+  const [newAircraftClass, setNewAircraftClass] = useState('ASEL');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [direction, setDirection] = useState(1);
+  const [stepValidationError, setStepValidationError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0
+    }),
+    center: {
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -300 : 300,
+      opacity: 0
+    })
+  };
+
+  const steps = [
+    { number: 1, label: 'Lesson Setup', icon: ClipboardList },
+    { number: 2, label: 'Flight Time Log', icon: Clock },
+    { number: 3, label: 'ACS Grading', icon: CheckCircle2 }
+  ];
 
   const resetLessonState = () => {
     setGrades({});
@@ -152,6 +185,10 @@ export default function FlightLesson() {
       cfiDidLandings: false,
       cfiDayLandings: '',
       cfiNightLandings: '',
+      aircraftClass: 'ASEL',
+      mePic: '',
+      meDual: '',
+      meNight: '',
     });
     setFillState('');
     setIsLogbookOpen(false);
@@ -302,7 +339,14 @@ export default function FlightLesson() {
   };
 
   const handleMetaChange = (field: keyof LessonMeta, val: any) => {
-    const newMeta = { ...meta, [field]: val };
+    let newMeta = { ...meta, [field]: val };
+    
+    // Auto-detect aircraft class when model changes
+    if (field === 'aircraftModel') {
+      const detectedClass = isAMEL(val) ? 'AMEL' : 'ASEL';
+      newMeta.aircraftClass = detectedClass;
+    }
+
     setMeta(newMeta);
     saveToLocal(grades, notes, newMeta);
   };
@@ -321,16 +365,17 @@ export default function FlightLesson() {
 
         const { data, error } = await supabase
           .from('saved_aircraft')
-          .select('model, icao')
+          .select('aircraft_model, aircraft_icao, aircraft_class')
           .eq('user_id', session.user.id)
-          .eq('tail_number', meta.aircraft.toUpperCase())
+          .eq('tail_number', meta.aircraft.toUpperCase().trim())
           .single();
 
         if (data && !error) {
           setMeta(prev => ({
             ...prev,
-            aircraftModel: data.model,
-            aircraftIcao: data.icao
+            aircraftModel: data.aircraft_model,
+            aircraftIcao: data.aircraft_icao,
+            aircraftClass: data.aircraft_class || 'ASEL'
           }));
           setIsAutoPopulated(true);
         } else {
@@ -369,6 +414,101 @@ export default function FlightLesson() {
     };
 
     fetchRecent();
+  }, []);
+
+  const handleSaveNewAircraft = async () => {
+    if (!newAircraftModel.trim()) {
+      alert('Please enter an aircraft model.');
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase
+        .from('saved_aircraft')
+        .upsert({
+          user_id: session.user.id,
+          tail_number: meta.aircraft.toUpperCase().trim() || 'UNKNOWN',
+          aircraft_model: newAircraftModel.trim(),
+          aircraft_icao: newAircraftIcao.trim(),
+          aircraft_class: newAircraftClass,
+          last_used: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          use_count: 1
+        }, { onConflict: 'user_id,tail_number' });
+
+      if (error) throw error;
+
+      setMeta(prev => ({
+        ...prev,
+        aircraftModel: newAircraftModel.trim(),
+        aircraftClass: newAircraftClass as 'ASEL' | 'AMEL'
+      }));
+      setIsAutoPopulated(true);
+      setShowAddAircraftModal(false);
+      
+      // Refresh recent aircraft
+      const { data: recentData } = await supabase
+        .from('saved_aircraft')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+      if (recentData) setRecentAircraft(recentData);
+
+      // Reset modal state
+      setNewAircraftModel('');
+      setNewAircraftIcao('');
+      setNewAircraftClass('ASEL');
+    } catch (err: any) {
+      console.error('Error saving new aircraft:', err);
+      alert('Failed to save aircraft: ' + err.message);
+    }
+  };
+
+  // Backfill aircraft from historical lessons
+  useEffect(() => {
+    const backfillAircraft = async () => {
+      if (localStorage.getItem('saved_aircraft_backfilled')) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: lessons, error } = await supabase
+        .from('lessons')
+        .select('meta')
+        .eq('user_id', session.user.id);
+
+      if (lessons && !error) {
+        const aircraftMap = new Map();
+        lessons.forEach(l => {
+          const m = l.meta || {};
+          if (m.aircraft && m.aircraftModel) {
+            const tail = m.aircraft.toUpperCase().trim();
+            if (!aircraftMap.has(tail)) {
+              aircraftMap.set(tail, {
+                user_id: session.user.id,
+                tail_number: tail,
+                aircraft_model: m.aircraftModel.trim(),
+                aircraft_icao: m.aircraftIcao || '',
+                last_used: m.date || new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                use_count: 1
+              });
+            }
+          }
+        });
+
+        const uniqueAircraft = Array.from(aircraftMap.values());
+        if (uniqueAircraft.length > 0) {
+          await supabase.from('saved_aircraft').upsert(uniqueAircraft, { onConflict: 'user_id,tail_number' });
+        }
+        localStorage.setItem('saved_aircraft_backfilled', 'true');
+      }
+    };
+    backfillAircraft();
   }, []);
 
   const toggleExpand = (taskId: string) => {
@@ -417,10 +557,10 @@ export default function FlightLesson() {
       nightDual: meta.nightDual,
       nightSolo: meta.nightSolo,
       nightPic: meta.nightPic,
-      nightTakeoffs: meta.nightTakeoffs,
-      ldgTotal: meta.ldgTotal,
-      ldgDay: meta.ldgDay,
-      ldgNight: meta.ldgNight,
+      nightTakeoffs: parseInt(meta.nightTakeoffs || '0') || 0,
+      ldgTotal: parseInt(meta.ldgTotal || '0') || 0,
+      ldgDay: parseInt(meta.ldgDay || '0') || 0,
+      ldgNight: parseInt(meta.ldgNight || '0') || 0,
       groundSim: meta.groundSim,
       cfi: meta.cfi,
       rating_code: rating?.code || 'ppl',
@@ -436,8 +576,12 @@ export default function FlightLesson() {
       approachTypes: meta.approachTypes,
       holdPerformed: meta.holdPerformed,
       cfiDidLandings: meta.cfiDidLandings,
-      cfiDayLandings: meta.cfiDayLandings,
-      cfiNightLandings: meta.cfiNightLandings
+      cfiDayLandings: parseInt(meta.cfiDayLandings || '0') || 0,
+      cfiNightLandings: parseInt(meta.cfiNightLandings || '0') || 0,
+      aircraftClass: meta.aircraftClass || 'ASEL',
+      mePic: meta.mePic,
+      meDual: meta.meDual,
+      meNight: meta.meNight
     };
 
     const lessonData: any = {
@@ -453,34 +597,46 @@ export default function FlightLesson() {
     };
 
     let error;
+    let savedLessonId = editId;
     if (editId) {
       const { error: updateError } = await supabase.from('lessons').update(lessonData).eq('id', editId);
       error = updateError;
     } else {
-      const { error: insertError } = await supabase.from('lessons').insert(lessonData);
+      const { data: insertData, error: insertError } = await supabase.from('lessons').insert(lessonData).select().single();
       error = insertError;
+      if (insertData) savedLessonId = insertData.id;
     }
 
     if (!error && meta.aircraft && meta.aircraftModel) {
-      await supabase
+      const { error: aircraftError } = await supabase
         .from('saved_aircraft')
         .upsert({
           user_id: session.user.id,
-          tail_number: meta.aircraft.toUpperCase(),
-          model: meta.aircraftModel,
-          icao: meta.aircraftIcao || '',
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,tail_number' });
+          tail_number: meta.aircraft.toUpperCase().trim(),
+          aircraft_model: meta.aircraftModel.trim(),
+          aircraft_icao: meta.aircraftIcao || '',
+          aircraft_class: meta.aircraftClass || 'ASEL',
+          last_used: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          use_count: 1
+        }, {
+          onConflict: 'user_id,tail_number',
+          ignoreDuplicates: false
+        });
+     
+      if (aircraftError) {
+        console.error('Failed to save aircraft:', aircraftError);
+      }
     }
 
     if (error) {
       alert('Save failed: ' + error.message);
     } else {
       // Auto-save CFI hours if dual instruction was given
-      if (parseFloat(meta.dual || '0') > 0) {
+      if (parseFloat(meta.dual || '0') > 0 && savedLessonId) {
         const cfiRecord = {
           user_id: session.user.id,
-          lesson_id: editId || 'new', // Note: if new, we might want the actual ID from the insert response, but the prompt says editId || 'new'
+          lesson_id: savedLessonId,
           student_name: studentName,
           date: meta.date,
           aircraft: meta.aircraft || '',
@@ -490,8 +646,12 @@ export default function FlightLesson() {
           dual_given: parseFloat(meta.dual || '0') || 0,
           night_dual: parseFloat(meta.nightDual || '0') || 0,
           instrument_given: parseFloat(meta.simInst || '0') || 0,
-          day_landings: meta.cfiDidLandings ? parseInt(meta.cfiDayLandings || '0') || 0 : 0,
-          night_landings: meta.cfiDidLandings ? parseInt(meta.cfiNightLandings || '0') || 0 : 0,
+          day_landings: parseInt(meta.cfiDayLandings || '0') || 0,
+          night_landings: parseInt(meta.cfiNightLandings || '0') || 0,
+          xc_pic: parseFloat(meta.xcDual || '0') || 0,
+          ratp_xc: parseFloat(meta.ratpXCTime || '0') || 0,
+          ratp_xc_eligible: meta.ratpXCEligible || false,
+          aircraft_class: meta.aircraftClass || 'ASEL',
           rating_code: rating?.code || 'ppl'
         };
 
@@ -555,6 +715,25 @@ export default function FlightLesson() {
     localStorage.removeItem('faa_current_lesson_flight');
   };
 
+  const handleNext = () => {
+    if (currentStep === 1) {
+      if (!lessonLabel || !meta.date) {
+        setStepValidationError('Please fill in the lesson label and date before continuing.');
+        return;
+      }
+    }
+    setStepValidationError(null);
+    setDirection(1);
+    setCurrentStep(prev => prev + 1);
+    window.scrollTo(0, 0);
+  };
+
+  const handlePrev = () => {
+    setDirection(-1);
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo(0, 0);
+  };
+
   const counts = {
     s: Object.values(grades).filter(v => v === 'S').length,
     n: Object.values(grades).filter(v => v === 'N').length,
@@ -568,174 +747,311 @@ export default function FlightLesson() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex flex-col gap-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
-            <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
-            <ChevronRight size={10} />
-            <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
-            <ChevronRight size={10} />
-            <Link to="/lesson-type" className="hover:text-[#1a3a5c] transition-colors">Lesson Type</Link>
-            <ChevronRight size={10} />
-            <span className="text-[#1a3a5c]">Flight Lesson</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#e8a020] rounded-lg flex items-center justify-center text-[#1a3a5c] text-xl font-bold">🛩</div>
-            <div>
-              <h1 className="text-xl font-bold text-[#1c2333]">Flight Lesson Entry</h1>
-              <p className="text-xs text-[#6b7280]">{rating?.label || 'Private Pilot ASEL'} · Areas II–XII</p>
+      <div className="flex flex-col gap-8 mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+              <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
+              <ChevronRight size={10} />
+              <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
+              <ChevronRight size={10} />
+              <Link to="/lesson-type" className="hover:text-[#1a3a5c] transition-colors">Lesson Type</Link>
+              <ChevronRight size={10} />
+              <span className="text-[#1a3a5c]">Flight Lesson</span>
             </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Link to="/lesson-type" className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#dde3ec] bg-white text-[#6b7280] hover:bg-[#f4f5f7] transition-all text-xs font-bold">
-            <ArrowLeft size={16} />
-            Back
-          </Link>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
-        {recentAircraft.length > 0 && (
-          <div className="mb-6">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-2 block">Recent Aircraft</label>
-            <div className="flex flex-wrap gap-2">
-              {recentAircraft.map((ac, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setMeta(prev => ({
-                      ...prev,
-                      aircraft: ac.tail_number,
-                      aircraftModel: ac.model,
-                      aircraftIcao: ac.icao
-                    }));
-                    setIsAutoPopulated(true);
-                  }}
-                  className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#f4f5f7] text-[#1a3a5c] border border-[#dde3ec] hover:border-[#1a3a5c] hover:bg-white transition-all flex items-center gap-1.5"
-                >
-                  <Plane size={10} className="opacity-50" />
-                  {ac.tail_number} — {ac.model}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Name</label>
-            <input
-              type="text"
-              value={studentName}
-              readOnly
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 bg-[#f4f5f7] text-[#1c2333] cursor-not-allowed"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Label</label>
-            <input
-              type="text"
-              value={lessonLabel}
-              onChange={(e) => setLessonLabel(e.target.value)}
-              placeholder="e.g. Flight Lesson 1"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor (CFI)</label>
-            <input
-              type="text"
-              value={instructorName}
-              onChange={(e) => setInstructorName(e.target.value)}
-              placeholder="Instructor name"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Date</label>
-            <input
-              type="date"
-              value={meta.date}
-              onChange={(e) => handleMetaChange('date', e.target.value)}
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Tail Number (N-Number)</label>
-            <input
-              type="text"
-              value={meta.aircraft}
-              onChange={(e) => handleMetaChange('aircraft', e.target.value.toUpperCase())}
-              placeholder="N12345"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-            />
-          </div>
-          <div className="space-y-1.5 relative">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
-              {isAutoPopulated && (
-                <div className="flex items-center gap-1 text-[9px] font-bold text-[#2d7a4f] bg-[#e4f5ec] px-1.5 py-0.5 rounded animate-in fade-in zoom-in duration-300">
-                  <CheckCircle2 size={10} />
-                  AUTO-FILLED
-                </div>
-              )}
-            </div>
-            <input
-              type="text"
-              value={meta.aircraftModel || ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleMetaChange('aircraftModel', val);
-                setAircraftSearch(val);
-                setShowAircraftDropdown(true);
-                setIsAutoPopulated(false); // Reset if manually changed
-              }}
-              onFocus={() => setShowAircraftDropdown(true)}
-              placeholder="e.g. C-172, Cessna"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-            />
-            {showAircraftDropdown && aircraftSearch && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-[#dde3ec] rounded-lg shadow-lg max-h-60 overflow-auto">
-                {AIRCRAFT_MODELS.filter(m => 
-                  m.toLowerCase().includes(aircraftSearch.toLowerCase())
-                ).slice(0, 50).map((model, idx) => (
-                  <div
-                    key={idx}
-                    className="px-3 py-2 text-sm hover:bg-[#f4f5f7] cursor-pointer text-[#1c2333]"
-                    onClick={() => {
-                      handleMetaChange('aircraftModel', model);
-                      setAircraftSearch('');
-                      setShowAircraftDropdown(false);
-                      setIsAutoPopulated(false);
-                    }}
-                  >
-                    {model}
-                  </div>
-                ))}
-                {AIRCRAFT_MODELS.filter(m => 
-                  m.toLowerCase().includes(aircraftSearch.toLowerCase())
-                ).length === 0 && (
-                  <div className="px-3 py-2 text-sm text-[#6b7280] italic">No matching models found</div>
-                )}
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-[#e8a020] rounded-lg flex items-center justify-center text-[#1a3a5c] text-xl font-bold">🛩</div>
+              <div>
+                <h1 className="text-xl font-bold text-[#1c2333]">Flight Lesson Entry</h1>
+                <p className="text-xs text-[#6b7280]">{rating?.label || 'Private Pilot ASEL'} · Areas II–XII</p>
               </div>
-            )}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Link to="/lesson-type" className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#dde3ec] bg-white text-[#6b7280] hover:bg-[#f4f5f7] transition-all text-xs font-bold">
+              <ArrowLeft size={16} />
+              Back
+            </Link>
           </div>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Objectives / Notes</label>
-          <textarea
-            value={meta.notes}
-            onChange={(e) => handleMetaChange('notes', e.target.value)}
-            placeholder="Maneuvers practiced, airport used, weather..."
-            rows={2}
-            className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all resize-none"
-          />
+
+        {/* Step Indicator */}
+        <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-4">
+          <div className="flex items-center justify-between max-w-2xl mx-auto relative">
+            {/* Connecting Lines */}
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[#dde3ec] -translate-y-1/2 z-0" />
+            <div 
+              className="absolute top-1/2 left-0 h-0.5 bg-[#1a3a5c] -translate-y-1/2 z-0 transition-all duration-500" 
+              style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+            />
+
+            {steps.map((step) => {
+              const Icon = step.icon;
+              const isCompleted = currentStep > step.number;
+              const isActive = currentStep === step.number;
+              
+              return (
+                <div key={step.number} className="relative z-10 flex flex-col items-center gap-2">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                    isCompleted ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
+                    isActive ? "bg-[#1a3a5c] border-[#1a3a5c] text-white" :
+                    "bg-white border-[#dde3ec] text-[#6b7280]"
+                  )}>
+                    {isCompleted ? <Check size={20} /> : <Icon size={20} />}
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest transition-colors",
+                      isActive || isCompleted ? "text-[#1a3a5c]" : "text-[#6b7280]"
+                    )}>
+                      Step {step.number}
+                    </span>
+                    <span className={cn(
+                      "text-[11px] font-bold transition-colors whitespace-nowrap",
+                      isActive || isCompleted ? "text-[#1c2333]" : "text-[#6b7280]"
+                    )}>
+                      {step.label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Logbook Section */}
-      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
+      <AnimatePresence mode="wait" custom={direction}>
+        <motion.div
+          key={currentStep}
+          custom={direction}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{
+            x: { type: "spring", stiffness: 300, damping: 30 },
+            opacity: { duration: 0.2 }
+          }}
+        >
+          {stepValidationError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={20} />
+              <span className="text-sm font-medium">{stepValidationError}</span>
+            </div>
+          )}
+
+          {currentStep === 1 && (
+            <>
+              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+                {recentAircraft.length > 0 && (
+                  <div className="mb-6">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-2 block">Recent Aircraft</label>
+                    <div className="flex flex-wrap gap-2">
+                      {recentAircraft.map((ac, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setMeta(prev => ({
+                              ...prev,
+                              aircraft: ac.tail_number,
+                              aircraftModel: ac.aircraft_model,
+                              aircraftIcao: ac.aircraft_icao
+                            }));
+                            setIsAutoPopulated(true);
+                          }}
+                          className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#f4f5f7] text-[#1a3a5c] border border-[#dde3ec] hover:border-[#1a3a5c] hover:bg-white transition-all flex items-center gap-1.5"
+                        >
+                          <Plane size={10} className="opacity-50" />
+                          {ac.tail_number} — {ac.aircraft_model}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Name</label>
+                    <input
+                      type="text"
+                      value={studentName}
+                      readOnly
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 bg-[#f4f5f7] text-[#1c2333] cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Label</label>
+                    <input
+                      type="text"
+                      value={lessonLabel}
+                      onChange={(e) => setLessonLabel(e.target.value)}
+                      placeholder="e.g. Flight Lesson 1"
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor (CFI)</label>
+                    <input
+                      type="text"
+                      value={instructorName}
+                      onChange={(e) => setInstructorName(e.target.value)}
+                      placeholder="Instructor name"
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Date</label>
+                    <input
+                      type="date"
+                      value={meta.date}
+                      onChange={(e) => handleMetaChange('date', e.target.value)}
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Tail Number (N-Number)</label>
+                    <input
+                      type="text"
+                      value={meta.aircraft}
+                      onChange={(e) => handleMetaChange('aircraft', e.target.value.toUpperCase())}
+                      placeholder="N12345"
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5 relative">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
+                      {isAutoPopulated && (
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-[#2d7a4f] bg-[#e4f5ec] px-1.5 py-0.5 rounded animate-in fade-in zoom-in duration-300">
+                          <CheckCircle2 size={10} />
+                          AUTO-FILLED
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={meta.aircraftModel || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        handleMetaChange('aircraftModel', val);
+                        setAircraftSearch(val);
+                        setShowAircraftDropdown(true);
+                        setIsAutoPopulated(false); // Reset if manually changed
+                      }}
+                      onFocus={() => setShowAircraftDropdown(true)}
+                      placeholder="e.g. C-172, Cessna"
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                    />
+                    {showAircraftDropdown && aircraftSearch && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-[#dde3ec] rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {AIRCRAFT_MODELS.filter(m => 
+                          m.toLowerCase().includes(aircraftSearch.toLowerCase())
+                        ).slice(0, 50).map((model, idx) => (
+                          <div
+                            key={idx}
+                            className="px-3 py-2 text-sm hover:bg-[#f4f5f7] cursor-pointer text-[#1c2333]"
+                            onClick={() => {
+                              const detectedClass = isAMEL(model) ? 'AMEL' : 'ASEL';
+                              setMeta(prev => ({
+                                ...prev,
+                                aircraftModel: model,
+                                aircraftClass: detectedClass
+                              }));
+                              setAircraftSearch('');
+                              setShowAircraftDropdown(false);
+                              setIsAutoPopulated(false);
+                            }}
+                          >
+                            {model}
+                          </div>
+                        ))}
+                        {AIRCRAFT_MODELS.filter(m => 
+                          m.toLowerCase().includes(aircraftSearch.toLowerCase())
+                        ).length === 0 && (
+                          <div className="px-3 py-2 text-sm text-[#6b7280] italic">No matching models found</div>
+                        )}
+                        <div
+                          onClick={() => setShowAddAircraftModal(true)}
+                          className="px-3 py-2 flex items-center gap-2 text-sm text-[#1a3a5c] font-bold border-t border-[#dde3ec] hover:bg-[#f4f5f7] cursor-pointer sticky bottom-0 bg-white"
+                        >
+                          <Plus size={14} className="text-[#1a3a5c]" />
+                          Add Aircraft Not in List
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest text-white",
+                        meta.aircraftClass === 'AMEL' ? "bg-[#7c3aed]" : "bg-[#1a3a5c]"
+                      )}>
+                        {meta.aircraftClass || 'ASEL'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowClassToggle(!showClassToggle)}
+                        className="text-[10px] text-[#6b7280] hover:text-[#1a3a5c] underline transition-colors"
+                      >
+                        Change Class
+                      </button>
+                      {showClassToggle && (
+                        <div className="flex gap-1 animate-in fade-in slide-in-from-left-1">
+                          {['ASEL', 'AMEL'].map(cls => (
+                            <button
+                              key={cls}
+                              type="button"
+                              onClick={() => {
+                                handleMetaChange('aircraftClass', cls);
+                                setShowClassToggle(false);
+                              }}
+                              className={cn(
+                                "text-[10px] font-bold px-2 py-0.5 rounded border transition-all",
+                                meta.aircraftClass === cls
+                                  ? "bg-[#1a3a5c] text-white border-[#1a3a5c]"
+                                  : "bg-white text-[#6b7280] border-[#dde3ec] hover:border-[#1a3a5c]"
+                              )}
+                            >
+                              {cls}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Objectives / Notes</label>
+                  <textarea
+                    value={meta.notes}
+                    onChange={(e) => handleMetaChange('notes', e.target.value)}
+                    placeholder="Maneuvers practiced, airport used, weather..."
+                    rows={2}
+                    className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8">
+                <button
+                  onClick={handleClear}
+                  className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all"
+                >
+                  Clear Page
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2"
+                >
+                  Next: Flight Log
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {currentStep === 2 && (
+            <>
+              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
         <div
           onClick={() => setIsLogbookOpen(!isLogbookOpen)}
           className="p-4 border-b border-[#dde3ec] flex items-center justify-between cursor-pointer hover:bg-[#f4f5f7] transition-all"
@@ -789,6 +1105,8 @@ export default function FlightLesson() {
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
+                          step="1"
+                          min="0"
                           value={meta.ldgTotal}
                           onChange={(e) => handleMetaChange('ldgTotal', e.target.value)}
                           className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
@@ -802,6 +1120,8 @@ export default function FlightLesson() {
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
+                          step="1"
+                          min="0"
                           value={meta.ldgDay}
                           onChange={(e) => handleMetaChange('ldgDay', e.target.value)}
                           className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
@@ -1059,6 +1379,8 @@ export default function FlightLesson() {
                                       <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Day Landings</label>
                                       <input 
                                         type="number" 
+                                        step="1"
+                                        min="0"
                                         value={meta.cfiDayLandings} 
                                         onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value)} 
                                         className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
@@ -1069,6 +1391,8 @@ export default function FlightLesson() {
                                       <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Landings</label>
                                       <input 
                                         type="number" 
+                                        step="1"
+                                        min="0"
                                         value={meta.cfiNightLandings} 
                                         onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value)} 
                                         className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
@@ -1334,11 +1658,11 @@ export default function FlightLesson() {
                               </div>
                               <div className="flex-1">
                                 <label htmlFor="ratpXCEligible" className="flex items-center gap-2 text-xs font-semibold text-[#1e1b4b] cursor-pointer">
-                                  This flight included a point more than 50NM from the original departure airport
+                                  This flight went more than 50NM from departure but did not include a landing at the distant point
                                   <div className="group relative">
                                     <HelpCircle size={14} className="text-[#7c3aed] cursor-help" />
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-[#1e293b] text-white text-[10px] rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
-                                      R-ATP XC does not require a landing at the distant point. The flight only needs to include a point more than 50NM straight line distance from the original point of departure per §61.160. This is different from regular cross country which requires a full stop landing more than 50NM away.
+                                      Log R-ATP XC hours here only when the flight included a point more than 50NM from the original departure airport but no landing was made at that distant point. If a landing was made log those hours in XC Dual XC Solo or XC PIC above. R-ATP XC captures the unique case where the flight qualifies under §61.160 but not as a regular cross country under §61.1.
                                     </div>
                                   </div>
                                 </label>
@@ -1413,14 +1737,14 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Takeoffs</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" value={meta.nightTakeoffs} onChange={(e) => handleMetaChange('nightTakeoffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
+                              <input type="number" step="1" min="0" value={meta.nightTakeoffs} onChange={(e) => handleMetaChange('nightTakeoffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
+                              <input type="number" step="1" min="0" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>
@@ -1432,6 +1756,65 @@ export default function FlightLesson() {
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* Group 5.5 — Multi Engine Time (Conditional) */}
+                {meta.aircraftClass === 'AMEL' && (
+                  <div className="bg-white">
+                    <button
+                      onClick={() => setExpandedGroups(prev => ({ ...prev, multi: !prev.multi }))}
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multi && "rotate-90")} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed]">Multi Engine Time</span>
+                      </div>
+                      <div className="text-[10px] font-mono text-[#6b7280]">
+                        {meta.totalFlight || '0.0'} hrs
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {expandedGroups.multi && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden bg-[#f5f3ff]"
+                        >
+                          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Total Time</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.totalFlight} readOnly className="w-full text-sm font-mono bg-gray-50 border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi PIC</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.mePic} onChange={(e) => handleMetaChange('mePic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Dual</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.meDual} onChange={(e) => handleMetaChange('meDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Night</label>
+                              <div className="flex items-center gap-2">
+                                <input type="number" step="0.1" value={meta.meNight} onChange={(e) => handleMetaChange('meNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {/* Group 6 — Sim Time */}
                 <div className="bg-white">
@@ -1538,12 +1921,126 @@ export default function FlightLesson() {
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* Multi Engine Time Group */}
+                {meta.aircraftClass === 'AMEL' && (
+                  <div className="bg-white border border-[#dde3ec] rounded-xl shadow-sm overflow-hidden mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedGroups(prev => ({ ...prev, multiEngine: !prev.multiEngine }))}
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-[#7c3aed] bg-opacity-10 rounded-lg flex items-center justify-center text-[#7c3aed]">
+                          <Plane size={18} />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs font-bold text-[#1c2333]">Multi Engine Time</div>
+                          <div className="text-[10px] text-[#6b7280]">AMEL specific flight hours</div>
+                        </div>
+                      </div>
+                      <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multiEngine && "rotate-90")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {expandedGroups.multiEngine && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: 'auto' }}
+                          exit={{ height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-4 bg-[#f8fafc] border-t border-[#dde3ec] space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Total Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    readOnly 
+                                    value={meta.totalFlight} 
+                                    className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#6b7280] italic">Auto-filled from Total Flight Time</p>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi PIC</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={meta.mePic} 
+                                    onChange={(e) => handleMetaChange('mePic', e.target.value)} 
+                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                    placeholder="0.0" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Dual</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={meta.meDual} 
+                                    onChange={(e) => handleMetaChange('meDual', e.target.value)} 
+                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                    placeholder="0.0" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Night</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={meta.meNight} 
+                                    onChange={(e) => handleMetaChange('meNight', e.target.value)} 
+                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                    placeholder="0.0" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
+      <div className="flex justify-between items-center mt-8">
+        <button
+          onClick={handlePrev}
+          className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2"
+        >
+          <ChevronLeft size={18} />
+          Back
+        </button>
+        <button
+          onClick={handleNext}
+          className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2"
+        >
+          Next: ACS Grading
+          <ChevronRight size={18} />
+        </button>
+      </div>
+    </>
+  )}
+
+  {currentStep === 3 && (
+    <>
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm font-bold text-[#1c2333]">Flight Progress</div>
@@ -1690,22 +2187,35 @@ export default function FlightLesson() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-between items-center mt-8">
         <button
-          onClick={handleClear}
-          className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all"
+          onClick={handlePrev}
+          className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2"
         >
-          Clear Page
+          <ChevronLeft size={18} />
+          Back
         </button>
-        <button
-          onClick={handleSave}
-          disabled={saving || !rating}
-          className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          Save Lesson
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleClear}
+            className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all"
+          >
+            Clear Page
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !rating}
+            className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            Save Lesson
+          </button>
+        </div>
       </div>
+    </>
+  )}
+    </motion.div>
+  </AnimatePresence>
 
       {activeACSTask && (
         <ACSStandardsModal 
@@ -1716,6 +2226,87 @@ export default function FlightLesson() {
           onCancel={handleACSCancel}
         />
       )}
+
+      <AnimatePresence>
+        {showAddAircraftModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white w-full max-w-md rounded-2xl border border-[#dde3ec] shadow-2xl overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-[#dde3ec] flex items-center justify-between bg-[#f8fafc]">
+                <h3 className="text-lg font-bold text-[#1a3a5c]">Add New Aircraft</h3>
+                <button 
+                  onClick={() => setShowAddAircraftModal(false)}
+                  className="p-2 hover:bg-[#dde3ec] rounded-full transition-colors"
+                >
+                  <X size={20} className="text-[#6b7280]" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
+                  <input
+                    type="text"
+                    value={newAircraftModel}
+                    onChange={(e) => setNewAircraftModel(e.target.value)}
+                    placeholder="e.g. C-172, Cessna"
+                    className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">ICAO Code</label>
+                  <input
+                    type="text"
+                    value={newAircraftIcao}
+                    onChange={(e) => setNewAircraftIcao(e.target.value)}
+                    placeholder="e.g. C172"
+                    className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Class</label>
+                  <div className="flex gap-2">
+                    {['ASEL', 'AMEL'].map((cls) => (
+                      <button
+                        key={cls}
+                        onClick={() => setNewAircraftClass(cls)}
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-xs font-bold transition-all border",
+                          newAircraftClass === cls 
+                            ? "bg-[#1a3a5c] text-white border-[#1a3a5c]" 
+                            : "bg-white text-[#6b7280] border-[#dde3ec] hover:bg-[#f4f5f7]"
+                        )}
+                      >
+                        {cls}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-[#f8fafc] border-t border-[#dde3ec] flex justify-end gap-3">
+                <button
+                  onClick={() => setShowAddAircraftModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-[#6b7280] hover:bg-[#dde3ec] rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveNewAircraft}
+                  className="px-6 py-2 bg-[#1a3a5c] text-white text-sm font-bold rounded-lg hover:bg-[#2a5a8c] transition-all shadow-md"
+                >
+                  Save Aircraft
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

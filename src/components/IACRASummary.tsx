@@ -9,8 +9,12 @@ interface IacraTotals {
   totalTime: number;
   atdTime: number;
   dualReceived: number;
+  dualReceivedASEL: number;
+  dualReceivedAMEL: number;
   soloTime: number;
   picTime: number;
+  picTimeASEL: number;
+  picTimeAMEL: number;
   xcDual: number;
   xcSolo: number;
   xcPic: number;
@@ -68,7 +72,8 @@ export default function IACRASummary() {
 
   const calculateTotals = (): IacraTotals => {
     const totals: IacraTotals = {
-      totalTime: 0, atdTime: 0, dualReceived: 0, soloTime: 0, picTime: 0,
+      totalTime: 0, atdTime: 0, dualReceived: 0, dualReceivedASEL: 0, dualReceivedAMEL: 0,
+      soloTime: 0, picTime: 0, picTimeASEL: 0, picTimeAMEL: 0,
       xcDual: 0, xcSolo: 0, xcPic: 0, instTotal: 0, atdInst: 0,
       ftdInst: 0, ffsInst: 0,
       nightDual: 0, nightTotal: 0, nightTakeoffs: 0, nightLandings: 0,
@@ -80,12 +85,19 @@ export default function IACRASummary() {
       const m = l.meta || {};
       const regXC = (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
       const rXCTime = parseFloat(m.ratpXCTime || '0') || 0;
+      const isAMEL = m.aircraftClass === 'AMEL';
 
       totals.totalTime += parseFloat(m.totalFlight || '0') || 0;
       totals.atdTime += parseFloat(m.atd || '0') || 0;
       totals.dualReceived += parseFloat(m.dual || '0') || 0;
+      if (isAMEL) totals.dualReceivedAMEL += parseFloat(m.dual || '0') || 0;
+      else totals.dualReceivedASEL += parseFloat(m.dual || '0') || 0;
+
       totals.soloTime += parseFloat(m.solo || '0') || 0;
       totals.picTime += parseFloat(m.pic || '0') || 0;
+      if (isAMEL) totals.picTimeAMEL += parseFloat(m.pic || '0') || 0;
+      else totals.picTimeASEL += parseFloat(m.pic || '0') || 0;
+
       totals.xcDual += parseFloat(m.xcDual || '0') || 0;
       totals.xcSolo += parseFloat(m.xcSolo || '0') || 0;
       totals.xcPic += parseFloat(m.xcPic || '0') || 0;
@@ -113,8 +125,12 @@ export default function IACRASummary() {
 
     totals.totalTime += getPriorValue('totalFlight');
     totals.dualReceived += getPriorValue('dual');
+    // For prior values, we assume ASEL unless specified, but here we'll just add to ASEL for simplicity
+    // or we could add a way to specify class in prior hours. For now, let's just add to ASEL.
+    totals.dualReceivedASEL += getPriorValue('dual');
     totals.soloTime += getPriorValue('solo');
     totals.picTime += getPriorValue('pic');
+    totals.picTimeASEL += getPriorValue('pic');
     totals.xcDual += getPriorValue('xcDual');
     totals.xcSolo += getPriorValue('xcSolo');
     totals.xcPic += getPriorValue('xcPic');
@@ -530,9 +546,9 @@ export default function IACRASummary() {
           <h2 className="text-[#1a3a8c] text-center font-bold text-sm mb-4 uppercase">Class Hours</h2>
           <div className="grid grid-cols-4 border-t border-l border-black">
             {/* Row 1 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL PIC: <span className="font-mono font-bold">{totals.picTime.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL PIC: <span className="font-mono font-bold">{totals.picTimeASEL.toFixed(1)}</span></div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES PIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL PIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL PIC: <span className="font-mono font-bold">{totals.picTimeAMEL.toFixed(1)}</span></div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES PIC:</div>
             {/* Row 2 */}
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL SIC:</div>
@@ -540,9 +556,9 @@ export default function IACRASummary() {
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL SIC:</div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES SIC:</div>
             {/* Row 3 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceived.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceivedASEL.toFixed(1)}</span></div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES Instruct Rcvd:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL Instruct Rcvd:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceivedAMEL.toFixed(1)}</span></div>
             <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES Instruct Rcvd:</div>
             {/* Row 4 */}
             <div className="border-b border-r border-black p-1 text-[11px]">Rotorcraft - HEL:</div>

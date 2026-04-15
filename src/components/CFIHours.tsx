@@ -13,6 +13,67 @@ export default function CFIHours() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const runBackfill = async () => {
+      // Reset flag for new fields
+      if (!localStorage.getItem('cfi_hours_v2_reset')) {
+        localStorage.removeItem('cfi_hours_backfilled');
+        localStorage.setItem('cfi_hours_v2_reset', 'true');
+      }
+
+      if (localStorage.getItem('cfi_hours_backfilled')) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Check if cfi_hours has any records for this user
+      const { count, error: countError } = await supabase
+        .from('cfi_hours')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+
+      if (countError) return;
+
+      if (count === 0) {
+        // Fetch all lessons where dual > 0
+        const { data: lessons, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('user_id', session.user.id);
+
+        if (lessonsError || !lessons) return;
+
+        const cfiEntries = lessons
+          .filter(l => parseFloat(l.meta?.dual || '0') > 0)
+          .map(lesson => ({
+            user_id: session.user.id,
+            lesson_id: lesson.id,
+            student_name: lesson.student_name,
+            date: lesson.meta?.date || lesson.saved_at,
+            aircraft: lesson.meta?.aircraft || '',
+            aircraft_model: lesson.meta?.aircraftModel || '',
+            route: lesson.meta?.route || '',
+            total_flight: parseFloat(lesson.meta?.totalFlight || '0') || 0,
+            dual_given: parseFloat(lesson.meta?.dual || '0') || 0,
+            night_dual: parseFloat(lesson.meta?.nightDual || '0') || 0,
+            instrument_given: parseFloat(lesson.meta?.simInst || '0') || 0,
+            day_landings: parseInt(lesson.meta?.cfiDayLandings || '0') || 0,
+            night_landings: parseInt(lesson.meta?.cfiNightLandings || '0') || 0,
+            xc_pic: parseFloat(lesson.meta?.xcDual || '0') || 0,
+            ratp_xc: parseFloat(lesson.meta?.ratpXCTime || '0') || 0,
+            ratp_xc_eligible: lesson.meta?.ratpXCEligible || false,
+            rating_code: lesson.meta?.rating_code || 'ppl'
+          }));
+
+        if (cfiEntries.length > 0) {
+          await supabase.from('cfi_hours').upsert(cfiEntries, { onConflict: 'lesson_id' });
+          fetchEntries(); // Refresh the list
+        }
+      }
+
+      localStorage.setItem('cfi_hours_backfilled', 'true');
+    };
+
+    runBackfill();
     fetchEntries();
   }, []);
 
@@ -41,6 +102,9 @@ export default function CFIHours() {
     instrumentGiven: entries.reduce((sum, e) => sum + (parseFloat(e.instrument_given) || 0), 0),
     dayLandings: entries.reduce((sum, e) => sum + (parseInt(e.day_landings) || 0), 0),
     nightLandings: entries.reduce((sum, e) => sum + (parseInt(e.night_landings) || 0), 0),
+    xcPic: entries.reduce((sum, e) => sum + (parseFloat(e.xc_pic) || 0), 0),
+    ratpXc: entries.reduce((sum, e) => sum + (parseFloat(e.ratp_xc) || 0), 0),
+    multiEngine: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.total_flight) || 0) : 0), 0),
   };
 
   // Currency calculations
@@ -94,6 +158,7 @@ export default function CFIHours() {
       row[5] = e.aircraft || '';
       row[11] = e.night_landings || '';
       row[12] = e.day_landings || '';
+      row[13] = e.xc_pic || '';
       row[14] = e.night_dual || '';
       row[16] = e.instrument_given || '';
       row[18] = ''; // Dual Received blank for CFI
@@ -136,29 +201,44 @@ export default function CFIHours() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {[
-          { label: 'Total Flight Time', value: stats.totalFlight.toFixed(1), unit: 'hrs' },
-          { label: 'Total Dual Given', value: stats.totalDual.toFixed(1), unit: 'hrs' },
-          { label: 'Night Instruction', value: stats.nightDual.toFixed(1), unit: 'hrs' },
-          { label: 'Instrument Given', value: stats.instrumentGiven.toFixed(1), unit: 'hrs' },
-          { label: 'Day Landings', value: stats.dayLandings, unit: 'ldg' },
-          { label: 'Night Landings', value: stats.nightLandings, unit: 'ldg' },
-        ].map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="bg-white p-4 rounded-xl border border-[#dde3ec] shadow-sm"
-          >
-            <div className="text-[10px] font-bold uppercase tracking-widest text-[#64748b] mb-1">{stat.label}</div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-[#1a3a5c]">{stat.value}</span>
-              <span className="text-[10px] font-mono text-[#94a3b8]">{stat.unit}</span>
-            </div>
-          </motion.div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+      {[
+        { label: 'Total Flight Time', value: stats.totalFlight.toFixed(1), unit: 'hrs' },
+        { label: 'Total Dual Given', value: stats.totalDual.toFixed(1), unit: 'hrs' },
+        { label: 'Cross Country PIC', value: stats.xcPic.toFixed(1), unit: 'hrs' },
+        { 
+          label: 'R-ATP Eligible XC', 
+          value: stats.ratpXc.toFixed(1), 
+          unit: 'hrs',
+          badge: 'R-ATP'
+        },
+        { label: 'Multi Engine', value: stats.multiEngine.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+        { label: 'Night Instruction', value: stats.nightDual.toFixed(1), unit: 'hrs' },
+        { label: 'Instrument Given', value: stats.instrumentGiven.toFixed(1), unit: 'hrs' },
+        { label: 'Day Landings', value: stats.dayLandings, unit: 'ldg' },
+        { label: 'Night Landings', value: stats.nightLandings, unit: 'ldg' },
+      ].map((stat, i) => (
+        <motion.div
+          key={stat.label}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.05 }}
+          className="bg-white p-4 rounded-xl border border-[#dde3ec] shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-[#64748b]">{stat.label}</div>
+            {stat.badge && (
+              <span className="text-[8px] font-bold bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                {stat.badge}
+              </span>
+            )}
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-bold text-[#1a3a5c]">{stat.value}</span>
+            <span className="text-[10px] font-mono text-[#94a3b8]">{stat.unit}</span>
+          </div>
+        </motion.div>
+      ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -234,6 +314,8 @@ export default function CFIHours() {
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Route</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Total</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Dual</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">XC PIC</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">R-ATP XC</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Night</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Inst</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Ldg</th>
@@ -267,6 +349,15 @@ export default function CFIHours() {
                       </td>
                       <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b]">{parseFloat(e.total_flight).toFixed(1)}</td>
                       <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.dual_given).toFixed(1)}</td>
+                      <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-mono text-[#475569]">{parseFloat(e.ratp_xc || 0).toFixed(1)}</span>
+                          {e.ratp_xc_eligible && (
+                            <span className="text-[7px] font-bold bg-[#1a3a5c] text-white px-1 py-0.5 rounded uppercase tracking-tighter">R-ATP</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.night_dual).toFixed(1)}</td>
                       <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.instrument_given).toFixed(1)}</td>
                       <td className="px-4 py-3">
@@ -282,6 +373,8 @@ export default function CFIHours() {
                     <td colSpan={4} className="px-4 py-3 text-[10px] uppercase tracking-widest text-[#64748b]">Totals</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalFlight.toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalDual.toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.xcPic.toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.ratpXc.toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.nightDual.toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.instrumentGiven.toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.dayLandings}D/{stats.nightLandings}N</td>
