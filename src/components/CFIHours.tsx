@@ -14,14 +14,6 @@ export default function CFIHours() {
 
   useEffect(() => {
     const runBackfill = async () => {
-      // Reset flag for new fields
-      if (!localStorage.getItem('cfi_hours_v2_reset')) {
-        localStorage.removeItem('cfi_hours_backfilled');
-        localStorage.setItem('cfi_hours_v2_reset', 'true');
-      }
-
-      if (localStorage.getItem('cfi_hours_backfilled')) return;
-
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
@@ -69,8 +61,6 @@ export default function CFIHours() {
           fetchEntries(); // Refresh the list
         }
       }
-
-      localStorage.setItem('cfi_hours_backfilled', 'true');
     };
 
     runBackfill();

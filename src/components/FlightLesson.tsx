@@ -368,7 +368,7 @@ export default function FlightLesson() {
           .select('aircraft_model, aircraft_icao, aircraft_class')
           .eq('user_id', session.user.id)
           .eq('tail_number', meta.aircraft.toUpperCase().trim())
-          .single();
+          .maybeSingle();
 
         if (data && !error) {
           setMeta(prev => ({
