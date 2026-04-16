@@ -66,6 +66,8 @@ export interface Lesson {
   grades: Record<string, Grade>;
   notes: Record<string, string>;
   saved_at: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface PassedRating {

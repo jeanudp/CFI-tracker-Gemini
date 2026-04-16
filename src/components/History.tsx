@@ -6,7 +6,7 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
 
@@ -88,8 +88,10 @@ export default function History() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [groundExpanded, setGroundExpanded] = useState(false);
   const [flightExpanded, setFlightExpanded] = useState(false);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
+  const [archivedLessons, setArchivedLessons] = useState<Lesson[]>([]);
   const [isFlightLogOpen, setIsFlightLogOpen] = useState(false);
   const [isACSCoverageOpen, setIsACSCoverageOpen] = useState(false);
   const [isHoursSummaryOpen, setIsHoursSummaryOpen] = useState(false);
@@ -234,17 +236,9 @@ export default function History() {
         </div>
         <button
           type="button"
-          onPointerDown={async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (!window.confirm('Delete this lesson? This cannot be undone.')) return;
-            const { error } = await supabase.from('lessons').delete().eq('id', lesson.id);
-            if (error) { window.alert('Delete failed: ' + error.message); return; }
-            setLessons((prev: any[]) => prev.filter((l: any) => l.id !== lesson.id));
-            if (selectedLessonId === lesson.id) setSelectedLessonId(null);
-          }}
+          onPointerDown={(e) => handleDeleteLesson(e, lesson.id, lesson.label)}
           className="shrink-0 mt-1 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-          title="Delete lesson"
+          title="Archive lesson"
         >
           <Trash2 size={15} />
         </button>
@@ -256,8 +250,19 @@ export default function History() {
     setLoading(true);
     setError(null);
     try {
-      const { data: lessonsData, error: lessonsError } = await supabase.from('lessons').select('*').order('saved_at', { ascending: false });
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('lessons')
+        .select('*')
+        .is('deleted_at', null)
+        .order('saved_at', { ascending: false });
       if (lessonsError) throw lessonsError;
+
+      const { data: archivedData } = await supabase
+        .from('lessons')
+        .select('*')
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+      setArchivedLessons(archivedData || []);
 
       const { data: manualData, error: manualError } = await supabase.from('manual_hours').select('*');
       if (manualError) throw manualError;
@@ -281,18 +286,51 @@ export default function History() {
     }
   };
 
-  const handleDeleteLesson = async (e: React.MouseEvent, lessonId: string) => {
+  const handleDeleteLesson = async (e: React.PointerEvent, lessonId: string, lessonLabel: string) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!window.confirm('Delete this lesson? This cannot be undone.')) return;
-    try {
-      const { error } = await supabase.from('lessons').delete().eq('id', lessonId);
-      if (error) throw error;
-      setLessons(prev => prev.filter(l => l.id !== lessonId));
-      if (selectedLesson?.id === lessonId) setSelectedLessonId(null);
-    } catch (err: any) {
-      window.alert('Failed to delete: ' + err.message);
-    }
+    if (!window.confirm(`Archive lesson ${lessonLabel}? You can restore it later from the Archived Lessons section.`)) return;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { error } = await supabase
+      .from('lessons')
+      .update({ 
+        deleted_at: new Date().toISOString(),
+        deleted_by: session.user.email
+      })
+      .eq('id', lessonId);
+      
+    if (error) { window.alert('Archive failed: ' + error.message); return; }
+    setLessons(prev => prev.filter(l => l.id !== lessonId));
+    if (selectedLessonId === lessonId) setSelectedLessonId(null);
+    fetchData();
+  };
+
+  const handleRestoreLesson = async (lessonId: string) => {
+    const { error } = await supabase
+      .from('lessons')
+      .update({ 
+        deleted_at: null,
+        deleted_by: null
+      })
+      .eq('id', lessonId);
+      
+    if (error) { window.alert('Failed to restore lesson: ' + error.message); return; }
+    fetchData();
+  };
+
+  const handlePermanentDeleteLesson = async (lessonId: string, lessonLabel: string) => {
+    if (!window.confirm(`Permanently delete ${lessonLabel}? This cannot be undone.`)) return;
+    
+    const { error } = await supabase
+      .from('lessons')
+      .delete()
+      .eq('id', lessonId);
+      
+    if (error) { window.alert('Failed to permanently delete: ' + error.message); return; }
+    fetchData();
   };
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
@@ -881,6 +919,61 @@ export default function History() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Archived Lessons Section */}
+                <div className="mt-8 border-t border-[#dde3ec]">
+                  <button 
+                    onClick={() => setArchivedExpanded(!archivedExpanded)}
+                    className="w-full px-4 py-3 flex justify-between items-center hover:bg-[#f8fafc] transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Archive size={14} className="text-[#6b7280]" />
+                      <span className="text-[10px] font-black text-[#6b7280] uppercase tracking-widest">Archived Lessons ({archivedLessons.length})</span>
+                    </div>
+                    <ChevronRight size={14} className={cn("text-[#6b7280] transition-transform", archivedExpanded && "rotate-90")} />
+                  </button>
+                  <AnimatePresence>
+                    {archivedExpanded && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden divide-y divide-[#f1f5f9] bg-[#f8fafc]"
+                      >
+                        {archivedLessons.length === 0 ? (
+                          <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No archived lessons.</div>
+                        ) : (
+                          archivedLessons.map(l => (
+                            <div key={l.id} className="p-3 pl-6 group">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-[#64748b]">{l.label}</span>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={() => handleRestoreLesson(l.id)}
+                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                    title="Restore lesson"
+                                  >
+                                    <RotateCcw size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => handlePermanentDeleteLesson(l.id, l.label)}
+                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Permanently delete"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="text-[10px] text-[#94a3b8]">
+                                Archived on {l.deleted_at ? formatDate(l.deleted_at) : '—'}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             )}
           </div>
