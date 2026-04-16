@@ -193,8 +193,17 @@ export default function CFIHours() {
   const isAmelNightCurrent = amelNightLandings >= 3;
 
   const instrumentRecent = entries.filter(h => new Date(h.date) >= sixMonthsAgo);
-  const totalApproaches = instrumentRecent.reduce((sum, h) => sum + (parseInt(h.approach_count || '0') || 0), 0);
-  const holdPerformed = instrumentRecent.some(h => h.hold_performed === true);
+  const totalApproaches = instrumentRecent.reduce((sum, h) => {
+    // If cfi_approach_count is available (even if 0), use it. 
+    // Otherwise fallback to approach_count (for backfilled data)
+    const count = h.cfi_approach_count !== undefined 
+      ? (parseInt(h.cfi_approach_count) || 0) 
+      : (parseInt(h.approach_count) || 0);
+    return sum + count;
+  }, 0);
+  const holdPerformed = instrumentRecent.some(h => 
+    h.cfi_hold_performed === true || (h.cfi_hold_performed === undefined && h.hold_performed === true)
+  );
   const isIFRCurrent = totalApproaches >= 6 && holdPerformed;
 
   // Flight Review Logic
@@ -260,12 +269,16 @@ export default function CFIHours() {
       label: 'IFR Currency', 
       ref: '§61.57(c)', 
       current: isIFRCurrent, 
-      show: entries.some(h => (parseInt(h.approach_count) || 0) > 0),
+      show: true, 
       details: [
         { label: 'Approaches (6m)', value: totalApproaches, target: 6 },
         { label: 'Holding Performed', value: holdPerformed ? 1 : 0, target: 1 },
       ],
-      lastDate: instrumentRecent.find(h => (parseInt(h.approach_count) || 0) > 0 || h.hold_performed)?.date || 'None',
+      lastDate: instrumentRecent.find(h => 
+        (parseInt(h.cfi_approach_count) || 0) > 0 || 
+        h.cfi_hold_performed || 
+        (h.cfi_approach_count === undefined && ((parseInt(h.approach_count) || 0) > 0 || h.hold_performed))
+      )?.date || 'None',
       expiryDate: instrumentRecent[0] ? new Date(new Date(instrumentRecent[0].date).setMonth(new Date(instrumentRecent[0].date).getMonth() + 6)).toISOString().split('T')[0] : null,
       customMsg: !isIFRCurrent ? "IFR currency lapsed. Complete an IPC with a CFII before acting as PIC under IFR." : null
     }

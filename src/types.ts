@@ -45,6 +45,10 @@ export interface LessonMeta {
   approachCount?: string;
   approachTypes?: string;
   holdPerformed?: boolean;
+  cfiFlewApproaches?: boolean;
+  cfiApproachCount?: string;
+  cfiApproachTypes?: string;
+  cfiHoldPerformed?: boolean;
   cfiDidLandings?: boolean;
   cfiDayLandings?: string;
   cfiNightLandings?: string;
