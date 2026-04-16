@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ALL_ACS, RATINGS } from '../constants';
+import { ALL_ACS, ALL_GROUND_ACS, RATINGS } from '../constants';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion } from 'motion/react';
 import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, AlertCircle, HelpCircle, Loader2, ChevronRight } from 'lucide-react';
@@ -94,12 +94,16 @@ export default function GroundLesson() {
     });
   }, [navigate]);
 
-  const groundTasks = rating ? ALL_ACS[rating.code][0].tasks
+  const acsData = rating?.code === 'ir'
+    ? (ALL_GROUND_ACS['ir'] || ALL_ACS['ppl'])
+    : (ALL_ACS[rating?.code || 'ppl'] || ALL_ACS['ppl']);
+
+  const groundTasks = rating ? acsData[0].tasks
     .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
     .map((task, ti) => ({
       ...task,
       id: `0_${ti}`,
-      area: ALL_ACS[rating.code][0].area,
+      area: acsData[0].area,
       ai: 0,
       ti
     })) : [];

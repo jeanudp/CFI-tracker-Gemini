@@ -5,7 +5,7 @@ import { ALL_ACS, RATINGS } from '../constants';
 import { AIRCRAFT_MODELS, isAMEL } from '../constants/aircraft';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, ChevronLeft, Loader2, Check, Search, X, Plus, ClipboardList, Clock } from 'lucide-react';
+import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, ChevronLeft, Loader2, Check, Search, X, Plus, ClipboardList, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ACSStandardsModal from './ACSStandardsModal';
 
@@ -98,7 +98,7 @@ export default function FlightLesson() {
   });
   const [approachSearch, setApproachSearch] = useState('');
   const [soloGroupExpanded, setSoloGroupExpanded] = useState(false);
-  const [isLogbookOpen, setIsLogbookOpen] = useState(false);
+  const [isFlightLogOpen, setIsFlightLogOpen] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
@@ -118,6 +118,8 @@ export default function FlightLesson() {
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [stepValidationError, setStepValidationError] = useState<string | null>(null);
+  const [nightWarning, setNightWarning] = useState(false);
+  const [nightWarningDismissed, setNightWarningDismissed] = useState(false);
   const navigate = useNavigate();
 
   const variants = {
@@ -191,7 +193,7 @@ export default function FlightLesson() {
       meNight: '',
     });
     setFillState('');
-    setIsLogbookOpen(false);
+    setIsFlightLogOpen(true);
     
     localStorage.removeItem('faa_ground_grades');
     localStorage.removeItem('faa_ground_notes');
@@ -229,7 +231,7 @@ export default function FlightLesson() {
       setLessonNum(editLesson.lesson_num || 1);
       // Auto-open logbook if any field is filled
       const hasLogData = Object.entries(editLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v);
-      if (hasLogData) setIsLogbookOpen(true);
+      if (hasLogData) setIsFlightLogOpen(true);
       // Clear edit lesson from storage
       localStorage.removeItem('faa_edit_lesson');
     } else {
@@ -345,6 +347,11 @@ export default function FlightLesson() {
     if (field === 'aircraftModel') {
       const detectedClass = isAMEL(val) ? 'AMEL' : 'ASEL';
       newMeta.aircraftClass = detectedClass;
+    }
+
+    if (['night', 'ldgNight', 'nightDual', 'nightPic', 'nightTakeoffs', 'meNight', 'nightSolo'].includes(field)) {
+      setNightWarning(false);
+      setNightWarningDismissed(false);
     }
 
     setMeta(newMeta);
@@ -523,6 +530,22 @@ export default function FlightLesson() {
     if (!studentName) return;
     setSaving(true);
 
+    const hasNightActivity = 
+      parseInt(meta.ldgNight || '0') > 0 ||
+      parseFloat(meta.nightDual || '0') > 0 ||
+      parseFloat(meta.nightPic || '0') > 0 ||
+      parseFloat(meta.nightSolo || '0') > 0 ||
+      parseInt(meta.nightTakeoffs || '0') > 0 ||
+      parseFloat(meta.meNight || '0') > 0;
+
+    const hasNightTime = parseFloat(meta.night || '0') > 0;
+
+    if (hasNightActivity && !hasNightTime && !nightWarningDismissed) {
+      setNightWarning(true);
+      setSaving(false);
+      return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       alert('Session expired — please sign in again.');
@@ -633,10 +656,10 @@ export default function FlightLesson() {
       alert('Save failed: ' + error.message);
     } else {
       // Auto-save CFI hours if dual instruction was given
-      if (parseFloat(meta.dual || '0') > 0 && savedLessonId) {
+      if (parseFloat(meta.dual || '0') > 0 && (editId || savedLessonId)) {
         const cfiRecord = {
           user_id: session.user.id,
-          lesson_id: savedLessonId,
+          lesson_id: editId || savedLessonId,
           student_name: studentName,
           date: meta.date,
           aircraft: meta.aircraft || '',
@@ -646,18 +669,28 @@ export default function FlightLesson() {
           dual_given: parseFloat(meta.dual || '0') || 0,
           night_dual: parseFloat(meta.nightDual || '0') || 0,
           instrument_given: parseFloat(meta.simInst || '0') || 0,
-          day_landings: parseInt(meta.cfiDayLandings || '0') || 0,
-          night_landings: parseInt(meta.cfiNightLandings || '0') || 0,
+          day_landings: meta.cfiDidLandings ? parseInt(meta.cfiDayLandings || '0') || 0 : 0,
+          night_landings: meta.cfiDidLandings ? parseInt(meta.cfiNightLandings || '0') || 0 : 0,
           xc_pic: parseFloat(meta.xcDual || '0') || 0,
           ratp_xc: parseFloat(meta.ratpXCTime || '0') || 0,
           ratp_xc_eligible: meta.ratpXCEligible || false,
           aircraft_class: meta.aircraftClass || 'ASEL',
-          rating_code: rating?.code || 'ppl'
+          rating_code: meta.rating_code || 'ppl',
+          approach_count: parseInt(meta.approachCount || '0') || 0,
+          hold_performed: meta.holdPerformed || false
         };
 
         await supabase
           .from('cfi_hours')
           .upsert(cfiRecord, { onConflict: 'lesson_id' });
+      }
+
+      // Handle the case where dual time was previously greater than zero but has been edited to zero
+      if (parseFloat(meta.dual || '0') === 0 && editId) {
+        await supabase
+          .from('cfi_hours')
+          .delete()
+          .eq('lesson_id', editId);
       }
 
       localStorage.removeItem(`faa_current_flight_lesson_${rating?.code}`);
@@ -1053,19 +1086,19 @@ export default function FlightLesson() {
             <>
               <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
         <div
-          onClick={() => setIsLogbookOpen(!isLogbookOpen)}
+          onClick={() => setIsFlightLogOpen(!isFlightLogOpen)}
           className="p-4 border-b border-[#dde3ec] flex items-center justify-between cursor-pointer hover:bg-[#f4f5f7] transition-all"
         >
           <div className="flex items-center gap-3">
-            <ChevronRight size={14} className={cn("text-[#6b7280] transition-transform", isLogbookOpen && "rotate-90")} />
+            <ChevronRight size={14} className={cn("text-[#6b7280] transition-transform", isFlightLogOpen && "rotate-90")} />
             <span className="text-sm font-bold text-[#1c2333]">Flight Time Log — IACRA Compatible</span>
           </div>
           <div className="text-[10px] text-[#6b7280] font-medium uppercase tracking-wider">
-            FAA logbook fields — Part 61 <span className="italic ml-2">{isLogbookOpen ? 'click to collapse' : 'click to expand'}</span>
+            FAA logbook fields — Part 61 <span className="italic ml-2">{isFlightLogOpen ? 'click to collapse' : 'click to expand'}</span>
           </div>
         </div>
         <AnimatePresence>
-          {isLogbookOpen && (
+          {isFlightLogOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -1705,7 +1738,7 @@ export default function FlightLesson() {
                 </div>
 
                 {/* Group 5 — Night Flying */}
-                <div className="bg-white">
+                <div className="bg-white" id="night-group">
                   <button
                     onClick={() => setExpandedGroups(prev => ({ ...prev, night: !prev.night }))}
                     className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-all"
@@ -2302,6 +2335,51 @@ export default function FlightLesson() {
                 >
                   Save Aircraft
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {nightWarning && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-yellow-200"
+            >
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={32} className="text-yellow-600" />
+                </div>
+                <h3 className="text-lg font-bold text-[#1a3a5c] mb-2">Night time required</h3>
+                <p className="text-sm text-[#6b7280] leading-relaxed mb-6">
+                  You have logged night activity but Night Total Time is empty. Please enter the total night flight time before saving.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      setExpandedGroups(prev => ({ ...prev, night: true }));
+                      setNightWarning(false);
+                      setTimeout(() => {
+                        document.getElementById('night-group')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 100);
+                    }}
+                    className="w-full py-3 bg-[#1a3a5c] text-white rounded-xl font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md"
+                  >
+                    Go to Night Fields
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNightWarning(false);
+                      setNightWarningDismissed(true);
+                    }}
+                    className="w-full py-3 bg-[#f3f4f6] text-[#6b7280] rounded-xl font-bold text-sm hover:bg-[#e5e7eb] transition-all"
+                  >
+                    Dismiss
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

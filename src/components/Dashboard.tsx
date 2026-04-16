@@ -118,7 +118,6 @@ export default function Dashboard() {
   const [undoSuccess, setUndoSuccess] = useState<string | null>(null);
   const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
   const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
-  const [isSavingIfrTracking, setIsSavingIfrTracking] = useState(false);
 
   const navigate = useNavigate();
 
@@ -628,40 +627,6 @@ export default function Dashboard() {
     return { count: studentLessons.length, s, n, hrs: hrs.toFixed(1) };
   };
 
-  const handleToggleIfrTracking = async (studentName: string, currentVal: boolean) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    setIsSavingIfrTracking(true);
-    try {
-      const key = `ifr_currency_tracking_${studentName}`;
-      const existing = manualHours.find(m => m.student_name === studentName && m.field_key === key);
-      const newVal = !currentVal;
-
-      if (existing) {
-        await supabase
-          .from('manual_hours')
-          .update({ total: newVal ? 1 : 0, updated_at: new Date().toISOString() })
-          .eq('id', existing.id);
-      } else {
-        await supabase
-          .from('manual_hours')
-          .insert({
-            user_id: session.user.id,
-            student_name: studentName,
-            field_key: key,
-            entries: [{ val: newVal ? 1 : 0, date: new Date().toISOString() }],
-            total: newVal ? 1 : 0
-          });
-      }
-      await fetchData();
-    } catch (err) {
-      console.error('Error toggling IFR tracking:', err);
-    } finally {
-      setIsSavingIfrTracking(false);
-    }
-  };
-
   const selectedStats = selectedStudent ? getStudentStats(selectedStudent) : null;
 
   const getTaskName = (ratingCode: string, taskId: string) => {
@@ -1093,9 +1058,7 @@ export default function Dashboard() {
                         const hasEverLoggedApproaches = studentLessons.some(l => (parseInt(l.meta?.approachCount || '0') || 0) > 0);
                         const totalApproaches = recentIFRLessons.reduce((sum, l) => sum + (parseInt(l.meta?.approachCount || '0') || 0), 0);
                         const holdPerformed = recentIFRLessons.some(l => l.meta?.holdPerformed === true);
-                        const ifrTrackingKey = `ifr_currency_tracking_${selectedStudent}`;
-                        const ifrTrackingVal = getManualValue(selectedStudent, ifrTrackingKey) === 1;
-                        const isIFRCurrent = totalApproaches >= 6 && holdPerformed && ifrTrackingVal;
+                        const isIFRCurrent = totalApproaches >= 6 && holdPerformed;
                         const lastIFRFlight = recentIFRLessons.find(l => (parseInt(l.meta?.approachCount || '0') || 0) > 0 || l.meta?.holdPerformed);
                         const ifrExpiryDate = lastIFRFlight ? new Date(new Date(lastIFRFlight.saved_at).setMonth(new Date(lastIFRFlight.saved_at).getMonth() + 6)) : null;
                         const ifrDaysUntilExpiry = ifrExpiryDate ? Math.ceil((ifrExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
@@ -1374,23 +1337,6 @@ export default function Dashboard() {
                                         <div className="flex items-center gap-1.5">
                                           {holdPerformed ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
                                         </div>
-                                      </div>
-                                      
-                                      <div className="flex items-center justify-between text-xs">
-                                        <span className="text-[#6b7280]">Intercepting and tracking</span>
-                                        <button
-                                          onClick={() => handleToggleIfrTracking(selectedStudent, ifrTrackingVal)}
-                                          disabled={isSavingIfrTracking}
-                                          className="flex items-center gap-2"
-                                        >
-                                          <div className={cn(
-                                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                                            ifrTrackingVal ? "bg-[#2d7a4f] border-[#2d7a4f]" : "bg-white border-[#dde3ec]"
-                                          )}>
-                                            {ifrTrackingVal && <CheckCircle size={10} className="text-white" />}
-                                          </div>
-                                          <span className="text-[10px] font-medium text-[#1c2333]">Completed within 6 months</span>
-                                        </button>
                                       </div>
 
                                       <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">

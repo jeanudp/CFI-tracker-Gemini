@@ -92,11 +92,17 @@ export default function History() {
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
   const [archivedLessons, setArchivedLessons] = useState<Lesson[]>([]);
-  const [isFlightLogOpen, setIsFlightLogOpen] = useState(false);
+  const [isFlightLogOpen, setIsFlightLogOpen] = useState(true);
   const [isACSCoverageOpen, setIsACSCoverageOpen] = useState(false);
   const [isHoursSummaryOpen, setIsHoursSummaryOpen] = useState(false);
   const [isFlightReqOpen, setIsFlightReqOpen] = useState(false);
   const [showFullTaskList, setShowFullTaskList] = useState(false);
+  const [cfiHoursPrompt, setCfiHoursPrompt] = useState<{
+    lessonId: string;
+    lessonLabel: string;
+    dualTime: number;
+    isPermanent?: boolean;
+  } | null>(null);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -152,7 +158,7 @@ export default function History() {
   };
 
   useEffect(() => {
-    setIsFlightLogOpen(false);
+    setIsFlightLogOpen(true);
   }, [selectedLessonId]);
 
   const handleSpecialLog = async (row: any, date: string, count: number) => {
@@ -286,9 +292,7 @@ export default function History() {
     }
   };
 
-  const handleDeleteLesson = async (e: React.PointerEvent, lessonId: string, lessonLabel: string) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const archiveLesson = async (lessonId: string, lessonLabel: string) => {
     if (!window.confirm(`Archive lesson ${lessonLabel}? You can restore it later from the Archived Lessons section.`)) return;
     
     const { data: { session } } = await supabase.auth.getSession();
@@ -308,6 +312,21 @@ export default function History() {
     fetchData();
   };
 
+  const handleDeleteLesson = async (e: React.PointerEvent, lessonId: string, lessonLabel: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const lesson = lessons.find(l => l.id === lessonId) || archivedLessons.find(l => l.id === lessonId);
+    const dualTime = parseFloat(lesson?.meta?.dual || '0') || 0;
+    
+    if (dualTime > 0) {
+      setCfiHoursPrompt({ lessonId, lessonLabel, dualTime });
+      return;
+    }
+    
+    await archiveLesson(lessonId, lessonLabel);
+  };
+
   const handleRestoreLesson = async (lessonId: string) => {
     const { error } = await supabase
       .from('lessons')
@@ -321,7 +340,7 @@ export default function History() {
     fetchData();
   };
 
-  const handlePermanentDeleteLesson = async (lessonId: string, lessonLabel: string) => {
+  const finishPermanentDelete = async (lessonId: string, lessonLabel: string) => {
     if (!window.confirm(`Permanently delete ${lessonLabel}? This cannot be undone.`)) return;
     
     const { error } = await supabase
@@ -331,6 +350,18 @@ export default function History() {
       
     if (error) { window.alert('Failed to permanently delete: ' + error.message); return; }
     fetchData();
+  };
+
+  const handlePermanentDeleteLesson = async (lessonId: string, lessonLabel: string) => {
+    const lesson = lessons.find(l => l.id === lessonId) || archivedLessons.find(l => l.id === lessonId);
+    const dualTime = parseFloat(lesson?.meta?.dual || '0') || 0;
+    
+    if (dualTime > 0) {
+      setCfiHoursPrompt({ lessonId, lessonLabel, dualTime, isPermanent: true });
+      return;
+    }
+    
+    await finishPermanentDelete(lessonId, lessonLabel);
   };
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
@@ -3015,6 +3046,70 @@ export default function History() {
           </div>
         )}
       </AnimatePresence>
+
+      {cfiHoursPrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setCfiHoursPrompt(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#fffbeb] rounded-xl flex items-center justify-center">
+                <Clock size={20} className="text-[#d97706]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#1e293b]">Keep CFI Hours?</h3>
+                <p className="text-[11px] text-[#64748b]">This lesson has {cfiHoursPrompt.dualTime.toFixed(1)} hours of dual instruction logged.</p>
+              </div>
+            </div>
+            <p className="text-xs text-[#475569] leading-relaxed">
+              Would you like to keep these hours in your CFI logbook? The flight was flown regardless of whether this lesson record is {cfiHoursPrompt.isPermanent ? 'permanently deleted' : 'archived'}.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={async () => {
+                  const id = cfiHoursPrompt.lessonId;
+                  const label = cfiHoursPrompt.lessonLabel;
+                  const isPerm = cfiHoursPrompt.isPermanent;
+                  setCfiHoursPrompt(null);
+                  if (isPerm) {
+                    await finishPermanentDelete(id, label);
+                  } else {
+                    await archiveLesson(id, label);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-[#1a3a5c] text-white text-xs font-bold rounded-xl hover:bg-[#2a5a8c] transition-all"
+              >
+                Keep Hours
+              </button>
+              <button
+                onClick={async () => {
+                  const id = cfiHoursPrompt.lessonId;
+                  const label = cfiHoursPrompt.lessonLabel;
+                  const isPerm = cfiHoursPrompt.isPermanent;
+                  await supabase
+                    .from('cfi_hours')
+                    .delete()
+                    .eq('lesson_id', id);
+                  setCfiHoursPrompt(null);
+                  if (isPerm) {
+                    await finishPermanentDelete(id, label);
+                  } else {
+                    await archiveLesson(id, label);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-white text-[#64748b] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
+              >
+                Remove Hours
+              </button>
+            </div>
+            <button
+              onClick={() => setCfiHoursPrompt(null)}
+              className="w-full py-2 text-[10px] text-[#94a3b8] hover:text-[#64748b] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

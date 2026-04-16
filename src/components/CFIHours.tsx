@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { motion } from 'motion/react';
-import { GraduationCap, Search, Calendar, Clock, Plane, MapPin, Download, ChevronRight, Loader2, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  GraduationCap, Search, Calendar, Clock, Plane, MapPin, 
+  Download, ChevronRight, Loader2, Info, Shield, ChevronDown, 
+  Check, X, Pencil, AlertTriangle 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
@@ -10,6 +14,12 @@ export default function CFIHours() {
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
+  const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
+  const [flightReviewData, setFlightReviewData] = useState<any>(null);
+  const [isEditingFlightReview, setIsEditingFlightReview] = useState(false);
+  const [newFlightReviewDate, setNewFlightReviewDate] = useState('');
+  const [isSavingFlightReview, setIsSavingFlightReview] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,55 +27,101 @@ export default function CFIHours() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Check if cfi_hours has any records for this user
-      const { count, error: countError } = await supabase
-        .from('cfi_hours')
-        .select('*', { count: 'exact', head: true })
+      // Fetch flight review date
+      fetchFlightReviewDate(session.user.id);
+
+      // Fetch all lessons where dual > 0
+      const { data: lessons, error: lessonsError } = await supabase
+        .from('lessons')
+        .select('*')
         .eq('user_id', session.user.id);
 
-      if (countError) return;
+      if (lessonsError || !lessons) return;
 
-      if (count === 0) {
-        // Fetch all lessons where dual > 0
-        const { data: lessons, error: lessonsError } = await supabase
-          .from('lessons')
-          .select('*')
-          .eq('user_id', session.user.id);
+      const cfiEntries = lessons
+        .filter(l => parseFloat(l.meta?.dual || '0') > 0)
+        .map(lesson => ({
+          user_id: session.user.id,
+          lesson_id: lesson.id,
+          student_name: lesson.student_name,
+          date: lesson.meta?.date || lesson.saved_at,
+          aircraft: lesson.meta?.aircraft || '',
+          aircraft_model: lesson.meta?.aircraftModel || '',
+          route: lesson.meta?.route || '',
+          total_flight: parseFloat(lesson.meta?.totalFlight || '0') || 0,
+          dual_given: parseFloat(lesson.meta?.dual || '0') || 0,
+          night_dual: parseFloat(lesson.meta?.nightDual || '0') || 0,
+          instrument_given: parseFloat(lesson.meta?.simInst || '0') || 0,
+          day_landings: parseInt(lesson.meta?.cfiDayLandings || '0') || 0,
+          night_landings: parseInt(lesson.meta?.cfiNightLandings || '0') || 0,
+          xc_pic: parseFloat(lesson.meta?.xcDual || '0') || 0,
+          ratp_xc: parseFloat(lesson.meta?.ratpXCTime || '0') || 0,
+          ratp_xc_eligible: lesson.meta?.ratpXCEligible || false,
+          rating_code: lesson.meta?.rating_code || 'ppl',
+          approach_count: parseInt(lesson.meta?.approachCount || '0') || 0,
+          hold_performed: lesson.meta?.holdPerformed || false
+        }));
 
-        if (lessonsError || !lessons) return;
-
-        const cfiEntries = lessons
-          .filter(l => parseFloat(l.meta?.dual || '0') > 0)
-          .map(lesson => ({
-            user_id: session.user.id,
-            lesson_id: lesson.id,
-            student_name: lesson.student_name,
-            date: lesson.meta?.date || lesson.saved_at,
-            aircraft: lesson.meta?.aircraft || '',
-            aircraft_model: lesson.meta?.aircraftModel || '',
-            route: lesson.meta?.route || '',
-            total_flight: parseFloat(lesson.meta?.totalFlight || '0') || 0,
-            dual_given: parseFloat(lesson.meta?.dual || '0') || 0,
-            night_dual: parseFloat(lesson.meta?.nightDual || '0') || 0,
-            instrument_given: parseFloat(lesson.meta?.simInst || '0') || 0,
-            day_landings: parseInt(lesson.meta?.cfiDayLandings || '0') || 0,
-            night_landings: parseInt(lesson.meta?.cfiNightLandings || '0') || 0,
-            xc_pic: parseFloat(lesson.meta?.xcDual || '0') || 0,
-            ratp_xc: parseFloat(lesson.meta?.ratpXCTime || '0') || 0,
-            ratp_xc_eligible: lesson.meta?.ratpXCEligible || false,
-            rating_code: lesson.meta?.rating_code || 'ppl'
-          }));
-
-        if (cfiEntries.length > 0) {
-          await supabase.from('cfi_hours').upsert(cfiEntries, { onConflict: 'lesson_id' });
-          fetchEntries(); // Refresh the list
-        }
+      if (cfiEntries.length > 0) {
+        await supabase.from('cfi_hours').upsert(cfiEntries, { onConflict: 'lesson_id' });
+        fetchEntries(); // Refresh the list
       }
     };
 
     runBackfill();
     fetchEntries();
   }, []);
+
+  const fetchFlightReviewDate = async (userId: string) => {
+    const { data } = await supabase
+      .from('manual_hours')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('field_key', 'cfi_flight_review_date')
+      .maybeSingle();
+    
+    setFlightReviewData(data);
+    if (data?.entries?.[0]?.completedDate) {
+      setNewFlightReviewDate(data.entries[0].completedDate);
+    }
+  };
+
+  const saveFlightReviewDate = async () => {
+    if (!newFlightReviewDate) return;
+    setIsSavingFlightReview(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const entry = { val: 1, date: new Date().toLocaleDateString(), completedDate: newFlightReviewDate };
+
+    if (flightReviewData) {
+      const { error } = await supabase
+        .from('manual_hours')
+        .update({ entries: [entry], total: 1, updated_at: new Date().toISOString() })
+        .eq('id', flightReviewData.id);
+      if (!error) {
+        setFlightReviewData({ ...flightReviewData, entries: [entry] });
+        setIsEditingFlightReview(false);
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('manual_hours')
+        .insert({
+          user_id: session.user.id,
+          field_key: 'cfi_flight_review_date',
+          student_name: session.user.email,
+          entries: [entry],
+          total: 1
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        setFlightReviewData(data);
+        setIsEditingFlightReview(false);
+      }
+    }
+    setIsSavingFlightReview(false);
+  };
 
   const fetchEntries = async () => {
     setLoading(true);
@@ -111,6 +167,121 @@ export default function CFIHours() {
     const hours = Math.floor(decimal);
     const minutes = Math.round((decimal - hours) * 60);
     return `${hours}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // Passenger Currency Calculations
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  const recentASEL = entries.filter(h =>
+    (h.aircraft_class === 'ASEL' || !h.aircraft_class) &&
+    new Date(h.date) >= ninetyDaysAgo
+  );
+  const aselDayLandings = recentASEL.reduce((sum, h) => sum + (h.day_landings || 0), 0);
+  const aselDayTakeoffs = recentASEL.reduce((sum, h) => sum + (h.day_landings || 0), 0); // Assuming landings ~= takeoffs for simplification or if not tracked separately
+  const aselNightLandings = recentASEL.reduce((sum, h) => sum + (h.night_landings || 0), 0);
+  const isAselDayCurrent = aselDayLandings >= 3 && aselDayTakeoffs >= 3;
+  const isAselNightCurrent = aselNightLandings >= 3;
+
+  const recentAMEL = entries.filter(h =>
+    h.aircraft_class === 'AMEL' &&
+    new Date(h.date) >= ninetyDaysAgo
+  );
+  const amelDayLandings = recentAMEL.reduce((sum, h) => sum + (h.day_landings || 0), 0);
+  const amelNightLandings = recentAMEL.reduce((sum, h) => sum + (h.night_landings || 0), 0);
+  const isAmelDayCurrent = amelDayLandings >= 3;
+  const isAmelNightCurrent = amelNightLandings >= 3;
+
+  const instrumentRecent = entries.filter(h => new Date(h.date) >= sixMonthsAgo);
+  const totalApproaches = instrumentRecent.reduce((sum, h) => sum + (parseInt(h.approach_count || '0') || 0), 0);
+  const holdPerformed = instrumentRecent.some(h => h.hold_performed === true);
+  const isIFRCurrent = totalApproaches >= 6 && holdPerformed;
+
+  // Flight Review Logic
+  const flightReviewDate = flightReviewData?.entries?.[0]?.completedDate || null;
+  const frExpiryDate = flightReviewDate ? new Date(flightReviewDate) : null;
+  if (frExpiryDate) frExpiryDate.setMonth(frExpiryDate.getMonth() + 24);
+  const isFlightReviewCurrent = frExpiryDate ? new Date() < frExpiryDate : false;
+  const frDaysUntilExpiry = frExpiryDate ? 
+    Math.ceil((frExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+  const categories = [
+    { 
+      id: 'asel_day', 
+      label: 'Passenger Currency Day ASEL', 
+      ref: '§61.57(a)', 
+      current: isAselDayCurrent, 
+      show: entries.some(h => (h.aircraft_class === 'ASEL' || !h.aircraft_class)),
+      details: [
+        { label: 'Day Takeoffs (90d)', value: aselDayTakeoffs, target: 3 },
+        { label: 'Day Landings (90d)', value: aselDayLandings, target: 3 },
+      ],
+      lastDate: recentASEL[0]?.date || 'None',
+      expiryDate: recentASEL[0] ? new Date(new Date(recentASEL[0].date).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null
+    },
+    { 
+      id: 'asel_night', 
+      label: 'Passenger Currency Night ASEL', 
+      ref: '§61.57(b)', 
+      current: isAselNightCurrent, 
+      show: entries.some(h => (h.aircraft_class === 'ASEL' || !h.aircraft_class) && h.night_landings > 0),
+      details: [
+        { label: 'Night Landings (90d)', value: aselNightLandings, target: 3 },
+      ],
+      lastDate: recentASEL.find(h => h.night_landings > 0)?.date || 'None',
+      expiryDate: recentASEL.find(h => h.night_landings > 0) ? new Date(new Date(recentASEL.find(h => h.night_landings > 0).date).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null
+    },
+    { 
+      id: 'amel_day', 
+      label: 'Passenger Currency Day AMEL', 
+      ref: '§61.57(a)', 
+      current: isAmelDayCurrent, 
+      show: entries.some(h => h.aircraft_class === 'AMEL'),
+      details: [
+        { label: 'Day Landings (90d)', value: amelDayLandings, target: 3 },
+      ],
+      lastDate: recentAMEL[0]?.date || 'None',
+      expiryDate: recentAMEL[0] ? new Date(new Date(recentAMEL[0].date).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null
+    },
+    { 
+      id: 'amel_night', 
+      label: 'Passenger Currency Night AMEL', 
+      ref: '§61.57(b)', 
+      current: isAmelNightCurrent, 
+      show: entries.some(h => h.aircraft_class === 'AMEL' && h.night_landings > 0),
+      details: [
+        { label: 'Night Landings (90d)', value: amelNightLandings, target: 3 },
+      ],
+      lastDate: recentAMEL.find(h => h.night_landings > 0)?.date || 'None',
+      expiryDate: recentAMEL.find(h => h.night_landings > 0) ? new Date(new Date(recentAMEL.find(h => h.night_landings > 0).date).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null
+    },
+    { 
+      id: 'ifr', 
+      label: 'IFR Currency', 
+      ref: '§61.57(c)', 
+      current: isIFRCurrent, 
+      show: entries.some(h => (parseInt(h.approach_count) || 0) > 0),
+      details: [
+        { label: 'Approaches (6m)', value: totalApproaches, target: 6 },
+        { label: 'Holding Performed', value: holdPerformed ? 1 : 0, target: 1 },
+      ],
+      lastDate: instrumentRecent.find(h => (parseInt(h.approach_count) || 0) > 0 || h.hold_performed)?.date || 'None',
+      expiryDate: instrumentRecent[0] ? new Date(new Date(instrumentRecent[0].date).setMonth(new Date(instrumentRecent[0].date).getMonth() + 6)).toISOString().split('T')[0] : null,
+      customMsg: !isIFRCurrent ? "IFR currency lapsed. Complete an IPC with a CFII before acting as PIC under IFR." : null
+    }
+  ].filter(c => c.show);
+
+  const activeCurrencies = categories.filter(c => c.current).length + (isFlightReviewCurrent ? 1 : 0);
+  const totalCurrencies = categories.length + 1;
+
+  const headerBgStyle = activeCurrencies === totalCurrencies ? 'bg-[#f0fdf4] border-[#bcf0da]' : 
+                       activeCurrencies === 0 ? 'bg-[#fef2f2] border-[#fecaca]' : 
+                       'bg-[#fffbeb] border-[#fde68a]';
+
+  const formatDaysUntil = (days: number) => {
+    if (days < 0) return 'Expired';
+    if (days === 0) return 'Expires today';
+    return `${days} days left`;
   };
 
   const exportToMyFlightBook = () => {
@@ -231,57 +402,249 @@ export default function CFIHours() {
       ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Currency Card */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden h-full">
-            <div className="bg-[#f8fafc] px-4 py-3 border-b border-[#dde3ec] flex items-center gap-2">
-              <Info size={16} className="text-[#1a3a5c]" />
-              <h3 className="text-xs font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Currency Requirements</h3>
+      {/* Currency Section */}
+      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+        <button
+          onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
+          className={cn(
+            "w-full px-6 py-4 flex items-center justify-between transition-colors",
+            headerBgStyle
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border",
+              activeCurrencies === totalCurrencies ? "bg-white border-[#bcf0da] text-[#059669]" :
+              activeCurrencies === 0 ? "bg-white border-[#fecaca] text-[#dc2626]" :
+              "bg-white border-[#fde68a] text-[#d97706]"
+            )}>
+              <Shield size={20} />
             </div>
-            <div className="p-5 space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between items-start">
-                  <div className="text-[11px] font-bold text-[#334155]">Flight Review</div>
-                  <div className="text-[10px] text-[#64748b]">24 Calendar Months</div>
-                </div>
-                <div className="p-3 bg-[#f1f5f9] rounded-lg border border-[#e2e8f0]">
-                  {lastInstruction ? (
-                    <>
-                      <div className="text-[11px] text-[#475569] mb-1">Last instruction given on <span className="font-bold">{lastInstruction}</span></div>
-                      <div className="text-[10px] text-[#64748b]">{daysSinceLast} days since last instruction</div>
-                    </>
-                  ) : (
-                    <div className="text-[11px] text-[#64748b]">No instruction logged yet</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between items-start">
-                  <div className="text-[11px] font-bold text-[#334155]">Instrument Instruction Given</div>
-                  <div className="text-[10px] text-[#64748b]">Past 6 Months</div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(100, (instrumentPast6Months / 15) * 100)}%` }}
-                      className="h-full bg-[#0ea5e9]"
-                    />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-[#0ea5e9]">{instrumentPast6Months.toFixed(1)} hrs</span>
-                    <span className="text-[10px] text-[#94a3b8]">Goal: 15h</span>
-                  </div>
-                </div>
-              </div>
+            <div className="text-left">
+              <h3 className="text-sm font-bold text-[#1a3a5c]">CFI Currency Status</h3>
+              <p className="text-[10px] text-[#64748b]">FAR/AIM §61.56, §61.57 compliance</p>
             </div>
           </div>
-        </div>
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "px-3 py-1 rounded-full text-[10px] font-bold border shadow-sm",
+              activeCurrencies === totalCurrencies ? "bg-[#dcfce7] text-[#166534] border-[#bcf0da]" :
+              activeCurrencies === 0 ? "bg-[#fee2e2] text-[#991b1b] border-[#fecaca]" :
+              "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"
+            )}>
+              {activeCurrencies}/{totalCurrencies} Current
+            </div>
+            <motion.div
+              animate={{ rotate: isCurrencyOpen ? 180 : 0 }}
+              className="text-[#94a3b8]"
+            >
+              <ChevronDown size={20} />
+            </motion.div>
+          </div>
+        </button>
 
+        <AnimatePresence>
+          {isCurrencyOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="border-t border-[#dde3ec]"
+            >
+              <div className="p-4 space-y-4">
+                {categories.map((cat) => {
+                  const daysUntil = cat.expiryDate ? Math.ceil((new Date(cat.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                  return (
+                    <div key={cat.id} className="bg-[#f8fafc] rounded-xl border border-[#dde3ec] overflow-hidden">
+                      <button
+                        onClick={() => setExpandedCurrencyRow(expandedCurrencyRow === cat.id ? null : cat.id)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f1f5f9] transition-colors"
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="text-[11px] font-bold text-[#1e293b]">{cat.label}</span>
+                          <span className="text-[9px] text-[#64748b] tracking-wider uppercase">{cat.ref}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {cat.current ? (
+                            <span className="bg-[#dcfce7] text-[#166534] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#bcf0da]">CURRENT</span>
+                          ) : (
+                            <span className="bg-[#fee2e2] text-[#991b1b] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fecaca]">NOT CURRENT</span>
+                          )}
+                          <motion.div
+                            animate={{ rotate: expandedCurrencyRow === cat.id ? 90 : 0 }}
+                            className="text-[#94a3b8]"
+                          >
+                            <ChevronRight size={16} />
+                          </motion.div>
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {expandedCurrencyRow === cat.id && (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            className="px-4 pb-4 border-t border-[#dde3ec]/10 space-y-3 pt-3"
+                          >
+                            <div className="grid grid-cols-2 gap-4">
+                              {cat.details.map((detail, idx) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                  <span className="text-[10px] text-[#64748b]">{detail.label}</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={cn(
+                                      "text-[10px] font-bold font-mono",
+                                      detail.value >= detail.target ? "text-[#059669]" : "text-[#dc2626]"
+                                    )}>
+                                      {detail.value} / {detail.target}
+                                    </span>
+                                    {detail.value >= detail.target ? (
+                                      <Check size={12} className="text-[#059669]" />
+                                    ) : (
+                                      <X size={12} className="text-[#dc2626]" />
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex flex-col gap-1 border-t border-[#dde3ec]/50 pt-3">
+                              <div className="flex justify-between text-[10px]">
+                                <span className="text-[#64748b]">Last Currency Event</span>
+                                <span className="font-bold text-[#1e293b]">{cat.lastDate}</span>
+                              </div>
+                              {cat.expiryDate && (
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-[#64748b]">Expiry Date</span>
+                                  <span className={cn(
+                                    "font-bold",
+                                    daysUntil < 15 && daysUntil > 0 ? "text-[#d97706]" : daysUntil <= 0 ? "text-[#dc2626]" : "text-[#1e293b]"
+                                  )}>
+                                    {cat.expiryDate} {daysUntil < 15 && `(${formatDaysUntil(daysUntil)})`}
+                                  </span>
+                                </div>
+                              )}
+                              {cat.customMsg && (
+                                <div className="mt-2 p-2 bg-[#fffbeb] border border-[#fef3c7] rounded-lg flex items-center gap-2">
+                                  <AlertTriangle size={12} className="text-[#d97706]" />
+                                  <span className="text-[10px] text-[#92400e] font-medium">{cat.customMsg}</span>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+
+                {/* Flight Review Row */}
+                <div className="bg-[#f8fafc] rounded-xl border border-[#dde3ec] overflow-hidden">
+                  <button
+                    onClick={() => setExpandedCurrencyRow(expandedCurrencyRow === 'fr' ? null : 'fr')}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f1f5f9] transition-colors"
+                  >
+                    <div className="flex flex-col items-start">
+                      <span className="text-[11px] font-bold text-[#1e293b]">Flight Review</span>
+                      <span className="text-[9px] text-[#64748b] tracking-wider uppercase">§61.56</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {isFlightReviewCurrent ? (
+                        <span className="bg-[#dcfce7] text-[#166534] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#bcf0da]">CURRENT</span>
+                      ) : (
+                        <span className="bg-[#fee2e2] text-[#991b1b] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fecaca]">EXPIRED</span>
+                      )}
+                      <motion.div
+                        animate={{ rotate: expandedCurrencyRow === 'fr' ? 90 : 0 }}
+                        className="text-[#94a3b8]"
+                      >
+                        <ChevronRight size={16} />
+                      </motion.div>
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {expandedCurrencyRow === 'fr' && (
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
+                        exit={{ height: 0 }}
+                        className="px-4 pb-4 border-t border-[#dde3ec]/10 pt-3"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex flex-col gap-1">
+                            {flightReviewDate ? (
+                              <>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-[#64748b]">Last Flight Review</span>
+                                  <span className="font-bold text-[#1e293b]">{flightReviewDate}</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-[#64748b]">Expiry Date</span>
+                                  <span className={cn(
+                                    "font-bold",
+                                    frDaysUntilExpiry < 60 && frDaysUntilExpiry > 0 ? "text-[#d97706]" : frDaysUntilExpiry <= 0 ? "text-[#dc2626]" : "text-[#1e293b]"
+                                  )}>
+                                    {frExpiryDate?.toISOString().split('T')[0]} {frDaysUntilExpiry < 60 && `(${formatDaysUntil(frDaysUntilExpiry)})`}
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="p-3 bg-[#fffbeb] border border-[#fef3c7] rounded-lg text-center">
+                                <p className="text-[11px] text-[#92400e] font-medium leading-relaxed">
+                                  No flight review date on record. Click Edit to add your most recent flight review date.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-[#dde3ec]/50 pt-3">
+                            {isEditingFlightReview ? (
+                              <div className="flex gap-2 w-full">
+                                <input
+                                  type="date"
+                                  value={newFlightReviewDate}
+                                  onChange={(e) => setNewFlightReviewDate(e.target.value)}
+                                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-[#dde3ec] rounded-lg focus:outline-none focus:border-[#1a3a5c]"
+                                />
+                                <button
+                                  onClick={saveFlightReviewDate}
+                                  disabled={isSavingFlightReview}
+                                  className="px-4 py-1.5 bg-[#1a3a5c] text-white text-[11px] font-bold rounded-lg hover:bg-[#2a5a8c] transition-all flex items-center gap-2"
+                                >
+                                  {isSavingFlightReview ? <Loader2 size={12} className="animate-spin" /> : 'Save'}
+                                </button>
+                                <button
+                                  onClick={() => setIsEditingFlightReview(false)}
+                                  className="px-4 py-1.5 bg-white text-[#64748b] text-[11px] font-bold rounded-lg border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <span className="text-[10px] text-[#64748b]">Update flight review details</span>
+                                <button
+                                  onClick={() => setIsEditingFlightReview(true)}
+                                  className="p-1.5 rounded-lg border border-[#dde3ec] text-[#64748b] hover:bg-[#f8fafc] hover:text-[#1a3a5c] transition-all flex items-center gap-1.5"
+                                >
+                                  <Pencil size={12} />
+                                  <span className="text-[10px] font-bold">Edit</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="space-y-4">
         {/* Logbook Table */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={16} />
             <input
