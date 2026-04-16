@@ -52,7 +52,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] text-[#1c2333] dark:text-[#e2e8f0] flex flex-col font-sans">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#0f1f35]/80 backdrop-blur-md border-b border-[#dde3ec] dark:border-[#1e3a5c] shadow-sm px-6 h-16 flex items-center justify-between shrink-0">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#0f1f35]/80 backdrop-blur-md border-b border-[#dde3ec] dark:border-[#1e3a5c] shadow-sm px-6 h-16 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <div className="w-9 h-9 bg-[#1a3a5c] dark:bg-[#2a5a8c] rounded-lg flex items-center justify-center">
@@ -92,7 +92,7 @@ export default function Layout({ children, user }: LayoutProps) {
               <Link 
                 to="/cfi-hours" 
                 title="My Hours"
-                className="hidden lg:flex items-center gap-1.5 text-[10px] text-[#1a3a5c]/50 dark:text-white/50 uppercase tracking-widest hover:text-[#1a3a5c] dark:hover:text-white hover:underline transition-all cursor-pointer"
+                className="hidden lg:flex items-center gap-1.5 text-[10px] text-[#1a3a5c] font-bold dark:text-white uppercase tracking-widest transition-all cursor-pointer"
               >
                 <BarChart3 size={12} />
                 <span>{user.user_metadata?.full_name || user.email}</span>
