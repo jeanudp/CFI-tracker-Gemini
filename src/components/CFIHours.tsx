@@ -23,6 +23,7 @@ export default function CFIHours() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    localStorage.removeItem('cfi_hours_backfilled');
     const runBackfill = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -52,14 +53,15 @@ export default function CFIHours() {
           dual_given: parseFloat(lesson.meta?.dual || '0') || 0,
           night_dual: parseFloat(lesson.meta?.nightDual || '0') || 0,
           instrument_given: parseFloat(lesson.meta?.simInst || '0') || 0,
-          day_landings: parseInt(lesson.meta?.cfiDayLandings || '0') || 0,
-          night_landings: parseInt(lesson.meta?.cfiNightLandings || '0') || 0,
+          day_landings: lesson.meta?.cfiDidLandings ? (parseInt(lesson.meta?.cfiDayLandings || '0') || 0) : 0,
+          night_landings: lesson.meta?.cfiDidLandings ? (parseInt(lesson.meta?.cfiNightLandings || '0') || 0) : 0,
           xc_pic: parseFloat(lesson.meta?.xcDual || '0') || 0,
           ratp_xc: parseFloat(lesson.meta?.ratpXCTime || '0') || 0,
           ratp_xc_eligible: lesson.meta?.ratpXCEligible || false,
           rating_code: lesson.meta?.rating_code || 'ppl',
-          approach_count: parseInt(lesson.meta?.approachCount || '0') || 0,
-          hold_performed: lesson.meta?.holdPerformed || false
+          cfi_approach_count: lesson.meta?.cfiFlewApproaches ? (parseInt(lesson.meta?.cfiApproachCount || '0') || 0) : 0,
+          cfi_approach_types: lesson.meta?.cfiFlewApproaches ? (lesson.meta?.cfiApproachTypes || '[]') : '[]',
+          cfi_hold_performed: lesson.meta?.cfiFlewApproaches ? (lesson.meta?.cfiHoldPerformed || false) : false
         }));
 
       if (cfiEntries.length > 0) {
@@ -177,9 +179,11 @@ export default function CFIHours() {
     (h.aircraft_class === 'ASEL' || !h.aircraft_class) &&
     new Date(h.date) >= ninetyDaysAgo
   );
-  const aselDayLandings = recentASEL.reduce((sum, h) => sum + (h.day_landings || 0), 0);
-  const aselDayTakeoffs = recentASEL.reduce((sum, h) => sum + (h.day_landings || 0), 0); // Assuming landings ~= takeoffs for simplification or if not tracked separately
-  const aselNightLandings = recentASEL.reduce((sum, h) => sum + (h.night_landings || 0), 0);
+  const aselDayLandings = recentASEL.reduce((sum, h) => 
+    sum + (parseInt(h.day_landings || '0') || 0), 0);
+  const aselDayTakeoffs = aselDayLandings; // Assuming landings ~= takeoffs for simplification
+  const aselNightLandings = recentASEL.reduce((sum, h) => 
+    sum + (parseInt(h.night_landings || '0') || 0), 0);
   const isAselDayCurrent = aselDayLandings >= 3 && aselDayTakeoffs >= 3;
   const isAselNightCurrent = aselNightLandings >= 3;
 
@@ -187,23 +191,17 @@ export default function CFIHours() {
     h.aircraft_class === 'AMEL' &&
     new Date(h.date) >= ninetyDaysAgo
   );
-  const amelDayLandings = recentAMEL.reduce((sum, h) => sum + (h.day_landings || 0), 0);
-  const amelNightLandings = recentAMEL.reduce((sum, h) => sum + (h.night_landings || 0), 0);
+  const amelDayLandings = recentAMEL.reduce((sum, h) => 
+    sum + (parseInt(h.day_landings || '0') || 0), 0);
+  const amelNightLandings = recentAMEL.reduce((sum, h) => 
+    sum + (parseInt(h.night_landings || '0') || 0), 0);
   const isAmelDayCurrent = amelDayLandings >= 3;
   const isAmelNightCurrent = amelNightLandings >= 3;
 
   const instrumentRecent = entries.filter(h => new Date(h.date) >= sixMonthsAgo);
-  const totalApproaches = instrumentRecent.reduce((sum, h) => {
-    // If cfi_approach_count is available (even if 0), use it. 
-    // Otherwise fallback to approach_count (for backfilled data)
-    const count = h.cfi_approach_count !== undefined 
-      ? (parseInt(h.cfi_approach_count) || 0) 
-      : (parseInt(h.approach_count) || 0);
-    return sum + count;
-  }, 0);
-  const holdPerformed = instrumentRecent.some(h => 
-    h.cfi_hold_performed === true || (h.cfi_hold_performed === undefined && h.hold_performed === true)
-  );
+  const totalApproaches = instrumentRecent.reduce((sum, h) =>
+    sum + (parseInt(h.cfi_approach_count || '0') || 0), 0);
+  const holdPerformed = instrumentRecent.some(h => h.cfi_hold_performed === true);
   const isIFRCurrent = totalApproaches >= 6 && holdPerformed;
 
   // Flight Review Logic
@@ -276,8 +274,7 @@ export default function CFIHours() {
       ],
       lastDate: instrumentRecent.find(h => 
         (parseInt(h.cfi_approach_count) || 0) > 0 || 
-        h.cfi_hold_performed || 
-        (h.cfi_approach_count === undefined && ((parseInt(h.approach_count) || 0) > 0 || h.hold_performed))
+        h.cfi_hold_performed === true
       )?.date || 'None',
       expiryDate: instrumentRecent[0] ? new Date(new Date(instrumentRecent[0].date).setMonth(new Date(instrumentRecent[0].date).getMonth() + 6)).toISOString().split('T')[0] : null,
       customMsg: !isIFRCurrent ? "IFR currency lapsed. Complete an IPC with a CFII before acting as PIC under IFR." : null

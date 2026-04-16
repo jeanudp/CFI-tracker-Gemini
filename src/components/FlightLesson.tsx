@@ -671,7 +671,7 @@ export default function FlightLesson() {
           ratp_xc_eligible: meta.ratpXCEligible || false,
           aircraft_class: meta.aircraftClass || 'ASEL',
           rating_code: meta.rating_code || 'ppl',
-          cfi_approach_count: meta.cfiFlewApproaches ? (parseInt(meta.cfiApproachCount || '0') || 0) : 0,
+          cfi_approach_count: meta.cfiFlewApproaches ? parseInt(meta.cfiApproachCount || '0') || 0 : 0,
           cfi_approach_types: meta.cfiFlewApproaches ? (meta.cfiApproachTypes || '[]') : '[]',
           cfi_hold_performed: meta.cfiFlewApproaches ? (meta.cfiHoldPerformed || false) : false
         };
