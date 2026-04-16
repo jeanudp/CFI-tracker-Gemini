@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3 } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3, Moon, Sun } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +14,19 @@ export default function Layout({ children, user }: LayoutProps) {
   const location = useLocation();
   const path = location.pathname;
   const [isOnline, setIsOnline] = useState(true);
+
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('dark_mode') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dark_mode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -35,14 +48,14 @@ export default function Layout({ children, user }: LayoutProps) {
     navigate('/auth');
   };
 
-  const buttonClass = "text-[12px] text-[#1a3a5c] px-[12px] py-[6px] rounded-[6px] border border-[#1a3a5c]/25 bg-[#1a3a5c]/5 hover:bg-[#1a3a5c]/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
+  const buttonClass = "text-[12px] text-[#1a3a5c] dark:text-[#94a3b8] px-[12px] py-[6px] rounded-[6px] border border-[#1a3a5c]/25 dark:border-[#1e3a5c] bg-[#1a3a5c]/5 dark:bg-[#1a2f4a] hover:bg-[#1a3a5c]/10 dark:hover:bg-[#1a2f4a]/80 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] text-[#1c2333] flex flex-col font-sans">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#dde3ec] shadow-sm px-6 h-16 flex items-center justify-between shrink-0">
+    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] text-[#1c2333] dark:text-[#e2e8f0] flex flex-col font-sans">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#0f1f35]/80 backdrop-blur-md border-b border-[#dde3ec] dark:border-[#1e3a5c] shadow-sm px-6 h-16 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <div className="w-9 h-9 bg-[#1a3a5c] rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 bg-[#1a3a5c] dark:bg-[#2a5a8c] rounded-lg flex items-center justify-center">
               <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="28" height="28">
                 {/* Fuselage */}
                 <ellipse cx="50" cy="50" rx="5" ry="38" />
@@ -75,14 +88,23 @@ export default function Layout({ children, user }: LayoutProps) {
             </div>
           )}
           {user && (
-            <Link 
-              to="/cfi-hours" 
-              title="My Hours"
-              className="hidden lg:flex items-center gap-1.5 text-[10px] text-white/50 uppercase tracking-widest mr-4 hover:text-white hover:underline transition-all cursor-pointer"
-            >
-              <BarChart3 size={12} />
-              <span>{user.user_metadata?.full_name || user.email}</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link 
+                to="/cfi-hours" 
+                title="My Hours"
+                className="hidden lg:flex items-center gap-1.5 text-[10px] text-[#1a3a5c]/50 dark:text-white/50 uppercase tracking-widest hover:text-[#1a3a5c] dark:hover:text-white hover:underline transition-all cursor-pointer"
+              >
+                <BarChart3 size={12} />
+                <span>{user.user_metadata?.full_name || user.email}</span>
+              </Link>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-lg border border-[#dde3ec] dark:border-[#1e3a5c] bg-white dark:bg-[#0f1f35] text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] transition-all"
+                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            </div>
           )}
           
           {/* Dynamic Navigation Buttons */}

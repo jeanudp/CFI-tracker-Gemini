@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f4f5f7;
+  --text-primary: #1c2333;
+  --text-secondary: #6b7280;
+  --border-color: #dde3ec;
+  --navy: #1a3a5c;
+  --navy-light: #2a5a8c;
+}
+
+.dark {
+  --bg-primary: #0a1628;
+  --bg-secondary: #0f1f35;
+  --bg-tertiary: #1a2f4a;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border-color: #1e3a5c;
+  --navy: #2a5a8c;
+  --navy-light: #3a7abC;
+}

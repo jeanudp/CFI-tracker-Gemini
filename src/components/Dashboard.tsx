@@ -32,31 +32,31 @@ const CurrencyRow = ({
     <div className="flex flex-col">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center justify-between hover:bg-[#f8fafc] transition-colors"
+        className="w-full p-4 flex items-center justify-between hover:bg-[#f8fafc] dark:hover:bg-[#1a2f4a] transition-colors"
       >
         <div className="flex flex-col items-start">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#1c2333]">{title}</span>
+            <span className="text-xs font-bold text-[#1c2333] dark:text-[#e2e8f0]">{title}</span>
             {classBadge && (
               <span className={cn(
                 "text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter text-white",
-                classBadge === 'AMEL' ? "bg-[#7c3aed]" : "bg-[#1a3a5c]"
+                classBadge === 'AMEL' ? "bg-[#7c3aed]" : "bg-[#1a3a5c] dark:bg-[#3a7abc]"
               )}>
                 {classBadge}
               </span>
             )}
           </div>
-          <span className="text-[10px] text-[#6b7280]">{reference}</span>
+          <span className="text-[10px] text-[#6b7280] dark:text-[#94a3b8]">{reference}</span>
         </div>
         <div className="flex items-center gap-3">
           {isNotApplicable ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500 uppercase tracking-widest">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase tracking-widest">
               Not Applicable
             </span>
           ) : (
             <span className={cn(
               "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest",
-              isCurrent ? "bg-[#e4f5ec] text-[#2d7a4f]" : "bg-[#fdecea] text-[#c0392b]"
+              isCurrent ? "bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80]" : "bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171]"
             )}>
               {isCurrent ? 'Current' : 'Not Current'}
             </span>
@@ -64,7 +64,7 @@ const CurrencyRow = ({
           <ChevronRight 
             size={16} 
             className={cn(
-              "text-[#6b7280] transition-transform duration-200",
+              "text-[#6b7280] dark:text-[#94a3b8] transition-transform duration-200",
               isExpanded ? "rotate-90" : "rotate-0"
             )} 
           />
@@ -653,16 +653,16 @@ export default function Dashboard() {
       .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'));
 
     return (
-      <div className="p-4 bg-white rounded-xl border border-[#dde3ec] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+      <div className="p-4 bg-white dark:bg-[#0f1f35] rounded-xl border border-[#dde3ec] dark:border-[#1e3a5c] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
         <div className="flex justify-between items-start mb-2">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#2a5a8c] bg-[#d4e8f5] px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#2a5a8c] dark:text-[#3a7abc] bg-[#d4e8f5] dark:bg-[#1a3a5c] px-1.5 py-0.5 rounded">
                 {lesson.meta?.rating_label || 'PPL'}
               </span>
-              <h4 className="text-sm font-bold text-[#1c2333]">{lesson.label}</h4>
+              <h4 className="text-sm font-bold text-[#1c2333] dark:text-[#e2e8f0]">{lesson.label}</h4>
             </div>
-            <p className="text-[10px] text-[#6b7280] mt-0.5">
+            <p className="text-[10px] text-[#6b7280] dark:text-[#94a3b8] mt-0.5">
               {new Date(lesson.saved_at).toLocaleDateString()} · {lesson.instructor}
               {lesson.meta?.aircraft && ` · ${lesson.meta.aircraftModel ? `${lesson.meta.aircraft} — ${lesson.meta.aircraftModel}` : lesson.meta.aircraft}`}
             </p>
@@ -670,28 +670,28 @@ export default function Dashboard() {
           {type === 'flight' && lesson.meta?.totalFlight && (
             <div className="text-right">
               <div className="text-[10px] font-bold text-[#e8a020] uppercase tracking-widest">Flight Time</div>
-              <div className="text-sm font-mono font-bold text-[#1a3a5c]">{lesson.meta.totalFlight}h</div>
+              <div className="text-sm font-mono font-bold text-[#1a3a5c] dark:text-[#3a7abc]">{lesson.meta.totalFlight}h</div>
             </div>
           )}
         </div>
 
         {niTasks.length > 0 ? (
           <div className="mt-3 space-y-1.5">
-            <div className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b]">Focus Areas (N)</div>
+            <div className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b] dark:text-[#f87171]">Focus Areas (N)</div>
             {niTasks.map(task => (
               <div key={task.id} className="flex items-start gap-2 text-[11px] leading-tight">
                 <span className={cn(
                   "shrink-0 w-3 h-3 rounded-full flex items-center justify-center text-[8px] font-bold text-white mt-0.5",
-                  "bg-[#c0392b]"
+                  "bg-[#c0392b] dark:bg-[#f87171]"
                 )}>
                   {task.grade}
                 </span>
-                <span className="text-[#1c2333]">{task.name}</span>
+                <span className="text-[#1c2333] dark:text-[#e2e8f0]">{task.name}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#2d7a4f] font-medium">
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#2d7a4f] dark:text-[#4ade80] font-medium">
             <CheckCircle2 size={12} />
             All tasks satisfactory
           </div>
@@ -701,18 +701,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] flex flex-col font-sans">
       {/* Roster Sidebar */}
-      <aside className="w-72 bg-white border-r border-[#dde3ec] flex flex-col shrink-0">
-        <div className="p-4 border-bottom border-[#dde3ec]">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Home</h2>
+      <aside className="w-72 bg-white dark:bg-[#0f1f35] border-r border-[#dde3ec] dark:border-[#1e3a5c] flex flex-col shrink-0">
+        <div className="p-4 border-bottom border-[#dde3ec] dark:border-[#1e3a5c]">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-3">Home</h2>
           <form onSubmit={handleAddStudent} className="flex gap-2">
             <input
               type="text"
               value={newStudentName}
               onChange={(e) => setNewStudentName(e.target.value)}
               placeholder="Add student name..."
-              className="flex-1 text-xs border border-[#dde3ec] rounded-lg px-3 py-2 bg-[#f4f5f7] focus:outline-none focus:border-[#4a8ab8] focus:bg-white transition-all"
+              className="flex-1 text-xs border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-3 py-2 bg-[#f4f5f7] dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] focus:outline-none focus:border-[#4a8ab8] dark:focus:border-[#3a7abc] focus:bg-white dark:focus:bg-[#0f1f35] transition-all"
             />
             <button
               type="submit"
@@ -767,19 +767,19 @@ export default function Dashboard() {
                   key={student.id}
                   onClick={() => handleSelectStudent(student.name)}
                   className={cn(
-                    "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#dde3ec] border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-lg duration-200",
-                    isActive ? "bg-[#d4e8f5] border-l-[#2a5a8c]" : "border-l-transparent hover:bg-[#f4f5f7]"
+                    "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#dde3ec] dark:border-[#1e3a5c] border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-lg duration-200",
+                    isActive ? "bg-[#d4e8f5] dark:bg-[#1a3a5c] border-l-[#2a5a8c] dark:border-l-[#3a7abc]" : "border-l-transparent hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a]"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",
-                    isActive ? "bg-[#2a5a8c] text-white" : "bg-[#d4e8f5] text-[#2a5a8c]"
+                    isActive ? "bg-[#2a5a8c] text-white" : "bg-[#d4e8f5] dark:bg-[#1a2f4a] text-[#2a5a8c] dark:text-[#94a3b8]"
                   )}>
                     {student.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
                   </div>
                   <div className="flex-1 min-width-0">
                     <div className="flex items-center gap-2">
-                      <div className={cn("text-xs font-medium truncate", isActive ? "text-[#1a3a5c] font-bold" : "text-[#1c2333]")}>
+                      <div className={cn("text-xs font-medium truncate", isActive ? "text-[#1a3a5c] dark:text-white font-bold" : "text-[#1c2333] dark:text-[#e2e8f0]")}>
                         {student.name}
                       </div>
                       <span className={cn(
@@ -789,13 +789,13 @@ export default function Dashboard() {
                         {student.current_rating}
                       </span>
                     </div>
-                    <div className="text-[10px] font-mono text-[#6b7280] mt-0.5 flex items-center gap-2">
+                    <div className="text-[10px] font-mono text-[#6b7280] dark:text-[#94a3b8] mt-0.5 flex items-center gap-2">
                       <span>{stats.count > 0 ? `${lessons.filter(l => l.student_name === student.name && l.type === 'ground').length}G · ${lessons.filter(l => l.student_name === student.name && l.type === 'flight').length}F` : 'No lessons yet'}</span>
                       {stats.count > 0 && (
                         <Link 
                           to={`/student/${encodeURIComponent(student.name)}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-[#2a5a8c] hover:underline flex items-center gap-0.5"
+                          className="text-[#2a5a8c] dark:text-[#3a7abc] hover:underline flex items-center gap-0.5"
                         >
                           <TrendingUp size={10} />
                           Analytics
@@ -809,7 +809,7 @@ export default function Dashboard() {
                       handleDeleteStudent(student.id, student.name);
                     }}
                     title="Archive Student"
-                    className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[#6b7280] hover:bg-[#f4f5f7] hover:text-[#1a3a5c] transition-all"
+                    className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] hover:text-[#1a3a5c] dark:hover:text-[#e2e8f0] transition-all"
                   >
                     <Archive size={12} />
                   </button>
@@ -820,16 +820,16 @@ export default function Dashboard() {
 
           {/* Archived Students Section */}
           {!loading && !error && (
-            <div className="mt-4 border-t border-[#dde3ec]">
+            <div className="mt-4 border-t border-[#dde3ec] dark:border-[#1e3a5c]">
               <button
                 onClick={() => setArchivedExpanded(!archivedExpanded)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] dark:hover:bg-[#1a2f4a] transition-colors"
               >
-                <div className="flex items-center gap-2 text-[#6b7280]">
+                <div className="flex items-center gap-2 text-[#6b7280] dark:text-[#94a3b8]">
                   <Archive size={14} />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Archived Students ({archivedStudents.length})</span>
                 </div>
-                <ChevronRight size={14} className={cn("text-[#6b7280] transition-transform", archivedExpanded && "rotate-90")} />
+                <ChevronRight size={14} className={cn("text-[#6b7280] dark:text-[#94a3b8] transition-transform", archivedExpanded && "rotate-90")} />
               </button>
               
               <AnimatePresence>
@@ -838,7 +838,7 @@ export default function Dashboard() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden bg-[#f8fafc]/50"
+                    className="overflow-hidden bg-[#f8fafc]/50 dark:bg-[#1a2f4a]/20"
                   >
                     {archivedStudents.length === 0 ? (
                       <div className="px-6 py-4 text-[10px] text-[#94a3b8] italic text-center">
@@ -846,21 +846,21 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       archivedStudents.map(student => (
-                        <div key={student.id} className="px-4 py-3 border-b border-[#dde3ec] opacity-70">
+                        <div key={student.id} className="px-4 py-3 border-b border-[#dde3ec] dark:border-[#1e3a5c] opacity-70">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-[#6b7280]">{student.name}</span>
+                            <span className="text-xs font-medium text-[#6b7280] dark:text-[#94a3b8]">{student.name}</span>
                             <div className="flex gap-1">
                               <button
                                 onClick={() => handleRestoreStudent(student.id)}
                                 title="Restore Student"
-                                className="p-1 text-[#2d7a4f] hover:bg-[#e4f5ec] rounded transition-colors"
+                                className="p-1 text-[#2d7a4f] dark:text-[#4ade80] hover:bg-[#e4f5ec] dark:hover:bg-[#0f2a1a] rounded transition-colors"
                               >
                                 <RotateCcw size={12} />
                               </button>
                               <button
                                 onClick={() => handlePermanentDelete(student.id, student.name)}
                                 title="Permanently Delete"
-                                className="p-1 text-[#c0392b] hover:bg-[#fdecea] rounded transition-colors"
+                                className="p-1 text-[#c0392b] dark:text-[#f87171] hover:bg-[#fdecea] dark:hover:bg-[#2a0f0f] rounded transition-colors"
                               >
                                 <Trash2 size={12} />
                               </button>
@@ -881,10 +881,10 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-h-screen bg-gradient-to-br from-[#f0f4f8] via-[#f8fafc] to-[#eef2f7] p-8 overflow-y-auto">
+      <main className="flex-1 min-h-screen bg-gradient-to-br from-[#f0f4f8] via-[#f8fafc] to-[#eef2f7] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto w-full">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-6">
-            <span className="text-[#1a3a5c]">Home</span>
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-6">
+            <span className="text-[#1a3a5c] dark:text-[#3a7abc]">Home</span>
           </div>
 
           <AnimatePresence mode="wait">
@@ -894,11 +894,11 @@ export default function Dashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center max-w-md"
+              className="text-center max-w-md mx-auto"
             >
               <div className="text-5xl mb-6 opacity-30">👨‍✈️</div>
-              <h1 className="text-2xl font-bold text-[#1c2333] mb-2">Select a student</h1>
-              <p className="text-sm text-[#6b7280] leading-relaxed">
+              <h1 className="text-2xl font-bold text-[#1c2333] dark:text-[#e2e8f0] mb-2">Select a student</h1>
+              <p className="text-sm text-[#6b7280] dark:text-[#94a3b8] leading-relaxed">
                 Choose a student from the list on the left to view their progress and start a new lesson.
               </p>
             </motion.div>
@@ -908,20 +908,20 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="w-full max-w-lg"
+              className="w-full max-w-lg mx-auto"
             >
-              <div className="relative bg-white rounded-2xl border border-[#dde3ec] shadow-xl border-t-white border-t-2 overflow-hidden mb-6">
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
-                <div className="p-6 border-b border-[#dde3ec] flex items-center justify-between">
+              <div className="relative bg-white dark:bg-[#0f1f35] rounded-2xl border border-[#dde3ec] dark:border-[#1e3a5c] shadow-xl border-t-white dark:border-t-[#1e3a5c] border-t-2 overflow-hidden mb-6">
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white dark:via-[#1e3a5c] to-transparent opacity-60" />
+                <div className="p-6 border-b border-[#dde3ec] dark:border-[#1e3a5c] flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-[#1c2333]">{selectedStudent}</h2>
-                    <p className="text-xs text-[#6b7280] mt-1">
-                      Currently working on: <span className="font-bold text-[#1a3a5c]">{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
+                    <h2 className="text-xl font-bold text-[#1c2333] dark:text-[#e2e8f0]">{selectedStudent}</h2>
+                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">
+                      Currently working on: <span className="font-bold text-[#1a3a5c] dark:text-[#3a7abc]">{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
                     </p>
                   </div>
                   <Link
                     to="/history"
-                    className="text-xs font-medium text-[#2a5a8c] bg-[#d4e8f5] border border-[#4a8ab8] px-3 py-1.5 rounded-lg hover:bg-[#4a8ab8] hover:text-white transition-all"
+                    className="text-xs font-medium text-[#2a5a8c] dark:text-[#3a7abc] bg-[#d4e8f5] dark:bg-[#1a3a5c] border border-[#4a8ab8] dark:border-[#3a7abc] px-3 py-1.5 rounded-lg hover:bg-[#4a8ab8] dark:hover:bg-[#3a7abc] hover:text-white transition-all"
                   >
                     History →
                   </Link>
@@ -929,8 +929,8 @@ export default function Dashboard() {
                 <div className="p-6 space-y-6">
                   {/* Rating History */}
                   {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings?.length ? (
-                    <div className="bg-[#f8fafc] rounded-xl p-4 border border-[#dde3ec]">
-                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-3 flex items-center gap-2">
+                    <div className="bg-[#f8fafc] dark:bg-[#1a2f4a] rounded-xl p-4 border border-[#dde3ec] dark:border-[#1e3a5c]">
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] mb-3 flex items-center gap-2">
                         <Award size={14} className="text-[#e8a020]" />
                         Ratings Completed
                       </h3>
@@ -938,19 +938,19 @@ export default function Dashboard() {
                         {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings.map((r, idx) => (
                           <div key={idx} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-[#1c2333]">{r.label}</span>
+                              <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{r.label}</span>
                               <button
                                 onClick={() => {
                                   setRatingToUndo(r);
                                   setIsUndoConfirmOpen(true);
                                 }}
-                                className="p-1 text-[#6b7280] hover:text-[#c0392b] hover:bg-red-50 rounded transition-all"
+                                className="p-1 text-[#6b7280] dark:text-[#94a3b8] hover:text-[#c0392b] dark:hover:text-[#f87171] hover:bg-red-50 dark:hover:bg-[#2a0f0f] rounded transition-all"
                                 title="Undo checkride pass"
                               >
                                 <History size={12} />
                               </button>
                             </div>
-                            <span className="text-[#6b7280]">Passed {r.date}</span>
+                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Passed {r.date}</span>
                           </div>
                         ))}
                       </div>
@@ -958,26 +958,26 @@ export default function Dashboard() {
                   ) : null}
 
                   {undoSuccess && (
-                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-[#f0fdf4] dark:bg-[#0f2a1a] border border-[#bbf7d0] dark:border-[#1a4a2e] text-[#166534] dark:text-[#4ade80] text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
                       <CheckCircle2 size={14} />
                       {undoSuccess}
                     </div>
                   )}
 
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Latest Lesson</h3>
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-3">Latest Lesson</h3>
                     <LessonSummary lesson={recentLesson} type={recentLesson?.type === 'ground' ? 'ground' : 'flight'} />
                   </div>
 
                   {preSoloTestResult && (
                     <div className="flex items-center gap-2 h-8">
                       {preSoloTestResult.passed ? (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#e4f5ec] text-[#2d7a4f] rounded-full border border-[#bcf0da]">
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] rounded-full border border-[#bcf0da] dark:border-[#1a4a2e]">
                           <CheckCircle2 size={12} strokeWidth={3} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Passed — {new Date(preSoloTestResult.date).toLocaleDateString()}</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fdecea] text-[#c0392b] rounded-full border border-[#fecaca]">
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] rounded-full border border-[#fecaca] dark:border-[#451212]">
                           <XCircle size={12} strokeWidth={3} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Failed — Retest Required</span>
                         </div>
@@ -1092,23 +1092,31 @@ export default function Dashboard() {
                         return (
                           <div className={cn(
                             "rounded-xl border-2 overflow-hidden transition-all shadow-sm",
-                            allApplicableCurrent ? "border-[#2d7a4f]" : noneCurrent ? "border-[#c0392b]" : "border-[#e8a020]"
+                            allApplicableCurrent 
+                              ? "border-[#2d7a4f] dark:border-[#1a4a2e]" 
+                              : noneCurrent 
+                                ? "border-[#c0392b] dark:border-[#451212]" 
+                                : "border-[#e8a020] dark:border-[#453008]"
                           )}>
                             {/* Header */}
                             <button
-                              onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
-                              className={cn(
-                                "w-full p-4 flex items-center justify-between transition-colors",
-                                allApplicableCurrent ? "bg-[#e4f5ec]" : noneCurrent ? "bg-[#fdecea]" : "bg-[#fffbeb]"
-                              )}
+                               onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
+                               className={cn(
+                                 "w-full p-4 flex items-center justify-between transition-colors",
+                                 allApplicableCurrent 
+                                   ? "bg-[#e4f5ec] dark:bg-[#0f2a1a]" 
+                                   : noneCurrent 
+                                     ? "bg-[#fdecea] dark:bg-[#2a0f0f]" 
+                                     : "bg-[#fffbeb] dark:bg-[#2a1a0f]"
+                               )}
                             >
                               <div className="flex items-center gap-3">
                                 <Shield size={18} className={cn(
-                                  allApplicableCurrent ? "text-[#2d7a4f]" : noneCurrent ? "text-[#c0392b]" : "text-[#e8a020]"
+                                  allApplicableCurrent ? "text-[#2d7a4f] dark:text-[#4ade80]" : noneCurrent ? "text-[#c0392b] dark:text-[#f87171]" : "text-[#e8a020] dark:text-[#fbbf24]"
                                 )} />
                                 <h3 className={cn(
                                   "text-sm font-bold",
-                                  allApplicableCurrent ? "text-[#166534]" : noneCurrent ? "text-[#991b1b]" : "text-[#92400e]"
+                                  allApplicableCurrent ? "text-[#166534] dark:text-[#4ade80]" : noneCurrent ? "text-[#991b1b] dark:text-[#f87171]" : "text-[#92400e] dark:text-[#fbbf24]"
                                 )}>
                                   Currency Status
                                 </h3>
@@ -1116,7 +1124,11 @@ export default function Dashboard() {
                               <div className="flex items-center gap-3">
                                 <span className={cn(
                                   "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest",
-                                  allApplicableCurrent ? "bg-[#2d7a4f] text-white" : noneCurrent ? "bg-[#c0392b] text-white" : "bg-[#e8a020] text-white"
+                                  allApplicableCurrent 
+                                    ? "bg-[#2d7a4f] dark:bg-[#1a4a2e] text-white" 
+                                    : noneCurrent 
+                                      ? "bg-[#c0392b] dark:bg-[#451212] text-white" 
+                                      : "bg-[#e8a020] dark:bg-[#453008] text-white"
                                 )}>
                                   {currentCount}/{totalCurrencies} Current
                                 </span>
@@ -1125,7 +1137,7 @@ export default function Dashboard() {
                                   className={cn(
                                     "transition-transform duration-200",
                                     isCurrencyExpanded ? "rotate-180" : "rotate-0",
-                                    allApplicableCurrent ? "text-[#2d7a4f]" : noneCurrent ? "text-[#c0392b]" : "text-[#e8a020]"
+                                    allApplicableCurrent ? "text-[#2d7a4f] dark:text-[#4ade80]" : noneCurrent ? "text-[#c0392b] dark:text-[#f87171]" : "text-[#e8a020] dark:text-[#fbbf24]"
                                   )} 
                                 />
                               </div>
@@ -1138,7 +1150,7 @@ export default function Dashboard() {
                                   initial={{ height: 0 }}
                                   animate={{ height: 'auto' }}
                                   exit={{ height: 0 }}
-                                  className="bg-white divide-y divide-[#dde3ec]"
+                                  className="bg-white dark:bg-[#0f1f35] divide-y divide-[#dde3ec] dark:divide-[#1e3a5c]"
                                 >
                                   {/* Day Currency Row - ASEL */}
                                   {hasEverLoggedASEL && (
@@ -1150,29 +1162,29 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'day_asel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_asel' ? null : 'day_asel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Takeoffs (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{aselTakeoffs}</span>
-                                            {aselTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{aselTakeoffs}</span>
+                                            {aselTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Landings (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{aselLandings}</span>
-                                            {aselLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{aselLandings}</span>
+                                            {aselLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Last flight date</span>
-                                            <span className="font-medium">{lastDayFlightASEL ? new Date(lastDayFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last flight date</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastDayFlightASEL ? new Date(lastDayFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Currency expires on</span>
-                                            <span className="font-medium">{dayExpiryDateASEL ? dayExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{dayExpiryDateASEL ? dayExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {dayDaysUntilExpiryASEL > 0 && dayDaysUntilExpiryASEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1194,29 +1206,29 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'day_amel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_amel' ? null : 'day_amel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Takeoffs (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{amelTakeoffs}</span>
-                                            {amelTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{amelTakeoffs}</span>
+                                            {amelTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Landings (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{amelLandings}</span>
-                                            {amelLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{amelLandings}</span>
+                                            {amelLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Last flight date</span>
-                                            <span className="font-medium">{lastDayFlightAMEL ? new Date(lastDayFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last flight date</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastDayFlightAMEL ? new Date(lastDayFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Currency expires on</span>
-                                            <span className="font-medium">{dayExpiryDateAMEL ? dayExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{dayExpiryDateAMEL ? dayExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {dayDaysUntilExpiryAMEL > 0 && dayDaysUntilExpiryAMEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1238,29 +1250,29 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'night_asel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_asel' ? null : 'night_asel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Night takeoffs (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{recentNightTakeoffsASEL}</span>
-                                            {recentNightTakeoffsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightTakeoffsASEL}</span>
+                                            {recentNightTakeoffsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Night landings (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{recentNightLandingsASEL}</span>
-                                            {recentNightLandingsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightLandingsASEL}</span>
+                                            {recentNightLandingsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Last night flight</span>
-                                            <span className="font-medium">{lastNightFlightASEL ? new Date(lastNightFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last night flight</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastNightFlightASEL ? new Date(lastNightFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Currency expires on</span>
-                                            <span className="font-medium">{nightExpiryDateASEL ? nightExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{nightExpiryDateASEL ? nightExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {nightDaysUntilExpiryASEL > 0 && nightDaysUntilExpiryASEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1282,29 +1294,29 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'night_amel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_amel' ? null : 'night_amel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Night takeoffs (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{recentNightTakeoffsAMEL}</span>
-                                            {recentNightTakeoffsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightTakeoffsAMEL}</span>
+                                            {recentNightTakeoffsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280]">Night landings (past 90 days)</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold">{recentNightLandingsAMEL}</span>
-                                            {recentNightLandingsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightLandingsAMEL}</span>
+                                            {recentNightLandingsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Last night flight</span>
-                                            <span className="font-medium">{lastNightFlightAMEL ? new Date(lastNightFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last night flight</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastNightFlightAMEL ? new Date(lastNightFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280]">Currency expires on</span>
-                                            <span className="font-medium">{nightExpiryDateAMEL ? nightExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
+                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{nightExpiryDateAMEL ? nightExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {nightDaysUntilExpiryAMEL > 0 && nightDaysUntilExpiryAMEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1325,29 +1337,29 @@ export default function Dashboard() {
                                     isExpanded={expandedCurrencyRow === 'ifr'}
                                     onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'ifr' ? null : 'ifr')}
                                   >
-                                    <div className="space-y-3 p-4 bg-[#f8fafc]">
+                                    <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
                                       <div className="flex items-center justify-between text-xs">
-                                        <span className="text-[#6b7280]">Instrument approaches (past 6 months)</span>
+                                        <span className="text-[#6b7280] dark:text-[#94a3b8]">Instrument approaches (past 6 months)</span>
                                         <div className="flex items-center gap-1.5">
-                                          <span className="font-mono font-bold">{totalApproaches}</span>
-                                          {totalApproaches >= 6 ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{totalApproaches}</span>
+                                          {totalApproaches >= 6 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                         </div>
                                       </div>
                                       <div className="flex items-center justify-between text-xs">
-                                        <span className="text-[#6b7280]">Holding performed (past 6 months)</span>
+                                        <span className="text-[#6b7280] dark:text-[#94a3b8]">Holding performed (past 6 months)</span>
                                         <div className="flex items-center gap-1.5">
-                                          {holdPerformed ? <CheckCircle2 size={14} className="text-[#2d7a4f]" /> : <X size={14} className="text-[#c0392b]" />}
+                                          {holdPerformed ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
                                         </div>
                                       </div>
 
-                                      <div className="pt-2 border-t border-[#dde3ec] space-y-1 text-[10px]">
+                                      <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
                                         <div className="flex justify-between">
-                                          <span className="text-[#6b7280]">Last IFR flight date</span>
-                                          <span className="font-medium">{lastIFRFlight ? new Date(lastIFRFlight.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Last IFR flight date</span>
+                                          <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastIFRFlight ? new Date(lastIFRFlight.saved_at).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                          <span className="text-[#6b7280]">Currency expires on</span>
-                                          <span className="font-medium">{ifrExpiryDate ? ifrExpiryDate.toLocaleDateString() : 'N/A'}</span>
+                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
+                                          <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{ifrExpiryDate ? ifrExpiryDate.toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                         {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
                                           <div className="text-right font-bold text-[#e8a020]">
@@ -1357,17 +1369,17 @@ export default function Dashboard() {
                                       </div>
 
                                       {isIFRCurrent ? (
-                                        <div className="mt-2 p-2 bg-[#e4f5ec] rounded-lg text-[10px] text-[#2d7a4f] font-medium leading-tight">
+                                        <div className="mt-2 p-2 bg-[#e4f5ec] dark:bg-[#0f2a1a] rounded-lg text-[10px] text-[#2d7a4f] dark:text-[#4ade80] font-medium leading-tight">
                                           IFR Current — valid until {ifrExpiryDate?.toLocaleDateString()}
                                         </div>
                                       ) : hasEverLoggedApproaches ? (
-                                        <div className="mt-2 p-2 bg-[#fdecea] rounded-lg text-[10px] text-[#c0392b] font-medium leading-tight">
+                                        <div className="mt-2 p-2 bg-[#fdecea] dark:bg-[#2a0f0f] rounded-lg text-[10px] text-[#c0392b] dark:text-[#f87171] font-medium leading-tight">
                                           IFR currency lapsed. Student must complete an IPC with a CFII before acting as PIC under IFR
                                         </div>
                                       ) : null}
                                       
                                       {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
-                                        <div className="mt-2 p-2 bg-[#fffbeb] rounded-lg text-[10px] text-[#92400e] font-medium leading-tight">
+                                        <div className="mt-2 p-2 bg-[#fffbeb] dark:bg-[#2a1a0f] rounded-lg text-[10px] text-[#92400e] dark:text-[#fbbf24] font-medium leading-tight">
                                           IFR currency expires in {ifrDaysUntilExpiry} days. Schedule approaches soon.
                                         </div>
                                       )}
@@ -1385,19 +1397,19 @@ export default function Dashboard() {
                   <div className="space-y-3">
                     <button
                       onClick={openPriorHoursModal}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-[#dde3ec] rounded-xl hover:bg-[#f4f5f7] transition-all group"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-[#0f1f35] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-xl hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#f4f5f7] rounded-lg flex items-center justify-center text-[#1a3a5c] group-hover:bg-white transition-colors">
+                        <div className="w-8 h-8 bg-[#f4f5f7] dark:bg-[#1a2f4a] rounded-lg flex items-center justify-center text-[#1a3a5c] dark:text-[#3a7abc] group-hover:bg-white dark:group-hover:bg-[#0f1f35] transition-colors">
                           <BookOpen size={16} />
                         </div>
                         <div className="text-left">
-                          <div className="text-xs font-bold text-[#1c2333]">Prior Logbook Hours</div>
-                          <div className="text-[10px] text-[#6b7280]">Import totals from physical logbook</div>
+                          <div className="text-xs font-bold text-[#1c2333] dark:text-[#e2e8f0]">Prior Logbook Hours</div>
+                          <div className="text-[10px] text-[#6b7280] dark:text-[#94a3b8]">Import totals from physical logbook</div>
                         </div>
                       </div>
                       {manualHours.some(m => m.student_name === selectedStudent && m.field_key.startsWith('prior_')) && (
-                        <span className="text-[8px] font-bold uppercase tracking-widest bg-[#e4f5ec] text-[#2d7a4f] px-2 py-0.5 rounded-full">
+                        <span className="text-[8px] font-bold uppercase tracking-widest bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] px-2 py-0.5 rounded-full">
                           Prior hours on file
                         </span>
                       )}
@@ -1413,12 +1425,12 @@ export default function Dashboard() {
                       if (isPassed) {
                         const passDate = student.checkride_passed_ratings?.find(r => r.code === student.current_rating)?.date;
                         return (
-                          <div className="bg-[#f0fdf4] border-2 border-[#bbf7d0] rounded-xl p-4 flex flex-col items-center justify-center gap-1">
-                            <div className="flex items-center gap-2 text-[#166534] font-bold">
+                          <div className="bg-[#f0fdf4] dark:bg-[#0f2a1a] border-2 border-[#bbf7d0] dark:border-[#1a4a2e] rounded-xl p-4 flex flex-col items-center justify-center gap-1">
+                            <div className="flex items-center gap-2 text-[#166534] dark:text-[#4ade80] font-bold">
                               <CheckCircle size={20} />
                               Checkride Passed
                             </div>
-                            <div className="text-[10px] text-[#166534] opacity-70 font-bold uppercase tracking-widest">
+                            <div className="text-[10px] text-[#166534] dark:text-[#4ade80] opacity-70 font-bold uppercase tracking-widest">
                               Completed on {passDate}
                             </div>
                           </div>
@@ -1436,14 +1448,14 @@ export default function Dashboard() {
                               "w-full font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm",
                               canPassCheckride 
                                 ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] animate-pulse shadow-[0_0_15px_rgba(45,122,79,0.4)]" 
-                                : "bg-[#dde3ec] text-[#6b7280] cursor-not-allowed"
+                                : "bg-[#dde3ec] dark:bg-[#1a2f4a] text-[#6b7280] dark:text-[#94a3b8] cursor-not-allowed border dark:border-[#1e3a5c]"
                             )}
                           >
                             <CheckCircle size={18} />
                             Checkride Passed
                           </button>
                           {!canPassCheckride && (
-                            <p className="text-[10px] text-center text-[#6b7280] font-medium">
+                            <p className="text-[10px] text-center text-[#6b7280] dark:text-[#94a3b8] font-medium">
                               Give A.1 endorsement in the Checkride tab to unlock.
                             </p>
                           )}
@@ -1457,7 +1469,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <button
                   onClick={handleStartLesson}
-                  className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center justify-center gap-3"
+                  className="w-full bg-[#1a3a5c] dark:bg-[#3a7abc] text-white font-bold py-4 rounded-xl shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center justify-center gap-3"
                 >
                   <Plane size={20} />
                   Start New Lesson →
@@ -1465,7 +1477,7 @@ export default function Dashboard() {
 
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent)}`}
-                  className="w-full bg-white text-[#1a3a5c] font-bold py-3 rounded-xl border-2 border-[#1a3a5c]/20 hover:bg-[#1a3a5c]/5 transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-white dark:bg-[#0f1f35] text-[#1a3a5c] dark:text-[#3a7abc] font-bold py-3 rounded-xl border-2 border-[#1a3a5c]/20 dark:border-[#3a7abc]/20 hover:bg-[#1a3a5c]/5 dark:hover:bg-[#3a7abc]/10 transition-all flex items-center justify-center gap-2"
                 >
                   <FileText size={18} />
                   IACRA Summary
@@ -1482,18 +1494,18 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-[#f8fafc] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+                className="bg-[#f8fafc] dark:bg-[#0a1628] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-6 bg-white border-b border-[#dde3ec] flex justify-between items-center shrink-0">
+                <div className="p-6 bg-white dark:bg-[#0f1f35] border-b border-[#dde3ec] dark:border-[#1e3a5c] flex justify-between items-center shrink-0">
                   <div>
-                    <h2 className="text-xl font-black text-[#1a3a5c]">Add New Student</h2>
-                    <p className="text-xs text-[#6b7280] mt-1">Enter details and select a rating</p>
+                    <h2 className="text-xl font-black text-[#1a3a5c] dark:text-[#3a7abc]">Add New Student</h2>
+                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">Enter details and select a rating</p>
                   </div>
                   <button 
                     onClick={() => setIsRatingModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] rounded-full transition-all"
+                    className="p-2 hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-full transition-all"
                   >
-                    <X size={20} className="text-[#6b7280]" />
+                    <X size={20} className="text-[#6b7280] dark:text-[#94a3b8]" />
                   </button>
                 </div>
 
@@ -1501,13 +1513,13 @@ export default function Dashboard() {
                   <div className="max-w-2xl mx-auto space-y-10">
                     {/* Name Input */}
                     <div className="space-y-3">
-                      <label className="text-xs font-bold text-[#1a3a5c] uppercase tracking-widest ml-1">Student Name</label>
+                      <label className="text-xs font-bold text-[#1a3a5c] dark:text-[#3a7abc] uppercase tracking-widest ml-1">Student Name</label>
                       <input
                         type="text"
                         value={pendingStudentName}
                         onChange={(e) => setPendingStudentName(e.target.value)}
                         placeholder="Enter student name"
-                        className="w-full text-lg font-bold border-2 border-[#dde3ec] rounded-2xl px-6 py-4 focus:outline-none focus:border-[#1a3a5c] transition-all placeholder:text-[#dde3ec]"
+                        className="w-full text-lg font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border-2 border-[#dde3ec] dark:border-[#1e3a5c] rounded-2xl px-6 py-4 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc] transition-all placeholder:text-[#dde3ec] dark:placeholder:text-[#3a4a5e]"
                         autoFocus
                       />
                     </div>
@@ -1515,8 +1527,8 @@ export default function Dashboard() {
                     {/* Rating Selection */}
                     <div className="space-y-6">
                       <div className="text-center">
-                        <h3 className="text-lg font-bold text-[#1c2333]">Select Initial Rating</h3>
-                        <p className="text-sm text-[#6b7280]">Choose the certificate they are working toward</p>
+                        <h3 className="text-lg font-bold text-[#1c2333] dark:text-[#e2e8f0]">Select Initial Rating</h3>
+                        <p className="text-sm text-[#6b7280] dark:text-[#94a3b8]">Choose the certificate they are working toward</p>
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -1531,12 +1543,12 @@ export default function Dashboard() {
                             mei: Navigation
                           };
                           const colors: Record<string, string> = {
-                            ppl: 'bg-[#d4e8f5] text-[#1a3a5c] border-[#1a3a5c]',
-                            ir: 'bg-[#ede8f8] text-[#5b3fa0] border-[#5b3fa0]',
-                            cpl: 'bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]',
-                            cfi: 'bg-[#fdf0e4] text-[#c05c10] border-[#c05c10]',
-                            cfii: 'bg-[#e0f5f2] text-[#1a7a6e] border-[#1a7a6e]',
-                            mei: 'bg-[#fdecea] text-[#c0392b] border-[#c0392b]'
+                            ppl: 'bg-[#d4e8f5] dark:bg-[#0f1f35] text-[#1a3a5c] dark:text-[#3a7abc] border-[#1a3a5c] dark:border-[#3a7abc]',
+                            ir: 'bg-[#ede8f8] dark:bg-[#1e1a2e] text-[#5b3fa0] dark:text-[#9f7aea] border-[#5b3fa0] dark:border-[#9f7aea]',
+                            cpl: 'bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] border-[#2d7a4f] dark:border-[#4ade80]',
+                            cfi: 'bg-[#fdf0e4] dark:bg-[#2a1a0f] text-[#c05c10] dark:text-[#ed8936] border-[#c05c10] dark:border-[#ed8936]',
+                            cfii: 'bg-[#e0f5f2] dark:bg-[#0f2a28] text-[#1a7a6e] dark:text-[#38b2ac] border-[#1a7a6e] dark:border-[#38b2ac]',
+                            mei: 'bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] border-[#c0392b] dark:border-[#f87171]'
                           };
                           const Icon = icons[code];
 
@@ -1573,10 +1585,10 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3 shrink-0">
+                <div className="p-6 bg-white dark:bg-[#0f1f35] border-t border-[#dde3ec] dark:border-[#1e3a5c] flex gap-3 shrink-0">
                   <button
                     onClick={() => setIsRatingModalOpen(false)}
-                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-2xl transition-all"
+                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-2xl transition-all"
                   >
                     Cancel
                   </button>
@@ -1586,8 +1598,8 @@ export default function Dashboard() {
                     className={cn(
                       "flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg",
                       adding || !selectedRatingCode || !pendingStudentName.trim() 
-                        ? "bg-[#dde3ec] cursor-not-allowed" 
-                        : "bg-[#1a3a5c] hover:bg-[#2a5a8c]"
+                        ? "bg-[#dde3ec] dark:bg-[#1a2f4a] text-[#6b7280] dark:text-[#94a3b8] cursor-not-allowed" 
+                        : "bg-[#1a3a5c] dark:bg-[#3a7abc] hover:bg-[#2a5a8c] dark:hover:bg-[#4a8ab8] active:scale-[0.98]"
                     )}
                   >
                     {adding ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Save Student'}
@@ -1603,19 +1615,19 @@ export default function Dashboard() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center"
+                className="bg-white dark:bg-[#0a1628] rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center border dark:border-[#1e3a5c]"
               >
-                <div className="w-16 h-16 bg-[#e4f5ec] text-[#2d7a4f] rounded-full flex items-center justify-center mb-6 mx-auto">
+                <div className="w-16 h-16 bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] rounded-full flex items-center justify-center mb-6 mx-auto">
                   <Award size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-[#1c2333] mb-2">Confirm Checkride Pass</h3>
-                <p className="text-sm text-[#6b7280] mb-8 leading-relaxed">
+                <h3 className="text-xl font-bold text-[#1c2333] dark:text-[#e2e8f0] mb-2">Confirm Checkride Pass</h3>
+                <p className="text-sm text-[#6b7280] dark:text-[#94a3b8] mb-8 leading-relaxed">
                   You are about to record that <strong>{selectedStudent}</strong> has passed their <strong>{students.find(s => s.name === selectedStudent)?.current_rating_label}</strong> checkride. This will lock this rating and prompt you to select the next rating. Are you sure?
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsCheckrideConfirmOpen(false)}
-                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-xl transition-all"
+                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-xl transition-all"
                   >
                     Cancel
                   </button>
@@ -1637,19 +1649,19 @@ export default function Dashboard() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center"
+                className="bg-white dark:bg-[#0a1628] rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center border dark:border-[#1e3a5c]"
               >
-                <div className="w-16 h-16 bg-[#fdecea] text-[#c0392b] rounded-full flex items-center justify-center mb-6 mx-auto">
+                <div className="w-16 h-16 bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] rounded-full flex items-center justify-center mb-6 mx-auto">
                   <AlertCircle size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-[#1c2333] mb-2">Undo Checkride Pass?</h3>
-                <p className="text-sm text-[#6b7280] mb-8 leading-relaxed">
+                <h3 className="text-xl font-bold text-[#1c2333] dark:text-[#e2e8f0] mb-2">Undo Checkride Pass?</h3>
+                <p className="text-sm text-[#6b7280] dark:text-[#94a3b8] mb-8 leading-relaxed">
                   Are you sure you want to undo the checkride pass for <strong>{ratingToUndo?.label}</strong>? This cannot be undone easily.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsUndoConfirmOpen(false)}
-                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-xl transition-all"
+                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-xl transition-all"
                   >
                     Cancel
                   </button>
@@ -1672,18 +1684,18 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-[#f8fafc] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+                className="bg-[#f8fafc] dark:bg-[#0a1628] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-6 bg-white border-b border-[#dde3ec] flex justify-between items-center shrink-0">
+                <div className="p-6 bg-white dark:bg-[#0f1f35] border-b border-[#dde3ec] dark:border-[#1e3a5c] flex justify-between items-center shrink-0">
                   <div>
-                    <h2 className="text-xl font-black text-[#1a3a5c]">Checkride Passed!</h2>
-                    <p className="text-xs text-[#6b7280] mt-1">What rating is {selectedStudent} pursuing next?</p>
+                    <h2 className="text-xl font-black text-[#1a3a5c] dark:text-[#3a7abc]">Checkride Passed!</h2>
+                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">What rating is {selectedStudent} pursuing next?</p>
                   </div>
                   <button 
                     onClick={() => setIsNextRatingModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] rounded-full transition-all"
+                    className="p-2 hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-full transition-all"
                   >
-                    <X size={20} className="text-[#6b7280]" />
+                    <X size={20} className="text-[#6b7280] dark:text-[#94a3b8]" />
                   </button>
                 </div>
 
@@ -1701,12 +1713,12 @@ export default function Dashboard() {
                           mei: Navigation
                         };
                         const colors: Record<string, string> = {
-                          ppl: 'bg-[#d4e8f5] text-[#1a3a5c] border-[#1a3a5c]',
-                          ir: 'bg-[#ede8f8] text-[#5b3fa0] border-[#5b3fa0]',
-                          cpl: 'bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]',
-                          cfi: 'bg-[#fdf0e4] text-[#c05c10] border-[#c05c10]',
-                          cfii: 'bg-[#e0f5f2] text-[#1a7a6e] border-[#1a7a6e]',
-                          mei: 'bg-[#fdecea] text-[#c0392b] border-[#c0392b]'
+                          ppl: 'bg-[#d4e8f5] dark:bg-[#0f1f35] text-[#1a3a5c] dark:text-[#3a7abc] border-[#1a3a5c] dark:border-[#3a7abc]',
+                          ir: 'bg-[#ede8f8] dark:bg-[#1e1a2e] text-[#5b3fa0] dark:text-[#9f7aea] border-[#5b3fa0] dark:border-[#9f7aea]',
+                          cpl: 'bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] border-[#2d7a4f] dark:border-[#4ade80]',
+                          cfi: 'bg-[#fdf0e4] dark:bg-[#2a1a0f] text-[#c05c10] dark:text-[#ed8936] border-[#c05c10] dark:border-[#ed8936]',
+                          cfii: 'bg-[#e0f5f2] dark:bg-[#0f2a28] text-[#1a7a6e] dark:text-[#38b2ac] border-[#1a7a6e] dark:border-[#38b2ac]',
+                          mei: 'bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] border-[#c0392b] dark:border-[#f87171]'
                         };
                         const Icon = icons[code];
 
@@ -1716,8 +1728,8 @@ export default function Dashboard() {
                             whileHover={{ y: -3 }}
                             onClick={() => setSelectedRatingCode(code)}
                             className={cn(
-                              "bg-white rounded-2xl border-2 p-6 text-center transition-all relative flex flex-col items-center gap-3 cursor-pointer",
-                              isSelected ? cn("shadow-xl scale-[1.05]", colors[code]) : "border-[#dde3ec] hover:border-[#1a3a5c]/30 hover:shadow-lg"
+                              "bg-white dark:bg-[#1a2f4a] rounded-2xl border-2 p-6 text-center transition-all relative flex flex-col items-center gap-3 cursor-pointer",
+                              isSelected ? cn("shadow-xl scale-[1.05]", colors[code]) : "border-[#dde3ec] dark:border-[#1e3a5c] hover:border-[#1a3a5c]/30 dark:hover:border-[#3a7abc] hover:shadow-lg"
                             )}
                           >
                             <div className={cn(
@@ -1727,8 +1739,8 @@ export default function Dashboard() {
                               <Icon size={24} />
                             </div>
                             <div>
-                              <div className="text-sm font-bold leading-tight">{rating.label}</div>
-                              <div className="text-[10px] opacity-60 mt-1">{rating.acs}</div>
+                              <div className="text-sm font-bold text-[#1c2333] dark:text-[#e2e8f0] leading-tight">{rating.label}</div>
+                              <div className="text-[10px] text-[#6b7280] dark:text-[#94a3b8] opacity-60 mt-1">{rating.acs}</div>
                             </div>
                             {isSelected && (
                               <div className="absolute top-2 right-2">
@@ -1742,10 +1754,10 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3 shrink-0">
+                <div className="p-6 bg-white dark:bg-[#0f1f35] border-t border-[#dde3ec] dark:border-[#1e3a5c] flex gap-3 shrink-0">
                   <button
                     onClick={() => setIsNextRatingModalOpen(false)}
-                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-2xl transition-all"
+                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-2xl transition-all"
                   >
                     Skip for now
                   </button>
@@ -1754,7 +1766,9 @@ export default function Dashboard() {
                     disabled={!selectedRatingCode}
                     className={cn(
                       "flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg",
-                      !selectedRatingCode ? "bg-[#dde3ec] cursor-not-allowed" : "bg-[#1a3a5c] hover:bg-[#2a5a8c]"
+                      !selectedRatingCode 
+                        ? "bg-[#dde3ec] dark:bg-[#1a2f4a] text-[#6b7280] dark:text-[#94a3b8] cursor-not-allowed" 
+                        : "bg-[#1a3a5c] dark:bg-[#3a7abc] hover:bg-[#2a5a8c] dark:hover:bg-[#4a8ab8]"
                     )}
                   >
                     Confirm Next Rating
@@ -1770,26 +1784,26 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-[#f8fafc] w-full h-full sm:h-auto sm:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+                className="bg-[#f8fafc] dark:bg-[#0a1628] w-full h-full sm:h-auto sm:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-6 bg-white border-b border-[#dde3ec] flex justify-between items-center shrink-0">
+                <div className="p-6 bg-white dark:bg-[#0f1f35] border-b border-[#dde3ec] dark:border-[#1e3a5c] flex justify-between items-center shrink-0">
                   <div>
-                    <h2 className="text-xl font-black text-[#1a3a5c]">Prior Logbook Hours</h2>
-                    <p className="text-xs text-[#6b7280] mt-1">Enter totals from the student's existing logbook for {selectedStudent}</p>
+                    <h2 className="text-xl font-black text-[#1a3a5c] dark:text-[#3a7abc]">Prior Logbook Hours</h2>
+                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">Enter totals from the student's existing logbook for {selectedStudent}</p>
                   </div>
                   <button 
                     onClick={() => setIsPriorHoursModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] rounded-full transition-all"
+                    className="p-2 hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-full transition-all"
                   >
-                    <X size={20} className="text-[#6b7280]" />
+                    <X size={20} className="text-[#6b7280] dark:text-[#94a3b8]" />
                   </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 sm:p-8">
                   <div className="max-w-2xl mx-auto space-y-8">
-                    <div className="bg-[#fffbeb] border border-[#fef3c7] rounded-xl p-4 flex items-start gap-3">
-                      <AlertCircle size={18} className="text-[#d97706] shrink-0 mt-0.5" />
-                      <p className="text-xs text-[#92400e] leading-relaxed">
+                    <div className="bg-[#fffbeb] dark:bg-[#2a1a0f] border border-[#fef3c7] dark:border-[#3a2a1a] rounded-xl p-4 flex items-start gap-3">
+                      <AlertCircle size={18} className="text-[#d97706] dark:text-[#fbbf24] shrink-0 mt-0.5" />
+                      <p className="text-xs text-[#92400e] dark:text-[#fbbf24] leading-relaxed">
                         <strong>Note:</strong> These hours will be added to all logged lesson totals throughout the app including the Checkride tab IACRA Summary and Cumulative tab. Only enter hours not already logged in this app.
                       </p>
                     </div>
@@ -1797,7 +1811,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       {/* Totals Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Totals</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Totals</h3>
                         {[
                           { key: 'prior_totalFlight', label: 'Total Flight Time', unit: 'hrs' },
                           { key: 'prior_ldgTotal', label: 'Total Landings', unit: 'count' },
@@ -1805,16 +1819,16 @@ export default function Dashboard() {
                           { key: 'prior_ldgNight', label: 'Night Landings', unit: 'count' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1822,23 +1836,23 @@ export default function Dashboard() {
 
                       {/* Solo Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Solo</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Solo</h3>
                         {[
                           { key: 'prior_solo', label: 'Solo Flight Time', unit: 'hrs' },
                           { key: 'prior_xcSolo', label: 'Solo Cross Country', unit: 'hrs' },
                           { key: 'prior_nightSolo', label: 'Night Solo', unit: 'hrs' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1846,23 +1860,23 @@ export default function Dashboard() {
 
                       {/* PIC Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">PIC</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">PIC</h3>
                         {[
                           { key: 'prior_pic', label: 'PIC Time', unit: 'hrs' },
                           { key: 'prior_xcPic', label: 'Cross Country PIC', unit: 'hrs' },
                           { key: 'prior_nightPic', label: 'Night PIC', unit: 'hrs' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1870,23 +1884,23 @@ export default function Dashboard() {
 
                       {/* Dual Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Dual</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Dual</h3>
                         {[
                           { key: 'prior_dual', label: 'Dual Received', unit: 'hrs' },
                           { key: 'prior_xcDual', label: 'Cross Country Dual', unit: 'hrs' },
                           { key: 'prior_nightDual', label: 'Night Dual', unit: 'hrs' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1894,23 +1908,23 @@ export default function Dashboard() {
 
                       {/* Instrument Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Instrument</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Instrument</h3>
                         {[
                           { key: 'prior_simInst', label: 'Simulated Instrument', unit: 'hrs' },
                           { key: 'prior_imc', label: 'Actual Instrument', unit: 'hrs' },
                           { key: 'prior_atdInst', label: 'Instrument on Simulator', unit: 'hrs' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1918,22 +1932,22 @@ export default function Dashboard() {
 
                       {/* Night Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Night</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Night</h3>
                         {[
                           { key: 'prior_night', label: 'Night Total', unit: 'hrs' },
                           { key: 'prior_nightTakeoffs', label: 'Night Takeoffs', unit: 'count' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1941,21 +1955,21 @@ export default function Dashboard() {
 
                       {/* Approaches Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Approaches</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Approaches</h3>
                         {[
                           { key: 'prior_approachCount', label: 'Number of Approaches', unit: 'count' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1963,23 +1977,23 @@ export default function Dashboard() {
 
                       {/* Simulator Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] border-b border-[#dde3ec] pb-1">Simulator</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Simulator</h3>
                         {[
                           { key: 'prior_atd', label: 'ATD Time', unit: 'hrs' },
                           { key: 'prior_ftd', label: 'FTD Time', unit: 'hrs' },
                           { key: 'prior_ffs', label: 'FFS Time', unit: 'hrs' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569]">{f.label}</label>
+                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -1987,23 +2001,23 @@ export default function Dashboard() {
 
                       {/* R-ATP Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed] border-b border-[#ddd6fe] pb-1">R-ATP (§61.160)</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed] dark:text-[#a78bfa] border-b border-[#ddd6fe] dark:border-[#4c1d95] pb-1">R-ATP (§61.160)</h3>
                         {[
                           { key: 'prior_ratpXC', label: 'R-ATP Eligible XC', unit: 'hrs' },
                           { key: 'prior_ratpSimInst', label: 'R-ATP Sim Instrument', unit: 'hrs' },
                           { key: 'prior_ratpActualInst', label: 'R-ATP Actual Instrument', unit: 'hrs' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#6d28d9]">{f.label}</label>
+                            <label className="text-xs text-[#6d28d9] dark:text-[#c4b5fd]">{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold border border-[#ddd6fe] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7c3aed]"
+                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#6d28d9] dark:text-[#c4b5fd] border border-[#ddd6fe] dark:border-[#4c1d95] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#7c3aed] dark:focus:border-[#a78bfa]"
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#a78bfa]">{f.unit}</span>
+                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#a78bfa] dark:text-[#7c3aed]">{f.unit}</span>
                             </div>
                           </div>
                         ))}
@@ -2012,17 +2026,17 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-white border-t border-[#dde3ec] flex gap-3 shrink-0">
+                <div className="p-6 bg-white dark:bg-[#0f1f35] border-t border-[#dde3ec] dark:border-[#1e3a5c] flex gap-3 shrink-0">
                   <button
                     onClick={() => setIsPriorHoursModalOpen(false)}
-                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] hover:bg-[#f4f5f7] rounded-2xl transition-all"
+                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-2xl transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={savePriorHours}
                     disabled={savingPrior}
-                    className="flex-[2] py-4 bg-[#1a3a5c] text-white font-bold rounded-2xl hover:bg-[#2a5a8c] transition-all shadow-lg disabled:opacity-50"
+                    className="flex-[2] py-4 bg-[#1a3a5c] dark:bg-[#3a7abc] text-white font-bold rounded-2xl hover:bg-[#2a5a8c] dark:hover:bg-[#4a8ab8] transition-all shadow-lg disabled:opacity-50"
                   >
                     {savingPrior ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Save Prior Hours'}
                   </button>
