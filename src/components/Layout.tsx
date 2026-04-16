@@ -35,11 +35,11 @@ export default function Layout({ children, user }: LayoutProps) {
     navigate('/auth');
   };
 
-  const buttonClass = "text-[12px] text-white px-[12px] py-[6px] rounded-[6px] border border-white/25 bg-white/10 hover:bg-white/20 transition-all flex items-center gap-2 font-medium";
+  const buttonClass = "text-[12px] text-[#1a3a5c] px-[12px] py-[6px] rounded-[6px] border border-[#1a3a5c]/25 bg-[#1a3a5c]/5 hover:bg-[#1a3a5c]/10 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
 
   return (
-    <div className="min-h-screen bg-[#eef2f8] text-[#1c2333] flex flex-col font-sans">
-      <header className="bg-[#1a3a5c] text-white px-6 h-16 flex items-center justify-between shadow-lg shrink-0 sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] text-[#1c2333] flex flex-col font-sans">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#dde3ec] shadow-sm px-6 h-16 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <div className="w-9 h-9 bg-[#1a3a5c] rounded-lg flex items-center justify-center">

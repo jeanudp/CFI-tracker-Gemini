@@ -1025,7 +1025,8 @@ export default function History() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-xl shadow-[#1a3a5c]/5 border border-[#dde3ec] overflow-hidden">
+            <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
               <div className="p-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                   <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-fit">
@@ -1033,7 +1034,9 @@ export default function History() {
                       onClick={() => setActiveTab('lesson')}
                       className={cn(
                         "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                        activeTab === 'lesson' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
+                        activeTab === 'lesson' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
                       )}
                     >
                       <BookOpen size={14} />
@@ -1043,7 +1046,9 @@ export default function History() {
                       onClick={() => setActiveTab('cumulative')}
                       className={cn(
                         "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                        activeTab === 'cumulative' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
+                        activeTab === 'cumulative' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
                       )}
                     >
                       <BarChart3 size={14} />
@@ -1053,7 +1058,9 @@ export default function History() {
                       onClick={() => setActiveTab('checkride')}
                       className={cn(
                         "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                        activeTab === 'checkride' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
+                        activeTab === 'checkride' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
                       )}
                     >
                       <CheckCircle2 size={14} />
@@ -1064,7 +1071,9 @@ export default function History() {
                         onClick={() => setActiveTab('advisor')}
                         className={cn(
                           "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                          activeTab === 'advisor' ? "bg-[#1a3a5c] text-white shadow-lg shadow-[#1a3a5c]/20" : "text-[#64748b] hover:text-[#1a3a5c]"
+                          activeTab === 'advisor' 
+                            ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                            : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
                         )}
                       >
                         <Sparkles size={14} />
@@ -1144,7 +1153,7 @@ export default function History() {
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <button
                     onClick={() => setIsFlightLogOpen(!isFlightLogOpen)}
-                    className="w-full bg-[#f4f5f7] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
+                    className="w-full bg-gradient-to-r from-[#f4f5f7] to-[#f8fafc] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
                   >
                     <div className="flex items-center gap-2">
                       <Clock size={16} className="text-[#6b7280]" />

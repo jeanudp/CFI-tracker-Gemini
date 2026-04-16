@@ -271,7 +271,7 @@ export default function GroundLesson() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link to="/lesson-type" className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#dde3ec] bg-white text-[#6b7280] hover:bg-[#f4f5f7] transition-all text-xs font-bold">
+          <Link to="/lesson-type" className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#dde3ec] bg-white text-[#6b7280] hover:bg-[#f4f5f7] hover:-translate-y-0.5 transition-all text-xs font-bold">
             <ArrowLeft size={16} />
             Back
           </Link>
@@ -349,9 +349,9 @@ export default function GroundLesson() {
             <button
               onClick={handleFillAll}
               className={cn(
-                "w-12 h-6 rounded border font-mono text-[11px] transition-all",
-                fillState === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
-                fillState === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
+                "w-12 h-6 rounded border font-mono text-[11px] transition-all active:scale-95",
+                fillState === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                fillState === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
                 "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
               )}
             >
@@ -405,9 +405,9 @@ export default function GroundLesson() {
                         <button
                           onClick={() => handleGradeCycle(task.id)}
                           className={cn(
-                            "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all",
-                            g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
-                            g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
+                            "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
+                            g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                            g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
                             "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
                           )}
                         >
@@ -468,7 +468,7 @@ export default function GroundLesson() {
         <button
           onClick={handleSave}
           disabled={saving || !rating}
-          className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
+          className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2 disabled:opacity-50"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           Save Lesson

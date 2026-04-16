@@ -653,7 +653,7 @@ export default function Dashboard() {
       .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'));
 
     return (
-      <div className="p-4 bg-white rounded-xl border border-[#dde3ec] shadow-sm">
+      <div className="p-4 bg-white rounded-xl border border-[#dde3ec] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
         <div className="flex justify-between items-start mb-2">
           <div>
             <div className="flex items-center gap-2">
@@ -767,7 +767,7 @@ export default function Dashboard() {
                   key={student.id}
                   onClick={() => handleSelectStudent(student.name)}
                   className={cn(
-                    "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#dde3ec] border-l-4 transition-all",
+                    "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#dde3ec] border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-lg duration-200",
                     isActive ? "bg-[#d4e8f5] border-l-[#2a5a8c]" : "border-l-transparent hover:bg-[#f4f5f7]"
                   )}
                 >
@@ -881,7 +881,7 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 bg-[#eef2f8] p-8 overflow-y-auto">
+      <main className="flex-1 min-h-screen bg-gradient-to-br from-[#f0f4f8] via-[#f8fafc] to-[#eef2f7] p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-6">
             <span className="text-[#1a3a5c]">Home</span>
@@ -910,7 +910,8 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="w-full max-w-lg"
             >
-              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-lg overflow-hidden mb-6">
+              <div className="relative bg-white rounded-2xl border border-[#dde3ec] shadow-xl border-t-white border-t-2 overflow-hidden mb-6">
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
                 <div className="p-6 border-b border-[#dde3ec] flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-[#1c2333]">{selectedStudent}</h2>
@@ -1456,7 +1457,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <button
                   onClick={handleStartLesson}
-                  className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all flex items-center justify-center gap-3 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0"
+                  className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center justify-center gap-3"
                 >
                   <Plane size={20} />
                   Start New Lesson →
