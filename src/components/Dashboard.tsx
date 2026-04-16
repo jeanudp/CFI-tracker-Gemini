@@ -701,10 +701,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] flex flex-col font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] flex flex-row font-sans">
       {/* Roster Sidebar */}
       <aside className="w-72 bg-white dark:bg-[#0f1f35] border-r border-[#dde3ec] dark:border-[#1e3a5c] flex flex-col shrink-0">
-        <div className="p-4 border-bottom border-[#dde3ec] dark:border-[#1e3a5c]">
+        <div className="p-4 border-b border-[#dde3ec] dark:border-[#1e3a5c]">
           <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-3">Home</h2>
           <form onSubmit={handleAddStudent} className="flex gap-2">
             <input
