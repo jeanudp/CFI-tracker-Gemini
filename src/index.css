@@ -95,87 +95,126 @@ input:focus, textarea:focus {
    DARK MODE OVERRIDES FOR HARDCODED TAILWIND
    ============================================ */
 
+/* Backgrounds */
 html.dark .bg-white {
   background-color: var(--bg-secondary) !important;
 }
-
 html.dark .bg-\[\#f4f5f7\] {
   background-color: var(--bg-tertiary) !important;
 }
-
 html.dark .bg-\[\#f8fafc\] {
   background-color: var(--bg-elevated) !important;
 }
-
 html.dark .bg-\[\#fafbfd\] {
   background-color: var(--bg-elevated) !important;
 }
+html.dark .bg-\[\#f1f5f9\] {
+  background-color: var(--bg-tertiary) !important;
+}
 
+/* Navy backgrounds stay dark but slightly lighter */
+html.dark .bg-\[\#1a3a5c\] {
+  background-color: #1e3a5c !important;
+}
+
+/* Text — primary dark colors become light */
 html.dark .text-\[\#1c2333\],
-html.dark .text-\[\#1a2333\] {
+html.dark .text-\[\#1a2333\],
+html.dark .text-\[\#1a3a5c\] {
   color: var(--text-primary) !important;
 }
 
-html.dark .text-\[\#6b7280\] {
+/* Text — secondary colors */
+html.dark .text-\[\#6b7280\],
+html.dark .text-\[\#4b5563\],
+html.dark .text-\[\#64748b\] {
   color: var(--text-secondary) !important;
 }
 
-html.dark .text-\[\#4b5563\] {
-  color: var(--text-secondary) !important;
+/* Navy accent text becomes light blue */
+html.dark .text-\[\#2a5a8c\],
+html.dark .text-\[\#3a7abc\] {
+  color: #93c5fd !important;
 }
 
+/* Borders */
 html.dark .border-\[\#dde3ec\] {
   border-color: var(--border-color) !important;
 }
-
+html.dark .border-\[\#e2e8f0\] {
+  border-color: var(--border-color) !important;
+}
 html.dark .divide-\[\#dde3ec\] > * {
   border-color: var(--border-color) !important;
 }
 
+/* Inputs */
 html.dark input,
-html.dark .dark input,
 html.dark textarea,
 html.dark select {
   background-color: var(--bg-tertiary) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }
-
 html.dark input:read-only,
 html.dark input[readonly] {
   background-color: var(--bg-primary) !important;
   color: var(--text-secondary) !important;
 }
 
-html.dark .bg-\[\#1a3a5c\] {
-  background-color: #1e3a5c !important;
-}
-
+/* Hover states */
 html.dark .hover\:bg-\[\#fafbfd\]:hover {
   background-color: var(--bg-tertiary) !important;
 }
+html.dark .hover\:bg-\[\#f4f5f7\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+html.dark .hover\:text-\[\#1c2333\]:hover {
+  color: var(--text-primary) !important;
+}
+html.dark .hover\:text-\[\#1a3a5c\]:hover {
+  color: #93c5fd !important;
+}
 
+/* Green tinted areas */
 html.dark .bg-\[\#e4f5ec\] {
   background-color: rgba(45, 122, 79, 0.2) !important;
 }
-
 html.dark .text-\[\#1a4a2e\] {
   color: #a7f3d0 !important;
 }
+html.dark .text-\[\#2d7a4f\] {
+  color: #4ade80 !important;
+}
 
+/* Blue tinted areas */
 html.dark .bg-\[\#d4e8f5\] {
   background-color: rgba(42, 90, 140, 0.3) !important;
 }
 
-html.dark .bg-\[\#f1f5f9\] {
-  background-color: var(--bg-tertiary) !important;
+/* Prose in AI modal */
+html.dark .prose-headings\:text-\[\#1a3a5c\] h1,
+html.dark .prose-headings\:text-\[\#1a3a5c\] h2,
+html.dark .prose-headings\:text-\[\#1a3a5c\] h3 {
+  color: var(--text-primary) !important;
 }
-
-html.dark .text-\[\#64748b\] {
+html.dark .prose-strong\:text-\[\#1a3a5c\] strong {
+  color: var(--text-primary) !important;
+}
+html.dark .prose-p\:text-\[\#6b7280\] p {
   color: var(--text-secondary) !important;
 }
 
-html.dark .border-\[\#e2e8f0\] {
-  border-color: var(--border-color) !important;
+/* Pill and badge backgrounds */
+html.dark .rounded-full.bg-white {
+  background-color: var(--bg-tertiary) !important;
 }
 
+/* Scrollbars */
+html.dark ::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
