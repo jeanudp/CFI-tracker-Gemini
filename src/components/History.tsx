@@ -73,6 +73,9 @@ export default function History() {
   const [manualHours, setManualHours] = useState<ManualHours[]>([]);
   const [endorsements, setEndorsements] = useState<Endorsement[]>([]);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [activeStudentFilter, setActiveStudentFilter] = useState<string | null>(
+    localStorage.getItem('sb_selected_student')
+  );
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -279,7 +282,15 @@ export default function History() {
       setLessons(lessonsData || []);
       setManualHours(manualData || []);
       setEndorsements(endorsementsData || []);
-      if (lessonsData && lessonsData.length > 0) {
+      const preSelectedStudent = localStorage.getItem('sb_selected_student');
+      if (preSelectedStudent && lessonsData && lessonsData.length > 0) {
+        const studentLesson = lessonsData.find(l => l.student_name === preSelectedStudent);
+        if (studentLesson) {
+          setSelectedLessonId(studentLesson.id);
+        } else {
+          setSelectedLessonId(lessonsData[0].id);
+        }
+      } else if (lessonsData && lessonsData.length > 0) {
         setSelectedLessonId(lessonsData[0].id);
       }
     } catch (err: any) {
@@ -410,8 +421,9 @@ export default function History() {
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = (l.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (l.student_name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    if (studentName) {
-      return matchesSearch && l.student_name === studentName;
+    const filterName = studentName || activeStudentFilter;
+    if (filterName) {
+      return matchesSearch && l.student_name === filterName;
     }
     return matchesSearch;
   });

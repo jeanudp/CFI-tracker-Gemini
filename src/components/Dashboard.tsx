@@ -1050,13 +1050,18 @@ export default function Dashboard() {
                       Currently working on: <span className="font-bold" style={{ color: 'var(--navy-light)' }}>{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
                     </p>
                   </div>
-                  <Link
-                    to="/history"
+                  <button
+                    onClick={() => {
+                      if (selectedStudent) {
+                        localStorage.setItem('sb_selected_student', selectedStudent);
+                      }
+                      navigate('/history');
+                    }}
                     style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--navy-light)', borderColor: 'var(--border-color)' }}
                     className="text-xs font-medium border px-3 py-1.5 rounded-lg hover:opacity-80 transition-all"
                   >
                     History →
-                  </Link>
+                  </button>
                 </div>
                 <div className="p-6 space-y-6">
                   {/* Rating History */}
