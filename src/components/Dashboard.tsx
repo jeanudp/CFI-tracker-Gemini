@@ -817,84 +817,128 @@ export default function Dashboard() {
               const stats = getStudentStats(student.name);
               const isActive = selectedStudent === student.name;
               
-              const ratingColors: Record<string, string> = {
-                ppl: 'bg-[#1a3a5c]',
-                ir: 'bg-[#7c3aed]',
-                cpl: 'bg-[#2d7a4f]',
-                cfi: 'bg-[#e67e22]',
-                cfii: 'bg-[#16a34a]',
-                mei: 'bg-[#c0392b]'
+              const ratingColorMap: Record<string, { bg: string, text: string, dot: string }> = {
+                ppl:  { bg: 'rgba(26, 58, 92, 0.12)',   text: '#1a3a5c', dot: '#1a3a5c' },
+                ir:   { bg: 'rgba(124, 58, 237, 0.12)', text: '#7c3aed', dot: '#7c3aed' },
+                cpl:  { bg: 'rgba(45, 122, 79, 0.12)',  text: '#2d7a4f', dot: '#2d7a4f' },
+                cfi:  { bg: 'rgba(230, 126, 34, 0.12)', text: '#e67e22', dot: '#e67e22' },
+                cfii: { bg: 'rgba(22, 163, 74, 0.12)',  text: '#16a34a', dot: '#16a34a' },
+                mei:  { bg: 'rgba(192, 57, 43, 0.12)',  text: '#c0392b', dot: '#c0392b' },
               };
+
+              const ratingColor = ratingColorMap[student.current_rating] || ratingColorMap['ppl'];
+              const initials = student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+              const groundCount = lessons.filter(l => l.student_name === student.name && l.type === 'ground').length;
+              const flightCount = lessons.filter(l => l.student_name === student.name && l.type === 'flight').length;
 
               return (
                 <div
-                    key={student.id}
-                    onClick={() => handleSelectStudent(student.name)}
-                    style={{ 
-                      backgroundColor: isActive ? 'var(--navy)' : 'var(--bg-secondary)',
-                      borderColor: 'var(--border-color)',
-                      borderLeftColor: isActive ? 'var(--amber)' : 'transparent'
-                    }}
-                    className={cn(
-                      "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-lg duration-200",
-                    )}
-                  >
-                    <div 
-                      style={{ 
-                        backgroundColor: isActive ? 'var(--bg-primary)' : 'var(--bg-tertiary)',
-                        color: isActive ? 'var(--navy)' : 'var(--text-secondary)'
+                  key={student.id}
+                  onClick={() => handleSelectStudent(student.name)}
+                  className="group relative cursor-pointer px-3 py-2.5 transition-all duration-200"
+                  style={{
+                    backgroundColor: isActive ? 'var(--navy)' : 'transparent',
+                    borderLeft: isActive ? '3px solid var(--amber)' : '3px solid transparent',
+                  }}
+                >
+                  <div className={cn(
+                    "flex items-center gap-3 rounded-xl p-2.5 transition-all duration-200",
+                    !isActive && "group-hover:bg-[var(--bg-tertiary)]"
+                  )}>
+                    {/* Avatar */}
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 shadow-sm"
+                      style={{
+                        backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : ratingColor.bg,
+                        color: isActive ? 'white' : ratingColor.text,
                       }}
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",
-                      )}
                     >
-                      {student.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                      {initials}
                     </div>
-                    <div className="flex-1 min-width-0">
-                      <div className="flex items-center gap-2">
-                        <div 
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      {/* Name row */}
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span
+                          className="text-xs font-bold truncate"
                           style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
-                          className={cn("text-xs truncate", isActive ? "font-bold" : "font-medium")}
                         >
                           {student.name}
-                        </div>
-                        <span className={cn(
-                          "text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-tighter",
-                          ratingColors[student.current_rating] || 'bg-gray-500'
-                        )}>
-                          {student.current_rating}
                         </span>
                       </div>
-                      <div 
-                        className="text-[10px] font-mono mt-0.5 flex items-center gap-2"
-                        style={{ color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)' }}
-                      >
-                        <span>{stats.count > 0 ? `${lessons.filter(l => l.student_name === student.name && l.type === 'ground').length}G · ${lessons.filter(l => l.student_name === student.name && l.type === 'flight').length}F` : 'No lessons yet'}</span>
-                        {stats.count > 0 && (
-                          <Link 
-                            to={`/student/${encodeURIComponent(student.name)}`}
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ color: isActive ? 'white' : 'var(--navy-light)' }}
-                            className="hover:underline flex items-center gap-0.5"
-                          >
-                            <TrendingUp size={10} />
-                            Analytics
-                          </Link>
+
+                      {/* Rating + lesson counts */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                          style={{
+                            backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : ratingColor.bg,
+                            color: isActive ? 'white' : ratingColor.text,
+                          }}
+                        >
+                          {student.current_rating_label?.split(' ')[0] || student.current_rating?.toUpperCase()}
+                        </span>
+
+                        {(groundCount > 0 || flightCount > 0) && (
+                          <div className="flex items-center gap-1">
+                            {groundCount > 0 && (
+                              <span
+                                className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'var(--bg-tertiary)',
+                                  color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
+                                }}
+                              >
+                                {groundCount}G
+                              </span>
+                            )}
+                            {flightCount > 0 && (
+                              <span
+                                className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'var(--bg-tertiary)',
+                                  color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
+                                }}
+                              >
+                                {flightCount}F
+                              </span>
+                            )}
+                            {stats.hrs !== '0.0' && (
+                              <span
+                                className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: isActive ? 'rgba(232,160,32,0.3)' : 'rgba(232,160,32,0.1)',
+                                  color: isActive ? '#fde68a' : 'var(--amber)',
+                                }}
+                              >
+                                {stats.hrs}h
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Archive button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteStudent(student.id, student.name);
                       }}
                       title="Archive Student"
-                      style={{ color: isActive ? 'white' : 'var(--text-secondary)' }}
-                      className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center hover:bg-[rgba(0,0,0,0.1)] transition-all"
+                      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center transition-all shrink-0"
+                      style={{
+                        color: isActive ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)',
+                        backgroundColor: 'transparent',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.08)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <Archive size={12} />
+                      <Archive size={13} />
                     </button>
                   </div>
+                </div>
               );
             })
           )}
