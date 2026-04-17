@@ -94,9 +94,7 @@ export default function GroundLesson() {
     });
   }, [navigate]);
 
-  const acsData = rating?.code === 'ir'
-    ? (ALL_GROUND_ACS['ir'] || ALL_ACS['ppl'])
-    : (ALL_ACS[rating?.code || 'ppl'] || ALL_ACS['ppl']);
+const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
 
   const groundTasks = rating ? acsData.flatMap((area, ai) =>
     area.tasks
@@ -266,7 +264,7 @@ export default function GroundLesson() {
             <div className="w-10 h-10 bg-[#e8a020] rounded-lg flex items-center justify-center text-[#1a3a5c] text-xl font-bold">📚</div>
             <div>
               <h1 className="text-xl font-bold text-[#1c2333]">Ground Lesson Entry</h1>
-              <p className="text-xs text-[#6b7280]">{rating?.label || 'Private Pilot ASEL'} · Area I</p>
+              <p className="text-xs text-[#6b7280]">{rating?.label || 'Private Pilot ASEL'}</p>
             </div>
           </div>
         </div>
@@ -405,9 +403,9 @@ export default function GroundLesson() {
                         <button
                           onClick={() => handleGradeCycle(task.id)}
                           className={cn(
-                            "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
-                            g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                            g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
+                            "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all",
+                            g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
+                            g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
                             "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
                           )}
                         >

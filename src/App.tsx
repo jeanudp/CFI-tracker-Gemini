@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'motion/react';
+import PageTransition from './components/PageTransition';
 import { supabase } from './lib/supabase';
 import Layout from './components/Layout';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import LessonType from './components/LessonType';
+import RatingSelection from './components/RatingSelection';
 import GroundLesson from './components/GroundLesson';
 import FlightLesson from './components/FlightLesson';
 import History from './components/History';
@@ -18,6 +21,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState(false);
+  const location = useLocation();
 
   const checkConnection = async () => {
     try {
@@ -95,15 +99,31 @@ export default function App() {
   }
 
   return (
-    <Router>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/auth" element={<Auth />} />
         <Route
           path="/"
           element={
             session ? (
               <Layout user={session.user}>
-                <Dashboard />
+                <PageTransition>
+                  <Dashboard />
+                </PageTransition>
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route
+          path="/rating"
+          element={
+            session ? (
+              <Layout user={session.user}>
+                <PageTransition>
+                  <RatingSelection />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -115,7 +135,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <LessonType />
+                <PageTransition>
+                  <LessonType />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -127,7 +149,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <GroundLesson />
+                <PageTransition>
+                  <GroundLesson />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -139,7 +163,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <FlightLesson />
+                <PageTransition>
+                  <FlightLesson />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -151,7 +177,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <History />
+                <PageTransition>
+                  <History />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -163,7 +191,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <StudentDashboard />
+                <PageTransition>
+                  <StudentDashboard />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -175,7 +205,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <IACRASummary />
+                <PageTransition>
+                  <IACRASummary />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -187,7 +219,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <PreSoloTest />
+                <PageTransition>
+                  <PreSoloTest />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -199,7 +233,9 @@ export default function App() {
           element={
             session ? (
               <Layout user={session.user}>
-                <CFIHours />
+                <PageTransition>
+                  <CFIHours />
+                </PageTransition>
               </Layout>
             ) : (
               <Navigate to="/auth" />
@@ -207,6 +243,7 @@ export default function App() {
           }
         />
       </Routes>
-    </Router>
+    </AnimatePresence>
   );
 }
+

@@ -1,5 +1,6 @@
 import { ACSArea, ACSTask } from './types';
 import { IR_GROUND_ACS, IR_FLIGHT_ACS } from './constants/irACS';
+import { CPL_ACS } from './constants/cplACS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -841,107 +842,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
     },
   ],
   ir: IR_FLIGHT_ACS,
-  cpl: [
-    { 
-      area: "I. Preflight Preparation", 
-      tasks: [
-        createPlaceholderTask("Pilot Qualifications", "CA.I.A"),
-        createPlaceholderTask("Airworthiness Requirements", "CA.I.B"),
-        createPlaceholderTask("Weather Information", "CA.I.C"),
-        createPlaceholderTask("Performance and Limitations", "CA.I.D"),
-        createPlaceholderTask("Operation of Systems", "CA.I.E"),
-        createPlaceholderTask("Human Factors", "CA.I.F")
-      ] 
-    },
-    { 
-      area: "II. Preflight Procedures", 
-      tasks: [
-        createPlaceholderTask("Preflight Assessment", "CA.II.A"),
-        createPlaceholderTask("Flight Deck Management", "CA.II.B"),
-        createPlaceholderTask("Engine Starting", "CA.II.C"),
-        createPlaceholderTask("Taxiing", "CA.II.D"),
-        createPlaceholderTask("Before Takeoff Check", "CA.II.E")
-      ] 
-    },
-    { 
-      area: "III. Airport Operations", 
-      tasks: [
-        createPlaceholderTask("Communications", "CA.III.A"),
-        createPlaceholderTask("Traffic Patterns", "CA.III.B"),
-        createPlaceholderTask("Airport Markings / Signs / Lighting", "CA.III.C")
-      ] 
-    },
-    { 
-      area: "IV. Takeoffs, Landings, and Go-Arounds", 
-      tasks: [
-        createPlaceholderTask("Normal Takeoff and Climb", "CA.IV.A"),
-        createPlaceholderTask("Normal Approach and Landing", "CA.IV.B"),
-        createPlaceholderTask("Soft-Field Takeoff and Climb", "CA.IV.C"),
-        createPlaceholderTask("Soft-Field Approach and Landing", "CA.IV.D"),
-        createPlaceholderTask("Short-Field Takeoff and Maximum Performance Climb", "CA.IV.E"),
-        createPlaceholderTask("Short-Field Approach and Landing", "CA.IV.F"),
-        createPlaceholderTask("Power-Off 180° Accuracy Approach and Landing", "CA.IV.G"),
-        createPlaceholderTask("Forward Slip to a Landing", "CA.IV.H"),
-        createPlaceholderTask("Go-Around / Rejected Landing", "CA.IV.I")
-      ] 
-    },
-    { 
-      area: "V. Performance Maneuvers", 
-      tasks: [
-        createPlaceholderTask("Steep Turns", "CA.V.A"),
-        createPlaceholderTask("Steep Spirals", "CA.V.B"),
-        createPlaceholderTask("Chandelles", "CA.V.C"),
-        createPlaceholderTask("Lazy Eights", "CA.V.D")
-      ] 
-    },
-    { 
-      area: "VI. Ground Reference Maneuvers", 
-      tasks: [
-        createPlaceholderTask("Eights on Pylons", "CA.VI.A")
-      ] 
-    },
-    { 
-      area: "VII. Navigation", 
-      tasks: [
-        createPlaceholderTask("Pilotage and Dead Reckoning", "CA.VII.A"),
-        createPlaceholderTask("Navigation Systems and Radar Services", "CA.VII.B"),
-        createPlaceholderTask("Diversion", "CA.VII.C"),
-        createPlaceholderTask("Lost Procedures", "CA.VII.D")
-      ] 
-    },
-    { 
-      area: "VIII. Slow Flight and Stalls", 
-      tasks: [
-        createPlaceholderTask("Maneuvering During Slow Flight", "CA.VIII.A"),
-        createPlaceholderTask("Power-Off Stalls", "CA.VIII.B"),
-        createPlaceholderTask("Power-On Stalls", "CA.VIII.C"),
-        createPlaceholderTask("Accelerated Stalls", "CA.VIII.D"),
-        createPlaceholderTask("Spin Awareness", "CA.VIII.E")
-      ] 
-    },
-    { 
-      area: "IX. High Altitude Operations", 
-      tasks: [
-        createPlaceholderTask("Supplemental Oxygen", "CA.IX.A"),
-        createPlaceholderTask("Pressurization", "CA.IX.B")
-      ] 
-    },
-    { 
-      area: "X. Emergency Operations", 
-      tasks: [
-        createPlaceholderTask("Emergency Descent", "CA.X.A"),
-        createPlaceholderTask("Emergency Approach and Landing (Simulated)", "CA.X.B"),
-        createPlaceholderTask("Systems and Equipment Malfunctions", "CA.X.C"),
-        createPlaceholderTask("Emergency Equipment and Survival Gear", "CA.X.D")
-      ] 
-    },
-    { 
-      area: "XI. Postflight Procedures", 
-      tasks: [
-        createPlaceholderTask("After Landing, Parking, and Securing", "CA.XI.A")
-      ] 
-    }
-  ],
+  cpl: CPL_ACS,
   cfi: [
     { 
       area: "I. Fundamentals of Instructing", 
@@ -1411,12 +1312,24 @@ export const ACS_ELEMENTS: Record<string, string[]> = {
 export const RATINGS = {
   ppl:  { label: 'Private Pilot ASEL',  acs: 'FAA-S-ACS-6B',  groundPage: '/ground', flightPage: '/flight' },
   ir:   { label: 'Instrument Rating',   acs: 'FAA-S-ACS-8C',  groundPage: '/ground', flightPage: '/flight' },
-  cpl:  { label: 'Commercial Pilot',    acs: 'FAA-S-ACS-7A',  groundPage: '/ground', flightPage: '/flight' },
+  cpl:  { label: 'Commercial Pilot',    acs: 'FAA-S-ACS-7B',  groundPage: '/ground', flightPage: '/flight' },
   cfi:  { label: 'CFI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
   cfii: { label: 'CFII',               acs: 'FAA-S-ACS-25',   groundPage: '/ground', flightPage: '/flight' },
   mei:  { label: 'MEI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
 };
 
 export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
+  ppl: [
+    {
+      area: "I. Preflight Preparation",
+      tasks: ALL_ACS['ppl'][0].tasks
+    }
+  ],
   ir: IR_GROUND_ACS,
+  cpl: [
+    {
+      area: "I. Preflight Preparation",
+      tasks: CPL_ACS[0].tasks
+    }
+  ]
 };
