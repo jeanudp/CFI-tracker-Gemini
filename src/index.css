@@ -329,6 +329,11 @@ html.dark .bg-white\/95 {
   background-color: rgba(22, 36, 64, 0.95) !important;
 }
 
+/* Global cursor pointer for all buttons */
+button {
+  cursor: pointer;
+}
+
 html.dark .text-\[\#94a3b8\] {
   color: #64748b !important;
 }
