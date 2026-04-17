@@ -1033,13 +1033,6 @@ export default function Dashboard() {
         style={{ backgroundColor: 'var(--bg-primary)' }}
       >
         <div className="max-w-4xl mx-auto w-full">
-          <div 
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            <span style={{ color: 'var(--navy-light)' }}>Home</span>
-          </div>
-
           <AnimatePresence mode="wait">
             {!selectedStudent ? (
             <motion.div
