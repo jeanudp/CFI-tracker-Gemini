@@ -2126,10 +2126,37 @@ export default function History() {
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
-                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
-                      { key: 'A.38', label: 'A.38 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.123(c), and 61.125' },
-                      { key: 'A.39', label: 'A.39 — Flight proficiency/practical test: 14 CFR §§ 61.123(e), 61.127, and 61.129' }
+                      { key: 'A.1', text: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
+                      { key: 'A.2', text: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
+                      { key: 'A.38', text: 'A.38 — Aeronautical knowledge test: 14 CFR §§ 61.35(a)(1), 61.123(c), and 61.125' },
+                      { key: 'A.39', text: 'A.39 — Flight proficiency/practical test: 14 CFR §§ 61.123(e), 61.127, and 61.129' },
+                      { key: 'A.77', text: 'A.77 — Retesting after failure of a knowledge or practical test: 14 CFR § 61.49' }
+                    ];
+                    SOLO_OPTIONS = [
+                      {
+                        id: '1',
+                        label: 'Section 1 — Knowledge Test',
+                        description: 'Required before the FAA Commercial Pilot knowledge test.',
+                        endorsements: [ENDORSEMENTS[2]]
+                      },
+                      {
+                        id: '2',
+                        label: 'Section 2 — Practical Test Prerequisites',
+                        description: 'Required before the FAA Commercial Pilot practical test.',
+                        endorsements: [ENDORSEMENTS[0], ENDORSEMENTS[1]]
+                      },
+                      {
+                        id: '3',
+                        label: 'Section 3 — Practical Test Endorsement',
+                        description: 'Required before the FAA Commercial Pilot practical test with a DPE.',
+                        endorsements: [ENDORSEMENTS[3]]
+                      },
+                      {
+                        id: '4',
+                        label: 'Section 4 — Retesting After Failure',
+                        description: 'Required if the student fails any knowledge or practical test.',
+                        endorsements: [ENDORSEMENTS[4]]
+                      }
                     ];
                   } else if (lessonRating === 'cfi') {
                     REQS = [
@@ -2517,9 +2544,9 @@ export default function History() {
                               const isSectionInProgress = sectionEndorsementsMet > 0;
                               const isOpen = selectedSoloOption === section.id;
 
-                              const headerBg = isSectionComplete ? "bg-[#f0fdf4]" : (section.id === '4' && !isSectionInProgress ? "bg-[#f4f5f7]" : "bg-[#1a3a5c]");
-                              const titleColor = isSectionComplete ? "text-[#166534]" : (section.id === '4' && !isSectionInProgress ? "text-[#1c2333]" : "text-white");
-                              const descColor = isSectionComplete ? "text-[#166534]/70" : (section.id === '4' && !isSectionInProgress ? "text-[#6b7280]" : "text-white/70");
+                              const headerBg = isSectionComplete ? "bg-[#f0fdf4]" : "bg-[#1a3a5c]";
+                              const titleColor = isSectionComplete ? "text-[#166534]" : "text-white";
+                              const descColor = isSectionComplete ? "text-[#166534]/70" : "text-white/70";
                               const iconBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white text-[#1a3a5c]";
                               const badgeBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white/20 text-white";
 
@@ -2538,9 +2565,6 @@ export default function History() {
                                           <h3 className={cn("text-sm font-bold", titleColor)}>
                                             {section.label}
                                           </h3>
-                                          {section.id === '4' && (
-                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#dde3ec] text-[#6b7280] uppercase tracking-widest">Optional</span>
-                                          )}
                                         </div>
                                         <p className={cn("text-[10px] font-medium", descColor)}>{section.description}</p>
                                       </div>
@@ -2549,7 +2573,7 @@ export default function History() {
                                       <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", badgeBg)}>
                                         {sectionEndorsementsMet}/{section.endorsements.length}
                                       </span>
-                                      <ChevronRight size={16} className={cn(isSectionComplete || (section.id !== '4' || isSectionInProgress) ? "text-white" : "text-[#6b7280]", "transition-transform", isOpen && "rotate-90")} />
+                                      <ChevronRight size={16} className={cn(isSectionComplete ? "text-white" : "text-white", "transition-transform", isOpen && "rotate-90")} />
                                     </div>
                                   </button>
 
@@ -2832,9 +2856,26 @@ export default function History() {
                           <div className="space-y-4">
                             {SOLO_OPTIONS.map(section => {
                               const isSectionComplete = (() => {
-                                if (section.id === '1') return isEndorsementMet('A.42');
-                                if (section.id === '2') return isEndorsementMet('A.1') && isEndorsementMet('A.44');
-                                if (section.id === '3') return isEndorsementMet('A.43');
+                                if (lessonRating === 'ir') {
+                                  if (section.id === '1') return isEndorsementMet('A.42');
+                                  if (section.id === '2') return isEndorsementMet('A.1') && isEndorsementMet('A.44');
+                                  if (section.id === '3') return isEndorsementMet('A.43');
+                                }
+                                if (lessonRating === 'cpl') {
+                                  if (section.id === '1') return isEndorsementMet('A.38');
+                                  if (section.id === '2') return isEndorsementMet('A.1') && isEndorsementMet('A.2');
+                                  if (section.id === '3') return isEndorsementMet('A.39');
+                                  if (section.id === '4') return isEndorsementMet('A.77');
+                                }
+                                if (lessonRating === 'cfi') {
+                                  if (section.id === '1') return isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49');
+                                }
+                                if (lessonRating === 'cfii') {
+                                  if (section.id === '1') return isEndorsementMet('A.1') && isEndorsementMet('A.48');
+                                }
+                                if (lessonRating === 'mei') {
+                                  if (section.id === '1') return isEndorsementMet('A.1') && isEndorsementMet('A.47');
+                                }
                                 return false;
                               })();
 
@@ -2925,9 +2966,10 @@ export default function History() {
                             {/* Endorsement Summary */}
                             {(() => {
                               const summaryLabels: Record<string, string> = {
-                                '1': 'Knowledge Test',
-                                '2': 'Prerequisites',
-                                '3': 'Checkride'
+                                '1': lessonRating === 'cpl' ? 'Knowledge Test' : 'Knowledge Test',
+                                '2': lessonRating === 'cpl' ? 'Prerequisites' : 'Prerequisites',
+                                '3': lessonRating === 'cpl' ? 'Practical Test' : 'Checkride',
+                                '4': 'Retesting'
                               };
 
                               const summarySections = SOLO_OPTIONS.map(section => {
