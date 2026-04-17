@@ -32,41 +32,48 @@ const CurrencyRow = ({
     <div className="flex flex-col">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center justify-between hover:bg-[#f8fafc] dark:hover:bg-[#1a2f4a] transition-colors"
+        className="w-full p-4 flex items-center justify-between hover:bg-[var(--bg-tertiary)] transition-colors"
       >
         <div className="flex flex-col items-start">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#1c2333] dark:text-[#e2e8f0]">{title}</span>
+            <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{title}</span>
             {classBadge && (
               <span className={cn(
                 "text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter text-white",
-                classBadge === 'AMEL' ? "bg-[#7c3aed]" : "bg-[#1a3a5c] dark:bg-[#3a7abc]"
+                classBadge === 'AMEL' ? "bg-[#7c3aed]" : "bg-[var(--navy)]"
               )}>
                 {classBadge}
               </span>
             )}
           </div>
-          <span className="text-[10px] text-[#6b7280] dark:text-[#94a3b8]">{reference}</span>
+          <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{reference}</span>
         </div>
         <div className="flex items-center gap-3">
           {isNotApplicable ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+            <span 
+              className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest"
+              style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}
+            >
               Not Applicable
             </span>
           ) : (
-            <span className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest",
-              isCurrent ? "bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80]" : "bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171]"
-            )}>
+            <span 
+              className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-widest"
+              style={{ 
+                backgroundColor: isCurrent ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                color: isCurrent ? 'var(--green)' : 'var(--red)'
+              }}
+            >
               {isCurrent ? 'Current' : 'Not Current'}
             </span>
           )}
           <ChevronRight 
             size={16} 
             className={cn(
-              "text-[#6b7280] dark:text-[#94a3b8] transition-transform duration-200",
+              "transition-transform duration-200",
               isExpanded ? "rotate-90" : "rotate-0"
             )} 
+            style={{ color: 'var(--text-secondary)' }}
           />
         </div>
       </button>
@@ -641,8 +648,16 @@ export default function Dashboard() {
   const LessonSummary = ({ lesson, type }: { lesson: Lesson | null, type: 'ground' | 'flight' }) => {
     if (!lesson) {
       return (
-        <div className="p-4 bg-[#f4f5f7] rounded-xl border border-[#dde3ec] text-center">
-          <p className="text-xs text-[#6b7280] italic">No {type} lessons yet.</p>
+        <div 
+          className="p-4 rounded-xl border border-dashed text-center"
+          style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}
+        >
+          <p 
+            className="text-xs italic"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            No {type} lessons yet.
+          </p>
         </div>
       );
     }
@@ -653,45 +668,75 @@ export default function Dashboard() {
       .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'));
 
     return (
-      <div className="p-4 bg-white dark:bg-[#0f1f35] rounded-xl border border-[#dde3ec] dark:border-[#1e3a5c] shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+      <div 
+        className="p-4 rounded-xl border shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+        style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+      >
         <div className="flex justify-between items-start mb-2">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#2a5a8c] dark:text-[#3a7abc] bg-[#d4e8f5] dark:bg-[#1a3a5c] px-1.5 py-0.5 rounded">
+              <span 
+                className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--navy-light)' }}
+              >
                 {lesson.meta?.rating_label || 'PPL'}
               </span>
-              <h4 className="text-sm font-bold text-[#1c2333] dark:text-[#e2e8f0]">{lesson.label}</h4>
+              <h4 
+                className="text-sm font-bold"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {lesson.label}
+              </h4>
             </div>
-            <p className="text-[10px] text-[#6b7280] dark:text-[#94a3b8] mt-0.5">
+            <p 
+              className="text-[10px] mt-0.5"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               {new Date(lesson.saved_at).toLocaleDateString()} · {lesson.instructor}
               {lesson.meta?.aircraft && ` · ${lesson.meta.aircraftModel ? `${lesson.meta.aircraft} — ${lesson.meta.aircraftModel}` : lesson.meta.aircraft}`}
             </p>
           </div>
           {type === 'flight' && lesson.meta?.totalFlight && (
             <div className="text-right">
-              <div className="text-[10px] font-bold text-[#e8a020] uppercase tracking-widest">Flight Time</div>
-              <div className="text-sm font-mono font-bold text-[#1a3a5c] dark:text-[#3a7abc]">{lesson.meta.totalFlight}h</div>
+              <div 
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: 'var(--amber)' }}
+              >
+                Flight Time
+              </div>
+              <div 
+                className="text-sm font-mono font-bold"
+                style={{ color: 'var(--navy-light)' }}
+              >
+                {lesson.meta.totalFlight}h
+              </div>
             </div>
           )}
         </div>
 
         {niTasks.length > 0 ? (
           <div className="mt-3 space-y-1.5">
-            <div className="text-[9px] font-bold uppercase tracking-widest text-[#c0392b] dark:text-[#f87171]">Focus Areas (N)</div>
+            <div 
+              className="text-[9px] font-bold uppercase tracking-widest"
+              style={{ color: 'var(--red)' }}
+            >Focus Areas (N)</div>
             {niTasks.map(task => (
               <div key={task.id} className="flex items-start gap-2 text-[11px] leading-tight">
-                <span className={cn(
-                  "shrink-0 w-3 h-3 rounded-full flex items-center justify-center text-[8px] font-bold text-white mt-0.5",
-                  "bg-[#c0392b] dark:bg-[#f87171]"
-                )}>
+                <span 
+                  className="shrink-0 w-3 h-3 rounded-full flex items-center justify-center text-[8px] font-bold text-white mt-0.5"
+                  style={{ backgroundColor: 'var(--red)' }}
+                >
                   {task.grade}
                 </span>
-                <span className="text-[#1c2333] dark:text-[#e2e8f0]">{task.name}</span>
+                <span style={{ color: 'var(--text-primary)' }}>{task.name}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-[#2d7a4f] dark:text-[#4ade80] font-medium">
+          <div 
+            className="mt-3 flex items-center gap-1.5 text-[11px] font-medium"
+            style={{ color: 'var(--green)' }}
+          >
             <CheckCircle2 size={12} />
             All tasks satisfactory
           </div>
@@ -701,18 +746,37 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] flex flex-row font-sans">
+    <div 
+      className="min-h-screen flex flex-row font-sans transition-colors duration-300"
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+    >
       {/* Roster Sidebar */}
-      <aside className="w-72 bg-white dark:bg-[#0f1f35] border-r border-[#dde3ec] dark:border-[#1e3a5c] flex flex-col shrink-0">
-        <div className="p-4 border-b border-[#dde3ec] dark:border-[#1e3a5c]">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-3">Home</h2>
+      <aside 
+        style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+        className="w-72 border-r flex flex-col shrink-0 transition-colors duration-300"
+      >
+        <div 
+          className="p-4 border-b"
+          style={{ borderColor: 'var(--border-color)' }}
+        >
+          <h2 
+            className="text-[10px] font-bold uppercase tracking-widest mb-3"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Home
+          </h2>
           <form onSubmit={handleAddStudent} className="flex gap-2">
             <input
               type="text"
               value={newStudentName}
               onChange={(e) => setNewStudentName(e.target.value)}
               placeholder="Add student name..."
-              className="flex-1 text-xs border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-3 py-2 bg-[#f4f5f7] dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] focus:outline-none focus:border-[#4a8ab8] dark:focus:border-[#3a7abc] focus:bg-white dark:focus:bg-[#0f1f35] transition-all"
+              style={{ 
+                backgroundColor: 'var(--bg-tertiary)',
+                borderColor: 'var(--border-color)',
+                color: 'var(--text-primary)'
+              }}
+              className="flex-1 text-xs border rounded-lg px-3 py-2 focus:outline-none focus:border-[#4a8ab8] transition-all"
             />
             <button
               type="submit"
@@ -764,72 +828,93 @@ export default function Dashboard() {
 
               return (
                 <div
-                  key={student.id}
-                  onClick={() => handleSelectStudent(student.name)}
-                  className={cn(
-                    "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#dde3ec] dark:border-[#1e3a5c] border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-lg duration-200",
-                    isActive ? "bg-[#d4e8f5] dark:bg-[#1a3a5c] border-l-[#2a5a8c] dark:border-l-[#3a7abc]" : "border-l-transparent hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a]"
-                  )}
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",
-                    isActive ? "bg-[#2a5a8c] text-white" : "bg-[#d4e8f5] dark:bg-[#1a2f4a] text-[#2a5a8c] dark:text-[#94a3b8]"
-                  )}>
-                    {student.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-width-0">
-                    <div className="flex items-center gap-2">
-                      <div className={cn("text-xs font-medium truncate", isActive ? "text-[#1a3a5c] dark:text-white font-bold" : "text-[#1c2333] dark:text-[#e2e8f0]")}>
-                        {student.name}
-                      </div>
-                      <span className={cn(
-                        "text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-tighter",
-                        ratingColors[student.current_rating] || 'bg-gray-500'
-                      )}>
-                        {student.current_rating}
-                      </span>
-                    </div>
-                    <div className="text-[10px] font-mono text-[#6b7280] dark:text-[#94a3b8] mt-0.5 flex items-center gap-2">
-                      <span>{stats.count > 0 ? `${lessons.filter(l => l.student_name === student.name && l.type === 'ground').length}G · ${lessons.filter(l => l.student_name === student.name && l.type === 'flight').length}F` : 'No lessons yet'}</span>
-                      {stats.count > 0 && (
-                        <Link 
-                          to={`/student/${encodeURIComponent(student.name)}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[#2a5a8c] dark:text-[#3a7abc] hover:underline flex items-center gap-0.5"
-                        >
-                          <TrendingUp size={10} />
-                          Analytics
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteStudent(student.id, student.name);
+                    key={student.id}
+                    onClick={() => handleSelectStudent(student.name)}
+                    style={{ 
+                      backgroundColor: isActive ? 'var(--navy)' : 'var(--bg-secondary)',
+                      borderColor: 'var(--border-color)',
+                      borderLeftColor: isActive ? 'var(--amber)' : 'transparent'
                     }}
-                    title="Archive Student"
-                    className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] hover:text-[#1a3a5c] dark:hover:text-[#e2e8f0] transition-all"
+                    className={cn(
+                      "group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-lg duration-200",
+                    )}
                   >
-                    <Archive size={12} />
-                  </button>
-                </div>
+                    <div 
+                      style={{ 
+                        backgroundColor: isActive ? 'var(--bg-primary)' : 'var(--bg-tertiary)',
+                        color: isActive ? 'var(--navy)' : 'var(--text-secondary)'
+                      }}
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors",
+                      )}
+                    >
+                      {student.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-width-0">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
+                          className={cn("text-xs truncate", isActive ? "font-bold" : "font-medium")}
+                        >
+                          {student.name}
+                        </div>
+                        <span className={cn(
+                          "text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-tighter",
+                          ratingColors[student.current_rating] || 'bg-gray-500'
+                        )}>
+                          {student.current_rating}
+                        </span>
+                      </div>
+                      <div 
+                        className="text-[10px] font-mono mt-0.5 flex items-center gap-2"
+                        style={{ color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--text-secondary)' }}
+                      >
+                        <span>{stats.count > 0 ? `${lessons.filter(l => l.student_name === student.name && l.type === 'ground').length}G · ${lessons.filter(l => l.student_name === student.name && l.type === 'flight').length}F` : 'No lessons yet'}</span>
+                        {stats.count > 0 && (
+                          <Link 
+                            to={`/student/${encodeURIComponent(student.name)}`}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ color: isActive ? 'white' : 'var(--navy-light)' }}
+                            className="hover:underline flex items-center gap-0.5"
+                          >
+                            <TrendingUp size={10} />
+                            Analytics
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteStudent(student.id, student.name);
+                      }}
+                      title="Archive Student"
+                      style={{ color: isActive ? 'white' : 'var(--text-secondary)' }}
+                      className="opacity-40 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center hover:bg-[rgba(0,0,0,0.1)] transition-all"
+                    >
+                      <Archive size={12} />
+                    </button>
+                  </div>
               );
             })
           )}
 
           {/* Archived Students Section */}
           {!loading && !error && (
-            <div className="mt-4 border-t border-[#dde3ec] dark:border-[#1e3a5c]">
+            <div 
+              className="mt-4 border-t"
+              style={{ borderColor: 'var(--border-color)' }}
+            >
               <button
                 onClick={() => setArchivedExpanded(!archivedExpanded)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] dark:hover:bg-[#1a2f4a] transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-tertiary)] transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
               >
-                <div className="flex items-center gap-2 text-[#6b7280] dark:text-[#94a3b8]">
+                <div className="flex items-center gap-2">
                   <Archive size={14} />
                   <span className="text-[10px] font-bold uppercase tracking-widest">Archived Students ({archivedStudents.length})</span>
                 </div>
-                <ChevronRight size={14} className={cn("text-[#6b7280] dark:text-[#94a3b8] transition-transform", archivedExpanded && "rotate-90")} />
+                <ChevronRight size={14} className={cn("transition-transform", archivedExpanded && "rotate-90")} />
               </button>
               
               <AnimatePresence>
@@ -838,35 +923,53 @@ export default function Dashboard() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden bg-[#f8fafc]/50 dark:bg-[#1a2f4a]/20"
+                    className="overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-tertiary)' }}
                   >
                     {archivedStudents.length === 0 ? (
-                      <div className="px-6 py-4 text-[10px] text-[#94a3b8] italic text-center">
+                      <div 
+                        className="px-6 py-4 text-[10px] italic text-center"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
                         No archived students.
                       </div>
                     ) : (
                       archivedStudents.map(student => (
-                        <div key={student.id} className="px-4 py-3 border-b border-[#dde3ec] dark:border-[#1e3a5c] opacity-70">
+                        <div 
+                          key={student.id} 
+                          className="px-4 py-3 border-b opacity-70"
+                          style={{ borderColor: 'var(--border-color)' }}
+                        >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-[#6b7280] dark:text-[#94a3b8]">{student.name}</span>
+                            <span 
+                              className="text-xs font-medium"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              {student.name}
+                            </span>
                             <div className="flex gap-1">
                               <button
                                 onClick={() => handleRestoreStudent(student.id)}
                                 title="Restore Student"
-                                className="p-1 text-[#2d7a4f] dark:text-[#4ade80] hover:bg-[#e4f5ec] dark:hover:bg-[#0f2a1a] rounded transition-colors"
+                                className="p-1 hover:bg-[rgba(0,0,0,0.05)] rounded transition-colors"
+                                style={{ color: 'var(--green)' }}
                               >
                                 <RotateCcw size={12} />
                               </button>
                               <button
                                 onClick={() => handlePermanentDelete(student.id, student.name)}
                                 title="Permanently Delete"
-                                className="p-1 text-[#c0392b] dark:text-[#f87171] hover:bg-[#fdecea] dark:hover:bg-[#2a0f0f] rounded transition-colors"
+                                className="p-1 hover:bg-[rgba(0,0,0,0.05)] rounded transition-colors"
+                                style={{ color: 'var(--red)' }}
                               >
                                 <Trash2 size={12} />
                               </button>
                             </div>
                           </div>
-                          <div className="text-[9px] text-[#94a3b8]">
+                          <div 
+                            className="text-[9px]"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
                             Archived {new Date(student.deleted_at!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                           </div>
                         </div>
@@ -881,10 +984,16 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-h-screen bg-gradient-to-br from-[#f0f4f8] via-[#f8fafc] to-[#eef2f7] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] p-8 overflow-y-auto">
+      <main 
+        className="flex-1 min-h-screen p-8 overflow-y-auto transition-colors duration-300"
+        style={{ backgroundColor: 'var(--bg-primary)' }}
+      >
         <div className="max-w-4xl mx-auto w-full">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-6">
-            <span className="text-[#1a3a5c] dark:text-[#3a7abc]">Home</span>
+          <div 
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-6"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <span style={{ color: 'var(--navy-light)' }}>Home</span>
           </div>
 
           <AnimatePresence mode="wait">
@@ -897,8 +1006,16 @@ export default function Dashboard() {
               className="text-center max-w-md mx-auto"
             >
               <div className="text-5xl mb-6 opacity-30">👨‍✈️</div>
-              <h1 className="text-2xl font-bold text-[#1c2333] dark:text-[#e2e8f0] mb-2">Select a student</h1>
-              <p className="text-sm text-[#6b7280] dark:text-[#94a3b8] leading-relaxed">
+              <h1 
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Select a student
+              </h1>
+              <p 
+                className="text-sm leading-relaxed"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 Choose a student from the list on the left to view their progress and start a new lesson.
               </p>
             </motion.div>
@@ -910,18 +1027,33 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -10 }}
               className="w-full max-w-lg mx-auto"
             >
-              <div className="relative bg-white dark:bg-[#0f1f35] rounded-2xl border border-[#dde3ec] dark:border-[#1e3a5c] shadow-xl border-t-white dark:border-t-[#1e3a5c] border-t-2 overflow-hidden mb-6">
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white dark:via-[#1e3a5c] to-transparent opacity-60" />
-                <div className="p-6 border-b border-[#dde3ec] dark:border-[#1e3a5c] flex items-center justify-between">
+              <div 
+                className="relative rounded-2xl border shadow-xl border-t-2 overflow-hidden mb-6"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', borderTopColor: 'var(--bg-secondary)' }}
+              >
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
+                <div 
+                  className="p-6 border-b flex items-center justify-between"
+                  style={{ borderColor: 'var(--border-color)' }}
+                >
                   <div>
-                    <h2 className="text-xl font-bold text-[#1c2333] dark:text-[#e2e8f0]">{selectedStudent}</h2>
-                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">
-                      Currently working on: <span className="font-bold text-[#1a3a5c] dark:text-[#3a7abc]">{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
+                    <h2 
+                      className="text-xl font-bold"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {selectedStudent}
+                    </h2>
+                    <p 
+                      className="text-xs mt-1"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Currently working on: <span className="font-bold" style={{ color: 'var(--navy-light)' }}>{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
                     </p>
                   </div>
                   <Link
                     to="/history"
-                    className="text-xs font-medium text-[#2a5a8c] dark:text-[#3a7abc] bg-[#d4e8f5] dark:bg-[#1a3a5c] border border-[#4a8ab8] dark:border-[#3a7abc] px-3 py-1.5 rounded-lg hover:bg-[#4a8ab8] dark:hover:bg-[#3a7abc] hover:text-white transition-all"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--navy-light)', borderColor: 'var(--border-color)' }}
+                    className="text-xs font-medium border px-3 py-1.5 rounded-lg hover:opacity-80 transition-all"
                   >
                     History →
                   </Link>
@@ -929,28 +1061,40 @@ export default function Dashboard() {
                 <div className="p-6 space-y-6">
                   {/* Rating History */}
                   {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings?.length ? (
-                    <div className="bg-[#f8fafc] dark:bg-[#1a2f4a] rounded-xl p-4 border border-[#dde3ec] dark:border-[#1e3a5c]">
-                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] mb-3 flex items-center gap-2">
-                        <Award size={14} className="text-[#e8a020]" />
+                    <div 
+                      className="rounded-xl p-4 border"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}
+                    >
+                      <h3 
+                        className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2"
+                        style={{ color: 'var(--navy-light)' }}
+                      >
+                        <Award size={14} style={{ color: 'var(--amber)' }} />
                         Ratings Completed
                       </h3>
                       <div className="space-y-2">
                         {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings.map((r, idx) => (
                           <div key={idx} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{r.label}</span>
+                              <span 
+                                className="font-medium"
+                                style={{ color: 'var(--text-primary)' }}
+                              >
+                                {r.label}
+                              </span>
                               <button
                                 onClick={() => {
                                   setRatingToUndo(r);
                                   setIsUndoConfirmOpen(true);
                                 }}
-                                className="p-1 text-[#6b7280] dark:text-[#94a3b8] hover:text-[#c0392b] dark:hover:text-[#f87171] hover:bg-red-50 dark:hover:bg-[#2a0f0f] rounded transition-all"
+                                style={{ color: 'var(--text-secondary)' }}
+                                className="p-1 hover:text-[var(--red)] hover:bg-[rgba(0,0,0,0.05)] rounded transition-all"
                                 title="Undo checkride pass"
                               >
                                 <History size={12} />
                               </button>
                             </div>
-                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Passed {r.date}</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>Passed {r.date}</span>
                           </div>
                         ))}
                       </div>
@@ -958,26 +1102,40 @@ export default function Dashboard() {
                   ) : null}
 
                   {undoSuccess && (
-                    <div className="bg-[#f0fdf4] dark:bg-[#0f2a1a] border border-[#bbf7d0] dark:border-[#1a4a2e] text-[#166534] dark:text-[#4ade80] text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                    <div 
+                      className="border text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2"
+                      style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', borderColor: 'var(--green)', color: 'var(--green)' }}
+                    >
                       <CheckCircle2 size={14} />
                       {undoSuccess}
                     </div>
                   )}
 
                   <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-[#94a3b8] mb-3">Latest Lesson</h3>
+                    <h3 
+                      className="text-[10px] font-bold uppercase tracking-widest mb-3"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      Latest Lesson
+                    </h3>
                     <LessonSummary lesson={recentLesson} type={recentLesson?.type === 'ground' ? 'ground' : 'flight'} />
                   </div>
 
                   {preSoloTestResult && (
                     <div className="flex items-center gap-2 h-8">
                       {preSoloTestResult.passed ? (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] rounded-full border border-[#bcf0da] dark:border-[#1a4a2e]">
+                        <div 
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
+                          style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', color: 'var(--green)', borderColor: 'var(--green)' }}
+                        >
                           <CheckCircle2 size={12} strokeWidth={3} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Passed — {new Date(preSoloTestResult.date).toLocaleDateString()}</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] rounded-full border border-[#fecaca] dark:border-[#451212]">
+                        <div 
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
+                          style={{ backgroundColor: 'rgba(248, 113, 113, 0.1)', color: 'var(--red)', borderColor: 'var(--red)' }}
+                        >
                           <XCircle size={12} strokeWidth={3} />
                           <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Failed — Retest Required</span>
                         </div>
@@ -1090,55 +1248,46 @@ export default function Dashboard() {
                         const noneCurrent = currentCount === 0;
 
                         return (
-                          <div className={cn(
-                            "rounded-xl border-2 overflow-hidden transition-all shadow-sm",
-                            allApplicableCurrent 
-                              ? "border-[#2d7a4f] dark:border-[#1a4a2e]" 
-                              : noneCurrent 
-                                ? "border-[#c0392b] dark:border-[#451212]" 
-                                : "border-[#e8a020] dark:border-[#453008]"
-                          )}>
+                          <div 
+                            className="rounded-xl border-2 overflow-hidden transition-all shadow-sm"
+                            style={{ 
+                              borderColor: allApplicableCurrent ? 'var(--green)' : noneCurrent ? 'var(--red)' : 'var(--amber)'
+                            }}
+                          >
                             {/* Header */}
                             <button
                                onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
-                               className={cn(
-                                 "w-full p-4 flex items-center justify-between transition-colors",
-                                 allApplicableCurrent 
-                                   ? "bg-[#e4f5ec] dark:bg-[#0f2a1a]" 
-                                   : noneCurrent 
-                                     ? "bg-[#fdecea] dark:bg-[#2a0f0f]" 
-                                     : "bg-[#fffbeb] dark:bg-[#2a1a0f]"
-                               )}
+                               className="w-full p-4 flex items-center justify-between transition-colors"
+                               style={{ 
+                                 backgroundColor: allApplicableCurrent ? 'rgba(74, 222, 128, 0.1)' : noneCurrent ? 'rgba(239, 68, 68, 0.1)' : 'rgba(232, 160, 32, 0.1)' 
+                               }}
                             >
                               <div className="flex items-center gap-3">
-                                <Shield size={18} className={cn(
-                                  allApplicableCurrent ? "text-[#2d7a4f] dark:text-[#4ade80]" : noneCurrent ? "text-[#c0392b] dark:text-[#f87171]" : "text-[#e8a020] dark:text-[#fbbf24]"
-                                )} />
-                                <h3 className={cn(
-                                  "text-sm font-bold",
-                                  allApplicableCurrent ? "text-[#166534] dark:text-[#4ade80]" : noneCurrent ? "text-[#991b1b] dark:text-[#f87171]" : "text-[#92400e] dark:text-[#fbbf24]"
-                                )}>
+                                <Shield 
+                                  size={18} 
+                                  style={{ color: allApplicableCurrent ? 'var(--green)' : noneCurrent ? 'var(--red)' : 'var(--amber)' }}
+                                />
+                                <h3 
+                                  className="text-sm font-bold"
+                                  style={{ color: allApplicableCurrent ? 'var(--green)' : noneCurrent ? 'var(--red)' : 'var(--amber)' }}
+                                >
                                   Currency Status
                                 </h3>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className={cn(
-                                  "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest",
-                                  allApplicableCurrent 
-                                    ? "bg-[#2d7a4f] dark:bg-[#1a4a2e] text-white" 
-                                    : noneCurrent 
-                                      ? "bg-[#c0392b] dark:bg-[#451212] text-white" 
-                                      : "bg-[#e8a020] dark:bg-[#453008] text-white"
-                                )}>
+                                <span 
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white"
+                                  style={{ backgroundColor: allApplicableCurrent ? 'var(--green)' : noneCurrent ? 'var(--red)' : 'var(--amber)' }}
+                                >
                                   {currentCount}/{totalCurrencies} Current
                                 </span>
                                 <ChevronDown 
                                   size={18} 
                                   className={cn(
                                     "transition-transform duration-200",
-                                    isCurrencyExpanded ? "rotate-180" : "rotate-0",
-                                    allApplicableCurrent ? "text-[#2d7a4f] dark:text-[#4ade80]" : noneCurrent ? "text-[#c0392b] dark:text-[#f87171]" : "text-[#e8a020] dark:text-[#fbbf24]"
+                                    isCurrencyExpanded ? "rotate-180" : "rotate-0"
                                   )} 
+                                  style={{ color: allApplicableCurrent ? 'var(--green)' : noneCurrent ? 'var(--red)' : 'var(--amber)' }}
                                 />
                               </div>
                             </button>
@@ -1150,7 +1299,8 @@ export default function Dashboard() {
                                   initial={{ height: 0 }}
                                   animate={{ height: 'auto' }}
                                   exit={{ height: 0 }}
-                                  className="bg-white dark:bg-[#0f1f35] divide-y divide-[#dde3ec] dark:divide-[#1e3a5c]"
+                                  className="divide-y"
+                                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
                                 >
                                   {/* Day Currency Row - ASEL */}
                                   {hasEverLoggedASEL && (
@@ -1162,29 +1312,47 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'day_asel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_asel' ? null : 'day_asel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
+                                      <div 
+                                        className="space-y-3 p-4"
+                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                      >
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Takeoffs (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{aselTakeoffs}</span>
-                                            {aselTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{aselTakeoffs}</span>
+                                            {aselTakeoffs >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Landings (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{aselLandings}</span>
-                                            {aselLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{aselLandings}</span>
+                                            {aselLandings >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
+                                        <div 
+                                          className="pt-2 border-t space-y-1 text-[10px]"
+                                          style={{ borderColor: 'var(--border-color)' }}
+                                        >
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last flight date</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastDayFlightASEL ? new Date(lastDayFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Last flight date</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{lastDayFlightASEL ? new Date(lastDayFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{dayExpiryDateASEL ? dayExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Currency expires on</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{dayExpiryDateASEL ? dayExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {dayDaysUntilExpiryASEL > 0 && dayDaysUntilExpiryASEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1206,29 +1374,47 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'day_amel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_amel' ? null : 'day_amel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
+                                      <div 
+                                        className="space-y-3 p-4"
+                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                      >
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Takeoffs (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{amelTakeoffs}</span>
-                                            {amelTakeoffs >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{amelTakeoffs}</span>
+                                            {amelTakeoffs >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Landings (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{amelLandings}</span>
-                                            {amelLandings >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{amelLandings}</span>
+                                            {amelLandings >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
+                                        <div 
+                                          className="pt-2 border-t space-y-1 text-[10px]"
+                                          style={{ borderColor: 'var(--border-color)' }}
+                                        >
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last flight date</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastDayFlightAMEL ? new Date(lastDayFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Last flight date</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{lastDayFlightAMEL ? new Date(lastDayFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{dayExpiryDateAMEL ? dayExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Currency expires on</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{dayExpiryDateAMEL ? dayExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {dayDaysUntilExpiryAMEL > 0 && dayDaysUntilExpiryAMEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1250,29 +1436,47 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'night_asel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_asel' ? null : 'night_asel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
+                                      <div 
+                                        className="space-y-3 p-4"
+                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                      >
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night takeoffs (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Night takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightTakeoffsASEL}</span>
-                                            {recentNightTakeoffsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{recentNightTakeoffsASEL}</span>
+                                            {recentNightTakeoffsASEL >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night landings (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Night landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightLandingsASEL}</span>
-                                            {recentNightLandingsASEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{recentNightLandingsASEL}</span>
+                                            {recentNightLandingsASEL >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
+                                        <div 
+                                          className="pt-2 border-t space-y-1 text-[10px]"
+                                          style={{ borderColor: 'var(--border-color)' }}
+                                        >
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last night flight</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastNightFlightASEL ? new Date(lastNightFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Last night flight</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{lastNightFlightASEL ? new Date(lastNightFlightASEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{nightExpiryDateASEL ? nightExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Currency expires on</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{nightExpiryDateASEL ? nightExpiryDateASEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {nightDaysUntilExpiryASEL > 0 && nightDaysUntilExpiryASEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1294,29 +1498,47 @@ export default function Dashboard() {
                                       isExpanded={expandedCurrencyRow === 'night_amel'}
                                       onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_amel' ? null : 'night_amel')}
                                     >
-                                      <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
+                                      <div 
+                                        className="space-y-3 p-4"
+                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                      >
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night takeoffs (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Night takeoffs (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightTakeoffsAMEL}</span>
-                                            {recentNightTakeoffsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{recentNightTakeoffsAMEL}</span>
+                                            {recentNightTakeoffsAMEL >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
                                         <div className="flex items-center justify-between text-xs">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Night landings (past 90 days)</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Night landings (past 90 days)</span>
                                           <div className="flex items-center gap-1.5">
-                                            <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{recentNightLandingsAMEL}</span>
-                                            {recentNightLandingsAMEL >= 3 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                            <span 
+                                              className="font-mono font-bold"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{recentNightLandingsAMEL}</span>
+                                            {recentNightLandingsAMEL >= 3 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                           </div>
                                         </div>
-                                        <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
+                                        <div 
+                                          className="pt-2 border-t space-y-1 text-[10px]"
+                                          style={{ borderColor: 'var(--border-color)' }}
+                                        >
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Last night flight</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastNightFlightAMEL ? new Date(lastNightFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Last night flight</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{lastNightFlightAMEL ? new Date(lastNightFlightAMEL.saved_at).toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
-                                            <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{nightExpiryDateAMEL ? nightExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}>Currency expires on</span>
+                                            <span 
+                                              className="font-medium"
+                                              style={{ color: 'var(--text-primary)' }}
+                                            >{nightExpiryDateAMEL ? nightExpiryDateAMEL.toLocaleDateString() : 'N/A'}</span>
                                           </div>
                                           {nightDaysUntilExpiryAMEL > 0 && nightDaysUntilExpiryAMEL < 15 && (
                                             <div className="text-right font-bold text-[#e8a020]">
@@ -1337,29 +1559,43 @@ export default function Dashboard() {
                                     isExpanded={expandedCurrencyRow === 'ifr'}
                                     onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'ifr' ? null : 'ifr')}
                                   >
-                                    <div className="space-y-3 p-4 bg-[#f8fafc] dark:bg-[#1a2f4a]">
+                                    <div 
+                                      className="space-y-3 p-4"
+                                      style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                    >
                                       <div className="flex items-center justify-between text-xs">
-                                        <span className="text-[#6b7280] dark:text-[#94a3b8]">Instrument approaches (past 6 months)</span>
+                                        <span style={{ color: 'var(--text-secondary)' }}>Instrument approaches (past 6 months)</span>
                                         <div className="flex items-center gap-1.5">
-                                          <span className="font-mono font-bold text-[#1c2333] dark:text-[#e2e8f0]">{totalApproaches}</span>
-                                          {totalApproaches >= 6 ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                          <span 
+                                            className="font-mono font-bold"
+                                            style={{ color: 'var(--text-primary)' }}
+                                          >{totalApproaches}</span>
+                                          {totalApproaches >= 6 ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                         </div>
                                       </div>
                                       <div className="flex items-center justify-between text-xs">
-                                        <span className="text-[#6b7280] dark:text-[#94a3b8]">Holding performed (past 6 months)</span>
+                                        <span style={{ color: 'var(--text-secondary)' }}>Holding performed (past 6 months)</span>
                                         <div className="flex items-center gap-1.5">
-                                          {holdPerformed ? <CheckCircle2 size={14} className="text-[#2d7a4f] dark:text-[#4ade80]" /> : <X size={14} className="text-[#c0392b] dark:text-[#f87171]" />}
+                                          {holdPerformed ? <CheckCircle2 size={14} style={{ color: 'var(--green)' }} /> : <X size={14} style={{ color: 'var(--red)' }} />}
                                         </div>
                                       </div>
-
-                                      <div className="pt-2 border-t border-[#dde3ec] dark:border-[#1e3a5c] space-y-1 text-[10px]">
+                                      <div 
+                                        className="pt-2 border-t space-y-1 text-[10px]"
+                                        style={{ borderColor: 'var(--border-color)' }}
+                                      >
                                         <div className="flex justify-between">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Last IFR flight date</span>
-                                          <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{lastIFRFlight ? new Date(lastIFRFlight.saved_at).toLocaleDateString() : 'N/A'}</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Last IFR flight date</span>
+                                          <span 
+                                            className="font-medium"
+                                            style={{ color: 'var(--text-primary)' }}
+                                          >{lastIFRFlight ? new Date(lastIFRFlight.saved_at).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                          <span className="text-[#6b7280] dark:text-[#94a3b8]">Currency expires on</span>
-                                          <span className="font-medium text-[#1c2333] dark:text-[#e2e8f0]">{ifrExpiryDate ? ifrExpiryDate.toLocaleDateString() : 'N/A'}</span>
+                                          <span style={{ color: 'var(--text-secondary)' }}>Currency expires on</span>
+                                          <span 
+                                            className="font-medium"
+                                            style={{ color: 'var(--text-primary)' }}
+                                          >{ifrExpiryDate ? ifrExpiryDate.toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                         {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
                                           <div className="text-right font-bold text-[#e8a020]">
@@ -1367,23 +1603,32 @@ export default function Dashboard() {
                                           </div>
                                         )}
                                       </div>
-
-                                      {isIFRCurrent ? (
-                                        <div className="mt-2 p-2 bg-[#e4f5ec] dark:bg-[#0f2a1a] rounded-lg text-[10px] text-[#2d7a4f] dark:text-[#4ade80] font-medium leading-tight">
-                                          IFR Current — valid until {ifrExpiryDate?.toLocaleDateString()}
-                                        </div>
-                                      ) : hasEverLoggedApproaches ? (
-                                        <div className="mt-2 p-2 bg-[#fdecea] dark:bg-[#2a0f0f] rounded-lg text-[10px] text-[#c0392b] dark:text-[#f87171] font-medium leading-tight">
-                                          IFR currency lapsed. Student must complete an IPC with a CFII before acting as PIC under IFR
-                                        </div>
-                                      ) : null}
-                                      
-                                      {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
-                                        <div className="mt-2 p-2 bg-[#fffbeb] dark:bg-[#2a1a0f] rounded-lg text-[10px] text-[#92400e] dark:text-[#fbbf24] font-medium leading-tight">
-                                          IFR currency expires in {ifrDaysUntilExpiry} days. Schedule approaches soon.
-                                        </div>
-                                      )}
                                     </div>
+
+                                    {isIFRCurrent ? (
+                                      <div 
+                                        className="mt-2 p-2 rounded-lg text-[10px] font-medium leading-tight"
+                                        style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', color: 'var(--green)' }}
+                                      >
+                                        IFR Current — valid until {ifrExpiryDate?.toLocaleDateString()}
+                                      </div>
+                                    ) : hasEverLoggedApproaches ? (
+                                      <div 
+                                        className="mt-2 p-2 rounded-lg text-[10px] font-medium leading-tight"
+                                        style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--red)' }}
+                                      >
+                                        IFR currency lapsed. Student must complete an IPC with a CFII before acting as PIC under IFR
+                                      </div>
+                                    ) : null}
+                                    
+                                    {ifrDaysUntilExpiry > 0 && ifrDaysUntilExpiry < 30 && (
+                                      <div 
+                                        className="mt-2 p-2 rounded-lg text-[10px] font-medium leading-tight"
+                                        style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--amber)' }}
+                                      >
+                                        IFR currency expires in {ifrDaysUntilExpiry} days. Schedule approaches soon.
+                                      </div>
+                                    )}
                                   </CurrencyRow>
                                 </motion.div>
                               )}
@@ -1397,19 +1642,42 @@ export default function Dashboard() {
                   <div className="space-y-3">
                     <button
                       onClick={openPriorHoursModal}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-[#0f1f35] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-xl hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] transition-all group"
+                      className="w-full flex items-center justify-between px-4 py-3 border rounded-xl transition-all group"
+                      style={{ 
+                        backgroundColor: 'var(--bg-secondary)', 
+                        borderColor: 'var(--border-color)' 
+                      }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#f4f5f7] dark:bg-[#1a2f4a] rounded-lg flex items-center justify-center text-[#1a3a5c] dark:text-[#3a7abc] group-hover:bg-white dark:group-hover:bg-[#0f1f35] transition-colors">
+                        <div 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                          style={{ 
+                            backgroundColor: 'var(--bg-tertiary)',
+                            color: 'var(--navy-lighter)'
+                          }}
+                        >
                           <BookOpen size={16} />
                         </div>
                         <div className="text-left">
-                          <div className="text-xs font-bold text-[#1c2333] dark:text-[#e2e8f0]">Prior Logbook Hours</div>
-                          <div className="text-[10px] text-[#6b7280] dark:text-[#94a3b8]">Import totals from physical logbook</div>
+                          <div 
+                            className="text-xs font-bold"
+                            style={{ color: 'var(--text-primary)' }}
+                          >
+                            Prior Logbook Hours
+                          </div>
+                          <div 
+                            className="text-[10px]"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            Import totals from physical logbook
+                          </div>
                         </div>
                       </div>
                       {manualHours.some(m => m.student_name === selectedStudent && m.field_key.startsWith('prior_')) && (
-                        <span className="text-[8px] font-bold uppercase tracking-widest bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] px-2 py-0.5 rounded-full">
+                        <span 
+                          className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', color: 'var(--green)' }}
+                        >
                           Prior hours on file
                         </span>
                       )}
@@ -1425,12 +1693,21 @@ export default function Dashboard() {
                       if (isPassed) {
                         const passDate = student.checkride_passed_ratings?.find(r => r.code === student.current_rating)?.date;
                         return (
-                          <div className="bg-[#f0fdf4] dark:bg-[#0f2a1a] border-2 border-[#bbf7d0] dark:border-[#1a4a2e] rounded-xl p-4 flex flex-col items-center justify-center gap-1">
-                            <div className="flex items-center gap-2 text-[#166534] dark:text-[#4ade80] font-bold">
+                          <div 
+                            className="border-2 rounded-xl p-4 flex flex-col items-center justify-center gap-1"
+                            style={{ 
+                              backgroundColor: 'rgba(74, 222, 128, 0.1)', 
+                              borderColor: 'rgba(74, 222, 128, 0.3)',
+                              color: 'var(--green)' 
+                            }}
+                          >
+                            <div className="flex items-center gap-2 font-bold">
                               <CheckCircle size={20} />
                               Checkride Passed
                             </div>
-                            <div className="text-[10px] text-[#166534] dark:text-[#4ade80] opacity-70 font-bold uppercase tracking-widest">
+                            <div 
+                              className="text-[10px] opacity-70 font-bold uppercase tracking-widest"
+                            >
                               Completed on {passDate}
                             </div>
                           </div>
@@ -1448,14 +1725,18 @@ export default function Dashboard() {
                               "w-full font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm",
                               canPassCheckride 
                                 ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] animate-pulse shadow-[0_0_15px_rgba(45,122,79,0.4)]" 
-                                : "bg-[#dde3ec] dark:bg-[#1a2f4a] text-[#6b7280] dark:text-[#94a3b8] cursor-not-allowed border dark:border-[#1e3a5c]"
+                                : "text-[var(--text-muted)] cursor-not-allowed border"
                             )}
+                            style={!canPassCheckride ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' } : {}}
                           >
                             <CheckCircle size={18} />
                             Checkride Passed
                           </button>
                           {!canPassCheckride && (
-                            <p className="text-[10px] text-center text-[#6b7280] dark:text-[#94a3b8] font-medium">
+                            <p 
+                              className="text-[10px] text-center font-medium"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
                               Give A.1 endorsement in the Checkride tab to unlock.
                             </p>
                           )}
@@ -1469,7 +1750,8 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <button
                   onClick={handleStartLesson}
-                  className="w-full bg-[#1a3a5c] dark:bg-[#3a7abc] text-white font-bold py-4 rounded-xl shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center justify-center gap-3"
+                  className="w-full text-white font-bold py-4 rounded-xl shadow-md transition-all duration-150 flex items-center justify-center gap-3"
+                  style={{ backgroundColor: 'var(--navy)' }}
                 >
                   <Plane size={20} />
                   Start New Lesson →
@@ -1477,7 +1759,8 @@ export default function Dashboard() {
 
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent)}`}
-                  className="w-full bg-white dark:bg-[#0f1f35] text-[#1a3a5c] dark:text-[#3a7abc] font-bold py-3 rounded-xl border-2 border-[#1a3a5c]/20 dark:border-[#3a7abc]/20 hover:bg-[#1a3a5c]/5 dark:hover:bg-[#3a7abc]/10 transition-all flex items-center justify-center gap-2"
+                  className="w-full font-bold py-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2"
+                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26, 58, 92, 0.2)' }}
                 >
                   <FileText size={18} />
                   IACRA Summary
@@ -1496,16 +1779,26 @@ export default function Dashboard() {
                 exit={{ opacity: 0, y: 20 }}
                 className="bg-[#f8fafc] dark:bg-[#0a1628] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-6 bg-white dark:bg-[#0f1f35] border-b border-[#dde3ec] dark:border-[#1e3a5c] flex justify-between items-center shrink-0">
+                <div 
+                  className="p-6 border-b flex justify-between items-center shrink-0"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
                   <div>
-                    <h2 className="text-xl font-black text-[#1a3a5c] dark:text-[#3a7abc]">Add New Student</h2>
-                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">Enter details and select a rating</p>
+                    <h2 
+                      className="text-xl font-black"
+                      style={{ color: 'var(--navy-lighter)' }}
+                    >Add New Student</h2>
+                    <p 
+                      className="text-xs mt-1"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >Enter details and select a rating</p>
                   </div>
                   <button 
                     onClick={() => setIsRatingModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-full transition-all"
+                    className="p-2 rounded-full transition-all"
+                    style={{ backgroundColor: 'transparent' }}
                   >
-                    <X size={20} className="text-[#6b7280] dark:text-[#94a3b8]" />
+                    <X size={20} style={{ color: 'var(--text-secondary)' }} />
                   </button>
                 </div>
 
@@ -1513,13 +1806,21 @@ export default function Dashboard() {
                   <div className="max-w-2xl mx-auto space-y-10">
                     {/* Name Input */}
                     <div className="space-y-3">
-                      <label className="text-xs font-bold text-[#1a3a5c] dark:text-[#3a7abc] uppercase tracking-widest ml-1">Student Name</label>
+                      <label 
+                        className="text-xs font-bold uppercase tracking-widest ml-1"
+                        style={{ color: 'var(--navy-lighter)' }}
+                      >Student Name</label>
                       <input
                         type="text"
                         value={pendingStudentName}
                         onChange={(e) => setPendingStudentName(e.target.value)}
                         placeholder="Enter student name"
-                        className="w-full text-lg font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border-2 border-[#dde3ec] dark:border-[#1e3a5c] rounded-2xl px-6 py-4 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc] transition-all placeholder:text-[#dde3ec] dark:placeholder:text-[#3a4a5e]"
+                        className="w-full text-lg font-bold border-2 rounded-2xl px-6 py-4 focus:outline-none transition-all placeholder:text-[#dde3ec]"
+                        style={{ 
+                          backgroundColor: 'var(--bg-secondary)',
+                          color: 'var(--text-primary)',
+                          borderColor: 'var(--border-color)'
+                        }}
                         autoFocus
                       />
                     </div>
@@ -1527,8 +1828,14 @@ export default function Dashboard() {
                     {/* Rating Selection */}
                     <div className="space-y-6">
                       <div className="text-center">
-                        <h3 className="text-lg font-bold text-[#1c2333] dark:text-[#e2e8f0]">Select Initial Rating</h3>
-                        <p className="text-sm text-[#6b7280] dark:text-[#94a3b8]">Choose the certificate they are working toward</p>
+                        <h3 
+                          className="text-lg font-bold"
+                          style={{ color: 'var(--text-primary)' }}
+                        >Select Initial Rating</h3>
+                        <p 
+                          className="text-sm"
+                          style={{ color: 'var(--text-secondary)' }}
+                        >Choose the certificate they are working toward</p>
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -1543,12 +1850,12 @@ export default function Dashboard() {
                             mei: Navigation
                           };
                           const colors: Record<string, string> = {
-                            ppl: 'bg-[#d4e8f5] dark:bg-[#0f1f35] text-[#1a3a5c] dark:text-[#3a7abc] border-[#1a3a5c] dark:border-[#3a7abc]',
-                            ir: 'bg-[#ede8f8] dark:bg-[#1e1a2e] text-[#5b3fa0] dark:text-[#9f7aea] border-[#5b3fa0] dark:border-[#9f7aea]',
-                            cpl: 'bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] border-[#2d7a4f] dark:border-[#4ade80]',
-                            cfi: 'bg-[#fdf0e4] dark:bg-[#2a1a0f] text-[#c05c10] dark:text-[#ed8936] border-[#c05c10] dark:border-[#ed8936]',
-                            cfii: 'bg-[#e0f5f2] dark:bg-[#0f2a28] text-[#1a7a6e] dark:text-[#38b2ac] border-[#1a7a6e] dark:border-[#38b2ac]',
-                            mei: 'bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] border-[#c0392b] dark:border-[#f87171]'
+                            ppl: 'bg-[#d4e8f5] text-[#1a3a5c] border-[#1a3a5c]',
+                            ir: 'bg-[#ede8f8] text-[#5b3fa0] border-[#5b3fa0]',
+                            cpl: 'bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]',
+                            cfi: 'bg-[#fdf0e4] text-[#c05c10] border-[#c05c10]',
+                            cfii: 'bg-[#e0f5f2] text-[#1a7a6e] border-[#1a7a6e]',
+                            mei: 'bg-[#fdecea] text-[#c0392b] border-[#c0392b]'
                           };
                           const Icon = icons[code];
 
@@ -1585,22 +1892,22 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-white dark:bg-[#0f1f35] border-t border-[#dde3ec] dark:border-[#1e3a5c] flex gap-3 shrink-0">
+                <div 
+                  className="p-6 border-t flex gap-3 shrink-0"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
                   <button
                     onClick={() => setIsRatingModalOpen(false)}
-                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-2xl transition-all"
+                    className="flex-1 py-4 text-sm font-bold rounded-2xl transition-all"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveNewStudent}
                     disabled={adding || !selectedRatingCode || !pendingStudentName.trim()}
-                    className={cn(
-                      "flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg",
-                      adding || !selectedRatingCode || !pendingStudentName.trim() 
-                        ? "bg-[#dde3ec] dark:bg-[#1a2f4a] text-[#6b7280] dark:text-[#94a3b8] cursor-not-allowed" 
-                        : "bg-[#1a3a5c] dark:bg-[#3a7abc] hover:bg-[#2a5a8c] dark:hover:bg-[#4a8ab8] active:scale-[0.98]"
-                    )}
+                    className="flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--navy)' }}
                   >
                     {adding ? <Loader2 size={20} className="animate-spin mx-auto" /> : 'Save Student'}
                   </button>
@@ -1651,24 +1958,35 @@ export default function Dashboard() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-white dark:bg-[#0a1628] rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center border dark:border-[#1e3a5c]"
               >
-                <div className="w-16 h-16 bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] rounded-full flex items-center justify-center mb-6 mx-auto">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto"
+                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--red)' }}
+                >
                   <AlertCircle size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-[#1c2333] dark:text-[#e2e8f0] mb-2">Undo Checkride Pass?</h3>
-                <p className="text-sm text-[#6b7280] dark:text-[#94a3b8] mb-8 leading-relaxed">
+                <h3 
+                  className="text-xl font-bold mb-2"
+                  style={{ color: 'var(--text-primary)' }}
+                >Undo Checkride Pass?</h3>
+                <p 
+                  className="text-sm mb-8 leading-relaxed"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   Are you sure you want to undo the checkride pass for <strong>{ratingToUndo?.label}</strong>? This cannot be undone easily.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setIsUndoConfirmOpen(false)}
-                    className="flex-1 py-3 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-xl transition-all"
+                    className="flex-1 py-3 text-sm font-bold rounded-xl transition-all"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleUndoCheckride}
                     disabled={processingCheckride}
-                    className="flex-[2] py-3 bg-[#c0392b] text-white font-bold rounded-xl hover:bg-[#a93226] transition-all shadow-md disabled:opacity-50"
+                    className="flex-[2] py-3 text-white font-bold rounded-xl transition-all shadow-md disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--red)' }}
                   >
                     {processingCheckride ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Undo Pass'}
                   </button>
@@ -1686,16 +2004,26 @@ export default function Dashboard() {
                 exit={{ opacity: 0, y: 20 }}
                 className="bg-[#f8fafc] dark:bg-[#0a1628] w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
               >
-                <div className="p-6 bg-white dark:bg-[#0f1f35] border-b border-[#dde3ec] dark:border-[#1e3a5c] flex justify-between items-center shrink-0">
+                <div 
+                  className="p-6 border-b flex justify-between items-center shrink-0"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
                   <div>
-                    <h2 className="text-xl font-black text-[#1a3a5c] dark:text-[#3a7abc]">Checkride Passed!</h2>
-                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">What rating is {selectedStudent} pursuing next?</p>
+                    <h2 
+                      className="text-xl font-black"
+                      style={{ color: 'var(--navy-lighter)' }}
+                    >Checkride Passed!</h2>
+                    <p 
+                      className="text-xs mt-1"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >What rating is {selectedStudent} pursuing next?</p>
                   </div>
                   <button 
                     onClick={() => setIsNextRatingModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-full transition-all"
+                    className="p-2 rounded-full transition-all"
+                    style={{ backgroundColor: 'transparent' }}
                   >
-                    <X size={20} className="text-[#6b7280] dark:text-[#94a3b8]" />
+                    <X size={20} style={{ color: 'var(--text-secondary)' }} />
                   </button>
                 </div>
 
@@ -1713,12 +2041,12 @@ export default function Dashboard() {
                           mei: Navigation
                         };
                         const colors: Record<string, string> = {
-                          ppl: 'bg-[#d4e8f5] dark:bg-[#0f1f35] text-[#1a3a5c] dark:text-[#3a7abc] border-[#1a3a5c] dark:border-[#3a7abc]',
-                          ir: 'bg-[#ede8f8] dark:bg-[#1e1a2e] text-[#5b3fa0] dark:text-[#9f7aea] border-[#5b3fa0] dark:border-[#9f7aea]',
-                          cpl: 'bg-[#e4f5ec] dark:bg-[#0f2a1a] text-[#2d7a4f] dark:text-[#4ade80] border-[#2d7a4f] dark:border-[#4ade80]',
-                          cfi: 'bg-[#fdf0e4] dark:bg-[#2a1a0f] text-[#c05c10] dark:text-[#ed8936] border-[#c05c10] dark:border-[#ed8936]',
-                          cfii: 'bg-[#e0f5f2] dark:bg-[#0f2a28] text-[#1a7a6e] dark:text-[#38b2ac] border-[#1a7a6e] dark:border-[#38b2ac]',
-                          mei: 'bg-[#fdecea] dark:bg-[#2a0f0f] text-[#c0392b] dark:text-[#f87171] border-[#c0392b] dark:border-[#f87171]'
+                          ppl: 'bg-[#d4e8f5] text-[#1a3a5c] border-[#1a3a5c]',
+                          ir: 'bg-[#ede8f8] text-[#5b3fa0] border-[#5b3fa0]',
+                          cpl: 'bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]',
+                          cfi: 'bg-[#fdf0e4] text-[#c05c10] border-[#c05c10]',
+                          cfii: 'bg-[#e0f5f2] text-[#1a7a6e] border-[#1a7a6e]',
+                          mei: 'bg-[#fdecea] text-[#c0392b] border-[#c0392b]'
                         };
                         const Icon = icons[code];
 
@@ -1754,22 +2082,22 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="p-6 bg-white dark:bg-[#0f1f35] border-t border-[#dde3ec] dark:border-[#1e3a5c] flex gap-3 shrink-0">
+                <div 
+                  className="p-6 border-t flex gap-3 shrink-0"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
                   <button
                     onClick={() => setIsNextRatingModalOpen(false)}
-                    className="flex-1 py-4 text-sm font-bold text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-2xl transition-all"
+                    className="flex-1 py-4 text-sm font-bold rounded-2xl transition-all"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                   >
                     Skip for now
                   </button>
                   <button
                     onClick={() => selectedRatingCode && handleSelectNextRating(selectedRatingCode)}
                     disabled={!selectedRatingCode}
-                    className={cn(
-                      "flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg",
-                      !selectedRatingCode 
-                        ? "bg-[#dde3ec] dark:bg-[#1a2f4a] text-[#6b7280] dark:text-[#94a3b8] cursor-not-allowed" 
-                        : "bg-[#1a3a5c] dark:bg-[#3a7abc] hover:bg-[#2a5a8c] dark:hover:bg-[#4a8ab8]"
-                    )}
+                    className="flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--navy)' }}
                   >
                     Confirm Next Rating
                   </button>
@@ -1784,26 +2112,43 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-[#f8fafc] dark:bg-[#0a1628] w-full h-full sm:h-auto sm:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+                className="w-full h-full sm:h-auto sm:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+                style={{ backgroundColor: 'var(--bg-primary)' }}
               >
-                <div className="p-6 bg-white dark:bg-[#0f1f35] border-b border-[#dde3ec] dark:border-[#1e3a5c] flex justify-between items-center shrink-0">
+                <div 
+                  className="p-6 border-b flex justify-between items-center shrink-0"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
                   <div>
-                    <h2 className="text-xl font-black text-[#1a3a5c] dark:text-[#3a7abc]">Prior Logbook Hours</h2>
-                    <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">Enter totals from the student's existing logbook for {selectedStudent}</p>
+                    <h2 
+                      className="text-xl font-black"
+                      style={{ color: 'var(--navy-lighter)' }}
+                    >Prior Logbook Hours</h2>
+                    <p 
+                      className="text-xs mt-1"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >Enter totals from the student's existing logbook for {selectedStudent}</p>
                   </div>
                   <button 
                     onClick={() => setIsPriorHoursModalOpen(false)}
-                    className="p-2 hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] rounded-full transition-all"
+                    className="p-2 rounded-full transition-all"
+                    style={{ backgroundColor: 'transparent' }}
                   >
-                    <X size={20} className="text-[#6b7280] dark:text-[#94a3b8]" />
+                    <X size={20} style={{ color: 'var(--text-secondary)' }} />
                   </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 sm:p-8">
                   <div className="max-w-2xl mx-auto space-y-8">
-                    <div className="bg-[#fffbeb] dark:bg-[#2a1a0f] border border-[#fef3c7] dark:border-[#3a2a1a] rounded-xl p-4 flex items-start gap-3">
-                      <AlertCircle size={18} className="text-[#d97706] dark:text-[#fbbf24] shrink-0 mt-0.5" />
-                      <p className="text-xs text-[#92400e] dark:text-[#fbbf24] leading-relaxed">
+                    <div 
+                      className="border rounded-xl p-4 flex items-start gap-3"
+                      style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)', borderColor: 'rgba(245, 158, 11, 0.2)' }}
+                    >
+                      <AlertCircle size={18} className="shrink-0 mt-0.5" style={{ color: 'var(--amber)' }} />
+                      <p 
+                        className="text-xs leading-relaxed"
+                        style={{ color: 'var(--amber)' }}
+                      >
                         <strong>Note:</strong> These hours will be added to all logged lesson totals throughout the app including the Checkride tab IACRA Summary and Cumulative tab. Only enter hours not already logged in this app.
                       </p>
                     </div>
@@ -1811,7 +2156,10 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       {/* Totals Group */}
                       <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] dark:text-[#3a7abc] border-b border-[#dde3ec] dark:border-[#1e3a5c] pb-1">Totals</h3>
+                        <h3 
+                          className="text-[10px] font-bold uppercase tracking-widest pb-1"
+                          style={{ color: 'var(--navy-lighter)', borderColor: 'var(--border-color)' }}
+                        >Totals</h3>
                         {[
                           { key: 'prior_totalFlight', label: 'Total Flight Time', unit: 'hrs' },
                           { key: 'prior_ldgTotal', label: 'Total Landings', unit: 'count' },
@@ -1819,16 +2167,27 @@ export default function Dashboard() {
                           { key: 'prior_ldgNight', label: 'Night Landings', unit: 'count' }
                         ].map(f => (
                           <div key={f.key} className="flex items-center justify-between gap-4">
-                            <label className="text-xs text-[#475569] dark:text-[#94a3b8]">{f.label}</label>
+                            <label 
+                              className="text-xs"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >{f.label}</label>
                             <div className="relative w-24">
                               <input
                                 type="number"
                                 step="0.1"
                                 value={priorHoursForm[f.key] || ''}
                                 onChange={(e) => setPriorHoursForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                className="w-full text-right text-xs font-bold bg-white dark:bg-[#1a2f4a] text-[#1c2333] dark:text-[#e2e8f0] border border-[#dde3ec] dark:border-[#1e3a5c] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#1a3a5c] dark:focus:border-[#3a7abc]"
+                                className="w-full text-right text-xs font-bold border rounded-lg px-2 py-1.5 focus:outline-none transition-all"
+                                style={{ 
+                                  backgroundColor: 'var(--bg-secondary)', 
+                                  color: 'var(--text-primary)',
+                                  borderColor: 'var(--border-color)'
+                                }}
                               />
-                              <span className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px] text-[#94a3b8] dark:text-[#64748b]">{f.unit}</span>
+                              <span 
+                                className="absolute -right-6 top-1/2 -translate-y-1/2 text-[9px]"
+                                style={{ color: 'var(--text-muted)' }}
+                              >{f.unit}</span>
                             </div>
                           </div>
                         ))}

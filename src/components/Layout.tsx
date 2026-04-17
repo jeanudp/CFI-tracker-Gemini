@@ -48,14 +48,23 @@ export default function Layout({ children, user }: LayoutProps) {
     navigate('/auth');
   };
 
-  const buttonClass = "text-[12px] text-[#1a3a5c] dark:text-[#94a3b8] px-[12px] py-[6px] rounded-[6px] border border-[#1a3a5c]/25 dark:border-[#1e3a5c] bg-[#1a3a5c]/5 dark:bg-[#1a2f4a] hover:bg-[#1a3a5c]/10 dark:hover:bg-[#1a2f4a]/80 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
+  const buttonClass = "text-[12px] px-[12px] py-[6px] rounded-[6px] border hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#eef2f7] via-[#f8fafc] to-[#f0f4f8] dark:from-[#0a1628] dark:via-[#0f1f35] dark:to-[#0a1628] text-[#1c2333] dark:text-[#e2e8f0] flex flex-col font-sans">
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#0f1f35]/80 backdrop-blur-md border-b border-[#dde3ec] dark:border-[#1e3a5c] shadow-sm px-6 h-16 flex items-center justify-between shrink-0">
+    <div 
+      className="min-h-screen flex flex-col font-sans"
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+    >
+      <header 
+        style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+        className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
+      >
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <div className="w-9 h-9 bg-[#1a3a5c] dark:bg-[#2a5a8c] rounded-lg flex items-center justify-center">
+            <div 
+              className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-300"
+              style={{ backgroundColor: 'var(--navy)' }}
+            >
               <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="28" height="28">
                 {/* Fuselage */}
                 <ellipse cx="50" cy="50" rx="5" ry="38" />
@@ -92,14 +101,16 @@ export default function Layout({ children, user }: LayoutProps) {
               <Link 
                 to="/cfi-hours" 
                 title="My Hours"
-                className="hidden lg:flex items-center gap-1.5 text-[10px] text-[#1a3a5c] font-bold dark:text-white uppercase tracking-widest transition-all cursor-pointer"
+                style={{ color: 'var(--text-primary)' }}
+                className="hidden lg:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer"
               >
                 <BarChart3 size={12} />
                 <span>{user.user_metadata?.full_name || user.email}</span>
               </Link>
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-lg border border-[#dde3ec] dark:border-[#1e3a5c] bg-white dark:bg-[#0f1f35] text-[#6b7280] dark:text-[#94a3b8] hover:bg-[#f4f5f7] dark:hover:bg-[#1a2f4a] transition-all"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                className="p-2 rounded-lg border hover:bg-[var(--bg-tertiary)] transition-all"
                 title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {darkMode ? <Sun size={16} /> : <Moon size={16} />}
@@ -109,28 +120,28 @@ export default function Layout({ children, user }: LayoutProps) {
           
           {/* Dynamic Navigation Buttons */}
           {path.startsWith('/student/') && (
-            <Link to="/history" className={buttonClass}>
+            <Link to="/history" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <ArrowLeft size={14} />
               <span>Back to Student Progress</span>
             </Link>
           )}
 
           {path !== '/' && (
-            <Link to="/" className={buttonClass}>
+            <Link to="/" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <Users size={14} />
               <span>Home</span>
             </Link>
           )}
 
           {path === '/rating' && (
-            <button onClick={handleSignOut} className={buttonClass}>
+            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <LogOut size={14} />
               <span>Sign Out</span>
             </button>
           )}
 
           {path === '/lesson-type' && (
-            <button onClick={handleSignOut} className={buttonClass}>
+            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <LogOut size={14} />
               <span>Sign Out</span>
             </button>
@@ -138,19 +149,19 @@ export default function Layout({ children, user }: LayoutProps) {
 
           {path === '/ground' && (
             <>
-              <Link to="/lesson-type" className={buttonClass}>
+              <Link to="/lesson-type" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <BookOpen size={14} />
                 <span>Lesson Type</span>
               </Link>
-              <Link to="/flight" className={buttonClass}>
+              <Link to="/flight" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <Plane size={14} />
                 <span>Flight</span>
               </Link>
-              <Link to="/history" className={buttonClass}>
+              <Link to="/history" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <HistoryIcon size={14} />
                 <span>Student Progress</span>
               </Link>
-              <button onClick={handleSignOut} className={buttonClass}>
+              <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <LogOut size={14} />
                 <span>Sign Out</span>
               </button>
@@ -159,19 +170,19 @@ export default function Layout({ children, user }: LayoutProps) {
 
           {path === '/flight' && (
             <>
-              <Link to="/lesson-type" className={buttonClass}>
+              <Link to="/lesson-type" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <BookOpen size={14} />
                 <span>Lesson Type</span>
               </Link>
-              <Link to="/ground" className={buttonClass}>
+              <Link to="/ground" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <BookOpen size={14} />
                 <span>Ground</span>
               </Link>
-              <Link to="/history" className={buttonClass}>
+              <Link to="/history" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <HistoryIcon size={14} />
                 <span>Student Progress</span>
               </Link>
-              <button onClick={handleSignOut} className={buttonClass}>
+              <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
                 <LogOut size={14} />
                 <span>Sign Out</span>
               </button>
@@ -179,14 +190,14 @@ export default function Layout({ children, user }: LayoutProps) {
           )}
 
           {path === '/history' && (
-            <button onClick={handleSignOut} className={buttonClass}>
+            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <LogOut size={14} />
               <span>Sign Out</span>
             </button>
           )}
 
           {(path === '/' || path.startsWith('/student/')) && (
-            <button onClick={handleSignOut} className={buttonClass}>
+            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <LogOut size={14} />
               <span>Sign Out</span>
             </button>
