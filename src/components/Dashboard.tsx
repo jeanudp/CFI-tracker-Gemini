@@ -1070,89 +1070,49 @@ export default function Dashboard() {
               >
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
                 <div 
-                  className="p-6 border-b flex items-center justify-between"
+                  className="p-6 border-b space-y-4"
                   style={{ borderColor: 'var(--border-color)' }}
                 >
-                  <div>
-                    <h2 
-                      className="text-xl font-bold"
-                      style={{ color: 'var(--text-primary)' }}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 
+                        className="text-xl font-bold"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {selectedStudent}
+                      </h2>
+                      <p 
+                        className="text-xs mt-1"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        Currently working on: <span className="font-bold" style={{ color: 'var(--navy-light)' }}>{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (selectedStudent) {
+                          localStorage.setItem('sb_selected_student', selectedStudent);
+                        }
+                        navigate('/history');
+                      }}
+                      style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--navy-light)', borderColor: 'var(--border-color)' }}
+                      className="text-xs font-medium border px-3 py-1.5 rounded-lg hover:opacity-80 transition-all cursor-pointer"
                     >
-                      {selectedStudent}
-                    </h2>
-                    <p 
-                      className="text-xs mt-1"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      Currently working on: <span className="font-bold" style={{ color: 'var(--navy-light)' }}>{students.find(s => s.name === selectedStudent)?.current_rating_label}</span>
-                    </p>
+                      History →
+                    </button>
                   </div>
+
                   <button
-                    onClick={() => {
-                      if (selectedStudent) {
-                        localStorage.setItem('sb_selected_student', selectedStudent);
-                      }
-                      navigate('/history');
-                    }}
-                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--navy-light)', borderColor: 'var(--border-color)' }}
-                    className="text-xs font-medium border px-3 py-1.5 rounded-lg hover:opacity-80 transition-all"
+                    onClick={handleStartLesson}
+                    className="w-full text-white font-bold py-4 rounded-xl shadow-md transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm"
+                    style={{ backgroundColor: 'var(--navy)' }}
                   >
-                    History →
+                    <Plane size={20} />
+                    Start New Lesson →
                   </button>
                 </div>
                 <div className="p-6 space-y-6">
-                  {/* Rating History */}
-                  {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings?.length ? (
-                    <div 
-                      className="rounded-xl p-4 border"
-                      style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}
-                    >
-                      <h3 
-                        className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2"
-                        style={{ color: 'var(--navy-light)' }}
-                      >
-                        <Award size={14} style={{ color: 'var(--amber)' }} />
-                        Ratings Completed
-                      </h3>
-                      <div className="space-y-2">
-                        {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings.map((r, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <span 
-                                className="font-medium"
-                                style={{ color: 'var(--text-primary)' }}
-                              >
-                                {r.label}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  setRatingToUndo(r);
-                                  setIsUndoConfirmOpen(true);
-                                }}
-                                style={{ color: 'var(--text-secondary)' }}
-                                className="p-1 hover:text-[var(--red)] hover:bg-[rgba(0,0,0,0.05)] rounded transition-all"
-                                title="Undo checkride pass"
-                              >
-                                <History size={12} />
-                              </button>
-                            </div>
-                            <span style={{ color: 'var(--text-secondary)' }}>Passed {r.date}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {undoSuccess && (
-                    <div 
-                      className="border text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2"
-                      style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', borderColor: 'var(--green)', color: 'var(--green)' }}
-                    >
-                      <CheckCircle2 size={14} />
-                      {undoSuccess}
-                    </div>
-                  )}
-
+                  {/* Latest Lesson */}
                   <div>
                     <h3 
                       className="text-[10px] font-bold uppercase tracking-widest mb-3"
@@ -1162,28 +1122,6 @@ export default function Dashboard() {
                     </h3>
                     <LessonSummary lesson={recentLesson} type={recentLesson?.type === 'ground' ? 'ground' : 'flight'} />
                   </div>
-
-                  {preSoloTestResult && (
-                    <div className="flex items-center gap-2 h-8">
-                      {preSoloTestResult.passed ? (
-                        <div 
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
-                          style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', color: 'var(--green)', borderColor: 'var(--green)' }}
-                        >
-                          <CheckCircle2 size={12} strokeWidth={3} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Passed — {new Date(preSoloTestResult.date).toLocaleDateString()}</span>
-                        </div>
-                      ) : (
-                        <div 
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
-                          style={{ backgroundColor: 'rgba(248, 113, 113, 0.1)', color: 'var(--red)', borderColor: 'var(--red)' }}
-                        >
-                          <XCircle size={12} strokeWidth={3} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Failed — Retest Required</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {/* Currency Tracker */}
                   {selectedStudent && (
@@ -1681,10 +1619,138 @@ export default function Dashboard() {
                     </div>
                   )}
 
+                  {/* Checkride Passed */}
+                  <div className="pt-2">
+                    {(() => {
+                      const student = students.find(s => s.name === selectedStudent);
+                      if (!student) return null;
+                      
+                      const isPassed = student.checkride_passed_ratings?.some(r => r.code === student.current_rating);
+                      if (isPassed) {
+                        const passDate = student.checkride_passed_ratings?.find(r => r.code === student.current_rating)?.date;
+                        return (
+                          <div 
+                            className="border-2 rounded-xl p-4 flex flex-col items-center justify-center gap-1"
+                            style={{ 
+                              backgroundColor: 'rgba(74, 222, 128, 0.1)', 
+                              borderColor: 'rgba(74, 222, 128, 0.3)',
+                              color: 'var(--green)' 
+                            }}
+                          >
+                            <div className="flex items-center gap-2 font-bold">
+                              <CheckCircle size={20} />
+                              Checkride Passed
+                            </div>
+                            <div 
+                              className="text-[10px] opacity-70 font-bold uppercase tracking-widest"
+                            >
+                              Completed on {passDate}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const { canPassCheckride } = checkRequirements(student);
+                      
+                      return (
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => setIsCheckrideConfirmOpen(true)}
+                            disabled={!canPassCheckride}
+                            className={cn(
+                              "w-full font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm",
+                              canPassCheckride 
+                                ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] animate-pulse shadow-[0_0_15px_rgba(45,122,79,0.4)] cursor-pointer" 
+                                : "text-[var(--text-muted)] cursor-not-allowed border"
+                            )}
+                            style={!canPassCheckride ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' } : {}}
+                          >
+                            <CheckCircle size={18} />
+                            Checkride Passed
+                          </button>
+                          {!canPassCheckride && (
+                            <p 
+                              className="text-[10px] text-center font-medium"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
+                              Give A.1 endorsement in the Checkride tab to unlock.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Ratings Completed */}
+                  {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings?.length ? (
+                    <div 
+                      className="rounded-xl p-4 border"
+                      style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}
+                    >
+                      <h3 
+                        className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2"
+                        style={{ color: 'var(--navy-light)' }}
+                      >
+                        <Award size={14} style={{ color: 'var(--amber)' }} />
+                        Ratings Completed
+                      </h3>
+                      <div className="space-y-2">
+                        {students.find(s => s.name === selectedStudent)?.checkride_passed_ratings.map((r, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span 
+                                className="font-medium"
+                                style={{ color: 'var(--text-primary)' }}
+                              >
+                                {r.label}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setRatingToUndo(r);
+                                  setIsUndoConfirmOpen(true);
+                                }}
+                                style={{ color: 'var(--text-secondary)' }}
+                                className="p-1 hover:text-[var(--red)] hover:bg-[rgba(0,0,0,0.05)] rounded transition-all cursor-pointer"
+                                title="Undo checkride pass"
+                              >
+                                <History size={12} />
+                              </button>
+                            </div>
+                            <span style={{ color: 'var(--text-secondary)' }}>Passed {r.date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Pre-Solo Test Result */}
+                  {preSoloTestResult && (
+                    <div className="flex items-center gap-2 h-8">
+                      {preSoloTestResult.passed ? (
+                        <div 
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
+                          style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', color: 'var(--green)', borderColor: 'var(--green)' }}
+                        >
+                          <CheckCircle2 size={12} strokeWidth={3} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Passed — {new Date(preSoloTestResult.date).toLocaleDateString()}</span>
+                        </div>
+                      ) : (
+                        <div 
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
+                          style={{ backgroundColor: 'rgba(248, 113, 113, 0.1)', color: 'var(--red)', borderColor: 'var(--red)' }}
+                        >
+                          <XCircle size={12} strokeWidth={3} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Pre-Solo Test Failed — Retest Required</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Prior Logbook Hours */}
                   <div className="space-y-3">
                     <button
                       onClick={openPriorHoursModal}
-                      className="w-full flex items-center justify-between px-4 py-3 border rounded-xl transition-all group"
+                      className="w-full flex items-center justify-between px-4 py-3 border rounded-xl transition-all group cursor-pointer"
                       style={{ 
                         backgroundColor: 'var(--bg-secondary)', 
                         borderColor: 'var(--border-color)' 
@@ -1726,82 +1792,23 @@ export default function Dashboard() {
                     </button>
                   </div>
 
-                  <div className="pt-2">
-                    {(() => {
-                      const student = students.find(s => s.name === selectedStudent);
-                      if (!student) return null;
-                      
-                      const isPassed = student.checkride_passed_ratings?.some(r => r.code === student.current_rating);
-                      if (isPassed) {
-                        const passDate = student.checkride_passed_ratings?.find(r => r.code === student.current_rating)?.date;
-                        return (
-                          <div 
-                            className="border-2 rounded-xl p-4 flex flex-col items-center justify-center gap-1"
-                            style={{ 
-                              backgroundColor: 'rgba(74, 222, 128, 0.1)', 
-                              borderColor: 'rgba(74, 222, 128, 0.3)',
-                              color: 'var(--green)' 
-                            }}
-                          >
-                            <div className="flex items-center gap-2 font-bold">
-                              <CheckCircle size={20} />
-                              Checkride Passed
-                            </div>
-                            <div 
-                              className="text-[10px] opacity-70 font-bold uppercase tracking-widest"
-                            >
-                              Completed on {passDate}
-                            </div>
-                          </div>
-                        );
-                      }
-
-                      const { canPassCheckride } = checkRequirements(student);
-                      
-                      return (
-                        <div className="space-y-2">
-                          <button
-                            onClick={() => setIsCheckrideConfirmOpen(true)}
-                            disabled={!canPassCheckride}
-                            className={cn(
-                              "w-full font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm",
-                              canPassCheckride 
-                                ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] animate-pulse shadow-[0_0_15px_rgba(45,122,79,0.4)]" 
-                                : "text-[var(--text-muted)] cursor-not-allowed border"
-                            )}
-                            style={!canPassCheckride ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' } : {}}
-                          >
-                            <CheckCircle size={18} />
-                            Checkride Passed
-                          </button>
-                          {!canPassCheckride && (
-                            <p 
-                              className="text-[10px] text-center font-medium"
-                              style={{ color: 'var(--text-secondary)' }}
-                            >
-                              Give A.1 endorsement in the Checkride tab to unlock.
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
+                  {/* Undo Success Message */}
+                  {undoSuccess && (
+                    <div 
+                      className="border text-xs font-bold p-3 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2"
+                      style={{ backgroundColor: 'rgba(74, 222, 128, 0.1)', borderColor: 'var(--green)', color: 'var(--green)' }}
+                    >
+                      <CheckCircle2 size={14} />
+                      {undoSuccess}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <button
-                  onClick={handleStartLesson}
-                  className="w-full text-white font-bold py-4 rounded-xl shadow-md transition-all duration-150 flex items-center justify-center gap-3"
-                  style={{ backgroundColor: 'var(--navy)' }}
-                >
-                  <Plane size={20} />
-                  Start New Lesson →
-                </button>
-
+              <div className="pt-2">
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent)}`}
-                  className="w-full font-bold py-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2"
+                  className="w-full font-bold py-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer hover:-translate-y-0.5"
                   style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26, 58, 92, 0.2)' }}
                 >
                   <FileText size={18} />
