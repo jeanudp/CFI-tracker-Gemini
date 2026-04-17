@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronDown, ChevronUp, Check } from 'lucide-react';
-import { ALL_ACS } from '../constants';
+import { ALL_ACS, ALL_GROUND_ACS } from '../constants';
+import { IR_GROUND_ACS } from '../constants/irACS';
 import { ACSTask, ACSStandard } from '../types';
 
 interface ACSStandardsModalProps {
@@ -29,12 +30,26 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
 
   // Find the task data in all ACS ratings
   const taskData = useMemo(() => {
+    // Search ALL_ACS first (flight tasks for all ratings)
     for (const ratingKey of Object.keys(ALL_ACS)) {
       const ratingTasks = ALL_ACS[ratingKey as keyof typeof ALL_ACS] || [];
       for (const area of ratingTasks) {
         const task = area.tasks.find((t) => t.code === taskId);
         if (task && task.stds && task.stds.length > 0) return task;
       }
+    }
+    // Search ALL_GROUND_ACS (ground tasks for PPL, IR, CPL)
+    for (const ratingKey of Object.keys(ALL_GROUND_ACS)) {
+      const ratingTasks = ALL_GROUND_ACS[ratingKey as keyof typeof ALL_GROUND_ACS] || [];
+      for (const area of ratingTasks) {
+        const task = area.tasks.find((t) => t.code === taskId);
+        if (task && task.stds && task.stds.length > 0) return task;
+      }
+    }
+    // Search IR_GROUND_ACS directly as a fallback
+    for (const area of IR_GROUND_ACS) {
+      const task = area.tasks.find((t) => t.code === taskId);
+      if (task && task.stds && task.stds.length > 0) return task;
     }
     return null;
   }, [taskId]);
