@@ -96,6 +96,37 @@ const [user, setUser] = useState<any>(null);
     }
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('dark_mode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const { error } = await supabase.from('students').select('id').limit(1);
+        setIsOnline(!error || error.message !== 'Failed to fetch');
+      } catch { setIsOnline(false); }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUser(session.user);
+    });
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
   const fetchData = async () => {
     setLoading(true);
     setError(null);
