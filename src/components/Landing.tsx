@@ -22,8 +22,8 @@ export default function Landing() {
       style={{
         backgroundColor: 'var(--bg-primary)',
         backgroundImage: darkMode
-          ? 'radial-gradient(ellipse at 50% 0%, rgba(58,122,188,0.18) 0%, transparent 70%), radial-gradient(ellipse at 80% 100%, rgba(45,122,79,0.1) 0%, transparent 60%)'
-          : 'radial-gradient(ellipse at 50% 0%, rgba(42,90,140,0.1) 0%, transparent 70%), radial-gradient(ellipse at 80% 100%, rgba(45,122,79,0.06) 0%, transparent 60%)',
+          ? 'radial-gradient(ellipse at 50% 0%, rgba(58,122,188,0.15) 0%, transparent 70%)'
+          : 'radial-gradient(ellipse at 50% 0%, rgba(42,90,140,0.1) 0%, transparent 70%)',
         backgroundAttachment: 'fixed',
       }}
     >
@@ -88,7 +88,7 @@ export default function Landing() {
                 height: '5px',
                 backgroundColor: '#e8a020',
                 borderRadius: '3px',
-                boxShadow: '0 2px 8px rgba(232,160,32,0.5), 0 1px 0 rgba(255,200,80,0.4)',
+                boxShadow: '0 2px 10px rgba(232,160,32,0.6), 0 0 20px rgba(232,160,32,0.3)',
               }}
             />
           </div>
@@ -174,64 +174,59 @@ export default function Landing() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-3 mb-20"
         >
-          {/* Primary button — raised effect */}
           <button
             onClick={() => navigate('/auth')}
-            className="px-8 py-4 text-white font-bold rounded-2xl text-sm transition-all flex items-center gap-2 justify-center cursor-pointer"
+            className="px-8 py-4 text-white font-bold rounded-2xl text-sm flex items-center gap-2 justify-center cursor-pointer transition-all"
             style={{
               backgroundColor: 'var(--navy)',
               backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.12) 0%, transparent 100%)',
-              boxShadow: '0 4px 0 rgba(15,30,50,0.5), 0 6px 20px rgba(26,58,92,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',
-              transform: 'translateY(0)',
+              boxShadow: '0 6px 0 rgba(10,20,40,0.4), 0 8px 24px rgba(26,58,92,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 7px 0 rgba(15,30,50,0.5), 0 12px 28px rgba(26,58,92,0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 9px 0 rgba(10,20,40,0.4), 0 14px 32px rgba(26,58,92,0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 0 rgba(15,30,50,0.5), 0 6px 20px rgba(26,58,92,0.35), inset 0 1px 0 rgba(255,255,255,0.15)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 0 rgba(10,20,40,0.4), 0 8px 24px rgba(26,58,92,0.35), inset 0 1px 0 rgba(255,255,255,0.15)';
             }}
             onMouseDown={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(3px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 0 rgba(15,30,50,0.5), 0 2px 8px rgba(26,58,92,0.2), inset 0 1px 0 rgba(255,255,255,0.15)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(5px)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 0 rgba(10,20,40,0.4), 0 2px 8px rgba(26,58,92,0.2), inset 0 1px 0 rgba(255,255,255,0.15)';
             }}
             onMouseUp={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 7px 0 rgba(15,30,50,0.5), 0 12px 28px rgba(26,58,92,0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 9px 0 rgba(10,20,40,0.4), 0 14px 32px rgba(26,58,92,0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
             }}
           >
             <Plane size={18} />
             Sign In
           </button>
 
-          {/* Secondary button — raised effect */}
           <button
             onClick={() => navigate('/auth?mode=signup')}
-            className="px-8 py-4 font-bold rounded-2xl text-sm transition-all flex items-center gap-2 justify-center cursor-pointer"
+            className="px-8 py-4 font-bold rounded-2xl text-sm flex items-center gap-2 justify-center cursor-pointer transition-all"
             style={{
               backgroundColor: 'var(--bg-secondary)',
-              backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, var(--bg-secondary) 100%)',
-              color: 'var(--navy)',
+              color: 'var(--text-primary)',
               border: '1px solid var(--border-color)',
-              boxShadow: '0 4px 0 rgba(26,58,92,0.12), 0 6px 20px rgba(26,58,92,0.1), inset 0 1px 0 rgba(255,255,255,0.9)',
-              transform: 'translateY(0)',
+              boxShadow: '0 6px 0 rgba(26,58,92,0.1), 0 8px 24px rgba(26,58,92,0.08), inset 0 1px 0 rgba(255,255,255,0.5)',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 7px 0 rgba(26,58,92,0.12), 0 12px 28px rgba(26,58,92,0.15), inset 0 1px 0 rgba(255,255,255,0.9)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 9px 0 rgba(26,58,92,0.1), 0 14px 32px rgba(26,58,92,0.12), inset 0 1px 0 rgba(255,255,255,0.5)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 0 rgba(26,58,92,0.12), 0 6px 20px rgba(26,58,92,0.1), inset 0 1px 0 rgba(255,255,255,0.9)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 0 rgba(26,58,92,0.1), 0 8px 24px rgba(26,58,92,0.08), inset 0 1px 0 rgba(255,255,255,0.5)';
             }}
             onMouseDown={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(3px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 0 rgba(26,58,92,0.1), 0 2px 8px rgba(26,58,92,0.06), inset 0 1px 0 rgba(255,255,255,0.9)';
+              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(5px)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 1px 0 rgba(26,58,92,0.08), 0 2px 8px rgba(26,58,92,0.06), inset 0 1px 0 rgba(255,255,255,0.5)';
             }}
             onMouseUp={e => {
               (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-3px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 7px 0 rgba(26,58,92,0.12), 0 12px 28px rgba(26,58,92,0.15), inset 0 1px 0 rgba(255,255,255,0.9)';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 9px 0 rgba(26,58,92,0.1), 0 14px 32px rgba(26,58,92,0.12), inset 0 1px 0 rgba(255,255,255,0.5)';
             }}
           >
             Create Account
@@ -273,47 +268,34 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 + i * 0.1 }}
-              className="rounded-2xl p-6 text-left transition-all cursor-default"
+              className="rounded-2xl p-6 text-left transition-all"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
-                backgroundImage: darkMode
-                  ? 'linear-gradient(145deg, rgba(255,255,255,0.04) 0%, transparent 60%)'
-                  : 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 60%)',
                 border: '1px solid var(--border-color)',
-                borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)'}`,
-                boxShadow: darkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3), 0 16px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)'
-                  : '0 4px 12px rgba(26,58,92,0.1), 0 16px 40px rgba(26,58,92,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
+                borderTop: '1px solid rgba(255,255,255,0.6)',
+                boxShadow: '0 4px 0 rgba(26,58,92,0.08), 0 8px 24px rgba(26,58,92,0.1), inset 0 1px 0 rgba(255,255,255,0.7)',
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)';
-                (e.currentTarget as HTMLDivElement).style.boxShadow = darkMode
-                  ? '0 8px 24px rgba(0,0,0,0.4), 0 24px 56px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
-                  : '0 8px 24px rgba(26,58,92,0.16), 0 24px 56px rgba(26,58,92,0.12), inset 0 1px 0 rgba(255,255,255,0.9)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 10px 0 rgba(26,58,92,0.08), 0 20px 40px rgba(26,58,92,0.14), inset 0 1px 0 rgba(255,255,255,0.7)';
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLDivElement).style.boxShadow = darkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3), 0 16px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)'
-                  : '0 4px 12px rgba(26,58,92,0.1), 0 16px 40px rgba(26,58,92,0.08), inset 0 1px 0 rgba(255,255,255,0.9)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 0 rgba(26,58,92,0.08), 0 8px 24px rgba(26,58,92,0.1), inset 0 1px 0 rgba(255,255,255,0.7)';
               }}
             >
-              {/* Icon container with inner shadow */}
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                 style={{
-                  backgroundColor: feature.iconBg,
-                  backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.6) 0%, transparent 100%)',
-                  boxShadow: `0 2px 8px ${feature.iconBg}, inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.04)`,
-                  border: '1px solid rgba(255,255,255,0.4)',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  boxShadow: '0 2px 6px rgba(26,58,92,0.1), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(26,58,92,0.06)',
+                  border: '1px solid var(--border-color)',
                 }}
               >
                 {feature.icon}
               </div>
               <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{feature.title}</h3>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{feature.description}</p>
-
-              {/* Bottom accent line */}
               <div
                 className="mt-4 h-0.5 rounded-full"
                 style={{
