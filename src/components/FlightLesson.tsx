@@ -216,7 +216,7 @@ export default function FlightLesson() {
     const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
 
     if (!savedStudent) {
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
     if (!savedRating.code) {
@@ -803,7 +803,7 @@ export default function FlightLesson() {
           <div className="flex flex-col gap-4">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
-              <Link to="/" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
+              <Link to="/dashboard" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
               <ChevronRight size={10} />
               <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
               <ChevronRight size={10} />

@@ -15,6 +15,7 @@ import StudentDashboard from './components/StudentDashboard';
 import IACRASummary from './components/IACRASummary';
 import PreSoloTest from './components/PreSoloTest';
 import CFIHours from './components/CFIHours';
+import Landing from './components/Landing';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -101,9 +102,17 @@ export default function App() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/auth" element={<Auth />} />
+        <Route 
+          path="/auth" 
+          element={!session ? <Auth /> : <Navigate to="/dashboard" />} 
+        />
         <Route
           path="/"
+          element={<Landing />}
+        />
+
+        <Route
+          path="/dashboard"
           element={
             session ? (
               <Layout user={session.user}>

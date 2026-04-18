@@ -45,7 +45,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/auth');
+    navigate('/');
   };
 
   const buttonClass = "text-[12px] px-[12px] py-[6px] rounded-[6px] border hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
@@ -60,7 +60,7 @@ export default function Layout({ children, user }: LayoutProps) {
         className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
       >
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <div 
               className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-300"
               style={{ backgroundColor: 'var(--navy)' }}
@@ -126,8 +126,8 @@ export default function Layout({ children, user }: LayoutProps) {
             </Link>
           )}
 
-          {path !== '/' && (
-            <Link to="/" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
+          {path !== '/dashboard' && (
+            <Link to="/dashboard" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <Users size={14} />
               <span>Home</span>
             </Link>
@@ -196,7 +196,7 @@ export default function Layout({ children, user }: LayoutProps) {
             </button>
           )}
 
-          {(path === '/' || path.startsWith('/student/')) && (
+          {(path === '/dashboard' || path.startsWith('/student/')) && (
             <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
               <LogOut size={14} />
               <span>Sign Out</span>

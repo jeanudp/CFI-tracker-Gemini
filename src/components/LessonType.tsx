@@ -31,11 +31,11 @@ export default function LessonType() {
     console.log('rating:', savedRating);
 
     if (!savedStudent) {
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
     if (!savedRating.code) {
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
 
@@ -202,7 +202,7 @@ export default function LessonType() {
         </motion.div>
       </div>
 
-      <Link to="/" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
+      <Link to="/dashboard" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
         ← Back to Home
       </Link>
 

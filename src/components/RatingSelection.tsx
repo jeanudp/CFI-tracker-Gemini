@@ -13,7 +13,7 @@ export default function RatingSelection() {
     const saved = localStorage.getItem('sb_selected_student') ||
       JSON.parse(localStorage.getItem('faa_student_info') || '{}').student || '';
     if (!saved) {
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
     setStudentName(saved);
@@ -110,7 +110,7 @@ export default function RatingSelection() {
         })}
       </div>
 
-      <Link to="/" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
+      <Link to="/dashboard" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
         ← Back to Students
       </Link>
     </div>

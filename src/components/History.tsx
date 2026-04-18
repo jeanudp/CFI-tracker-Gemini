@@ -805,7 +805,7 @@ export default function History() {
         </p>
         <div className="flex gap-4">
           <Link
-            to="/"
+            to="/dashboard"
             className="px-6 py-2.5 bg-[#1a3a5c] text-white font-semibold rounded-xl hover:bg-[#2a5a8c] transition-all"
           >
             Go to Dashboard

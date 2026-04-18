@@ -36,7 +36,7 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     if (!studentName) {
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
     fetchData();
@@ -92,7 +92,7 @@ export default function StudentDashboard() {
         <h2 className="text-xl font-bold text-[#1c2333] mb-2">Connection Error</h2>
         <p className="text-sm text-[#6b7280] max-w-md mb-8 leading-relaxed">{error}</p>
         <div className="flex gap-4">
-          <Link to="/" className="px-6 py-2.5 bg-[#1a3a5c] text-white font-semibold rounded-xl hover:bg-[#2a5a8c] transition-all">Go to Dashboard</Link>
+          <Link to="/dashboard" className="px-6 py-2.5 bg-[#1a3a5c] text-white font-semibold rounded-xl hover:bg-[#2a5a8c] transition-all">Go to Dashboard</Link>
           <button onClick={fetchData} className="px-6 py-2.5 bg-white text-[#1a3a5c] font-semibold border-2 border-[#dde3ec] rounded-xl hover:bg-[#f4f5f7] transition-all">Try Again</button>
         </div>
       </div>
