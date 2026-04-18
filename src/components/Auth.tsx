@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { Mail, Lock, User, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, AlertCircle, CheckCircle2, ArrowLeft, Moon, Sun } from 'lucide-react';
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -13,7 +13,17 @@ export default function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('dark_mode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -51,18 +61,31 @@ export default function Auth() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-6"
+      className="min-h-screen flex items-center justify-center p-6 transition-colors duration-300"
       style={{
-        backgroundColor: '#f0f4f8',
+        backgroundColor: 'var(--bg-primary)',
         backgroundImage: 'radial-gradient(ellipse at 20% 0%, rgba(42, 90, 140, 0.07) 0%, transparent 60%)',
       }}
     >
+      {/* Dark mode toggle — top right */}
+      <div className="fixed top-4 right-4 z-10">
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="p-2 rounded-lg border hover:bg-[var(--bg-tertiary)] transition-all"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+      </div>
+
       <div className="w-full max-w-md">
 
         {/* Back to landing */}
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-xs font-bold text-[#6b7280] hover:text-[#1a3a5c] transition-colors mb-6 cursor-pointer"
+          className="flex items-center gap-2 text-xs font-bold transition-colors mb-6 cursor-pointer hover:opacity-70"
+          style={{ color: 'var(--text-secondary)' }}
         >
           <ArrowLeft size={14} />
           Back to 61 Tracker
@@ -71,12 +94,16 @@ export default function Auth() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl border border-[#dde3ec] overflow-hidden"
-          style={{ boxShadow: '0 4px 24px rgba(26, 58, 92, 0.1), 0 16px 48px rgba(26, 58, 92, 0.08)' }}
+          className="rounded-3xl border overflow-hidden"
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            borderColor: 'var(--border-color)',
+            boxShadow: '0 4px 24px rgba(26, 58, 92, 0.1), 0 16px 48px rgba(26, 58, 92, 0.08)'
+          }}
         >
-          {/* Header */}
+          {/* Header — always navy gradient, looks great in both modes */}
           <div
-            className="px-8 pt-8 pb-6 border-b border-[#f0f4f8]"
+            className="px-8 pt-8 pb-6"
             style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)' }}
           >
             <div className="flex items-center gap-3 mb-4">
@@ -107,24 +134,29 @@ export default function Auth() {
 
           {/* Tab Toggle */}
           <div className="px-8 pt-6">
-            <div className="flex bg-[#f0f4f8] rounded-xl p-1">
+            <div
+              className="flex rounded-xl p-1"
+              style={{ backgroundColor: 'var(--bg-tertiary)' }}
+            >
               <button
                 onClick={() => setIsLogin(true)}
-                className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  isLogin
-                    ? 'bg-white text-[#1a3a5c] shadow-sm'
-                    : 'text-[#6b7280] hover:text-[#1a3a5c]'
-                }`}
+                className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                style={{
+                  backgroundColor: isLogin ? 'var(--bg-secondary)' : 'transparent',
+                  color: isLogin ? 'var(--navy)' : 'var(--text-muted)',
+                  boxShadow: isLogin ? '0 1px 4px rgba(26,58,92,0.1)' : 'none'
+                }}
               >
                 Sign In
               </button>
               <button
                 onClick={() => setIsLogin(false)}
-                className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  !isLogin
-                    ? 'bg-white text-[#1a3a5c] shadow-sm'
-                    : 'text-[#6b7280] hover:text-[#1a3a5c]'
-                }`}
+                className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                style={{
+                  backgroundColor: !isLogin ? 'var(--bg-secondary)' : 'transparent',
+                  color: !isLogin ? 'var(--navy)' : 'var(--text-muted)',
+                  boxShadow: !isLogin ? '0 1px 4px rgba(26,58,92,0.1)' : 'none'
+                }}
               >
                 Create Account
               </button>
@@ -134,14 +166,20 @@ export default function Auth() {
           {/* Form */}
           <div className="px-8 py-6">
             {error && (
-              <div className="bg-[#fdecea] border border-[#f5c0bc] rounded-xl p-3 mb-5 flex items-start gap-2 text-xs text-[#c0392b]">
+              <div
+                className="rounded-xl p-3 mb-5 flex items-start gap-2 text-xs border"
+                style={{ backgroundColor: 'rgba(192,57,43,0.1)', borderColor: 'rgba(192,57,43,0.3)', color: 'var(--red)' }}
+              >
                 <AlertCircle size={15} className="shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="bg-[#e4f5ec] border border-[#9fd4b4] rounded-xl p-3 mb-5 flex items-start gap-2 text-xs text-[#2d7a4f]">
+              <div
+                className="rounded-xl p-3 mb-5 flex items-start gap-2 text-xs border"
+                style={{ backgroundColor: 'rgba(45,122,79,0.1)', borderColor: 'rgba(45,122,79,0.3)', color: 'var(--green)' }}
+              >
                 <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
                 <span>{success}</span>
               </div>
@@ -150,56 +188,77 @@ export default function Auth() {
             <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] block">
+                  <label
+                    className="text-[10px] font-bold uppercase tracking-widest block"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
                     Full Name
                   </label>
                   <div className="relative">
-                    <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                    <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                     <input
                       type="text"
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="John Smith CFI"
-                      className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                      style={{ backgroundColor: '#f8fafc' }}
+                      className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                      style={{
+                        backgroundColor: 'var(--bg-tertiary)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-primary)'
+                      }}
                     />
                   </div>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] block">
+                <label
+                  className="text-[10px] font-bold uppercase tracking-widest block"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Email
                 </label>
                 <div className="relative">
-                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                    style={{ backgroundColor: '#f8fafc' }}
+                    className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                    style={{
+                      backgroundColor: 'var(--bg-tertiary)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)'
+                    }}
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] block">
+                <label
+                  className="text-[10px] font-bold uppercase tracking-widest block"
+                  style={{ color: 'var(--text-muted)' }}
+                >
                   Password
                 </label>
                 <div className="relative">
-                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
-                    className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                    style={{ backgroundColor: '#f8fafc' }}
+                    className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                    style={{
+                      backgroundColor: 'var(--bg-tertiary)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)'
+                    }}
                   />
                 </div>
               </div>
@@ -207,13 +266,17 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#1a3a5c] text-white font-bold py-3.5 rounded-xl hover:bg-[#2a5a8c] transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
+                className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
+                style={{ backgroundColor: 'var(--navy)' }}
               >
                 {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
               </button>
             </form>
 
-            <p className="text-center text-[10px] text-[#9ca3af] mt-6">
+            <p
+              className="text-center text-[10px] mt-6"
+              style={{ color: 'var(--text-muted)' }}
+            >
               FAR Part 61 · AC 61-65K · FAA ACS Standards
             </p>
           </div>
