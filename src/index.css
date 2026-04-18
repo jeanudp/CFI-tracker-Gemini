@@ -499,3 +499,114 @@ html.dark .hover\:bg-\[\#e5e7eb\]:hover {
   background-color: var(--bg-tertiary) !important;
 }
 
+/* ============================================
+   RATING CARD DARK MODE FIXES
+   (RatingSelector, NewStudentModal, Dashboard next rating modal)
+   ============================================ */
+
+/* Light rating background colors — selected state */
+html.dark .bg-\[\#d4e8f5\] {
+  background-color: rgba(26, 58, 92, 0.35) !important;
+}
+
+html.dark .bg-\[\#ede8f8\] {
+  background-color: rgba(124, 58, 237, 0.25) !important;
+}
+
+html.dark .bg-\[\#e4f5ec\] {
+  background-color: rgba(45, 122, 79, 0.25) !important;
+}
+
+html.dark .bg-\[\#fdf0e4\] {
+  background-color: rgba(230, 126, 34, 0.2) !important;
+}
+
+html.dark .bg-\[\#e0f5f2\] {
+  background-color: rgba(22, 163, 74, 0.2) !important;
+}
+
+html.dark .bg-\[\#fdecea\] {
+  background-color: rgba(192, 57, 43, 0.2) !important;
+}
+
+/* Rating card text colors — stay readable in dark mode */
+html.dark .text-\[\#1a3a5c\] {
+  color: #93c5fd !important;
+}
+
+html.dark .text-\[\#5b3fa0\] {
+  color: #c4b5fd !important;
+}
+
+html.dark .text-\[\#2d7a4f\] {
+  color: #4ade80 !important;
+}
+
+html.dark .text-\[\#c05c10\] {
+  color: #fb923c !important;
+}
+
+html.dark .text-\[\#1a7a6e\] {
+  color: #34d399 !important;
+}
+
+html.dark .text-\[\#c0392b\] {
+  color: #f87171 !important;
+}
+
+/* Rating card base — unselected white background */
+html.dark .bg-white.rounded-2xl.border-2 {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Rating card icon container unselected */
+html.dark .w-14.h-14.rounded-2xl.bg-\[\#d4e8f5\] {
+  background-color: rgba(26, 58, 92, 0.3) !important;
+}
+
+html.dark .w-14.h-14.rounded-2xl.bg-\[\#ede8f8\] {
+  background-color: rgba(124, 58, 237, 0.2) !important;
+}
+
+html.dark .w-14.h-14.rounded-2xl.bg-\[\#e4f5ec\] {
+  background-color: rgba(45, 122, 79, 0.2) !important;
+}
+
+html.dark .w-14.h-14.rounded-2xl.bg-\[\#fdf0e4\] {
+  background-color: rgba(230, 126, 34, 0.15) !important;
+}
+
+html.dark .w-14.h-14.rounded-2xl.bg-\[\#e0f5f2\] {
+  background-color: rgba(22, 163, 74, 0.15) !important;
+}
+
+html.dark .w-14.h-14.rounded-2xl.bg-\[\#fdecea\] {
+  background-color: rgba(192, 57, 43, 0.15) !important;
+}
+
+/* Card label text */
+html.dark .text-\[\#1c2333\] {
+  color: var(--text-primary) !important;
+}
+
+html.dark .text-\[\#6b7280\] {
+  color: var(--text-secondary) !important;
+}
+
+/* Student name pill on rating page */
+html.dark .bg-white.border.border-\[\#dde3ec\].rounded-full {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Coming soon badge */
+html.dark .bg-\[\#fdf0d4\] {
+  background-color: rgba(232, 160, 32, 0.15) !important;
+}
+
+html.dark .border-\[\#f0c96a\] {
+  border-color: rgba(232, 160, 32, 0.3) !important;
+}
+
+
