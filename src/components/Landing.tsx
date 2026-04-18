@@ -44,29 +44,81 @@ export default function Landing() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex items-center gap-4 mb-8"
+          className="flex items-center gap-6 mb-8"
         >
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: 'var(--navy)' }}
-          >
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="36" height="36">
-              <ellipse cx="50" cy="50" rx="5" ry="38" />
-              <path d="M 50 45 Q 20 40 5 55 Q 20 52 50 52" />
-              <path d="M 50 45 Q 80 40 95 55 Q 80 52 50 52" />
-              <path d="M 50 82 Q 35 80 28 86 Q 35 84 50 84" />
-              <path d="M 50 82 Q 65 80 72 86 Q 65 84 50 84" />
-              <path d="M 47 14 Q 50 10 53 14" />
-              <ellipse cx="50" cy="18" rx="4" ry="5" />
-              <line x1="50" y1="12" x2="50" y2="8" />
-              <path d="M 44 10 Q 50 8 56 10" />
-              <rect x="47" y="30" width="6" height="5" rx="1" />
-              <rect x="47" y="37" width="6" height="4" rx="1" />
-            </svg>
+          {/* Big 61 numeral */}
+          <div className="relative">
+            <span
+              className="block font-black leading-none tracking-tighter select-none"
+              style={{
+                fontSize: '96px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-4px',
+                lineHeight: 1,
+              }}
+            >
+              61
+            </span>
+            {/* Amber underline */}
+            <div
+              className="absolute rounded-full"
+              style={{
+                bottom: '-6px',
+                left: 0,
+                width: '100%',
+                height: '5px',
+                backgroundColor: '#e8a020',
+                borderRadius: '3px',
+              }}
+            />
           </div>
-          <div className="text-left">
-            <h1 className="text-3xl font-black tracking-tight" style={{ color: 'var(--navy)' }}>61 Tracker</h1>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Built for CFIs</p>
+
+          {/* Amber vertical divider */}
+          <div
+            className="self-stretch rounded-full"
+            style={{
+              width: '3px',
+              backgroundColor: '#e8a020',
+              opacity: 0.35,
+              borderRadius: '2px',
+              minHeight: '64px',
+            }}
+          />
+
+          {/* TRACKER wordmark + tagline */}
+          <div className="flex flex-col justify-center gap-1">
+            <span
+              className="font-black uppercase tracking-wide leading-none"
+              style={{
+                fontSize: '32px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '2px',
+              }}
+            >
+              TRACKER
+            </span>
+            <span
+              className="font-bold uppercase tracking-widest"
+              style={{
+                fontSize: '10px',
+                color: 'var(--text-muted)',
+                letterSpacing: '3px',
+              }}
+            >
+              From first lesson to checkride
+            </span>
+            {/* Amber tagline accent */}
+            <div
+              style={{
+                height: '2px',
+                backgroundColor: '#e8a020',
+                opacity: 0.25,
+                borderRadius: '1px',
+                marginTop: '2px',
+              }}
+            />
           </div>
         </motion.div>
 
@@ -78,8 +130,8 @@ export default function Landing() {
           className="max-w-xl mb-10"
         >
           <h2 className="text-4xl sm:text-5xl font-black leading-tight mb-4" style={{ color: 'var(--text-primary)' }}>
-            From first lesson<br />
-            <span style={{ color: 'var(--navy)' }}>to checkride.</span>
+            The CFI tool that keeps<br />
+            <span style={{ color: 'var(--navy)' }}>you in the FARs.</span>
           </h2>
           <p className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
             The complete lesson tracker for Part 61 flight instructors. Track ACS grades, manage endorsements, and know exactly when your student is checkride ready.
@@ -169,7 +221,7 @@ export default function Landing() {
         style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
       >
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-          61 Tracker · Built for flight instructors · FAR Part 61
+          61 Tracker · Built for CFIs · FAR Part 61
         </p>
       </footer>
     </div>
