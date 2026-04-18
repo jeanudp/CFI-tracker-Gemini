@@ -15,6 +15,15 @@
   --green: #2d7a4f;
   --red: #c0392b;
   --amber: #e8a020;
+  --shadow-xs: 0 1px 3px rgba(26, 58, 92, 0.1), 0 1px 2px rgba(26, 58, 92, 0.08);
+  --shadow-sm: 0 2px 6px rgba(26, 58, 92, 0.12), 0 6px 20px rgba(26, 58, 92, 0.08);
+  --shadow-md: 0 4px 12px rgba(26, 58, 92, 0.14), 0 12px 32px rgba(26, 58, 92, 0.1);
+  --shadow-lg: 0 8px 20px rgba(26, 58, 92, 0.16), 0 20px 48px rgba(26, 58, 92, 0.14);
+  --shadow-xl: 0 12px 32px rgba(26, 58, 92, 0.2), 0 32px 72px rgba(26, 58, 92, 0.16);
+  --shadow-inset: inset 0 2px 6px rgba(26, 58, 92, 0.1), inset 0 1px 3px rgba(26, 58, 92, 0.07);
+  --shadow-button: 0 3px 8px rgba(26, 58, 92, 0.28), 0 6px 20px rgba(26, 58, 92, 0.18);
+  --shadow-button-hover: 0 6px 16px rgba(26, 58, 92, 0.32), 0 12px 32px rgba(26, 58, 92, 0.24);
+  --shadow-button-active: 0 1px 3px rgba(26, 58, 92, 0.2);
 }
 
 html.dark {
@@ -32,6 +41,15 @@ html.dark {
   --green: #4ade80;
   --red: #f87171;
   --amber: #fbbf24;
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.45), 0 20px 48px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.5), 0 32px 72px rgba(0, 0, 0, 0.4);
+  --shadow-inset: inset 0 2px 6px rgba(0, 0, 0, 0.4), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-button: 0 3px 8px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-button-hover: 0 6px 16px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-button-active: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 body {
@@ -50,7 +68,13 @@ body {
 
 /* Sidebar separation */
 aside {
-  box-shadow: 2px 0 8px rgba(26, 58, 92, 0.06);
+  box-shadow: 6px 0 32px rgba(26, 58, 92, 0.16), 2px 0 8px rgba(26, 58, 92, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+html.dark aside {
+  box-shadow: 6px 0 32px rgba(0, 0, 0, 0.5), 2px 0 8px rgba(0, 0, 0, 0.35);
 }
 
 /* Button depth */
@@ -80,8 +104,9 @@ input:focus, textarea:focus {
 }
 
 /* White cards stand out from background */
-.bg-white, [style*="--bg-secondary"] {
-  box-shadow: 0 1px 3px rgba(26, 58, 92, 0.08), 0 2px 8px rgba(26, 58, 92, 0.04);
+.bg-white,
+[style*="--bg-secondary"] {
+  box-shadow: var(--shadow-md);
 }
 
 /* Smooth transitions for all interactive elements */
@@ -336,6 +361,64 @@ button {
 
 html.dark .text-\[\#94a3b8\] {
   color: #64748b !important;
+}
+
+header,
+nav {
+  box-shadow: 0 2px 0 rgba(26, 58, 92, 0.06), 0 6px 24px rgba(26, 58, 92, 0.12);
+  position: relative;
+  z-index: 20;
+}
+
+html.dark header,
+html.dark nav {
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4), 0 6px 24px rgba(0,0,0,0.35);
+}
+
+/* ============================================
+   GLOBAL DEPTH — force shadows on all cards
+   ============================================ */
+
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
+  box-shadow: var(--shadow-sm);
+}
+
+.rounded-xl:hover,
+.rounded-2xl:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+button[class*="bg-[#1a3a5c]"],
+a[class*="bg-[#1a3a5c]"],
+button[class*="bg-[#2d7a4f]"],
+a[class*="bg-[#2d7a4f]"] {
+  box-shadow: var(--shadow-button) !important;
+}
+
+button[class*="bg-[#1a3a5c]"]:hover,
+a[class*="bg-[#1a3a5c]"]:hover,
+button[class*="bg-[#2d7a4f]"]:hover,
+a[class*="bg-[#2d7a4f]"]:hover {
+  box-shadow: var(--shadow-button-hover) !important;
+  transform: translateY(-2px);
+}
+
+button[class*="bg-[#1a3a5c]"]:active,
+a[class*="bg-[#1a3a5c]"]:active,
+button[class*="bg-[#2d7a4f]"]:active,
+a[class*="bg-[#2d7a4f]"]:active {
+  box-shadow: var(--shadow-button-active) !important;
+  transform: translateY(1px);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: var(--shadow-inset), 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
 }
 
 /* ============================================

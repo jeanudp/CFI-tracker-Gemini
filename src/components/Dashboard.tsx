@@ -450,87 +450,81 @@ export default function Dashboard() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2">
             {sortedStudents.map(student => {
-              const config = ratingConfig[student.current_rating] || ratingConfig['ppl'];
-              const initials = student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-              const stats = getStudentStats(student.name);
+              const ratingAccents: Record<string, string> = {
+                ppl:  '#2563eb',
+                ir:   '#7c3aed',
+                cpl:  '#059669',
+                cfi:  '#d97706',
+                cfii: '#0d9488',
+                mei:  '#dc2626',
+              };
+              const accent = ratingAccents[student.current_rating] || '#2563eb';
 
               return (
                 <motion.div
                   key={student.id}
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(37, 99, 235, 0.12)' }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => handleSelectStudent(student)}
-                  className="relative rounded-2xl cursor-pointer overflow-hidden h-36 flex flex-col items-center justify-center gap-2 p-4"
+                  className="group relative cursor-pointer rounded-xl overflow-hidden"
                   style={{
-                    background: `linear-gradient(135deg, ${config.bg} 0%, ${config.bg}dd 100%)`,
-                    boxShadow: `0 4px 16px ${config.bg}40, 0 2px 6px ${config.bg}30`,
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderLeft: `3px solid ${accent}`,
+                    boxShadow: '0 1px 4px rgba(37, 99, 235, 0.06)',
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  {/* Archive button */}
-                  <button
-                    onClick={e => { e.stopPropagation(); handleDeleteStudent(student.id, student.name); }}
-                    className="absolute top-2.5 left-2.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                    title="Archive Student"
-                  >
-                    <Archive size={13} className="text-white" />
-                  </button>
-
-                  {/* Info button */}
-                  <button
-                    onClick={e => { e.stopPropagation(); setSelectedStudent(student); setIsInfoOpen(true); }}
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                    title="Student Info"
-                  >
-                    <Info size={13} className="text-white" />
-                  </button>
-
-                  {/* Initials */}
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  >
-                    {initials}
-                  </div>
-
-                  {/* Name */}
-                  <div className="text-center">
-                    <p className="text-xs font-black text-white leading-tight px-1 truncate w-full max-w-[120px]">
-                      {student.name.split(' ')[0]}
-                    </p>
-                    {student.name.split(' ').length > 1 && (
-                      <p className="text-[10px] font-bold text-white/70 leading-tight truncate w-full max-w-[120px]">
-                        {student.name.split(' ').slice(1).join(' ')}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Rating badge */}
-                  <div
-                    className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                  >
-                    {student.current_rating.toUpperCase()}
-                  </div>
-
-                  {/* Hours pill */}
-                  {parseFloat(stats.hrs) > 0 && (
+                  <div className="px-3 py-3 flex items-center gap-2.5">
+                    {/* Initials avatar */}
                     <div
-                      className="absolute bottom-2.5 left-2.5 px-1.5 py-0.5 rounded-md text-[8px] font-mono font-bold"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'rgba(255,255,255,0.9)' }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shrink-0"
+                      style={{
+                        backgroundColor: `${accent}15`,
+                        color: accent,
+                      }}
                     >
-                      {stats.hrs}h
+                      {student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
-                  )}
 
-                  {/* Shine */}
-                  <div
-                    className="absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl pointer-events-none"
-                    style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.12), transparent)' }}
-                  />
+                    {/* Name and rating */}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-xs font-bold truncate leading-tight"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {student.name}
+                      </p>
+                      <span
+                        className="text-[9px] font-bold uppercase tracking-wider"
+                        style={{ color: accent, opacity: 0.8 }}
+                      >
+                        {student.current_rating.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Action buttons — visible on hover */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <button
+                        onClick={e => { e.stopPropagation(); setSelectedStudent(student); setIsInfoOpen(true); }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                        style={{ backgroundColor: `${accent}15`, color: accent }}
+                        title="Student Info"
+                      >
+                        <Info size={11} />
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDeleteStudent(student.id, student.name); }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                        style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+                        title="Archive Student"
+                      >
+                        <Archive size={11} />
+                      </button>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
