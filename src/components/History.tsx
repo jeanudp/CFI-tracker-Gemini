@@ -2700,7 +2700,7 @@ export default function History() {
                                   const checkedCount = allChecklistItems.filter(item => {
                                     if (item.auto) {
                                       if (item.key === 'checklist_ppl_endorsements') return item.auto(endorsements);
-                                      if (item.key === 'checklist_ppl_recency') return item.auto(stats);
+                                      if (item.key === 'checklist_ppl_recency') return item.auto({ ...stats, recentDual });
                                       return false;
                                     }
                                     return getManualValue(item.key) > 0;
@@ -2759,7 +2759,7 @@ export default function History() {
                                                   const groupCheckedCount = groupItems.filter(item => {
                                                     if (item.auto) {
                                                       if (item.key === 'checklist_ppl_endorsements') return item.auto(endorsements);
-                                                      if (item.key === 'checklist_ppl_recency') return item.auto(stats);
+                                                      if (item.key === 'checklist_ppl_recency') return item.auto({ ...stats, recentDual });
                                                       return false;
                                                     }
                                                     return getManualValue(item.key) > 0;
@@ -2781,7 +2781,7 @@ export default function History() {
                                                           let isChecked = false;
                                                           if (isAuto) {
                                                             if (item.key === 'checklist_ppl_endorsements') isChecked = item.auto!(endorsements);
-                                                            if (item.key === 'checklist_ppl_recency') isChecked = item.auto!(stats);
+                                                            if (item.key === 'checklist_ppl_recency') isChecked = item.auto!({ ...stats, recentDual });
                                                           } else {
                                                             isChecked = getManualValue(item.key) > 0;
                                                           }
