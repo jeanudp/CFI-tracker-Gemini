@@ -101,29 +101,78 @@ export default function Auth() {
             boxShadow: '0 4px 24px rgba(26, 58, 92, 0.1), 0 16px 48px rgba(26, 58, 92, 0.08)'
           }}
         >
-          {/* Header — always navy gradient, looks great in both modes */}
+          {/* Header */}
           <div
             className="px-8 pt-8 pb-6"
             style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)' }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="24" height="24">
-                  <ellipse cx="50" cy="50" rx="5" ry="38" />
-                  <path d="M 50 45 Q 20 40 5 55 Q 20 52 50 52" />
-                  <path d="M 50 45 Q 80 40 95 55 Q 80 52 50 52" />
-                  <path d="M 50 82 Q 35 80 28 86 Q 35 84 50 84" />
-                  <path d="M 50 82 Q 65 80 72 86 Q 65 84 50 84" />
-                  <ellipse cx="50" cy="18" rx="4" ry="5" />
-                  <rect x="47" y="30" width="6" height="5" rx="1" />
-                  <rect x="47" y="37" width="6" height="4" rx="1" />
-                </svg>
+            {/* Logo lockup */}
+            <div className="flex items-center gap-4 mb-6">
+              {/* 61 numeral */}
+              <div className="relative">
+                <span
+                  className="block font-black leading-none select-none"
+                  style={{
+                    fontSize: '52px',
+                    color: 'white',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    letterSpacing: '-2px',
+                    lineHeight: 1,
+                  }}
+                >
+                  61
+                </span>
+                {/* Amber underline */}
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    bottom: '-4px',
+                    left: 0,
+                    width: '100%',
+                    height: '3.5px',
+                    backgroundColor: '#e8a020',
+                  }}
+                />
               </div>
-              <div>
-                <h1 className="text-lg font-black text-white tracking-tight">61 Tracker</h1>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Built for CFIs</p>
+
+              {/* Amber divider */}
+              <div
+                style={{
+                  width: '2px',
+                  height: '44px',
+                  backgroundColor: '#e8a020',
+                  opacity: 0.4,
+                  borderRadius: '1px',
+                  flexShrink: 0,
+                }}
+              />
+
+              {/* TRACKER + tagline */}
+              <div className="flex flex-col justify-center gap-0.5">
+                <span
+                  className="font-black uppercase leading-none"
+                  style={{
+                    fontSize: '20px',
+                    color: 'white',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    letterSpacing: '1.5px',
+                  }}
+                >
+                  TRACKER
+                </span>
+                <span
+                  className="font-bold uppercase"
+                  style={{
+                    fontSize: '8px',
+                    color: 'rgba(255,255,255,0.55)',
+                    letterSpacing: '2.5px',
+                  }}
+                >
+                  Built for CFIs
+                </span>
               </div>
             </div>
+
             <h2 className="text-2xl font-black text-white">
               {isLogin ? 'Welcome back' : 'Create account'}
             </h2>

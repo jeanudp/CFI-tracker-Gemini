@@ -299,24 +299,67 @@ export default function Dashboard() {
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--navy)' }}>
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
-              <ellipse cx="50" cy="50" rx="5" ry="38" />
-              <path d="M 50 45 Q 20 40 5 55 Q 20 52 50 52" />
-              <path d="M 50 45 Q 80 40 95 55 Q 80 52 50 52" />
-              <path d="M 50 82 Q 35 80 28 86 Q 35 84 50 84" />
-              <path d="M 50 82 Q 65 80 72 86 Q 65 84 50 84" />
-              <path d="M 47 14 Q 50 10 53 14" />
-              <ellipse cx="50" cy="18" rx="4" ry="5" />
-              <line x1="50" y1="12" x2="50" y2="8" />
-              <path d="M 44 10 Q 50 8 56 10" />
-              <rect x="47" y="30" width="6" height="5" rx="1" />
-              <rect x="47" y="37" width="6" height="4" rx="1" />
-            </svg>
+          {/* 61 numeral mark */}
+          <div className="relative">
+            <span
+              className="block font-black leading-none select-none"
+              style={{
+                fontSize: '34px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
+              }}
+            >
+              61
+            </span>
+            <div
+              className="absolute rounded-full"
+              style={{
+                bottom: '-3px',
+                left: 0,
+                width: '100%',
+                height: '3px',
+                backgroundColor: '#e8a020',
+              }}
+            />
           </div>
-          <div>
-            <h1 className="text-sm font-black" style={{ color: 'var(--navy)' }}>61 Tracker</h1>
-            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>My Students</p>
+
+          {/* Amber divider */}
+          <div
+            style={{
+              width: '2px',
+              height: '30px',
+              backgroundColor: '#e8a020',
+              opacity: 0.3,
+              borderRadius: '1px',
+              flexShrink: 0,
+            }}
+          />
+
+          {/* TRACKER + subtitle */}
+          <div className="flex flex-col justify-center gap-0.5">
+            <span
+              className="font-black uppercase leading-none"
+              style={{
+                fontSize: '13px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '1.5px',
+              }}
+            >
+              TRACKER
+            </span>
+            <span
+              className="font-bold uppercase"
+              style={{
+                fontSize: '7px',
+                color: 'var(--text-muted)',
+                letterSpacing: '2px',
+              }}
+            >
+              My Students
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
