@@ -81,6 +81,9 @@ export default function Dashboard() {
   const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [archivedExpanded, setArchivedExpanded] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
+const [isOnline, setIsOnline] = useState(true);
+const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
