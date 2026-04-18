@@ -376,7 +376,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                           onClick={() => setSelectedRating(code)}
                           className="relative rounded-2xl border-2 p-5 text-center cursor-pointer transition-all flex flex-col items-center gap-3"
                           style={{
-                            backgroundColor: isSelected ? colors.light : 'white',
+                            backgroundColor: isSelected ? colors.light : 'var(--bg-secondary)',
                             borderColor: isSelected ? colors.bg : '#dde3ec',
                             boxShadow: isSelected ? `0 4px 16px ${colors.bg}30` : '0 1px 4px rgba(26,58,92,0.06)',
                           }}
@@ -388,8 +388,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                             <Icon size={22} style={{ color: isSelected ? 'white' : colors.bg }} />
                           </div>
                           <div>
-                            <div className="text-xs font-bold text-[#1a2333] leading-tight">{rating.label}</div>
-                            <div className="text-[9px] text-[#6b7280] mt-0.5 opacity-70">{rating.acs}</div>
+                            <div className="text-xs font-bold leading-tight" style={{ color: isSelected ? ratingColors[code].text === 'white' ? 'white' : ratingColors[code].bg : 'var(--text-primary)' }}>{rating.label}</div>
+                            <div className="text-[9px] mt-0.5 opacity-70" style={{ color: isSelected ? ratingColors[code].text === 'white' ? 'rgba(255,255,255,0.7)' : ratingColors[code].bg : 'var(--text-secondary)' }}>{rating.acs}</div>
                           </div>
                           {isSelected && (
                             <div
