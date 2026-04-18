@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, Edit2 } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, Edit2 , LogOut, Moon, Sun, WifiOff, BarChart3 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 import { ALL_ACS, RATINGS } from '../constants';
