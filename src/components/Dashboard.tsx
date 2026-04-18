@@ -425,6 +425,16 @@ export default function Dashboard() {
                     boxShadow: `0 4px 16px ${config.bg}40, 0 2px 6px ${config.bg}30`,
                   }}
                 >
+                  {/* Archive button */}
+                  <button
+                    onClick={e => { e.stopPropagation(); handleDeleteStudent(student.id, student.name); }}
+                    className="absolute top-2.5 left-2.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                    title="Archive Student"
+                  >
+                    <Archive size={13} className="text-white" />
+                  </button>
+
                   {/* Info button */}
                   <button
                     onClick={e => { e.stopPropagation(); setSelectedStudent(student); setIsInfoOpen(true); }}
