@@ -115,11 +115,9 @@ export default function App() {
           path="/dashboard"
           element={
             session ? (
-              <Layout user={session.user}>
-                <PageTransition>
-                  <Dashboard />
-                </PageTransition>
-              </Layout>
+              <PageTransition>
+                <Dashboard />
+              </PageTransition>
             ) : (
               <Navigate to="/auth" />
             )
