@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, BookOpen, Plane, History, Loader2, TrendingUp, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, Edit2 , LogOut, Moon, Sun, WifiOff, BarChart3 } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 import { ALL_ACS, RATINGS } from '../constants';
@@ -82,18 +82,14 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [archivedExpanded, setArchivedExpanded] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
-const [isOnline, setIsOnline] = useState(true);
-const [user, setUser] = useState<any>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
     const saved = localStorage.getItem('sb_selected_student');
-    if (saved) {
-      // Find the student object if we have a saved name
-      const found = students.find(s => s.name === saved);
-      if (found) fetchRecentLessons(saved);
-    }
+    if (saved) fetchRecentLessons(saved);
   }, []);
 
   useEffect(() => {
@@ -127,6 +123,7 @@ const [user, setUser] = useState<any>(null);
     await supabase.auth.signOut();
     navigate('/');
   };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -253,11 +250,6 @@ const [user, setUser] = useState<any>(null);
     finally { setProcessingCheckride(false); }
   };
 
-  const getManualValue = (studentName: string, key: string) => {
-    const m = manualHours.find(h => h.student_name === studentName && h.field_key === key);
-    return m ? m.total : 0;
-  };
-
   const checkRequirements = (student: Student) => {
     const a1Given = endorsements.some(e => (e.endorsement_key === 'A1' || e.endorsement_key === 'A.1') && e.completed === true && e.student_name === student.name && e.rating?.toLowerCase() === student.current_rating?.toLowerCase());
     return { canPassCheckride: a1Given };
@@ -265,12 +257,14 @@ const [user, setUser] = useState<any>(null);
 
   const getStudentStats = (name: string) => {
     const studentLessons = lessons.filter(l => l.student_name === name);
-    let s = 0, n = 0, hrs = 0;
-    studentLessons.forEach(l => {
-      Object.values(l.grades || {}).forEach(g => { if (g === 'S') s++; if (g === 'N') n++; });
-      hrs += parseFloat(l.meta?.totalFlight || '0') || 0;
-    });
-    return { count: studentLessons.length, s, n, hrs: hrs.toFixed(1), groundCount: studentLessons.filter(l => l.type === 'ground').length, flightCount: studentLessons.filter(l => l.type === 'flight').length };
+    let hrs = 0;
+    studentLessons.forEach(l => { hrs += parseFloat(l.meta?.totalFlight || '0') || 0; });
+    return {
+      count: studentLessons.length,
+      hrs: hrs.toFixed(1),
+      groundCount: studentLessons.filter(l => l.type === 'ground').length,
+      flightCount: studentLessons.filter(l => l.type === 'flight').length
+    };
   };
 
   const getTaskName = (ratingCode: string, taskId: string) => {
@@ -280,55 +274,98 @@ const [user, setUser] = useState<any>(null);
     return task ? task.name : taskId;
   };
 
-  // Group students by rating
   const filteredStudents = students.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const groupedStudents = Object.keys(ratingConfig).reduce((acc, code) => {
-    const group = filteredStudents.filter(s => s.current_rating === code);
-    if (group.length > 0) acc[code] = group;
-    return acc;
-  }, {} as Record<string, Student[]>);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
+  const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
+  const sortedStudents = [...filteredStudents].sort((a, b) => {
+    const ratingDiff = ratingOrder.indexOf(a.current_rating) - ratingOrder.indexOf(b.current_rating);
+    if (ratingDiff !== 0) return ratingDiff;
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
 
       {/* Header */}
-      <div
-        className="sticky top-0 z-20 px-6 py-4 border-b flex items-center justify-between"
+      <header
+        className="sticky top-0 z-20 px-4 sm:px-6 h-16 border-b flex items-center justify-between shrink-0 backdrop-blur-md transition-colors duration-300"
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#1a3a5c] rounded-lg flex items-center justify-center">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--navy)' }}>
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#e8a020" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
               <ellipse cx="50" cy="50" rx="5" ry="38" />
               <path d="M 50 45 Q 20 40 5 55 Q 20 52 50 52" />
               <path d="M 50 45 Q 80 40 95 55 Q 80 52 50 52" />
               <path d="M 50 82 Q 35 80 28 86 Q 35 84 50 84" />
               <path d="M 50 82 Q 65 80 72 86 Q 65 84 50 84" />
+              <path d="M 47 14 Q 50 10 53 14" />
+              <ellipse cx="50" cy="18" rx="4" ry="5" />
+              <line x1="50" y1="12" x2="50" y2="8" />
+              <path d="M 44 10 Q 50 8 56 10" />
+              <rect x="47" y="30" width="6" height="5" rx="1" />
+              <rect x="47" y="37" width="6" height="4" rx="1" />
             </svg>
           </div>
           <div>
-            <h1 className="text-sm font-black text-[#1a3a5c]">61 Tracker</h1>
+            <h1 className="text-sm font-black" style={{ color: 'var(--navy)' }}>61 Tracker</h1>
             <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>My Students</p>
           </div>
         </div>
-        <button
-          onClick={() => setIsNewStudentOpen(true)}
-          className="w-9 h-9 bg-[#1a3a5c] text-white rounded-xl flex items-center justify-center hover:bg-[#2a5a8c] transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-        >
-          <Plus size={18} />
-        </button>
-      </div>
+        <div className="flex items-center gap-2">
+          {!isOnline && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-400 uppercase tracking-widest">
+              <WifiOff size={10} />
+              <span className="hidden sm:inline">Offline</span>
+            </div>
+          )}
+          {user && (
+            <Link
+              to="/cfi-hours"
+              className="hidden lg:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all hover:opacity-70"
+              style={{ color: 'var(--text-secondary)' }}
+              title="My CFI Hours"
+            >
+              <BarChart3 size={12} />
+              <span>{user.user_metadata?.full_name || user.email}</span>
+            </Link>
+          )}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-lg border hover:bg-[var(--bg-tertiary)] transition-all"
+            style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <button
+            onClick={() => setIsNewStudentOpen(true)}
+            className="w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+            style={{ backgroundColor: 'var(--navy)' }}
+            title="Add Student"
+          >
+            <Plus size={18} />
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border hover:-translate-y-0.5 hover:shadow-md transition-all font-medium cursor-pointer"
+            style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
+        </div>
+      </header>
 
       {/* Search */}
-      <div className="px-4 py-3 sticky top-[65px] z-10" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="px-4 py-3 sticky top-[64px] z-10 backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <input
           type="text"
           value={searchQuery}
@@ -351,7 +388,7 @@ const [user, setUser] = useState<any>(null);
             <p className="text-sm text-[#c0392b]">{error}</p>
             <button onClick={fetchData} className="mt-4 text-xs font-bold text-[#1a3a5c] hover:underline cursor-pointer">Try Again</button>
           </div>
-        ) : filteredStudents.length === 0 ? (
+        ) : sortedStudents.length === 0 ? (
           <div className="py-16 text-center">
             <div className="text-5xl mb-4">👨‍✈️</div>
             <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
@@ -370,159 +407,121 @@ const [user, setUser] = useState<any>(null);
             )}
           </div>
         ) : (
-          <div className="space-y-6 pt-2">
-            {Object.entries(groupedStudents).map(([ratingCode, ratingStudents]) => {
-              const config = ratingConfig[ratingCode];
-              const Icon = config.icon;
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+            {sortedStudents.map(student => {
+              const config = ratingConfig[student.current_rating] || ratingConfig['ppl'];
+              const initials = student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+              const stats = getStudentStats(student.name);
 
               return (
-                <div key={ratingCode}>
-                  {/* Rating Section Header */}
-                  <div
-                    className="flex items-center gap-3 px-4 py-3 rounded-2xl mb-3"
-                    style={{ backgroundColor: config.light }}
+                <motion.div
+                  key={student.id}
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleSelectStudent(student)}
+                  className="relative rounded-2xl cursor-pointer overflow-hidden aspect-square flex flex-col items-center justify-center gap-2 p-4"
+                  style={{
+                    background: `linear-gradient(135deg, ${config.bg} 0%, ${config.bg}dd 100%)`,
+                    boxShadow: `0 4px 16px ${config.bg}40, 0 2px 6px ${config.bg}30`,
+                  }}
+                >
+                  {/* Info button */}
+                  <button
+                    onClick={e => { e.stopPropagation(); setSelectedStudent(student); setIsInfoOpen(true); }}
+                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                    title="Student Info"
                   >
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: config.bg }}
-                    >
-                      <Icon size={16} color="white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xs font-black uppercase tracking-wider" style={{ color: config.bg }}>
-                        {config.label}
-                      </h2>
-                      <p className="text-[9px] font-bold" style={{ color: config.bg, opacity: 0.6 }}>
-                        {ratingStudents.length} student{ratingStudents.length !== 1 ? 's' : ''}
+                    <Info size={13} className="text-white" />
+                  </button>
+
+                  {/* Initials */}
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  >
+                    {initials}
+                  </div>
+
+                  {/* Name */}
+                  <div className="text-center">
+                    <p className="text-xs font-black text-white leading-tight px-1 truncate w-full max-w-[120px]">
+                      {student.name.split(' ')[0]}
+                    </p>
+                    {student.name.split(' ').length > 1 && (
+                      <p className="text-[10px] font-bold text-white/70 leading-tight truncate w-full max-w-[120px]">
+                        {student.name.split(' ').slice(1).join(' ')}
                       </p>
+                    )}
+                  </div>
+
+                  {/* Rating badge */}
+                  <div
+                    className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                  >
+                    {student.current_rating.toUpperCase()}
+                  </div>
+
+                  {/* Hours pill */}
+                  {parseFloat(stats.hrs) > 0 && (
+                    <div
+                      className="absolute bottom-2.5 left-2.5 px-1.5 py-0.5 rounded-md text-[8px] font-mono font-bold"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.2)', color: 'rgba(255,255,255,0.9)' }}
+                    >
+                      {stats.hrs}h
                     </div>
-                  </div>
+                  )}
 
-                  {/* Student Cards */}
-                  <div className="space-y-2">
-                    {ratingStudents.map(student => {
-                      const stats = getStudentStats(student.name);
-                      const isSelected = selectedStudent?.id === student.id;
-
-                      return (
-                        <motion.div
-                          key={student.id}
-                          whileHover={{ y: -1 }}
-                          whileTap={{ scale: 0.99 }}
-                          onClick={() => handleSelectStudent(student)}
-                          className="relative flex items-center gap-3 px-4 py-3.5 rounded-2xl border cursor-pointer transition-all"
-                          style={{
-                            backgroundColor: isSelected ? config.light : 'var(--bg-secondary)',
-                            borderColor: isSelected ? config.border : 'var(--border-color)',
-                            borderLeftWidth: '4px',
-                            borderLeftColor: config.bg,
-                            boxShadow: isSelected ? `0 4px 16px ${config.bg}20` : '0 1px 4px rgba(26,58,92,0.06)',
-                          }}
-                        >
-                          {/* Avatar */}
-                          <div
-                            className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
-                            style={{ backgroundColor: config.bg, color: 'white' }}
-                          >
-                            {student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
-                          </div>
-
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
-                                {student.name}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {stats.groundCount > 0 && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
-                                  {stats.groundCount}G
-                                </span>
-                              )}
-                              {stats.flightCount > 0 && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
-                                  {stats.flightCount}F
-                                </span>
-                              )}
-                              {parseFloat(stats.hrs) > 0 && (
-                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(232,160,32,0.1)', color: 'var(--amber)' }}>
-                                  {stats.hrs}h
-                                </span>
-                              )}
-                              {stats.count === 0 && (
-                                <span className="text-[9px] italic" style={{ color: 'var(--text-muted)' }}>No lessons yet</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Info button */}
-                          <button
-                            onClick={e => { e.stopPropagation(); setSelectedStudent(student); setIsInfoOpen(true); }}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-                            style={{ backgroundColor: config.light, color: config.bg }}
-                            title="Student Info"
-                          >
-                            <Info size={14} />
-                          </button>
-
-                          {/* Archive button */}
-                          <button
-                            onClick={e => { e.stopPropagation(); handleDeleteStudent(student.id, student.name); }}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all opacity-40 hover:opacity-100 cursor-pointer"
-                            style={{ color: 'var(--text-muted)' }}
-                            title="Archive"
-                          >
-                            <Archive size={13} />
-                          </button>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
+                  {/* Shine */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1/2 rounded-t-2xl pointer-events-none"
+                    style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.12), transparent)' }}
+                  />
+                </motion.div>
               );
             })}
-
-            {/* Archived Students */}
-            <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border-color)' }}>
-              <button
-                onClick={() => setArchivedExpanded(!archivedExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <Archive size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Archived Students ({archivedStudents.length})</span>
-                </div>
-                <ChevronRight size={14} className={cn("transition-transform", archivedExpanded && "rotate-90")} />
-              </button>
-              <AnimatePresence>
-                {archivedExpanded && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    {archivedStudents.length === 0 ? (
-                      <p className="text-xs italic text-center py-4" style={{ color: 'var(--text-muted)' }}>No archived students.</p>
-                    ) : archivedStudents.map(student => (
-                      <div key={student.id} className="flex items-center justify-between px-4 py-3 rounded-xl opacity-60" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                        <div>
-                          <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{student.name}</p>
-                          <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Archived {formatDate(student.deleted_at!)}</p>
-                        </div>
-                        <div className="flex gap-1">
-                          <button onClick={() => handleRestoreStudent(student.id)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer" style={{ color: 'var(--green)' }}>
-                            <RotateCcw size={13} />
-                          </button>
-                          <button onClick={() => handlePermanentDelete(student.id, student.name)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer" style={{ color: 'var(--red)' }}>
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </div>
         )}
+
+        {/* Archived Students */}
+        <div className="mt-6 border-t pt-4" style={{ borderColor: 'var(--border-color)' }}>
+          <button
+            onClick={() => setArchivedExpanded(!archivedExpanded)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <div className="flex items-center gap-2">
+              <Archive size={14} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Archived Students ({archivedStudents.length})</span>
+            </div>
+            <ChevronRight size={14} className={cn("transition-transform", archivedExpanded && "rotate-90")} />
+          </button>
+          <AnimatePresence>
+            {archivedExpanded && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                {archivedStudents.length === 0 ? (
+                  <p className="text-xs italic text-center py-4" style={{ color: 'var(--text-muted)' }}>No archived students.</p>
+                ) : archivedStudents.map(student => (
+                  <div key={student.id} className="flex items-center justify-between px-4 py-3 rounded-xl opacity-60 mb-1" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                    <div>
+                      <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{student.name}</p>
+                      <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Archived {formatDate(student.deleted_at!)}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => handleRestoreStudent(student.id)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer" style={{ color: 'var(--green)' }}>
+                        <RotateCcw size={13} />
+                      </button>
+                      <button onClick={() => handlePermanentDelete(student.id, student.name)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer" style={{ color: 'var(--red)' }}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ============================================
@@ -540,12 +539,9 @@ const [user, setUser] = useState<any>(null);
               className="relative w-full sm:max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden max-h-[80vh] flex flex-col"
               style={{ boxShadow: '0 -8px 40px rgba(26,58,92,0.15)' }}
             >
-              {/* Handle */}
               <div className="flex justify-center pt-3 pb-1 sm:hidden">
                 <div className="w-10 h-1 bg-[#dde3ec] rounded-full" />
               </div>
-
-              {/* Header */}
               <div
                 className="px-6 py-4 flex items-center justify-between shrink-0"
                 style={{ background: `linear-gradient(135deg, ${ratingConfig[selectedStudent.current_rating]?.bg || '#1a3a5c'} 0%, ${ratingConfig[selectedStudent.current_rating]?.bg || '#2a5a8c'}dd 100%)` }}
@@ -563,8 +559,6 @@ const [user, setUser] = useState<any>(null);
                   <X size={16} />
                 </button>
               </div>
-
-              {/* Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {[
                   { icon: Phone, label: 'Phone', value: (selectedStudent as any).phone },
@@ -586,14 +580,12 @@ const [user, setUser] = useState<any>(null);
                     </div>
                   ) : null
                 ))}
-
                 {(selectedStudent as any).notes && (
                   <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                     <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
                     <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).notes}</p>
                   </div>
                 )}
-
                 {!((selectedStudent as any).phone || (selectedStudent as any).email_address || (selectedStudent as any).notes) && (
                   <div className="py-8 text-center">
                     <div className="text-3xl mb-2">📋</div>
@@ -622,12 +614,9 @@ const [user, setUser] = useState<any>(null);
               className="relative w-full max-w-2xl bg-white rounded-t-3xl overflow-hidden flex flex-col"
               style={{ maxHeight: '92vh', boxShadow: '0 -8px 40px rgba(26,58,92,0.2)' }}
             >
-              {/* Handle */}
               <div className="flex justify-center pt-3 shrink-0">
                 <div className="w-10 h-1 bg-[#dde3ec] rounded-full" />
               </div>
-
-              {/* Header */}
               <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b" style={{ borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center gap-3">
                   <div
@@ -655,10 +644,8 @@ const [user, setUser] = useState<any>(null);
                 </div>
               </div>
 
-              {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
-                {/* Ratings completed */}
                 {selectedStudent.checkride_passed_ratings?.length ? (
                   <div className="rounded-xl p-4 border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
                     <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: 'var(--navy-light)' }}>
@@ -670,7 +657,7 @@ const [user, setUser] = useState<any>(null);
                         <div key={idx} className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2">
                             <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{r.label}</span>
-                            <button onClick={() => { setRatingToUndo(r); setIsUndoConfirmOpen(true); }} style={{ color: 'var(--text-secondary)' }} className="p-1 hover:text-[var(--red)] rounded transition-all cursor-pointer" title="Undo checkride pass">
+                            <button onClick={() => { setRatingToUndo(r); setIsUndoConfirmOpen(true); }} style={{ color: 'var(--text-secondary)' }} className="p-1 hover:text-[var(--red)] rounded transition-all cursor-pointer">
                               <History size={12} />
                             </button>
                           </div>
@@ -688,7 +675,6 @@ const [user, setUser] = useState<any>(null);
                   </div>
                 )}
 
-                {/* Latest Lesson */}
                 <div>
                   <h3 className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>Latest Lesson</h3>
                   {recentLesson ? (
@@ -728,7 +714,6 @@ const [user, setUser] = useState<any>(null);
                   )}
                 </div>
 
-                {/* Pre-Solo Test */}
                 {preSoloTestResult && (
                   <div className="flex items-center gap-2">
                     {preSoloTestResult.passed ? (
@@ -745,7 +730,6 @@ const [user, setUser] = useState<any>(null);
                   </div>
                 )}
 
-                {/* Currency */}
                 {(() => {
                   const studentLessons = lessons.filter(l => l.student_name === selectedStudent.name);
                   const ninetyDaysAgo = new Date(); ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
@@ -808,7 +792,6 @@ const [user, setUser] = useState<any>(null);
                   );
                 })()}
 
-                {/* Checkride */}
                 {(() => {
                   const isPassed = selectedStudent.checkride_passed_ratings?.some(r => r.code === selectedStudent.current_rating);
                   if (isPassed) {
@@ -840,7 +823,6 @@ const [user, setUser] = useState<any>(null);
                 })()}
               </div>
 
-              {/* Footer Actions */}
               <div className="px-6 py-4 border-t flex gap-3 shrink-0" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
                 <button
                   onClick={handleStartLesson}
