@@ -419,7 +419,7 @@ export default function Dashboard() {
                   whileHover={{ y: -4, scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSelectStudent(student)}
-                  className="relative rounded-2xl cursor-pointer overflow-hidden aspect-square flex flex-col items-center justify-center gap-2 p-4"
+                  className="relative rounded-2xl cursor-pointer overflow-hidden h-36 flex flex-col items-center justify-center gap-2 p-4"
                   style={{
                     background: `linear-gradient(135deg, ${config.bg} 0%, ${config.bg}dd 100%)`,
                     boxShadow: `0 4px 16px ${config.bg}40, 0 2px 6px ${config.bg}30`,
