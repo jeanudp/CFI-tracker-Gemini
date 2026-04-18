@@ -398,3 +398,104 @@ html.dark select option {
 html.dark .hover\:shadow-md:hover {
   box-shadow: var(--shadow-md) !important;
 }
+
+/* ============================================
+   FLIGHT LESSON DARK MODE FIXES
+   ============================================ */
+
+/* Expandable group buttons */
+html.dark .hover\:from-\[\#f4f5f7\]:hover {
+  --tw-gradient-from: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:to-\[\#f8fafc\]:hover {
+  --tw-gradient-to: var(--bg-elevated) !important;
+}
+
+/* Aircraft dropdown items */
+html.dark .hover\:bg-\[\#f8fafc\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#f4f5f7\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Approach type list items */
+html.dark .divide-\[\#f1f5f9\] > * {
+  border-color: var(--border-color) !important;
+}
+
+html.dark .bg-\[\#f0f9ff\] {
+  background-color: rgba(42, 90, 140, 0.2) !important;
+}
+
+/* Step indicator card */
+html.dark .bg-\[\#f4f5f7\].rounded-2xl {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Input fields hardcoded bg */
+html.dark .bg-\[\#f8fafc\] {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .bg-\[\#f1f5f9\] {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Approach list container */
+html.dark .border-\[\#dde3ec\].rounded-lg.bg-white {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* ACS task row hover */
+html.dark .hover\:bg-\[\#fafbfd\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* ACS task notes focus */
+html.dark .focus\:bg-\[\#d4e8f5\]:focus {
+  background-color: rgba(42, 90, 140, 0.2) !important;
+}
+
+/* ACS standards expanded block */
+html.dark .bg-\[\#d4e8f5\].rounded-lg {
+  background-color: rgba(42, 90, 140, 0.2) !important;
+  border-color: var(--navy-light) !important;
+}
+
+/* R-ATP purple section */
+html.dark .bg-\[\#f5f3ff\] {
+  background-color: rgba(124, 58, 237, 0.1) !important;
+}
+
+html.dark .border-\[\#ddd6fe\] {
+  border-color: rgba(124, 58, 237, 0.3) !important;
+}
+
+html.dark .text-\[\#1e1b4b\] {
+  color: var(--text-primary) !important;
+}
+
+/* Night warning modal */
+html.dark .bg-yellow-100 {
+  background-color: rgba(234, 179, 8, 0.2) !important;
+}
+
+html.dark .border-yellow-200 {
+  border-color: rgba(234, 179, 8, 0.3) !important;
+}
+
+html.dark .text-yellow-600 {
+  color: #fbbf24 !important;
+}
+
+html.dark .bg-\[\#f3f4f6\] {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#e5e7eb\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
