@@ -337,3 +337,64 @@ button {
 html.dark .text-\[\#94a3b8\] {
   color: #64748b !important;
 }
+
+/* ============================================
+   DARK MODE HOVER OVERRIDES
+   ============================================ */
+
+html.dark .hover\:bg-white:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#f4f5f7\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#f0f4f8\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#fafbfd\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#f1f5f9\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#f8fafc\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#eef2f8\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:bg-\[\#e8eef5\]:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+html.dark .hover\:text-\[\#1a2333\]:hover {
+  color: var(--text-primary) !important;
+}
+
+html.dark .hover\:text-white:hover {
+  color: var(--text-primary) !important;
+}
+
+html.dark .hover\:border-\[\#dde3ec\]:hover {
+  border-color: var(--border-color) !important;
+}
+
+html.dark .hover\:border-\[\#1a3a5c\]:hover {
+  border-color: var(--navy-light) !important;
+}
+
+html.dark select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+html.dark .hover\:shadow-md:hover {
+  box-shadow: var(--shadow-md) !important;
+}
