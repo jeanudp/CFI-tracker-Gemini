@@ -161,14 +161,16 @@ export default function Auth() {
                   TRACKER
                 </span>
                 <span
-                  className="font-bold uppercase"
+                  className="font-bold"
                   style={{
                     fontSize: '8px',
                     color: 'rgba(255,255,255,0.55)',
                     letterSpacing: '2.5px',
+                    textTransform: 'uppercase',
+                    fontVariant: 'normal',
                   }}
                 >
-                  Built for CFIs
+                  BUILT FOR CFI<span style={{ textTransform: 'none' }}>s</span>
                 </span>
               </div>
             </div>
