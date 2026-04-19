@@ -2,6 +2,7 @@ import { ACSArea, ACSTask } from './types';
 import { IR_GROUND_ACS, IR_FLIGHT_ACS } from './constants/irACS';
 import { CPL_ACS } from './constants/cplACS';
 import { CFI_GROUND_ACS } from './constants/cfiGroundACS';
+import { CFI_FLIGHT_ACS } from './constants/cfiFlightACS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -844,150 +845,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
   ],
   ir: IR_FLIGHT_ACS,
   cpl: CPL_ACS,
-  cfi: [
-    { 
-      area: "I. Fundamentals of Instructing", 
-      tasks: [
-        createPlaceholderTask("Learning Process", "FI.I.A"),
-        createPlaceholderTask("Human Behavior and Effective Communication", "FI.I.B"),
-        createPlaceholderTask("The Teaching Process", "FI.I.C"),
-        createPlaceholderTask("Teaching Methods", "FI.I.D"),
-        createPlaceholderTask("Critique and Evaluation", "FI.I.E"),
-        createPlaceholderTask("Flight Instructor Characteristics and Responsibilities", "FI.I.F"),
-        createPlaceholderTask("Planning Instructional Activity", "FI.I.G")
-      ] 
-    },
-    { 
-      area: "II. Technical Subject Areas", 
-      tasks: [
-        createPlaceholderTask("Aeromedical Factors", "FI.II.A"),
-        createPlaceholderTask("Visual Scanning and Collision Avoidance", "FI.II.B"),
-        createPlaceholderTask("Principles of Flight", "FI.II.C"),
-        createPlaceholderTask("Airplane Flight Controls", "FI.II.D"),
-        createPlaceholderTask("Airplane Systems", "FI.II.E"),
-        createPlaceholderTask("Magnetic Compass", "FI.II.F"),
-        createPlaceholderTask("Navigation and Flight Planning", "FI.II.G"),
-        createPlaceholderTask("Night Operations", "FI.II.H"),
-        createPlaceholderTask("High Altitude Operations", "FI.II.I"),
-        createPlaceholderTask("Federal Aviation Regulations and Publications", "FI.II.J"),
-        createPlaceholderTask("Publications", "FI.II.K"),
-        createPlaceholderTask("Logbook Entries and Certificate Endorsements", "FI.II.L")
-      ] 
-    },
-    { 
-      area: "III. Preflight Preparation", 
-      tasks: [
-        createPlaceholderTask("Certificates and Documents", "FI.III.A"),
-        createPlaceholderTask("Weather Information", "FI.III.B"),
-        createPlaceholderTask("Operation of Systems", "FI.III.C"),
-        createPlaceholderTask("Performance and Limitations", "FI.III.D"),
-        createPlaceholderTask("Airworthiness Requirements", "FI.III.E")
-      ] 
-    },
-    { 
-      area: "IV. Preflight Lesson on a Maneuver to be Performed in Flight", 
-      tasks: [
-        createPlaceholderTask("Maneuver Lesson", "FI.IV.A")
-      ] 
-    },
-    { 
-      area: "V. Preflight Procedures", 
-      tasks: [
-        createPlaceholderTask("Preflight Assessment", "FI.V.A"),
-        createPlaceholderTask("Flight Deck Management", "FI.V.B"),
-        createPlaceholderTask("Engine Starting", "FI.V.C"),
-        createPlaceholderTask("Taxiing", "FI.V.D"),
-        createPlaceholderTask("Before Takeoff Check", "FI.V.E")
-      ] 
-    },
-    { 
-      area: "VI. Airport Operations", 
-      tasks: [
-        createPlaceholderTask("Communications", "FI.VI.A"),
-        createPlaceholderTask("Traffic Patterns", "FI.VI.B"),
-        createPlaceholderTask("Airport Markings / Signs / Lighting", "FI.VI.C")
-      ] 
-    },
-    { 
-      area: "VII. Takeoffs, Landings, and Go-Arounds", 
-      tasks: [
-        createPlaceholderTask("Normal Takeoff and Climb", "FI.VII.A"),
-        createPlaceholderTask("Normal Approach and Landing", "FI.VII.B"),
-        createPlaceholderTask("Soft-Field Takeoff and Climb", "FI.VII.C"),
-        createPlaceholderTask("Soft-Field Approach and Landing", "FI.VII.D"),
-        createPlaceholderTask("Short-Field Takeoff and Maximum Performance Climb", "FI.VII.E"),
-        createPlaceholderTask("Short-Field Approach and Landing", "FI.VII.F"),
-        createPlaceholderTask("Power-Off 180° Accuracy Approach and Landing", "FI.VII.G"),
-        createPlaceholderTask("Forward Slip to a Landing", "FI.VII.H"),
-        createPlaceholderTask("Go-Around / Rejected Landing", "FI.VII.I")
-      ] 
-    },
-    { 
-      area: "VIII. Fundamentals of Flight", 
-      tasks: [
-        createPlaceholderTask("Straight-and-Level Flight", "FI.VIII.A"),
-        createPlaceholderTask("Level Turns", "FI.VIII.B"),
-        createPlaceholderTask("Climbs and Climbing Turns", "FI.VIII.C"),
-        createPlaceholderTask("Descents and Descending Turns", "FI.VIII.D")
-      ] 
-    },
-    { 
-      area: "IX. Performance Maneuvers", 
-      tasks: [
-        createPlaceholderTask("Steep Turns", "FI.IX.A"),
-        createPlaceholderTask("Steep Spirals", "FI.IX.B"),
-        createPlaceholderTask("Chandelles", "FI.IX.C"),
-        createPlaceholderTask("Lazy Eights", "FI.IX.D")
-      ] 
-    },
-    { 
-      area: "X. Ground Reference Maneuvers", 
-      tasks: [
-        createPlaceholderTask("Rectangular Course", "FI.X.A"),
-        createPlaceholderTask("S-Turns across a Road", "FI.X.B"),
-        createPlaceholderTask("Turns Around a Point", "FI.X.C"),
-        createPlaceholderTask("Eights on Pylons", "FI.X.D")
-      ] 
-    },
-    { 
-      area: "XI. Slow Flight, Stalls, and Spins", 
-      tasks: [
-        createPlaceholderTask("Maneuvering During Slow Flight", "FI.XI.A"),
-        createPlaceholderTask("Power-Off Stalls", "FI.XI.B"),
-        createPlaceholderTask("Power-On Stalls", "FI.XI.C"),
-        createPlaceholderTask("Accelerated Stalls", "FI.XI.D"),
-        createPlaceholderTask("Crossed-control Stalls", "FI.XI.E"),
-        createPlaceholderTask("Elevator Trim Stalls", "FI.XI.F"),
-        createPlaceholderTask("Secondary Stalls", "FI.XI.G"),
-        createPlaceholderTask("Spin Awareness", "FI.XI.H")
-      ] 
-    },
-    { 
-      area: "XII. Basic Instrument Maneuvers", 
-      tasks: [
-        createPlaceholderTask("Straight-and-Level Flight", "FI.XII.A"),
-        createPlaceholderTask("Constant Airspeed Climbs", "FI.XII.B"),
-        createPlaceholderTask("Constant Airspeed Descents", "FI.XII.C"),
-        createPlaceholderTask("Turns to Headings", "FI.XII.D"),
-        createPlaceholderTask("Recovery from Unusual Flight Attitudes", "FI.XII.E")
-      ] 
-    },
-    { 
-      area: "XIII. Emergency Operations", 
-      tasks: [
-        createPlaceholderTask("Emergency Descent", "FI.XIII.A"),
-        createPlaceholderTask("Emergency Approach and Landing (Simulated)", "FI.XIII.B"),
-        createPlaceholderTask("Systems and Equipment Malfunctions", "FI.XIII.C"),
-        createPlaceholderTask("Emergency Equipment and Survival Gear", "FI.XIII.D")
-      ] 
-    },
-    { 
-      area: "XIV. Postflight Procedures", 
-      tasks: [
-        createPlaceholderTask("After Landing, Parking, and Securing", "FI.XIV.A")
-      ] 
-    }
-  ],
+  cfi: CFI_FLIGHT_ACS,
   cfii: [
     { 
       area: "I. Fundamentals of Instructing", 
