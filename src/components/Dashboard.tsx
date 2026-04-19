@@ -183,10 +183,16 @@ export default function Dashboard() {
           .eq('user_id', session.user.id)
           .single();
 
+        console.log('Subscription:', sub);
+        console.log('Rating:', selectedStudent.current_rating);
+        console.log('Ratings unlocked:', sub?.ratings_unlocked);
+
         const isUnlocked =
           sub?.plan === 'invite' ||
           ((sub?.status === 'active' || sub?.status === 'trialing') &&
             sub?.ratings_unlocked?.includes(selectedStudent.current_rating));
+
+        console.log('Is unlocked:', isUnlocked);
 
         if (!isUnlocked) {
           setShowPaywall(true);
