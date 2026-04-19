@@ -313,8 +313,62 @@ export default function Landing() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.6 }}
-        className="w-full max-w-3xl px-6 pb-20 flex flex-col items-center"
+        className="w-full flex flex-col items-center px-6 pb-20"
       >
+        <div className="w-full max-w-3xl">
+
+        {/* Comparison banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
+          className="flex items-center justify-center gap-0 mb-10 rounded-2xl overflow-hidden border"
+          style={{
+            borderColor: 'var(--border-color)',
+            boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
+          }}
+        >
+          {/* 61 Tracker side */}
+          <div
+            className="flex-1 flex flex-col items-center py-5 px-4"
+            style={{ backgroundColor: '#1a3a5c' }}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">61 Tracker</span>
+            <span className="text-3xl font-black text-white">$9.99</span>
+            <span className="text-[10px] text-white/60 mt-0.5">per month</span>
+            <div
+              className="mt-2 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+              style={{ backgroundColor: 'rgba(232,160,32,0.2)', color: '#e8a020' }}
+            >
+              1 month free
+            </div>
+          </div>
+
+          {/* VS divider */}
+          <div
+            className="flex flex-col items-center justify-center px-4 py-5 shrink-0"
+            style={{ backgroundColor: 'var(--bg-tertiary)' }}
+          >
+            <span className="text-xs font-black" style={{ color: 'var(--text-muted)' }}>VS</span>
+          </div>
+
+          {/* Competitors side */}
+          <div
+            className="flex-1 flex flex-col items-center py-5 px-4"
+            style={{ backgroundColor: 'var(--bg-secondary)' }}
+          >
+            <span className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Competitors</span>
+            <span className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>$30–$50</span>
+            <span className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>per month</span>
+            <div
+              className="mt-2 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+              style={{ backgroundColor: 'rgba(239,68,68,0.08)', color: '#ef4444' }}
+            >
+              no free trial
+            </div>
+          </div>
+        </motion.div>
+
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>
             Simple, honest pricing
@@ -450,7 +504,7 @@ export default function Landing() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-6 w-fit"
               style={{ backgroundColor: 'rgba(45,122,79,0.1)', border: '1px solid rgba(45,122,79,0.2)' }}
             >
-              <span className="text-[10px] font-black" style={{ color: '#2d7a4f' }}>You save $21 — that is 2 months free</span>
+              <span className="text-[10px] font-black" style={{ color: '#2d7a4f' }}>💰 You save $21 every year</span>
             </div>
 
             <div className="space-y-2 mb-6 flex-1">
@@ -460,7 +514,7 @@ export default function Landing() {
                 'No monthly billing surprises',
                 'Full year of all 6 ratings',
                 'First month still free',
-                'Cancel anytime — prorated refund',
+                'Cancel anytime — access until year ends',
               ].map(f => (
                 <div key={f} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                   <CheckCircle2 size={12} style={{ color: '#2d7a4f', flexShrink: 0 }} />
@@ -482,6 +536,7 @@ export default function Landing() {
         <p className="text-center text-[10px] mt-6" style={{ color: 'var(--text-muted)' }}>
           All paid plans include a 1 month free trial · No charge until trial ends · Cancel anytime
         </p>
+        </div>
       </motion.div>
 
       {/* Footer */}
