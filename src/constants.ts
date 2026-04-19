@@ -1,6 +1,7 @@
 import { ACSArea, ACSTask } from './types';
 import { IR_GROUND_ACS, IR_FLIGHT_ACS } from './constants/irACS';
 import { CPL_ACS } from './constants/cplACS';
+import { CFI_GROUND_ACS } from './constants/cfiGroundACS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -1331,5 +1332,6 @@ export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
       area: "I. Preflight Preparation",
       tasks: CPL_ACS[0].tasks
     }
-  ]
+  ],
+  cfi: CFI_GROUND_ACS
 };
