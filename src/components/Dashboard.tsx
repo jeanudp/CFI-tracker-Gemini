@@ -88,6 +88,7 @@ export default function Dashboard() {
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showBirthdayBalloons, setShowBirthdayBalloons] = useState(false);
   const [paywallInviteCode, setPaywallInviteCode] = useState('');
   const [paywallInviteLoading, setPaywallInviteLoading] = useState(false);
   const [paywallInviteError, setPaywallInviteError] = useState<string | null>(null);
@@ -257,8 +258,10 @@ export default function Dashboard() {
     fetchRecentLessons(student.name);
     fetchTestResult(student.name);
 
-    // Birthday confetti
+    // Birthday balloons and confetti
     if (isBirthday((student as any).dob)) {
+      setShowBirthdayBalloons(true);
+      setTimeout(() => setShowBirthdayBalloons(false), 8000);
       confetti({
         particleCount: 80,
         spread: 60,
@@ -387,6 +390,47 @@ export default function Dashboard() {
     return { canPassCheckride: a1Given };
   };
 
+  const FloatingBalloons = () => {
+    const balloons = ['🎈', '🎈', '🎈', '🎈', '🎈', '🎈', '🎈', '🎈', '🎈', '🎈'];
+    return (
+      <div className="fixed inset-0 pointer-events-none z-[200] overflow-hidden">
+        {balloons.map((balloon, i) => (
+          <motion.div
+            key={i}
+            initial={{
+              y: '110vh',
+              x: `${8 + i * 9}vw`,
+              rotate: Math.random() * 30 - 15,
+              scale: 0.8 + Math.random() * 0.6,
+            }}
+            animate={{
+              y: '-20vh',
+              rotate: [
+                Math.random() * 20 - 10,
+                Math.random() * 20 - 10,
+                Math.random() * 20 - 10,
+                Math.random() * 20 - 10,
+              ],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 4,
+              delay: i * 0.3,
+              ease: 'easeOut',
+              rotate: {
+                duration: 2,
+                repeat: Infinity,
+                repeatType: 'mirror',
+              },
+            }}
+            style={{ position: 'absolute', fontSize: `${28 + Math.random() * 24}px` }}
+          >
+            {balloon}
+          </motion.div>
+        ))}
+      </div>
+    );
+  };
+
   const isBirthday = (dob: string | null) => {
     if (!dob) return false;
     const today = new Date();
@@ -453,6 +497,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {showBirthdayBalloons && <FloatingBalloons />}
 
       {/* Header */}
       <header
