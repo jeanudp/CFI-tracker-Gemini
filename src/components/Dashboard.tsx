@@ -84,6 +84,7 @@ export default function Dashboard() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -169,15 +170,41 @@ export default function Dashboard() {
     fetchTestResult(student.name);
   };
 
-  const handleStartLesson = () => {
+  const handleStartLesson = async () => {
     if (!selectedStudent) return;
+
+    // Check subscription for locked ratings
+    if (selectedStudent.current_rating !== 'ppl') {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        const isUnlocked =
+          sub?.plan === 'invite' ||
+          ((sub?.status === 'active' || sub?.status === 'trialing') &&
+            sub?.ratings_unlocked?.includes(selectedStudent.current_rating));
+
+        if (!isUnlocked) {
+          setShowPaywall(true);
+          return;
+        }
+      }
+    }
+
     localStorage.removeItem('faa_ground_grades');
     localStorage.removeItem('faa_ground_notes');
     localStorage.removeItem('faa_flight_grades');
     localStorage.removeItem('faa_flight_notes');
     localStorage.removeItem('current_lesson_id');
     localStorage.setItem('sb_selected_student', selectedStudent.name);
-    localStorage.setItem('selected_rating', JSON.stringify({ code: selectedStudent.current_rating || 'ppl', label: selectedStudent.current_rating_label || 'Private Pilot ASEL' }));
+    localStorage.setItem('selected_rating', JSON.stringify({
+      code: selectedStudent.current_rating || 'ppl',
+      label: selectedStudent.current_rating_label || 'Private Pilot ASEL'
+    }));
     localStorage.setItem('faa_student_info', JSON.stringify({ student: selectedStudent.name }));
     navigate('/lesson-type');
   };
@@ -984,6 +1011,165 @@ export default function Dashboard() {
               <div className="px-6 py-4 border-t flex gap-3" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
                 <button onClick={() => setIsNextRatingModalOpen(false)} className="flex-1 py-4 text-sm font-bold rounded-2xl cursor-pointer" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Skip for now</button>
                 <button onClick={() => selectedNextRating && handleSelectNextRating(selectedNextRating)} disabled={!selectedNextRating} className="flex-[2] py-4 text-white font-bold rounded-2xl transition-all shadow-lg disabled:opacity-50 cursor-pointer" style={{ backgroundColor: 'var(--navy)' }}>Confirm Next Rating</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ============================================
+          PAYWALL MODAL
+          ============================================ */}
+      <AnimatePresence>
+        {showPaywall && (
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-3xl bg-white rounded-3xl overflow-hidden"
+              style={{ boxShadow: '0 24px 80px rgba(26,58,92,0.25)' }}
+            >
+              {/* Header */}
+              <div
+                className="px-8 py-6 flex items-center justify-between"
+                style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)' }}
+              >
+                <div>
+                  <h2 className="text-2xl font-black text-white">Unlock All Ratings</h2>
+                  <p className="text-sm text-white/70 mt-1">
+                    Start your 1 month free trial — cancel anytime
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowPaywall(false)}
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Plans */}
+              <div className="p-6 sm:p-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  {[
+                    {
+                      id: 'single',
+                      priceId: import.meta.env.VITE_STRIPE_PRICE_SINGLE,
+                      name: 'Single Rating',
+                      price: '$4.99',
+                      period: 'per month',
+                      savings: null,
+                      description: 'Add one additional rating beyond PPL',
+                      features: ['One rating of your choice', 'Full lesson tracking', 'Endorsements', 'Checkride readiness'],
+                      color: '#2563eb',
+                      popular: false,
+                    },
+                    {
+                      id: 'all_monthly',
+                      priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,
+                      name: 'All Ratings',
+                      price: '$9.99',
+                      period: 'per month',
+                      savings: null,
+                      description: 'Unlock every rating — best for active CFIs',
+                      features: ['All 6 ratings unlocked', 'IR CPL CFI CFII MEI', 'Full lesson tracking', 'Endorsements', 'Checkride readiness'],
+                      color: '#1a3a5c',
+                      popular: true,
+                    },
+                    {
+                      id: 'all_annual',
+                      priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_ANNUAL,
+                      name: 'All Ratings Annual',
+                      price: '$99',
+                      period: 'per year',
+                      savings: 'Save $21 — 2 months free',
+                      description: 'Best value for committed CFIs',
+                      features: ['Everything in All Ratings', 'Annual billing', '2 months free vs monthly', 'Priority support'],
+                      color: '#2d7a4f',
+                      popular: false,
+                    },
+                  ].map(plan => (
+                    <div
+                      key={plan.id}
+                      className="relative rounded-2xl border-2 p-5 flex flex-col"
+                      style={{
+                        borderColor: plan.popular ? plan.color : 'var(--border-color)',
+                        backgroundColor: plan.popular ? `${plan.color}08` : 'var(--bg-secondary)',
+                        boxShadow: plan.popular ? `0 4px 20px ${plan.color}20` : 'none',
+                      }}
+                    >
+                      {plan.popular && (
+                        <div
+                          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap"
+                          style={{ backgroundColor: plan.color }}
+                        >
+                          Most Popular
+                        </div>
+                      )}
+                      {plan.savings && (
+                        <div
+                          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap"
+                          style={{ backgroundColor: plan.color }}
+                        >
+                          Best Value
+                        </div>
+                      )}
+                      <div className="mb-3">
+                        <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>{plan.name}</h3>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>{plan.description}</p>
+                      </div>
+                      <div className="mb-4">
+                        <span className="text-3xl font-black" style={{ color: plan.color }}>{plan.price}</span>
+                        <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>{plan.period}</span>
+                        {plan.savings && (
+                          <div className="text-[10px] font-bold mt-1" style={{ color: plan.color }}>{plan.savings}</div>
+                        )}
+                      </div>
+                      <div className="space-y-1.5 mb-5 flex-1">
+                        {plan.features.map(feature => (
+                          <div key={feature} className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                            <Check size={11} style={{ color: plan.color, flexShrink: 0 }} />
+                            {feature}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (!session) return;
+                            const response = await fetch('/api/create-checkout', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                priceId: plan.priceId,
+                                email: session.user.email,
+                                userId: session.user.id,
+                              }),
+                            });
+                            const { url, error } = await response.json();
+                            if (error) throw new Error(error);
+                            window.location.href = url;
+                          } catch (err: any) {
+                            alert('Failed to start checkout: ' + err.message);
+                          }
+                        }}
+                        className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:-translate-y-0.5 cursor-pointer"
+                        style={{
+                          backgroundColor: plan.color,
+                          boxShadow: `0 4px 12px ${plan.color}40`,
+                        }}
+                      >
+                        Start Free Trial →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-center text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  1 month free trial · No charge until trial ends · Cancel anytime
+                </p>
               </div>
             </motion.div>
           </div>
