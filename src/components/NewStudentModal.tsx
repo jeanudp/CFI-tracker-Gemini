@@ -500,8 +500,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                             </div>
                           )}
 
-                          {/* Free badge on PPL */}
-                          {code === 'ppl' && (
+                          {/* Free badge on PPL — only show for free users */}
+                          {code === 'ppl' && subscription?.plan === 'free' && (
                             <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider"
                               style={{ backgroundColor: 'rgba(45,122,79,0.15)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.3)' }}>
                               Free
@@ -552,34 +552,56 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                   {subscription?.plan === 'free' && (
                     <div className="mt-5 space-y-3">
                       <div
-                        className="p-4 rounded-xl flex items-center justify-between"
+                        className="p-4 rounded-xl"
                         style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.12)' }}
                       >
-                        <div>
-                          <p className="text-xs font-bold" style={{ color: 'var(--navy)' }}>Want to track all ratings?</p>
-                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>1 month free trial — card required but you won't be charged for 30 days</p>
+                        <p className="text-xs font-bold mb-1" style={{ color: 'var(--navy)' }}>Want to track all ratings?</p>
+                        <p className="text-[10px] mb-3" style={{ color: 'var(--text-muted)' }}>1 month free trial — card required but you won't be charged for 30 days</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={async () => {
+                              const { data: { session } } = await supabase.auth.getSession();
+                              if (!session) return;
+                              const response = await fetch('/api/create-checkout', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,
+                                  email: session.user.email,
+                                  userId: session.user.id,
+                                }),
+                              });
+                              const { url } = await response.json();
+                              if (url) window.location.href = url;
+                            }}
+                            className="py-2.5 text-xs font-black text-white rounded-xl transition-all hover:-translate-y-0.5 cursor-pointer"
+                            style={{ backgroundColor: '#1a3a5c', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
+                          >
+                            $9.99 / month
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const { data: { session } } = await supabase.auth.getSession();
+                              if (!session) return;
+                              const response = await fetch('/api/create-checkout', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_ANNUAL,
+                                  email: session.user.email,
+                                  userId: session.user.id,
+                                }),
+                              });
+                              const { url } = await response.json();
+                              if (url) window.location.href = url;
+                            }}
+                            className="py-2.5 text-xs font-black text-white rounded-xl transition-all hover:-translate-y-0.5 cursor-pointer"
+                            style={{ backgroundColor: '#2d7a4f', boxShadow: '0 4px 12px rgba(45,122,79,0.3)' }}
+                          >
+                            $99 / year 🏆
+                          </button>
                         </div>
-                        <button
-                          onClick={async () => {
-                            const { data: { session } } = await supabase.auth.getSession();
-                            if (!session) return;
-                            const response = await fetch('/api/create-checkout', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,
-                                email: session.user.email,
-                                userId: session.user.id,
-                              }),
-                            });
-                            const { url } = await response.json();
-                            if (url) window.location.href = url;
-                          }}
-                          className="px-4 py-2 text-xs font-black text-white rounded-xl transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
-                          style={{ backgroundColor: 'var(--navy)', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
-                        >
-                          Upgrade →
-                        </button>
+                        <p className="text-[9px] mt-2 text-center font-bold" style={{ color: '#2d7a4f' }}>Save $21 with annual — 2 months free</p>
                       </div>
 
                       {/* Invite code box */}
