@@ -87,6 +87,7 @@ export default function Dashboard() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [userSubscription, setUserSubscription] = useState<any>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showBirthdayBalloons, setShowBirthdayBalloons] = useState(false);
   const [paywallInviteCode, setPaywallInviteCode] = useState('');
@@ -127,8 +128,16 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setUser(session.user);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        setUser(session.user);
+        const { data: sub } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+        setUserSubscription(sub);
+      }
     });
   }, []);
 
@@ -587,7 +596,22 @@ export default function Dashboard() {
               title="My CFI Hours"
             >
               <BarChart3 size={12} />
-              <span>{user.user_metadata?.full_name || user.email}</span>
+              <div className="relative">
+                <span>{user.user_metadata?.full_name || user.email}</span>
+                {(userSubscription?.plan === 'all_monthly' || userSubscription?.plan === 'all_annual' || userSubscription?.plan === 'invite') && (
+                  <div
+                    className="absolute rounded-full"
+                    style={{
+                      bottom: '-3px',
+                      left: 0,
+                      width: '100%',
+                      height: '2px',
+                      backgroundColor: '#e8a020',
+                      boxShadow: '0 1px 4px rgba(232,160,32,0.5)',
+                    }}
+                  />
+                )}
+              </div>
             </Link>
           )}
           {user && (
