@@ -390,10 +390,14 @@ export default function Dashboard() {
   const isBirthday = (dob: string | null) => {
     if (!dob) return false;
     const today = new Date();
-    const birthday = new Date(dob);
+    // Parse date parts directly to avoid timezone shift
+    const parts = dob.split('-');
+    if (parts.length < 3) return false;
+    const birthMonth = parseInt(parts[1], 10) - 1; // months are 0-indexed
+    const birthDay = parseInt(parts[2], 10);
     return (
-      birthday.getMonth() === today.getMonth() &&
-      birthday.getDate() === today.getDate()
+      birthMonth === today.getMonth() &&
+      birthDay === today.getDate()
     );
   };
 
