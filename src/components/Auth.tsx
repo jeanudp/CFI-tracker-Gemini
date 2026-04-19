@@ -14,6 +14,7 @@ export default function Auth() {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
+  const [inviteCode, setInviteCode] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,14 +44,51 @@ export default function Auth() {
         if (error) throw error;
         navigate('/dashboard');
       } else {
-        const { error } = await supabase.auth.signUp({
+        // Validate invite code
+        const code = inviteCode.trim().toUpperCase();
+        if (!code) throw new Error('An invite code is required to create an account.');
+
+        const { data: codeData, error: codeError } = await supabase
+          .from('invite_codes')
+          .select('*')
+          .eq('code', code)
+          .eq('used', false)
+          .single();
+
+        if (codeError || !codeData) {
+          throw new Error('Invalid or already used invite code. Please check your code and try again.');
+        }
+
+        // Create the account
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: fullName } },
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+
+        // Mark invite code as used
+        await supabase
+          .from('invite_codes')
+          .update({
+            used: true,
+            used_by: email,
+            used_at: new Date().toISOString(),
+          })
+          .eq('code', code);
+
+        // Set plan to invite for full access
+        await supabase
+          .from('user_subscriptions')
+          .update({
+            plan: 'invite',
+            ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
+          })
+          .eq('email', email);
+
         setSuccess('Account created! Check your email to confirm, then sign in.');
         setIsLogin(true);
+        setInviteCode('');
       }
     } catch (err: any) {
       setError(err.message);
@@ -238,30 +276,60 @@ export default function Auth() {
 
             <form onSubmit={handleAuth} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-1.5">
-                  <label
-                    className="text-[10px] font-bold uppercase tracking-widest block"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                    <input
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="John Smith CFI"
-                      className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                      style={{
-                        backgroundColor: 'var(--bg-tertiary)',
-                        borderColor: 'var(--border-color)',
-                        color: 'var(--text-primary)'
-                      }}
-                    />
+                <>
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-[10px] font-bold uppercase tracking-widest block"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="John Smith CFI"
+                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-[10px] font-bold uppercase tracking-widest block"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Invite Code
+                    </label>
+                    <div className="relative">
+                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        required
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                        placeholder="CFI-ALPHA-2024"
+                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border font-mono tracking-wider"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      61 Tracker is currently invite only. Contact us to request access.
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="space-y-1.5">
