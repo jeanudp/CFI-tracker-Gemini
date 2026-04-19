@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { Copy, Check, Plus, RefreshCw, Shield, Users, Key, LogOut } from 'lucide-react';
+import { Copy, Check, Plus, RefreshCw, Shield, Users, Key, LogOut, X } from 'lucide-react';
 
 const ADMIN_EMAIL = 'jeanudp@gmail.com';
 
@@ -83,6 +83,34 @@ export default function Admin() {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleRevokeInvite = async (email: string, codeId: string) => {
+    if (!window.confirm(`Revoke access for ${email}? This will lock their account to PPL only.`)) return;
+    try {
+      // Reset their subscription to free
+      await supabase
+        .from('user_subscriptions')
+        .update({
+          plan: 'free',
+          ratings_unlocked: ['ppl'],
+        })
+        .eq('email', email);
+
+      // Mark the invite code as unused so it can be reused
+      await supabase
+        .from('invite_codes')
+        .update({
+          used: false,
+          used_by: null,
+          used_at: null,
+        })
+        .eq('id', codeId);
+
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
   const unusedCodes = codes.filter(c => !c.used);
@@ -210,13 +238,24 @@ export default function Admin() {
               ))}
               {/* Used codes */}
               {usedCodes.map(code => (
-                <div key={code.id} className="px-6 py-3 flex items-center justify-between opacity-50">
+                <div key={code.id} className="px-6 py-3 flex items-center justify-between hover:bg-[var(--bg-tertiary)] transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-gray-300" />
                     <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>{code.code}</span>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>Used</span>
+                    {code.used_by && (
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{code.used_by}</span>
+                    )}
                   </div>
-                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{code.used_by}</span>
+                  <button
+                    onClick={() => handleRevokeInvite(code.used_by, code.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:opacity-80 cursor-pointer"
+                    style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+                    title="Revoke access"
+                  >
+                    <X size={12} />
+                    Revoke
+                  </button>
                 </div>
               ))}
             </div>
