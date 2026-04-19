@@ -1090,7 +1090,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-3xl bg-white rounded-3xl overflow-hidden"
+              className="w-full max-w-3xl bg-white rounded-3xl overflow-hidden max-h-[90vh] flex flex-col"
               style={{ boxShadow: '0 24px 80px rgba(26,58,92,0.25)' }}
             >
               {/* Header */}
@@ -1113,7 +1113,7 @@ export default function Dashboard() {
               </div>
 
               {/* Plans */}
-              <div className="p-6 sm:p-8">
+              <div className="p-6 sm:p-8 overflow-y-auto flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   {[
                     {
