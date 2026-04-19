@@ -53,24 +53,22 @@ export default function Admin() {
   const generateCode = async () => {
     setGenerating(true);
     try {
-      const words = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL',
-        'INDIA', 'JULIET', 'KILO', 'LIMA', 'MIKE', 'NOVEMBER', 'OSCAR', 'PAPA',
-        'QUEBEC', 'ROMEO', 'SIERRA', 'TANGO', 'UNIFORM', 'VICTOR', 'WHISKEY',
-        'XRAY', 'YANKEE', 'ZULU'];
-      const year = new Date().getFullYear();
-      const existing = codes.map(c => c.code);
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const segments = [4, 4, 4];
       let newCode = '';
-      for (const word of words) {
-        const candidate = `CFI-${word}-${year}`;
-        if (!existing.includes(candidate)) {
-          newCode = candidate;
-          break;
-        }
+      let isUnique = false;
+      const existing = codes.map(c => c.code);
+
+      while (!isUnique) {
+        const parts = segments.map(len =>
+          Array.from({ length: len }, () =>
+            chars[Math.floor(Math.random() * chars.length)]
+          ).join('')
+        );
+        newCode = `61T-${parts.join('-')}`;
+        if (!existing.includes(newCode)) isUnique = true;
       }
-      if (!newCode) {
-        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-        newCode = `CFI-${random}-${year}`;
-      }
+
       const { error } = await supabase.from('invite_codes').insert({ code: newCode });
       if (error) throw error;
       await fetchData();
