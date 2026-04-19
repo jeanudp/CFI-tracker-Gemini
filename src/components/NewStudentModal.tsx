@@ -483,7 +483,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                     >
                       <div>
                         <p className="text-xs font-bold" style={{ color: 'var(--navy)' }}>Want to track all ratings?</p>
-                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Start a 1 month free trial — no credit card needed until trial ends</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>1 month free trial — card required but you won't be charged for 30 days</p>
                       </div>
                       <button
                         onClick={async () => {
