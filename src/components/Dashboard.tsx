@@ -99,6 +99,10 @@ export default function Dashboard() {
     fetchData();
     const saved = localStorage.getItem('sb_selected_student');
     if (saved) fetchRecentLessons(saved);
+
+    const handleOpenPaywall = () => setShowPaywall(true);
+    window.addEventListener('openPaywall', handleOpenPaywall);
+    return () => window.removeEventListener('openPaywall', handleOpenPaywall);
   }, []);
 
   useEffect(() => {
