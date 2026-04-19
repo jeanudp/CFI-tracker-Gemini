@@ -79,6 +79,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   }, [isOpen]);
 
   const isRatingUnlocked = (code: string) => {
+    console.log('isRatingUnlocked called:', code, 'subscription:', subscription);
     if (code === 'ppl') return true;
     if (!subscription) return false;
     if (subscription.plan === 'invite') return true;
