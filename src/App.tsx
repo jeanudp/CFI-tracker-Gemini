@@ -17,6 +17,7 @@ import PreSoloTest from './components/PreSoloTest';
 import CFIHours from './components/CFIHours';
 import Landing from './components/Landing';
 import Admin from './components/Admin';
+import Account from './components/Account';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -262,6 +263,7 @@ export default function App() {
             )
           }
         />
+        <Route path="/account" element={<Account />} />
       </Routes>
     </AnimatePresence>
   );

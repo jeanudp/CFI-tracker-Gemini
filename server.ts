@@ -40,6 +40,16 @@ async function startServer() {
     }
   });
 
+  app.post('/api/create-portal', async (req, res) => {
+    try {
+      const { default: handler } = await import('./api/create-portal.js');
+      await handler(req, res);
+    } catch (error) {
+      console.error('Error in create-portal handler:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   // API Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
