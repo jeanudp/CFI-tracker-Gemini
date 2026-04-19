@@ -29,6 +29,17 @@ async function startServer() {
   // Regular JSON parsing for other routes
   app.use(express.json());
 
+  // API Routes
+  app.post('/api/create-checkout', async (req, res) => {
+    try {
+      const { default: handler } = await import('./api/create-checkout.js');
+      await handler(req, res);
+    } catch (error) {
+      console.error('Error in create-checkout handler:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   // API Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
