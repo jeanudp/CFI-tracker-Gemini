@@ -308,9 +308,163 @@ export default function Landing() {
         </motion.div>
       </div>
 
+      {/* Pricing Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+        className="w-full max-w-3xl px-6 pb-20"
+      >
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>
+            Simple, honest pricing
+          </h2>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Start free with Private Pilot. Upgrade when you need more.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Free tier */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="rounded-2xl border-2 p-6 flex flex-col"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderColor: 'var(--border-color)',
+              boxShadow: '0 4px 16px rgba(26,58,92,0.06)',
+            }}
+          >
+            <h3 className="text-sm font-black mb-1" style={{ color: 'var(--text-primary)' }}>Free</h3>
+            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Perfect for getting started</p>
+            <div className="mb-6">
+              <span className="text-4xl font-black" style={{ color: 'var(--navy)' }}>$0</span>
+              <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>forever</span>
+            </div>
+            <div className="space-y-2 mb-6 flex-1">
+              {[
+                'Private Pilot tracking',
+                'ACS task grading',
+                'Endorsements AC 61-65K',
+                'Checkride readiness',
+                'Unlimited students',
+              ].map(f => (
+                <div key={f} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <CheckCircle2 size={12} style={{ color: '#2d7a4f', flexShrink: 0 }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => navigate('/auth?mode=signup')}
+              className="w-full py-2.5 rounded-xl text-xs font-bold border-2 transition-all hover:-translate-y-0.5 cursor-pointer"
+              style={{ borderColor: 'var(--border-color)', color: 'var(--navy)', backgroundColor: 'transparent' }}
+            >
+              Get Started Free
+            </button>
+          </motion.div>
+
+          {/* Monthly tier */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="rounded-2xl border-2 p-6 flex flex-col relative"
+            style={{
+              backgroundColor: '#1a3a5c',
+              borderColor: '#1a3a5c',
+              boxShadow: '0 8px 32px rgba(26,58,92,0.25)',
+            }}
+          >
+            <div
+              className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap"
+              style={{ backgroundColor: '#e8a020' }}
+            >
+              Most Popular
+            </div>
+            <h3 className="text-sm font-black mb-1 text-white">All Ratings</h3>
+            <p className="text-[10px] mb-4 text-white/60">For active flight instructors</p>
+            <div className="mb-2">
+              <span className="text-4xl font-black text-white">$9.99</span>
+              <span className="text-xs ml-1 text-white/60">per month</span>
+            </div>
+            <p className="text-[10px] font-bold mb-6" style={{ color: '#e8a020' }}>1 month free trial</p>
+            <div className="space-y-2 mb-6 flex-1">
+              {[
+                'Everything in Free',
+                'Instrument Rating',
+                'Commercial Pilot',
+                'CFI · CFII · MEI',
+                'All 6 ratings unlocked',
+                'Priority support',
+              ].map(f => (
+                <div key={f} className="flex items-center gap-2 text-xs text-white/80">
+                  <CheckCircle2 size={12} style={{ color: '#e8a020', flexShrink: 0 }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => navigate('/auth?mode=signup')}
+              className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:-translate-y-0.5 cursor-pointer"
+              style={{ backgroundColor: '#e8a020', boxShadow: '0 4px 12px rgba(232,160,32,0.4)' }}
+            >
+              Start Free Trial →
+            </button>
+          </motion.div>
+
+          {/* Annual tier */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+            className="rounded-2xl border-2 p-6 flex flex-col"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderColor: '#2d7a4f',
+              boxShadow: '0 4px 16px rgba(45,122,79,0.12)',
+            }}
+          >
+            <h3 className="text-sm font-black mb-1" style={{ color: 'var(--text-primary)' }}>All Ratings Annual</h3>
+            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Best value for committed CFIs</p>
+            <div className="mb-1">
+              <span className="text-4xl font-black" style={{ color: '#2d7a4f' }}>$99</span>
+              <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>per year</span>
+            </div>
+            <p className="text-[10px] font-bold mb-6" style={{ color: '#2d7a4f' }}>Save $21 — 2 months free</p>
+            <div className="space-y-2 mb-6 flex-1">
+              {[
+                'Everything in All Ratings',
+                'Annual billing',
+                '2 months free vs monthly',
+                'Priority support',
+              ].map(f => (
+                <div key={f} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <CheckCircle2 size={12} style={{ color: '#2d7a4f', flexShrink: 0 }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => navigate('/auth?mode=signup')}
+              className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:-translate-y-0.5 cursor-pointer"
+              style={{ backgroundColor: '#2d7a4f', boxShadow: '0 4px 12px rgba(45,122,79,0.3)' }}
+            >
+              Start Free Trial →
+            </button>
+          </motion.div>
+        </div>
+
+        <p className="text-center text-[10px] mt-6" style={{ color: 'var(--text-muted)' }}>
+          All paid plans include a 1 month free trial · No charge until trial ends · Cancel anytime
+        </p>
+      </motion.div>
+
       {/* Footer */}
       <footer
-        className="py-6 text-center border-t transition-colors duration-300"
+        className="w-full py-6 text-center border-t transition-colors duration-300"
         style={{
           borderColor: 'var(--border-color)',
           backgroundColor: 'var(--bg-secondary)',
