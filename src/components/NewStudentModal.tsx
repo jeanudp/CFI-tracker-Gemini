@@ -89,10 +89,11 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     if (subLoading) return false;
     if (!subscription) return false;
     if (subscription.plan === 'invite') return true;
-    if (subscription.status === 'active' || subscription.status === 'trialing') {
-      return subscription.ratings_unlocked?.includes(code);
-    }
-    return false;
+    const unlockedList = subscription.ratings_unlocked;
+    if (!unlockedList) return false;
+    if (!Array.isArray(unlockedList)) return false;
+    if (subscription.status !== 'active' && subscription.status !== 'trialing') return false;
+    return unlockedList.includes(code);
   };
 
   // Step 1 — Details
@@ -424,7 +425,10 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                           key={code}
                           whileHover={unlocked ? { y: -3 } : {}}
                           whileTap={unlocked ? { scale: 0.97 } : {}}
-                          onClick={() => unlocked && setSelectedRating(code)}
+                          onClick={() => {
+                            if (!unlocked) return;
+                            setSelectedRating(code);
+                          }}
                           className="relative rounded-2xl border-2 p-5 text-center transition-all flex flex-col items-center gap-3"
                           style={{
                             backgroundColor: locked ? '#f8fafc' : isSelected ? colors.light : 'var(--bg-secondary)',
