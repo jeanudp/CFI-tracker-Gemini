@@ -1058,20 +1058,8 @@ export default function Dashboard() {
 
               {/* Plans */}
               <div className="p-6 sm:p-8">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   {[
-                    {
-                      id: 'single',
-                      priceId: import.meta.env.VITE_STRIPE_PRICE_SINGLE,
-                      name: 'Single Rating',
-                      price: '$4.99',
-                      period: 'per month',
-                      savings: null,
-                      description: 'Add one additional rating beyond PPL',
-                      features: ['One rating of your choice', 'Full lesson tracking', 'Endorsements', 'Checkride readiness'],
-                      color: '#2563eb',
-                      popular: false,
-                    },
                     {
                       id: 'all_monthly',
                       priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,

@@ -117,18 +117,6 @@ export default function RatingSelection() {
 
   const plans = [
     {
-      id: 'single',
-      priceId: PRICE_SINGLE,
-      name: 'Single Rating',
-      price: '$4.99',
-      period: 'per month',
-      annual: null,
-      description: 'Add one additional rating beyond PPL',
-      features: ['One rating of your choice', 'Full lesson tracking', 'Endorsements', 'Checkride readiness'],
-      color: '#2563eb',
-      popular: false,
-    },
-    {
       id: 'all_monthly',
       priceId: PRICE_ALL_MONTHLY,
       name: 'All Ratings',
@@ -274,7 +262,7 @@ export default function RatingSelection() {
 
               {/* Plans */}
               <div className="p-6 sm:p-8">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   {plans.map(plan => (
                     <div
                       key={plan.id}
