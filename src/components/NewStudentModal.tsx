@@ -63,24 +63,30 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
+  const [subLoading, setSubLoading] = useState(true);
 
   useEffect(() => {
     const fetchSub = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const { data } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      setSubscription(data);
+      setSubLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data } = await supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+        setSubscription(data);
+      } finally {
+        setSubLoading(false);
+      }
     };
     if (isOpen) fetchSub();
   }, [isOpen]);
 
   const isRatingUnlocked = (code: string) => {
-    console.log('isRatingUnlocked called:', code, 'subscription:', subscription);
     if (code === 'ppl') return true;
+    if (subLoading) return false;
     if (!subscription) return false;
     if (subscription.plan === 'invite') return true;
     if (subscription.status === 'active' || subscription.status === 'trialing') {
@@ -389,6 +395,13 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
               {/* Step 1 — Rating */}
               {step === 1 && (
                 <div className="p-6">
+                  {subLoading && (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 size={24} className="animate-spin text-[#1a3a5c]" />
+                    </div>
+                  )}
+                  {!subLoading && (
+                  <>
                   <p className="text-xs text-[#6b7280] mb-2 leading-relaxed">
                     Select the certificate or rating this student is currently working toward.
                   </p>
@@ -508,6 +521,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                         Upgrade →
                       </button>
                     </div>
+                  )}
+                  </>
                   )}
                 </div>
               )}
