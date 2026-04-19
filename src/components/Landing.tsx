@@ -338,18 +338,18 @@ export default function Landing() {
             }}
           >
             <h3 className="text-sm font-black mb-1" style={{ color: 'var(--text-primary)' }}>Free</h3>
-            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Perfect for getting started</p>
+            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Try it with your PPL students at no cost</p>
             <div className="mb-6">
               <span className="text-4xl font-black" style={{ color: 'var(--navy)' }}>$0</span>
               <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>forever</span>
             </div>
             <div className="space-y-2 mb-6 flex-1">
               {[
-                'Private Pilot tracking',
-                'ACS task grading',
-                'Endorsements AC 61-65K',
-                'Checkride readiness',
-                'Unlimited students',
+                'Private Pilot rating only',
+                'Full ACS task grading',
+                'AC 61-65K endorsements',
+                '§61.109 hour tracking',
+                'Unlimited PPL students',
               ].map(f => (
                 <div key={f} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                   <CheckCircle2 size={12} style={{ color: '#2d7a4f', flexShrink: 0 }} />
@@ -385,20 +385,20 @@ export default function Landing() {
               Most Popular
             </div>
             <h3 className="text-sm font-black mb-1 text-white">All Ratings</h3>
-            <p className="text-[10px] mb-4 text-white/60">For active flight instructors</p>
+            <p className="text-[10px] mb-4 text-white/60">Track every student across every rating</p>
             <div className="mb-2">
               <span className="text-4xl font-black text-white">$9.99</span>
               <span className="text-xs ml-1 text-white/60">per month</span>
             </div>
-            <p className="text-[10px] font-bold mb-6" style={{ color: '#e8a020' }}>1 month free trial</p>
+            <p className="text-[10px] font-bold mb-6" style={{ color: '#e8a020' }}>First month completely free</p>
             <div className="space-y-2 mb-6 flex-1">
               {[
                 'Everything in Free',
-                'Instrument Rating',
-                'Commercial Pilot',
-                'CFI · CFII · MEI',
-                'All 6 ratings unlocked',
-                'Priority support',
+                'IR · CPL · CFI · CFII · MEI',
+                'Full ACS grading all ratings',
+                'All endorsements unlocked',
+                'Checkride readiness all ratings',
+                'Cancel anytime',
               ].map(f => (
                 <div key={f} className="flex items-center gap-2 text-xs text-white/80">
                   <CheckCircle2 size={12} style={{ color: '#e8a020', flexShrink: 0 }} />
@@ -420,26 +420,47 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
-            className="rounded-2xl border-2 p-6 flex flex-col"
+            className="rounded-2xl border-2 p-6 flex flex-col relative"
             style={{
               backgroundColor: 'var(--bg-secondary)',
               borderColor: '#2d7a4f',
-              boxShadow: '0 4px 16px rgba(45,122,79,0.12)',
+              boxShadow: '0 8px 32px rgba(45,122,79,0.15)',
             }}
           >
-            <h3 className="text-sm font-black mb-1" style={{ color: 'var(--text-primary)' }}>All Ratings Annual</h3>
-            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Best value for committed CFIs</p>
-            <div className="mb-1">
-              <span className="text-4xl font-black" style={{ color: '#2d7a4f' }}>$99</span>
-              <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>per year</span>
+            {/* Best value ribbon */}
+            <div
+              className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-wider whitespace-nowrap"
+              style={{ backgroundColor: '#2d7a4f' }}
+            >
+              🏆 Best Value
             </div>
-            <p className="text-[10px] font-bold mb-6" style={{ color: '#2d7a4f' }}>Save $21 — 2 months free</p>
+
+            <h3 className="text-sm font-black mb-1 mt-2" style={{ color: 'var(--text-primary)' }}>All Ratings Annual</h3>
+            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>One payment. Full year. Nothing to think about.</p>
+
+            <div className="mb-1 flex items-end gap-2">
+              <span className="text-4xl font-black" style={{ color: '#2d7a4f' }}>$99</span>
+              <div className="mb-1.5">
+                <span className="text-xs line-through opacity-40" style={{ color: 'var(--text-muted)' }}>$119.88</span>
+                <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>per year</span>
+              </div>
+            </div>
+
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg mb-6 w-fit"
+              style={{ backgroundColor: 'rgba(45,122,79,0.1)', border: '1px solid rgba(45,122,79,0.2)' }}
+            >
+              <span className="text-[10px] font-black" style={{ color: '#2d7a4f' }}>You save $21 — that is 2 months free</span>
+            </div>
+
             <div className="space-y-2 mb-6 flex-1">
               {[
                 'Everything in All Ratings',
-                'Annual billing',
-                '2 months free vs monthly',
-                'Priority support',
+                'Locked in at $8.25/month effective',
+                'No monthly billing surprises',
+                'Full year of all 6 ratings',
+                'First month still free',
+                'Cancel anytime — prorated refund',
               ].map(f => (
                 <div key={f} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                   <CheckCircle2 size={12} style={{ color: '#2d7a4f', flexShrink: 0 }} />
@@ -447,12 +468,13 @@ export default function Landing() {
                 </div>
               ))}
             </div>
+
             <button
               onClick={() => navigate('/auth?mode=signup')}
-              className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:-translate-y-0.5 cursor-pointer"
-              style={{ backgroundColor: '#2d7a4f', boxShadow: '0 4px 12px rgba(45,122,79,0.3)' }}
+              className="w-full py-3 rounded-xl text-xs font-bold text-white transition-all hover:-translate-y-0.5 cursor-pointer"
+              style={{ backgroundColor: '#2d7a4f', boxShadow: '0 6px 20px rgba(45,122,79,0.35)' }}
             >
-              Start Free Trial →
+              Get the Best Deal →
             </button>
           </motion.div>
         </div>
