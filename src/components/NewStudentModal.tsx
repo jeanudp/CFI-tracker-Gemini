@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { RATINGS } from '../constants';
-import { X, User, Phone, Mail, Calendar, FileText, Heart, ChevronRight, Check, Loader2, Plane, Cloud, Gauge, ClipboardList, Compass, Navigation, AlertCircle } from 'lucide-react';
+import { X, User, Phone, Mail, Calendar, FileText, Heart, ChevronRight, Check, Loader2, Plane, Cloud, Gauge, ClipboardList, Compass, Navigation, AlertCircle, Lock } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NewStudentModalProps {
@@ -62,6 +62,31 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSub = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+      setSubscription(data);
+    };
+    if (isOpen) fetchSub();
+  }, [isOpen]);
+
+  const isRatingUnlocked = (code: string) => {
+    if (code === 'ppl') return true;
+    if (!subscription) return false;
+    if (subscription.plan === 'invite') return true;
+    if (subscription.status === 'active' || subscription.status === 'trialing') {
+      return subscription.ratings_unlocked?.includes(code);
+    }
+    return false;
+  };
 
   // Step 1 — Details
   const [name, setName] = useState('');
@@ -108,6 +133,10 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     }
     if (step === 1 && !selectedRating) {
       setError('Please select a rating');
+      return;
+    }
+    if (step === 1 && selectedRating && !isRatingUnlocked(selectedRating)) {
+      setError('This rating requires an upgrade. Please select Private Pilot or upgrade your plan.');
       return;
     }
     setError(null);
@@ -359,39 +388,81 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
               {/* Step 1 — Rating */}
               {step === 1 && (
                 <div className="p-6">
-                  <p className="text-xs text-[#6b7280] mb-6 leading-relaxed">
+                  <p className="text-xs text-[#6b7280] mb-2 leading-relaxed">
                     Select the certificate or rating this student is currently working toward.
                   </p>
+                  <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-xl" style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.1)' }}>
+                    <Lock size={12} style={{ color: 'var(--navy)' }} />
+                    <p className="text-[10px] font-bold" style={{ color: 'var(--navy)' }}>
+                      Private Pilot is free forever. Upgrade to unlock additional ratings.
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {Object.entries(RATINGS).map(([code, rating]) => {
                       const isSelected = selectedRating === code;
                       const colors = ratingColors[code];
                       const Icon = ratingIcons[code];
+                      const unlocked = isRatingUnlocked(code);
+                      const locked = !unlocked;
 
                       return (
                         <motion.div
                           key={code}
-                          whileHover={{ y: -3 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => setSelectedRating(code)}
-                          className="relative rounded-2xl border-2 p-5 text-center cursor-pointer transition-all flex flex-col items-center gap-3"
+                          whileHover={unlocked ? { y: -3 } : {}}
+                          whileTap={unlocked ? { scale: 0.97 } : {}}
+                          onClick={() => unlocked && setSelectedRating(code)}
+                          className="relative rounded-2xl border-2 p-5 text-center transition-all flex flex-col items-center gap-3"
                           style={{
-                            backgroundColor: isSelected ? colors.light : 'var(--bg-secondary)',
-                            borderColor: isSelected ? colors.bg : '#dde3ec',
-                            boxShadow: isSelected ? `0 4px 16px ${colors.bg}30` : '0 1px 4px rgba(26,58,92,0.06)',
+                            backgroundColor: locked ? '#f8fafc' : isSelected ? colors.light : 'var(--bg-secondary)',
+                            borderColor: locked ? '#e2e8f0' : isSelected ? colors.bg : '#dde3ec',
+                            boxShadow: locked ? 'none' : isSelected ? `0 4px 16px ${colors.bg}30` : '0 1px 4px rgba(26,58,92,0.06)',
+                            opacity: locked ? 0.65 : 1,
+                            cursor: locked ? 'default' : 'pointer',
                           }}
                         >
+                          {/* Lock badge */}
+                          {locked && (
+                            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#1a3a5c] flex items-center justify-center">
+                              <Lock size={11} className="text-white" />
+                            </div>
+                          )}
+
+                          {/* Free badge on PPL */}
+                          {code === 'ppl' && (
+                            <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider"
+                              style={{ backgroundColor: 'rgba(45,122,79,0.15)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.3)' }}>
+                              Free
+                            </div>
+                          )}
+
                           <div
                             className="w-12 h-12 rounded-xl flex items-center justify-center"
-                            style={{ backgroundColor: isSelected ? colors.bg : colors.light }}
+                            style={{
+                              backgroundColor: locked ? '#f0f4f8' : isSelected ? colors.bg : colors.light,
+                            }}
                           >
-                            <Icon size={22} style={{ color: isSelected ? 'white' : colors.bg }} />
+                            {locked
+                              ? <Lock size={20} className="text-[#9ca3af]" />
+                              : <Icon size={22} style={{ color: isSelected ? 'white' : colors.bg }} />
+                            }
                           </div>
+
                           <div>
-                            <div className="text-xs font-bold leading-tight" style={{ color: isSelected ? ratingColors[code].text === 'white' ? 'white' : ratingColors[code].bg : 'var(--text-primary)' }}>{rating.label}</div>
-                            <div className="text-[9px] mt-0.5 opacity-70" style={{ color: isSelected ? ratingColors[code].text === 'white' ? 'rgba(255,255,255,0.7)' : ratingColors[code].bg : 'var(--text-secondary)' }}>{rating.acs}</div>
+                            <div
+                              className="text-xs font-bold leading-tight"
+                              style={{ color: locked ? '#9ca3af' : isSelected ? (ratingColors[code].text === 'white' ? colors.bg : colors.bg) : 'var(--text-primary)' }}
+                            >
+                              {rating.label}
+                            </div>
+                            <div
+                              className="text-[9px] mt-0.5"
+                              style={{ color: locked ? '#c4c9d4' : 'var(--text-secondary)', opacity: locked ? 1 : 0.7 }}
+                            >
+                              {locked ? 'Upgrade to unlock' : rating.acs}
+                            </div>
                           </div>
-                          {isSelected && (
+
+                          {isSelected && !locked && (
                             <div
                               className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
                               style={{ backgroundColor: colors.bg }}
@@ -403,6 +474,40 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                       );
                     })}
                   </div>
+
+                  {/* Upgrade prompt */}
+                  {subscription?.plan === 'free' && (
+                    <div
+                      className="mt-5 p-4 rounded-xl flex items-center justify-between"
+                      style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.12)' }}
+                    >
+                      <div>
+                        <p className="text-xs font-bold" style={{ color: 'var(--navy)' }}>Want to track all ratings?</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Start a 1 month free trial — no credit card needed until trial ends</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          if (!session) return;
+                          const response = await fetch('/api/create-checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,
+                              email: session.user.email,
+                              userId: session.user.id,
+                            }),
+                          });
+                          const { url } = await response.json();
+                          if (url) window.location.href = url;
+                        }}
+                        className="px-4 py-2 text-xs font-black text-white rounded-xl transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
+                        style={{ backgroundColor: 'var(--navy)', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
+                      >
+                        Upgrade →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
