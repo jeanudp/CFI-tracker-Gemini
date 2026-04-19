@@ -224,6 +224,17 @@ export default function Dashboard() {
     localStorage.setItem('faa_student_info', JSON.stringify({ student: student.name }));
     fetchRecentLessons(student.name);
     fetchTestResult(student.name);
+
+    // Birthday confetti
+    if (isBirthday((student as any).dob)) {
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.8 },
+        colors: ['#e8a020', '#1a3a5c', '#2d7a4f', '#7c3aed', '#ef4444'],
+        shapes: ['circle'],
+      });
+    }
   };
 
   const handleStartLesson = async () => {
@@ -342,6 +353,31 @@ export default function Dashboard() {
   const checkRequirements = (student: Student) => {
     const a1Given = endorsements.some(e => (e.endorsement_key === 'A1' || e.endorsement_key === 'A.1') && e.completed === true && e.student_name === student.name && e.rating?.toLowerCase() === student.current_rating?.toLowerCase());
     return { canPassCheckride: a1Given };
+  };
+
+  const isBirthday = (dob: string | null) => {
+    if (!dob) return false;
+    const today = new Date();
+    const birthday = new Date(dob);
+    return (
+      birthday.getMonth() === today.getMonth() &&
+      birthday.getDate() === today.getDate()
+    );
+  };
+
+  const isMedicalExpiringSoon = (medicalExpiry: string | null) => {
+    if (!medicalExpiry) return false;
+    const today = new Date();
+    const expiry = new Date(medicalExpiry);
+    const daysUntilExpiry = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+  };
+
+  const isMedicalExpired = (medicalExpiry: string | null) => {
+    if (!medicalExpiry) return false;
+    const today = new Date();
+    const expiry = new Date(medicalExpiry);
+    return expiry < today;
   };
 
   const getStudentStats = (name: string) => {
@@ -580,30 +616,63 @@ export default function Dashboard() {
                   <div className="px-3 py-3 flex items-center gap-2.5">
                     {/* Initials avatar */}
                     <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shrink-0"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shrink-0 relative"
                       style={{
-                        backgroundColor: `${accent}15`,
-                        color: accent,
+                        backgroundColor: isBirthday((student as any).dob) ? 'rgba(232,160,32,0.15)' : `${accent}15`,
+                        color: isBirthday((student as any).dob) ? '#e8a020' : accent,
                       }}
                     >
-                      {student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                      {isBirthday((student as any).dob) ? '🎂' : student.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
 
                     {/* Name and rating */}
                     <div className="flex-1 min-w-0">
-                      <p
-                        className="text-xs font-bold truncate leading-tight"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {student.name}
-                      </p>
+                      <div className="flex items-center gap-1">
+                        <p
+                          className="text-xs font-bold truncate leading-tight"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {student.name}
+                        </p>
+                        {isBirthday((student as any).dob) && (
+                          <motion.span
+                            animate={{ rotate: [0, -10, 10, -10, 10, 0], scale: [1, 1.2, 1] }}
+                            transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 2 }}
+                            className="text-sm shrink-0"
+                          >
+                            🎈
+                          </motion.span>
+                        )}
+                      </div>
                       <span
                         className="text-[9px] font-bold uppercase tracking-wider"
-                        style={{ color: accent, opacity: 0.8 }}
+                        style={{ color: isBirthday((student as any).dob) ? '#e8a020' : accent, opacity: 0.8 }}
                       >
-                        {student.current_rating.toUpperCase()}
+                        {isBirthday((student as any).dob) ? '🎉 Happy Birthday!' : student.current_rating.toUpperCase()}
                       </span>
                     </div>
+
+                    {/* Medical warning badge */}
+                    {isMedicalExpired((student as any).medical_expiry) && (
+                      <div
+                        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}
+                        title="Medical expired"
+                      >
+                        <span className="text-xs">❌</span>
+                      </div>
+                    )}
+                    {!isMedicalExpired((student as any).medical_expiry) && isMedicalExpiringSoon((student as any).medical_expiry) && (
+                      <motion.div
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)' }}
+                        title={`Medical expiring soon — ${new Date((student as any).medical_expiry).toLocaleDateString()}`}
+                      >
+                        <span className="text-xs">✚</span>
+                      </motion.div>
+                    )}
 
                     {/* Action buttons — visible on hover */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
