@@ -16,6 +16,7 @@ import IACRASummary from './components/IACRASummary';
 import PreSoloTest from './components/PreSoloTest';
 import CFIHours from './components/CFIHours';
 import Landing from './components/Landing';
+import Admin from './components/Admin';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -244,6 +245,18 @@ export default function App() {
                   <CFIHours />
                 </PageTransition>
               </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            session ? (
+              <PageTransition>
+                <Admin />
+              </PageTransition>
             ) : (
               <Navigate to="/auth" />
             )
