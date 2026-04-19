@@ -64,6 +64,10 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [subLoading, setSubLoading] = useState(true);
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   useEffect(() => {
     const fetchSub = async () => {
@@ -94,6 +98,57 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     if (!Array.isArray(unlockedList)) return false;
     if (subscription.status !== 'active' && subscription.status !== 'trialing') return false;
     return unlockedList.includes(code);
+  };
+
+  const handleRedeemCode = async () => {
+    setInviteLoading(true);
+    setInviteError(null);
+    try {
+      const code = inviteCode.trim().toUpperCase();
+      if (!code) throw new Error('Please enter an invite code');
+
+      const { data: codeData, error: codeError } = await supabase
+        .from('invite_codes')
+        .select('*')
+        .eq('code', code)
+        .eq('used', false)
+        .single();
+
+      if (codeError || !codeData) {
+        throw new Error('Invalid or already used invite code');
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not logged in');
+
+      await supabase
+        .from('invite_codes')
+        .update({
+          used: true,
+          used_by: session.user.email,
+          used_at: new Date().toISOString(),
+        })
+        .eq('code', code);
+
+      await supabase
+        .from('user_subscriptions')
+        .update({
+          plan: 'invite',
+          ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
+        })
+        .eq('user_id', session.user.id);
+
+      setInviteSuccess(true);
+      setSubscription((prev: any) => ({
+        ...prev,
+        plan: 'invite',
+        ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
+      }));
+    } catch (err: any) {
+      setInviteError(err.message);
+    } finally {
+      setInviteLoading(false);
+    }
   };
 
   // Step 1 — Details
@@ -495,35 +550,79 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
 
                   {/* Upgrade prompt */}
                   {subscription?.plan === 'free' && (
-                    <div
-                      className="mt-5 p-4 rounded-xl flex items-center justify-between"
-                      style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.12)' }}
-                    >
-                      <div>
-                        <p className="text-xs font-bold" style={{ color: 'var(--navy)' }}>Want to track all ratings?</p>
-                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>1 month free trial — card required but you won't be charged for 30 days</p>
-                      </div>
-                      <button
-                        onClick={async () => {
-                          const { data: { session } } = await supabase.auth.getSession();
-                          if (!session) return;
-                          const response = await fetch('/api/create-checkout', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,
-                              email: session.user.email,
-                              userId: session.user.id,
-                            }),
-                          });
-                          const { url } = await response.json();
-                          if (url) window.location.href = url;
-                        }}
-                        className="px-4 py-2 text-xs font-black text-white rounded-xl transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
-                        style={{ backgroundColor: 'var(--navy)', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
+                    <div className="mt-5 space-y-3">
+                      <div
+                        className="p-4 rounded-xl flex items-center justify-between"
+                        style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.12)' }}
                       >
-                        Upgrade →
-                      </button>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: 'var(--navy)' }}>Want to track all ratings?</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>1 month free trial — card required but you won't be charged for 30 days</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (!session) return;
+                            const response = await fetch('/api/create-checkout', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                priceId: import.meta.env.VITE_STRIPE_PRICE_ALL_MONTHLY,
+                                email: session.user.email,
+                                userId: session.user.id,
+                              }),
+                            });
+                            const { url } = await response.json();
+                            if (url) window.location.href = url;
+                          }}
+                          className="px-4 py-2 text-xs font-black text-white rounded-xl transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"
+                          style={{ backgroundColor: 'var(--navy)', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
+                        >
+                          Upgrade →
+                        </button>
+                      </div>
+
+                      {/* Invite code box */}
+                      <div
+                        className="p-4 rounded-xl"
+                        style={{ backgroundColor: 'rgba(26,58,92,0.03)', border: '1px solid rgba(26,58,92,0.08)' }}
+                      >
+                        <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>
+                          Have an invite code?
+                        </p>
+                        {inviteSuccess ? (
+                          <div className="flex items-center gap-2 py-2 text-xs font-bold" style={{ color: '#2d7a4f' }}>
+                            <Check size={14} />
+                            Access unlocked! All ratings are now available.
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={inviteCode}
+                              onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                              placeholder="61T-XXXX-XXXX-XXXX"
+                              className="flex-1 text-xs rounded-xl px-3 py-2 border font-mono tracking-wider focus:outline-none"
+                              style={{
+                                backgroundColor: 'var(--bg-tertiary)',
+                                borderColor: inviteError ? '#ef4444' : 'var(--border-color)',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                            <button
+                              onClick={handleRedeemCode}
+                              disabled={inviteLoading || !inviteCode.trim()}
+                              className="px-3 py-2 rounded-xl text-xs font-bold text-white cursor-pointer disabled:opacity-50"
+                              style={{ backgroundColor: '#1a3a5c' }}
+                            >
+                              {inviteLoading ? '...' : 'Redeem'}
+                            </button>
+                          </div>
+                        )}
+                        {inviteError && (
+                          <p className="text-[10px] mt-1.5 font-bold" style={{ color: '#ef4444' }}>{inviteError}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                   </>

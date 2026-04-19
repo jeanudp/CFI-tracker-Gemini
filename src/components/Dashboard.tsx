@@ -85,6 +85,10 @@ export default function Dashboard() {
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallInviteCode, setPaywallInviteCode] = useState('');
+  const [paywallInviteLoading, setPaywallInviteLoading] = useState(false);
+  const [paywallInviteError, setPaywallInviteError] = useState<string | null>(null);
+  const [paywallInviteSuccess, setPaywallInviteSuccess] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -123,6 +127,58 @@ export default function Dashboard() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handleRedeemInviteCode = async () => {
+    setPaywallInviteLoading(true);
+    setPaywallInviteError(null);
+    try {
+      const code = paywallInviteCode.trim().toUpperCase();
+      if (!code) throw new Error('Please enter an invite code');
+
+      const { data: codeData, error: codeError } = await supabase
+        .from('invite_codes')
+        .select('*')
+        .eq('code', code)
+        .eq('used', false)
+        .single();
+
+      if (codeError || !codeData) {
+        throw new Error('Invalid or already used invite code');
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not logged in');
+
+      await supabase
+        .from('invite_codes')
+        .update({
+          used: true,
+          used_by: session.user.email,
+          used_at: new Date().toISOString(),
+        })
+        .eq('code', code);
+
+      await supabase
+        .from('user_subscriptions')
+        .update({
+          plan: 'invite',
+          ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
+        })
+        .eq('user_id', session.user.id);
+
+      setPaywallInviteSuccess(true);
+      setTimeout(() => {
+        setShowPaywall(false);
+        setPaywallInviteSuccess(false);
+        setPaywallInviteCode('');
+        window.location.reload();
+      }, 1500);
+    } catch (err: any) {
+      setPaywallInviteError(err.message);
+    } finally {
+      setPaywallInviteLoading(false);
+    }
   };
 
   const fetchData = async () => {
@@ -1164,6 +1220,45 @@ export default function Dashboard() {
                 <p className="text-center text-[10px]" style={{ color: 'var(--text-muted)' }}>
                   1 month free trial · No charge until trial ends · Cancel anytime
                 </p>
+
+                {/* Invite code redemption */}
+                <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                  <p className="text-center text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Have an invite code?
+                  </p>
+                  {paywallInviteSuccess ? (
+                    <div className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold" style={{ backgroundColor: 'rgba(45,122,79,0.1)', color: '#2d7a4f' }}>
+                      <Check size={16} />
+                      Access unlocked successfully!
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={paywallInviteCode}
+                        onChange={e => setPaywallInviteCode(e.target.value.toUpperCase())}
+                        placeholder="61T-XXXX-XXXX-XXXX"
+                        className="flex-1 text-sm rounded-xl px-4 py-2.5 border font-mono tracking-wider focus:outline-none"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: paywallInviteError ? '#ef4444' : 'var(--border-color)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <button
+                        onClick={handleRedeemInviteCode}
+                        disabled={paywallInviteLoading || !paywallInviteCode.trim()}
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-50"
+                        style={{ backgroundColor: '#1a3a5c', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
+                      >
+                        {paywallInviteLoading ? '...' : 'Redeem'}
+                      </button>
+                    </div>
+                  )}
+                  {paywallInviteError && (
+                    <p className="text-[10px] mt-2 text-center font-bold" style={{ color: '#ef4444' }}>{paywallInviteError}</p>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>
