@@ -469,6 +469,17 @@ export default function Dashboard() {
               <span>{user.user_metadata?.full_name || user.email}</span>
             </Link>
           )}
+          {user?.email === 'jeanudp@gmail.com' && (
+            <Link
+              to="/admin"
+              className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-all hover:opacity-80"
+              style={{ backgroundColor: 'rgba(26,58,92,0.08)', color: 'var(--navy)', border: '1px solid rgba(26,58,92,0.15)' }}
+              title="Admin Panel"
+            >
+              <Shield size={12} />
+              Admin
+            </Link>
+          )}
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="p-2 rounded-lg border hover:bg-[var(--bg-tertiary)] transition-all"
