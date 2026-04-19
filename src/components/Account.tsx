@@ -296,8 +296,14 @@ export default function Account() {
               <div className="p-3 rounded-xl text-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>You are on the free plan. Upgrade to access all ratings.</p>
                 <button
-                  onClick={() => navigate('/dashboard')}
-                  className="mt-2 text-xs font-bold cursor-pointer hover:opacity-70"
+                  onClick={() => {
+                    navigate('/dashboard');
+                    setTimeout(() => {
+                      const event = new CustomEvent('openPaywall');
+                      window.dispatchEvent(event);
+                    }, 400);
+                  }}
+                  className="mt-2 text-xs font-bold cursor-pointer hover:opacity-70 transition-all"
                   style={{ color: 'var(--navy)' }}
                 >
                   See Plans →
