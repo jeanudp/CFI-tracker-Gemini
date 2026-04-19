@@ -313,7 +313,7 @@ export default function Landing() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.6 }}
-        className="w-full max-w-3xl px-6 pb-20"
+        className="w-full max-w-3xl px-6 pb-20 flex flex-col items-center"
       >
         <div className="text-center mb-10">
           <h2 className="text-3xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>
@@ -324,7 +324,7 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
           {/* Free tier */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
