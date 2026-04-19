@@ -89,6 +89,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [userSubscription, setUserSubscription] = useState<any>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showBirthdayBalloons, setShowBirthdayBalloons] = useState(false);
   const [paywallInviteCode, setPaywallInviteCode] = useState('');
   const [paywallInviteLoading, setPaywallInviteLoading] = useState(false);
@@ -103,6 +104,15 @@ export default function Dashboard() {
 
     const handleOpenPaywall = () => setShowPaywall(true);
     window.addEventListener('openPaywall', handleOpenPaywall);
+
+    // Show success banner after payment
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      setShowSuccessBanner(true);
+      window.history.replaceState({}, '', '/dashboard');
+      setTimeout(() => setShowSuccessBanner(false), 6000);
+    }
+
     return () => window.removeEventListener('openPaywall', handleOpenPaywall);
   }, []);
 
@@ -511,6 +521,46 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {showBirthdayBalloons && <FloatingBalloons />}
+
+      {/* Success banner */}
+      <AnimatePresence>
+        {showSuccessBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl"
+            style={{
+              backgroundColor: '#1a3a5c',
+              boxShadow: '0 8px 32px rgba(26,58,92,0.4), 0 2px 8px rgba(26,58,92,0.3)',
+              minWidth: '320px',
+              maxWidth: '90vw',
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ backgroundColor: 'rgba(232,160,32,0.2)' }}
+            >
+              <span className="text-xl">🎉</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-white">Welcome to 61 Tracker Pro!</p>
+              <p className="text-[11px] text-white/70 mt-0.5">All ratings are now unlocked. Your free trial has started.</p>
+            </div>
+            <div
+              className="w-1 self-stretch rounded-full shrink-0"
+              style={{ backgroundColor: '#e8a020' }}
+            />
+            <button
+              onClick={() => setShowSuccessBanner(false)}
+              className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer shrink-0"
+            >
+              <X size={12} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <header
