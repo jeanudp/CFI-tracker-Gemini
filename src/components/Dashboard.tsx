@@ -70,6 +70,9 @@ export default function Dashboard() {
   const [isNewStudentOpen, setIsNewStudentOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
+  const [savingInfo, setSavingInfo] = useState(false);
   const [isCheckrideConfirmOpen, setIsCheckrideConfirmOpen] = useState(false);
   const [isNextRatingModalOpen, setIsNextRatingModalOpen] = useState(false);
   const [isUndoConfirmOpen, setIsUndoConfirmOpen] = useState(false);
@@ -214,6 +217,35 @@ export default function Dashboard() {
   const fetchTestResult = async (studentName: string) => {
     const { data } = await supabase.from('student_tests').select('*').eq('student_name', studentName).eq('test_type', 'pre_solo').order('created_at', { ascending: false }).limit(1).single();
     setPreSoloTestResult(data);
+  };
+
+  const handleSaveStudentInfo = async () => {
+    if (!selectedStudent) return;
+    setSavingInfo(true);
+    try {
+      await supabase
+        .from('students')
+        .update({
+          phone: editForm.phone || null,
+          email_address: editForm.email_address || null,
+          dob: editForm.dob || null,
+          student_cert_number: editForm.student_cert_number || null,
+          medical_class: editForm.medical_class || null,
+          medical_expiry: editForm.medical_expiry || null,
+          notes: editForm.notes || null,
+        })
+        .eq('id', selectedStudent.id);
+
+      setStudents(prev => prev.map(s =>
+        s.id === selectedStudent.id ? { ...s, ...editForm } : s
+      ));
+      setSelectedStudent(prev => prev ? { ...prev, ...editForm } : null);
+      setIsEditingInfo(false);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSavingInfo(false);
+    }
   };
 
   const handleSelectStudent = (student: Student) => {
@@ -746,7 +778,7 @@ export default function Dashboard() {
       <AnimatePresence>
         {isInfoOpen && selectedStudent && (
           <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsInfoOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsInfoOpen(false); setIsEditingInfo(false); }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
             <motion.div
               initial={{ opacity: 0, y: 60 }}
               animate={{ opacity: 1, y: 0 }}
@@ -771,45 +803,146 @@ export default function Dashboard() {
                     <p className="text-xs text-white/70 font-bold">{selectedStudent.current_rating_label}</p>
                   </div>
                 </div>
-                <button onClick={() => setIsInfoOpen(false)} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors cursor-pointer">
-                  <X size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setIsEditingInfo(!isEditingInfo);
+                      setEditForm({
+                        phone: (selectedStudent as any).phone || '',
+                        email_address: (selectedStudent as any).email_address || '',
+                        dob: (selectedStudent as any).dob || '',
+                        student_cert_number: (selectedStudent as any).student_cert_number || '',
+                        medical_class: (selectedStudent as any).medical_class || '',
+                        medical_expiry: (selectedStudent as any).medical_expiry || '',
+                        notes: (selectedStudent as any).notes || '',
+                      });
+                    }}
+                    className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors cursor-pointer text-xs font-bold"
+                    title={isEditingInfo ? 'Cancel edit' : 'Edit info'}
+                  >
+                    {isEditingInfo ? <X size={14} /> : <span>✏️</span>}
+                  </button>
+                  <button onClick={() => { setIsInfoOpen(false); setIsEditingInfo(false); }} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors cursor-pointer">
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
+
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {[
-                  { icon: Phone, label: 'Phone', value: (selectedStudent as any).phone },
-                  { icon: Mail, label: 'Email', value: (selectedStudent as any).email_address },
-                  { icon: Calendar, label: 'Date of Birth', value: (selectedStudent as any).dob ? formatDate((selectedStudent as any).dob) : null },
-                  { icon: FileText, label: 'Student Cert Number', value: (selectedStudent as any).student_cert_number },
-                  { icon: Heart, label: 'Medical Class', value: (selectedStudent as any).medical_class },
-                  { icon: Calendar, label: 'Medical Expiry', value: (selectedStudent as any).medical_expiry ? formatDate((selectedStudent as any).medical_expiry) : null },
-                ].map(({ icon: Icon, label, value }) => (
-                  value ? (
-                    <div key={label} className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                        <Icon size={14} style={{ color: 'var(--navy-light)' }} />
+                {isEditingInfo ? (
+                  /* Edit mode */
+                  <div className="space-y-4">
+                    {[
+                      { key: 'phone', label: 'Phone', icon: Phone, type: 'tel', placeholder: '(555) 000-0000' },
+                      { key: 'email_address', label: 'Email', icon: Mail, type: 'email', placeholder: 'student@email.com' },
+                      { key: 'dob', label: 'Date of Birth', icon: Calendar, type: 'date', placeholder: '' },
+                      { key: 'student_cert_number', label: 'Student Cert Number', icon: FileText, type: 'text', placeholder: 'Certificate number' },
+                      { key: 'medical_expiry', label: 'Medical Expiry', icon: Calendar, type: 'date', placeholder: '' },
+                    ].map(({ key, label, icon: Icon, type, placeholder }) => (
+                      <div key={key} className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
+                        <div className="relative">
+                          <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                          <input
+                            type={type}
+                            value={editForm[key] || ''}
+                            onChange={e => setEditForm((prev: any) => ({ ...prev, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full text-sm rounded-xl pl-9 pr-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all"
+                            style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</p>
-                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
+                    ))}
+
+                    {/* Medical class select */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Medical Class</label>
+                      <div className="relative">
+                        <Heart size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                        <select
+                          value={editForm.medical_class || ''}
+                          onChange={e => setEditForm((prev: any) => ({ ...prev, medical_class: e.target.value }))}
+                          className="w-full text-sm rounded-xl pl-9 pr-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all"
+                          style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                        >
+                          <option value="">Select class</option>
+                          <option value="First Class">First Class</option>
+                          <option value="Second Class">Second Class</option>
+                          <option value="Third Class">Third Class</option>
+                          <option value="BasicMed">BasicMed</option>
+                          <option value="Sport Pilot">Sport Pilot (Driver License)</option>
+                        </select>
                       </div>
                     </div>
-                  ) : null
-                ))}
-                {(selectedStudent as any).notes && (
-                  <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
-                    <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).notes}</p>
+
+                    {/* Notes */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Notes</label>
+                      <textarea
+                        value={editForm.notes || ''}
+                        onChange={e => setEditForm((prev: any) => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Any notes about this student..."
+                        rows={3}
+                        className="w-full text-sm rounded-xl px-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all resize-none"
+                        style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                      />
+                    </div>
                   </div>
-                )}
-                {!((selectedStudent as any).phone || (selectedStudent as any).email_address || (selectedStudent as any).notes) && (
-                  <div className="py-8 text-center">
-                    <div className="text-3xl mb-2">📋</div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>No info on file</p>
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Create a new student to add details</p>
-                  </div>
+                ) : (
+                  /* View mode */
+                  <>
+                    {[
+                      { icon: Phone, label: 'Phone', value: (selectedStudent as any).phone },
+                      { icon: Mail, label: 'Email', value: (selectedStudent as any).email_address },
+                      { icon: Calendar, label: 'Date of Birth', value: (selectedStudent as any).dob ? formatDate((selectedStudent as any).dob) : null },
+                      { icon: FileText, label: 'Student Cert Number', value: (selectedStudent as any).student_cert_number },
+                      { icon: Heart, label: 'Medical Class', value: (selectedStudent as any).medical_class },
+                      { icon: Calendar, label: 'Medical Expiry', value: (selectedStudent as any).medical_expiry ? formatDate((selectedStudent as any).medical_expiry) : null },
+                    ].map(({ icon: Icon, label, value }) => (
+                      value ? (
+                        <div key={label} className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                            <Icon size={14} style={{ color: 'var(--navy-light)' }} />
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
+                          </div>
+                        </div>
+                      ) : null
+                    ))}
+                    {(selectedStudent as any).notes && (
+                      <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
+                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).notes}</p>
+                      </div>
+                    )}
+                    {!((selectedStudent as any).phone || (selectedStudent as any).email_address || (selectedStudent as any).notes) && (
+                      <div className="py-8 text-center">
+                        <div className="text-3xl mb-2">📋</div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>No info on file</p>
+                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Tap the pencil icon to add details</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
+
+              {/* Save button in edit mode */}
+              {isEditingInfo && (
+                <div className="px-6 py-4 border-t shrink-0" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+                  <button
+                    onClick={handleSaveStudentInfo}
+                    disabled={savingInfo}
+                    className="w-full py-3 text-white font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                    style={{ backgroundColor: '#2d7a4f', boxShadow: '0 4px 12px rgba(45,122,79,0.3)' }}
+                  >
+                    {savingInfo ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                    {savingInfo ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
