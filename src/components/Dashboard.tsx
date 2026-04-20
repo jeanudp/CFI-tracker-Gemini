@@ -675,40 +675,42 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Offline</span>
             </div>
           )}
-          <div className="relative hidden lg:flex">
-            <Link
-              to="/cfi-hours"
-              className={cn(
-                "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all hover:opacity-70",
-                onboardingStep === 3 && "ring-2 ring-[#e8a020] ring-offset-2 rounded-lg px-1 animate-pulse"
-              )}
-              style={{ color: 'var(--text-secondary)' }}
-              title="My CFI Hours"
-            >
-              <BarChart3 size={12} />
-              <div className="relative">
-                <span>{user.user_metadata?.full_name || user.email}</span>
-                {(userSubscription?.plan === 'all_monthly' || userSubscription?.plan === 'all_annual' || userSubscription?.plan === 'invite') && (
-                  <div
-                    className="absolute rounded-full"
-                    style={{
-                      bottom: '-3px',
-                      left: 0,
-                      width: '100%',
-                      height: '2px',
-                      backgroundColor: '#e8a020',
-                      boxShadow: '0 1px 4px rgba(232,160,32,0.5)',
-                    }}
-                  />
+          {user && (
+            <div className="relative hidden lg:flex">
+              <Link
+                to="/cfi-hours"
+                className={cn(
+                  "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all hover:opacity-70",
+                  onboardingStep === 3 && "ring-2 ring-[#e8a020] ring-offset-2 rounded-lg px-1 animate-pulse"
                 )}
-              </div>
-            </Link>
-            <AnimatePresence>
-              {onboardingStep === 3 && (
-                <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom" />
-              )}
-            </AnimatePresence>
-          </div>
+                style={{ color: 'var(--text-secondary)' }}
+                title="My CFI Hours"
+              >
+                <BarChart3 size={12} />
+                <div className="relative">
+                  <span>{user?.user_metadata?.full_name || user?.email}</span>
+                  {(userSubscription?.plan === 'all_monthly' || userSubscription?.plan === 'all_annual' || userSubscription?.plan === 'invite') && (
+                    <div
+                      className="absolute rounded-full"
+                      style={{
+                        bottom: '-3px',
+                        left: 0,
+                        width: '100%',
+                        height: '2px',
+                        backgroundColor: '#e8a020',
+                        boxShadow: '0 1px 4px rgba(232,160,32,0.5)',
+                      }}
+                    />
+                  )}
+                </div>
+              </Link>
+              <AnimatePresence>
+                {onboardingStep === 3 && (
+                  <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom" />
+                )}
+              </AnimatePresence>
+            </div>
+          )}
           {user && (
             <Link
               to="/account"
