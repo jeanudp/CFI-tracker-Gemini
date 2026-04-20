@@ -124,6 +124,7 @@ export default function FlightLesson() {
   const [direction, setDirection] = useState(1);
   const [stepValidationError, setStepValidationError] = useState<string | null>(null);
   const [nightWarning, setNightWarning] = useState(false);
+  const [collapsedFlightAreas, setCollapsedFlightAreas] = useState<Record<number, boolean>>({});
   const navigate = useNavigate();
 
   const variants = {
@@ -531,6 +532,10 @@ export default function FlightLesson() {
 
   const toggleNoteExpand = (taskId: string) => {
     setExpandedNotes(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
+
+  const toggleFlightArea = (fi: number) => {
+    setCollapsedFlightAreas(prev => ({ ...prev, [fi]: !prev[fi] }));
   };
 
   const handleSave = async () => {
@@ -2262,12 +2267,29 @@ export default function FlightLesson() {
           {flightAreas.map((area, fi) => {
             const ai = fi + 1;
             if (area.tasks.length === 0) return null;
+            const isCFI = rating?.code === 'cfi';
+            const isAreaCollapsed = isCFI ? (collapsedFlightAreas[fi] !== false) : false;
             return (
               <React.Fragment key={area.area}>
-                <div className="bg-[#1a3a5c] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider">
-                  {area.area}
+                <div
+                  className={cn(
+                    "bg-[#1a3a5c] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center",
+                    isCFI && "cursor-pointer hover:bg-[#15304d] transition-colors select-none"
+                  )}
+                  onClick={isCFI ? () => toggleFlightArea(fi) : undefined}
+                >
+                  <span>{area.area}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="opacity-60 font-normal text-[10px]">{area.tasks.length} tasks</span>
+                    {isCFI && (
+                      <ChevronDown
+                        size={14}
+                        className={cn("opacity-70 transition-transform", !isAreaCollapsed && "rotate-180")}
+                      />
+                    )}
+                  </div>
                 </div>
-                {area.tasks.map((task, ti) => {
+                {!isAreaCollapsed && area.tasks.map((task, ti) => {
                   const id = `${ai}_${ti}`;
                   const g = grades[id] || '';
                   const n = notes[id] || '';
