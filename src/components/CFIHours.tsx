@@ -471,24 +471,36 @@ export default function CFIHours() {
           <p className="text-sm text-[#64748b]">Cumulative flight hours as an instructor</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <label className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold cursor-not-allowed transition-all opacity-40 select-none pointer-events-none",
-            "border-[#dde3ec] text-[#94a3b8] bg-[#f8fafc]"
-          )}>
-            <Upload size={14} />
-            Import MyFlightBook
-            <input
-              type="file"
-              accept=".csv"
-              className="hidden"
-              disabled={true}
-              onChange={handleMFBImport}
-            />
-          </label>
-          <ExportButton 
-            onExportCSV={exportToMyFlightBook}
-            buttonText="Export CFI Hours"
-          />
+          <div className="relative">
+            <label className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold cursor-not-allowed transition-all opacity-40 select-none pointer-events-none",
+              "border-[#dde3ec] text-[#94a3b8] bg-[#f8fafc]"
+            )}>
+              <Upload size={14} />
+              Import MyFlightBook
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                disabled={true}
+                onChange={handleMFBImport}
+              />
+            </label>
+            <span className="absolute -top-2 -right-2 bg-[#e8a020] text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-sm">
+              Soon
+            </span>
+          </div>
+          <div className="relative">
+            <div className="opacity-40 pointer-events-none select-none">
+              <ExportButton 
+                onExportCSV={exportToMyFlightBook}
+                buttonText="Export CFI Hours"
+              />
+            </div>
+            <span className="absolute -top-2 -right-2 bg-[#e8a020] text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-sm">
+              Soon
+            </span>
+          </div>
         </div>
       </div>
 
