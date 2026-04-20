@@ -128,21 +128,21 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
           className={`w-full flex items-start gap-3 p-4 text-left transition-colors min-h-[48px] border-l-4 ${
             isSelected
               ? `${activeColor} border-current`
-              : 'hover:bg-gray-50 border-transparent'
+              : 'hover:bg-gray-50 dark:hover:bg-[#232d3f] border-transparent'
           } ${isChild ? 'pl-8' : ''}`}
         >
           <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center ${
-            isSelected ? 'bg-current border-current' : 'border-gray-300 bg-white'
+            isSelected ? 'bg-current border-current' : 'border-gray-300 dark:border-[#4a5568] bg-white dark:bg-[#1c2333]'
           }`}>
             {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
           </div>
           <div className="flex flex-col gap-2">
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider w-fit ${
-              isSelected ? 'bg-white/50' : 'bg-gray-100 text-gray-500'
+              isSelected ? 'bg-white/50 dark:bg-white/20' : 'bg-gray-100 dark:bg-[#2a3448] text-gray-500 dark:text-[#ccd6e0]'
             }`}>
               {std.code}
             </span>
-            <span className="text-sm text-gray-700 leading-relaxed">
+            <span className="text-sm text-gray-700 dark:text-white leading-relaxed">
               {std.description}
             </span>
           </div>
@@ -151,16 +151,16 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
     };
 
     return (
-      <div className="border-b border-gray-100 last:border-0">
+      <div className="border-b border-gray-100 dark:border-[#2a3448] last:border-0">
         <button
           onClick={() => toggleSection(category)}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-[#232d3f] transition-colors"
         >
-          <span className="font-semibold text-gray-700">{title}</span>
+          <span className="font-semibold text-gray-700 dark:text-[#ccd6e0]">{title}</span>
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
+            <ChevronUp className="w-5 h-5 text-gray-400 dark:text-[#8899aa]" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
+            <ChevronDown className="w-5 h-5 text-gray-400 dark:text-[#8899aa]" />
           )}
         </button>
         <AnimatePresence initial={false}>
@@ -177,11 +177,11 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
                     {group.children.length > 0 ? (
                       <>
                         {/* Parent Header */}
-                        <div className="px-6 py-3 bg-gray-50/50 border-y border-gray-100">
-                          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-2">
+                        <div className="px-6 py-3 bg-gray-50/50 dark:bg-[#1a2336] border-y border-gray-100 dark:border-[#2a3448]">
+                          <span className="text-[11px] font-bold text-gray-400 dark:text-[#8899aa] uppercase tracking-wider mr-2">
                             {group.parent?.code || group.children[0].code.slice(0, -1)}
                           </span>
-                          <span className="text-xs font-bold text-gray-600">
+                          <span className="text-xs font-bold text-gray-600 dark:text-[#ccd6e0]">
                             {group.parent?.description || "General Knowledge"}
                           </span>
                         </div>
@@ -217,7 +217,7 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="relative w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-[600px] bg-white sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-[600px] bg-white dark:bg-[#1c2333] sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
       >
         {/* Header */}
         <div className="bg-red-600 px-6 py-4 flex items-center justify-between shrink-0">
@@ -242,20 +242,20 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
           {taskData ? (
             <div className="flex flex-col">
               {/* References & Objective */}
-              <div className="p-6 bg-gray-50 space-y-4 border-b border-gray-200">
+              <div className="p-6 bg-gray-50 dark:bg-[#151c2a] space-y-4 border-b border-gray-200 dark:border-[#2a3448]">
                 <div>
-                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5">
+                  <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#8899aa] uppercase tracking-[0.2em] mb-1.5">
                     References
                   </h3>
-                  <p className="text-sm text-gray-600 font-medium italic">
+                  <p className="text-sm text-gray-600 dark:text-[#aabbcc] font-medium italic">
                     {taskData.references}
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1.5">
+                  <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#8899aa] uppercase tracking-[0.2em] mb-1.5">
                     Objective
                   </h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                  <p className="text-sm text-gray-700 dark:text-[#ccd6e0] leading-relaxed">
                     {taskData.objective}
                   </p>
                 </div>
@@ -269,15 +269,15 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
               </div>
 
               {/* Additional Notes */}
-              <div className="p-6 border-t border-gray-100">
-                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">
+              <div className="p-6 border-t border-gray-100 dark:border-[#2a3448]">
+                <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#8899aa] uppercase tracking-[0.2em] mb-3">
                   Additional Notes
                 </h3>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Explain why this task was graded as 'N'..."
-                  className="w-full h-32 p-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                  className="w-full h-32 p-4 text-sm bg-gray-50 dark:bg-[#151c2a] dark:text-[#ccd6e0] dark:border-[#2a3448] border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
                 />
               </div>
             </div>
@@ -299,7 +299,7 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Enter notes here..."
-                  className="w-full h-32 p-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                  className="w-full h-32 p-4 text-sm bg-gray-50 dark:bg-[#151c2a] dark:text-[#ccd6e0] dark:border-[#2a3448] border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
                 />
               </div>
             </div>
@@ -307,10 +307,10 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-3 shrink-0">
+        <div className="p-4 bg-gray-50 dark:bg-[#151c2a] border-t border-gray-200 dark:border-[#2a3448] flex gap-3 shrink-0">
           <button
             onClick={onCancel}
-            className="flex-1 py-3.5 px-6 rounded-xl font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 px-6 rounded-xl font-semibold text-gray-600 dark:text-[#aabbcc] bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-[#2a3448] hover:bg-gray-50 dark:hover:bg-[#232d3f] active:scale-[0.98] transition-all"
           >
             Cancel
           </button>
