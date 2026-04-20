@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   GraduationCap, Search, Calendar, Clock, Plane, MapPin, 
   Download, ChevronRight, Loader2, Info, Shield, ChevronDown, 
-  Check, X, Pencil, AlertTriangle 
+  Check, X, Pencil, AlertTriangle, Upload, RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -20,6 +20,9 @@ export default function CFIHours() {
   const [isEditingFlightReview, setIsEditingFlightReview] = useState(false);
   const [newFlightReviewDate, setNewFlightReviewDate] = useState('');
   const [isSavingFlightReview, setIsSavingFlightReview] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ flights: number, error: string | null } | null>(null);
+  const [mfbSummary, setMfbSummary] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,7 +75,109 @@ export default function CFIHours() {
 
     runBackfill();
     fetchEntries();
+    fetchMfbSummary();
   }, []);
+
+  const fetchMfbSummary = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase
+      .from('manual_hours')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .eq('field_key', 'mfb_import_summary')
+      .maybeSingle();
+    if (data?.entries?.[0]) setMfbSummary(data.entries[0]);
+  };
+
+  const handleMFBImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not logged in');
+
+      const text = await file.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+
+      const getCol = (row: string[], name: string) => {
+        const idx = headers.indexOf(name);
+        if (idx === -1) return '';
+        return (row[idx] || '').trim().replace(/^"|"$/g, '');
+      };
+
+      const summary = {
+        totalFlight: 0, dualGiven: 0, pic: 0, night: 0,
+        simInst: 0, imc: 0, xc: 0, dayLandings: 0, nightLandings: 0,
+        approaches: 0, flightCount: 0,
+        importedAt: new Date().toISOString().split('T')[0],
+      };
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const row = line.split(',');
+
+        const total = parseFloat(getCol(row, 'Total Flight Time')) || 0;
+        if (total === 0) continue;
+
+        summary.flightCount++;
+        summary.totalFlight += total;
+        summary.dualGiven += parseFloat(getCol(row, 'CFI')) || 0;
+        summary.pic += parseFloat(getCol(row, 'PIC')) || 0;
+        summary.night += parseFloat(getCol(row, 'Night')) || 0;
+        summary.simInst += parseFloat(getCol(row, 'Simulated Instrument')) || 0;
+        summary.imc += parseFloat(getCol(row, 'IMC')) || 0;
+        summary.xc += parseFloat(getCol(row, 'X-Country')) || 0;
+        summary.dayLandings += parseInt(getCol(row, 'FS Day Landings')) || 0;
+        summary.nightLandings += parseInt(getCol(row, 'FS Night Landings')) || 0;
+        summary.approaches += parseInt(getCol(row, 'Approaches')) || 0;
+      }
+
+      // Round all values to 1 decimal
+      Object.keys(summary).forEach(k => {
+        if (typeof (summary as any)[k] === 'number' && !Number.isInteger((summary as any)[k])) {
+          (summary as any)[k] = Math.round((summary as any)[k] * 10) / 10;
+        }
+      });
+
+      // Save to manual_hours
+      const { data: existing } = await supabase
+        .from('manual_hours')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('field_key', 'mfb_import_summary')
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('manual_hours').update({
+          entries: [summary],
+          total: summary.totalFlight,
+          updated_at: new Date().toISOString(),
+        }).eq('id', existing.id);
+      } else {
+        await supabase.from('manual_hours').insert({
+          user_id: session.user.id,
+          field_key: 'mfb_import_summary',
+          student_name: session.user.email,
+          entries: [summary],
+          total: summary.totalFlight,
+        });
+      }
+
+      setMfbSummary(summary);
+      setImportResult({ flights: summary.flightCount, error: null });
+    } catch (err: any) {
+      setImportResult({ flights: 0, error: err.message });
+    } finally {
+      setImporting(false);
+      e.target.value = '';
+    }
+  };
 
   const fetchFlightReviewDate = async (userId: string) => {
     const { data } = await supabase
@@ -144,13 +249,13 @@ export default function CFIHours() {
   );
 
   const stats = {
-    totalFlight: entries.reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0),
-    totalDual: entries.reduce((sum, e) => sum + (parseFloat(e.dual_given) || 0), 0),
-    nightDual: entries.reduce((sum, e) => sum + (parseFloat(e.night_dual) || 0), 0),
-    instrumentGiven: entries.reduce((sum, e) => sum + (parseFloat(e.instrument_given) || 0), 0),
-    dayLandings: entries.reduce((sum, e) => sum + (parseInt(e.day_landings) || 0), 0),
-    nightLandings: entries.reduce((sum, e) => sum + (parseInt(e.night_landings) || 0), 0),
-    xcPic: entries.reduce((sum, e) => sum + (parseFloat(e.xc_pic) || 0), 0),
+    totalFlight: entries.reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0) + (mfbSummary?.totalFlight || 0),
+    totalDual: entries.reduce((sum, e) => sum + (parseFloat(e.dual_given) || 0), 0) + (mfbSummary?.dualGiven || 0),
+    nightDual: entries.reduce((sum, e) => sum + (parseFloat(e.night_dual) || 0), 0) + (mfbSummary?.night || 0),
+    instrumentGiven: entries.reduce((sum, e) => sum + (parseFloat(e.instrument_given) || 0), 0) + (mfbSummary?.simInst || 0),
+    dayLandings: entries.reduce((sum, e) => sum + (parseInt(e.day_landings) || 0), 0) + (mfbSummary?.dayLandings || 0),
+    nightLandings: entries.reduce((sum, e) => sum + (parseInt(e.night_landings) || 0), 0) + (mfbSummary?.nightLandings || 0),
+    xcPic: entries.reduce((sum, e) => sum + (parseFloat(e.xc_pic) || 0), 0) + (mfbSummary?.xc || 0),
     ratpXc: entries.reduce((sum, e) => sum + (parseFloat(e.ratp_xc) || 0), 0),
     multiEngine: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.total_flight) || 0) : 0), 0),
   };
@@ -365,11 +470,82 @@ export default function CFIHours() {
           </h1>
           <p className="text-sm text-[#64748b]">Cumulative flight hours as an instructor</p>
         </div>
-        <ExportButton 
-          onExportCSV={exportToMyFlightBook}
-          buttonText="Export CFI Hours"
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <label className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all",
+            importing
+              ? "opacity-50 cursor-not-allowed border-[#dde3ec] text-[#94a3b8] bg-[#f8fafc]"
+              : "border-[#dde3ec] text-[#1a3a5c] bg-white hover:border-[#1a3a5c] hover:bg-[#f4f5f7]"
+          )}>
+            {importing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+            {importing ? 'Importing...' : 'Import MyFlightBook'}
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              disabled={importing}
+              onChange={handleMFBImport}
+            />
+          </label>
+          <ExportButton 
+            onExportCSV={exportToMyFlightBook}
+            buttonText="Export CFI Hours"
+          />
+        </div>
       </div>
+
+      {importResult && (
+        <div className={cn(
+          "px-4 py-3 rounded-xl border text-xs font-medium flex items-center justify-between",
+          importResult.error
+            ? "bg-red-50 border-red-200 text-red-700"
+            : "bg-green-50 border-green-200 text-green-700"
+        )}>
+          <span>
+            {importResult.error
+              ? `Import failed: ${importResult.error}`
+              : `✓ Imported ${importResult.flights} flights from MyFlightBook — totals updated below`
+            }
+          </span>
+          <button onClick={() => setImportResult(null)} className="ml-4 opacity-60 hover:opacity-100">✕</button>
+        </div>
+      )}
+
+      {mfbSummary && (
+        <div className="bg-[#f0f4ff] border border-[#c7d4f0] rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={14} className="text-[#1a3a5c]" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#1a3a5c]">MyFlightBook Import Summary</span>
+              <span className="text-[10px] text-[#64748b]">— {mfbSummary.flightCount} flights · imported {mfbSummary.importedAt}</span>
+            </div>
+            <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#1a3a5c] cursor-pointer hover:underline">
+              <RefreshCw size={11} />
+              Re-import
+              <input type="file" accept=".csv" className="hidden" onChange={handleMFBImport} />
+            </label>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-3">
+            {[
+              { label: 'Total Flight', value: mfbSummary.totalFlight?.toFixed(1), unit: 'hrs' },
+              { label: 'CFI Dual', value: mfbSummary.dualGiven?.toFixed(1), unit: 'hrs' },
+              { label: 'PIC', value: mfbSummary.pic?.toFixed(1), unit: 'hrs' },
+              { label: 'Night', value: mfbSummary.night?.toFixed(1), unit: 'hrs' },
+              { label: 'Sim Inst', value: mfbSummary.simInst?.toFixed(1), unit: 'hrs' },
+              { label: 'IMC', value: mfbSummary.imc?.toFixed(1), unit: 'hrs' },
+              { label: 'XC', value: mfbSummary.xc?.toFixed(1), unit: 'hrs' },
+              { label: 'Day Ldg', value: mfbSummary.dayLandings, unit: '' },
+              { label: 'Night Ldg', value: mfbSummary.nightLandings, unit: '' },
+              { label: 'Approaches', value: mfbSummary.approaches, unit: '' },
+            ].map(stat => (
+              <div key={stat.label} className="bg-white rounded-lg p-2 border border-[#c7d4f0]">
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[#64748b] mb-0.5">{stat.label}</div>
+                <div className="text-sm font-bold text-[#1a3a5c] font-mono">{stat.value} <span className="text-[9px] text-[#94a3b8]">{stat.unit}</span></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
