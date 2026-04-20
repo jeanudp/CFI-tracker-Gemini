@@ -472,18 +472,16 @@ export default function CFIHours() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <label className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all",
-            importing
-              ? "opacity-50 cursor-not-allowed border-[#dde3ec] text-[#94a3b8] bg-[#f8fafc]"
-              : "border-[#dde3ec] text-[#1a3a5c] bg-white hover:border-[#1a3a5c] hover:bg-[#f4f5f7]"
+            "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold cursor-not-allowed transition-all opacity-40 select-none pointer-events-none",
+            "border-[#dde3ec] text-[#94a3b8] bg-[#f8fafc]"
           )}>
-            {importing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-            {importing ? 'Importing...' : 'Import MyFlightBook'}
+            <Upload size={14} />
+            Import MyFlightBook
             <input
               type="file"
               accept=".csv"
               className="hidden"
-              disabled={importing}
+              disabled={true}
               onChange={handleMFBImport}
             />
           </label>
