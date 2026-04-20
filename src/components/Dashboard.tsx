@@ -95,6 +95,18 @@ export default function Dashboard() {
   const [paywallInviteLoading, setPaywallInviteLoading] = useState(false);
   const [paywallInviteError, setPaywallInviteError] = useState<string | null>(null);
   const [paywallInviteSuccess, setPaywallInviteSuccess] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<number>(() => {
+    return localStorage.getItem('onboarding_done') ? 0 : 1;
+  });
+
+  const dismissOnboarding = (step: number) => {
+    if (step >= 3) {
+      localStorage.setItem('onboarding_done', 'true');
+      setOnboardingStep(0);
+    } else {
+      setOnboardingStep(step + 1);
+    }
+  };
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -518,6 +530,31 @@ export default function Dashboard() {
     return a.name.localeCompare(b.name);
   });
 
+  const OnboardingTooltip = ({ step, targetStep, text, position = 'bottom' }: { step: number, targetStep: number, text: string, position?: 'bottom' | 'left' }) => {
+    if (step !== targetStep) return null;
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        onClick={() => dismissOnboarding(targetStep)}
+        className={`absolute z-[300] cursor-pointer ${position === 'left' ? 'right-full mr-3 top-1/2 -translate-y-1/2' : 'top-full mt-2 left-1/2 -translate-x-1/2'}`}
+        style={{ minWidth: '200px', maxWidth: '240px' }}
+      >
+        <div className="bg-[#1a3a5c] text-white text-xs font-medium rounded-xl px-4 py-3 shadow-2xl leading-relaxed relative">
+          {text}
+          <div className="mt-2 text-[10px] text-white/50 font-bold uppercase tracking-widest">{targetStep}/3 · Tap to dismiss</div>
+          {position !== 'left' && (
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
+          )}
+          {position === 'left' && (
+            <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {showBirthdayBalloons && <FloatingBalloons />}
@@ -638,10 +675,13 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Offline</span>
             </div>
           )}
-          {user && (
+          <div className="relative hidden lg:flex">
             <Link
               to="/cfi-hours"
-              className="hidden lg:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all hover:opacity-70"
+              className={cn(
+                "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all hover:opacity-70",
+                onboardingStep === 3 && "ring-2 ring-[#e8a020] ring-offset-2 rounded-lg px-1 animate-pulse"
+              )}
               style={{ color: 'var(--text-secondary)' }}
               title="My CFI Hours"
             >
@@ -663,7 +703,12 @@ export default function Dashboard() {
                 )}
               </div>
             </Link>
-          )}
+            <AnimatePresence>
+              {onboardingStep === 3 && (
+                <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom" />
+              )}
+            </AnimatePresence>
+          </div>
           {user && (
             <Link
               to="/account"
@@ -694,14 +739,24 @@ export default function Dashboard() {
           >
             {darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          <button
-            onClick={() => setIsNewStudentOpen(true)}
-            className="w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-            style={{ backgroundColor: 'var(--navy)' }}
-            title="Add Student"
-          >
-            <Plus size={18} />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsNewStudentOpen(true)}
+              className={cn(
+                "w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer",
+                onboardingStep === 1 && "ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
+              )}
+              style={{ backgroundColor: 'var(--navy)' }}
+              title="Add Student"
+            >
+              <Plus size={18} />
+            </button>
+            <AnimatePresence>
+              {onboardingStep === 1 && (
+                <OnboardingTooltip step={onboardingStep} targetStep={1} text="Start here — add your first student to begin tracking lessons and hours" position="bottom" />
+              )}
+            </AnimatePresence>
+          </div>
           <button
             onClick={handleSignOut}
             className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border hover:-translate-y-0.5 hover:shadow-md transition-all font-medium cursor-pointer"
@@ -756,7 +811,14 @@ export default function Dashboard() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative">
+            <AnimatePresence>
+              {onboardingStep === 2 && sortedStudents.length > 0 && (
+                <div className="absolute -top-8 left-0 z-[300]">
+                  <OnboardingTooltip step={onboardingStep} targetStep={2} text="Tap a student card to start a lesson or view their progress" position="bottom" />
+                </div>
+              )}
+            </AnimatePresence>
             {sortedStudents.map(student => {
               const ratingAccents: Record<string, string> = {
                 ppl:  '#2563eb',
