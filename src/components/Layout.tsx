@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3, Moon, Sun } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3, Moon, Sun, AlertTriangle, X, Send } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +14,8 @@ export default function Layout({ children, user }: LayoutProps) {
   const location = useLocation();
   const path = location.pathname;
   const [isOnline, setIsOnline] = useState(true);
+  const [maydayOpen, setMaydayOpen] = useState(false);
+  const [maydayText, setMaydayText] = useState('');
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('dark_mode') === 'true';
@@ -46,6 +48,20 @@ export default function Layout({ children, user }: LayoutProps) {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handleMaydaySend = () => {
+    if (!maydayText.trim()) return;
+    const subject = encodeURIComponent('61 Tracker — Mayday Feedback');
+    const body = encodeURIComponent(
+      `Page: ${path}\n` +
+      `User: ${user?.email || 'unknown'}\n` +
+      `Date: ${new Date().toLocaleString()}\n\n` +
+      `Issue:\n${maydayText}`
+    );
+    window.open(`mailto:61trckr@gmail.com?subject=${subject}&body=${body}`, '_blank');
+    setMaydayText('');
+    setMaydayOpen(false);
   };
 
   const buttonClass = "text-[12px] px-[12px] py-[6px] rounded-[6px] border hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
@@ -127,6 +143,20 @@ export default function Layout({ children, user }: LayoutProps) {
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          {/* Mayday Button */}
+          <button
+            onClick={() => setMaydayOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md border"
+            style={{
+              backgroundColor: 'rgba(220,38,38,0.08)',
+              borderColor: 'rgba(220,38,38,0.25)',
+              color: '#dc2626',
+            }}
+            title="Report a problem"
+          >
+            <AlertTriangle size={13} />
+            <span className="hidden sm:inline">Mayday</span>
+          </button>
           {!isOnline && (
             <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-100 uppercase tracking-widest mr-4">
               <WifiOff size={10} />
@@ -244,6 +274,79 @@ export default function Layout({ children, user }: LayoutProps) {
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+
+      {/* Mayday Modal */}
+      {maydayOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderBottom: '1px solid rgba(220,38,38,0.15)' }}>
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={18} className="text-[#dc2626]" />
+                <div>
+                  <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>Mayday — Report a Problem</h3>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Your feedback goes directly to the developer</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setMaydayOpen(false); setMaydayText(''); }}
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
+                📍 Page: {path}
+              </div>
+              <textarea
+                value={maydayText}
+                onChange={e => setMaydayText(e.target.value)}
+                placeholder="Describe what went wrong — what you were doing, what you expected, what happened instead..."
+                rows={5}
+                autoFocus
+                className="w-full text-sm rounded-xl px-4 py-3 border resize-none focus:outline-none transition-all"
+                style={{
+                  backgroundColor: 'var(--bg-tertiary)',
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)',
+                }}
+                onFocus={e => e.target.style.borderColor = '#dc2626'}
+                onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+              />
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                This will open your email app with the report pre-filled and addressed to 61trckr@gmail.com.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 flex gap-3" style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+              <button
+                onClick={() => { setMaydayOpen(false); setMaydayText(''); }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMaydaySend}
+                disabled={!maydayText.trim()}
+                className="flex-[2] py-2.5 rounded-xl text-xs font-black text-white transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg"
+                style={{ backgroundColor: '#dc2626', boxShadow: '0 4px 12px rgba(220,38,38,0.3)' }}
+              >
+                <Send size={13} />
+                Send to Developer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
