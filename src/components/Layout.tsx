@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3, Moon, Sun, AlertTriangle, X, Send } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,8 @@ export default function Layout({ children, user }: LayoutProps) {
   const [isOnline, setIsOnline] = useState(true);
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
+  const [maydaySending, setMaydaySending] = useState(false);
+  const [maydaySuccess, setMaydaySuccess] = useState(false);
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('dark_mode') === 'true';
@@ -50,18 +53,34 @@ export default function Layout({ children, user }: LayoutProps) {
     navigate('/');
   };
 
-  const handleMaydaySend = () => {
+  const handleMaydaySend = async () => {
     if (!maydayText.trim()) return;
-    const subject = encodeURIComponent('61 Tracker — Mayday Feedback');
-    const body = encodeURIComponent(
-      `Page: ${path}\n` +
-      `User: ${user?.email || 'unknown'}\n` +
-      `Date: ${new Date().toLocaleString()}\n\n` +
-      `Issue:\n${maydayText}`
-    );
-    window.open(`mailto:61trckr@gmail.com?subject=${subject}&body=${body}`, '_blank');
-    setMaydayText('');
-    setMaydayOpen(false);
+    setMaydaySending(true);
+    setMaydaySuccess(false);
+    try {
+      await emailjs.send(
+        'service_nka0c1g',
+        'template_zegp5ps',
+        {
+          page: path,
+          user_email: user?.email || 'unknown',
+          date: new Date().toLocaleString(),
+          message: maydayText,
+        },
+        'mFm3-Cne6LHV8dZOJ'
+      );
+      setMaydaySuccess(true);
+      setMaydayText('');
+      setTimeout(() => {
+        setMaydayOpen(false);
+        setMaydaySuccess(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Mayday send failed:', err);
+      alert('Failed to send feedback. Please try again.');
+    } finally {
+      setMaydaySending(false);
+    }
   };
 
   const buttonClass = "text-[12px] px-[12px] py-[6px] rounded-[6px] border hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
@@ -321,7 +340,7 @@ export default function Layout({ children, user }: LayoutProps) {
                 onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
               />
               <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                This will open your email app with the report pre-filled and addressed to 61trckr@gmail.com.
+                Your feedback is sent directly to the 61 Tracker developer.
               </p>
             </div>
 
@@ -336,12 +355,12 @@ export default function Layout({ children, user }: LayoutProps) {
               </button>
               <button
                 onClick={handleMaydaySend}
-                disabled={!maydayText.trim()}
+                disabled={!maydayText.trim() || maydaySending || maydaySuccess}
                 className="flex-[2] py-2.5 rounded-xl text-xs font-black text-white transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg"
-                style={{ backgroundColor: '#dc2626', boxShadow: '0 4px 12px rgba(220,38,38,0.3)' }}
+                style={{ backgroundColor: maydaySuccess ? '#2d7a4f' : '#dc2626', boxShadow: maydaySuccess ? '0 4px 12px rgba(45,122,79,0.3)' : '0 4px 12px rgba(220,38,38,0.3)' }}
               >
-                <Send size={13} />
-                Send to Developer
+                {maydaySending ? <Loader2 size={13} className="animate-spin" /> : maydaySuccess ? <CheckCircle2 size={13} /> : <Send size={13} />}
+                {maydaySending ? 'Sending...' : maydaySuccess ? 'Sent!' : 'Send to Developer'}
               </button>
             </div>
           </div>
