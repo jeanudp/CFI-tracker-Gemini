@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plane, CheckCircle, AlertTriangle, RefreshCw, MapPin, Moon, Clock, Repeat, Award, CloudLightning, Loader2, Plus, ChevronRight, Info } from 'lucide-react';
+import { Plane, CheckCircle, AlertTriangle, RefreshCw, MapPin, Moon, Clock, Repeat, Award, CloudLightning, Loader2, Plus, ChevronRight, Info, Printer } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import EndorsementPrinter from './EndorsementPrinter';
 
 interface EndorsementAdvisorProps {
   studentName?: string;
@@ -77,6 +78,7 @@ type Scenario =
   | 'first-solo'
   | 'solo-night'
   | 'solo-within-25'
+  | 'solo-25-to-50'
   | 'solo-beyond-50'
   | 'solo-90day'
   | 'solo-classb'
@@ -106,6 +108,14 @@ const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNo
     icon: <MapPin size={20} />,
     color: '#2d7a4f',
     required: ['A.8'],
+  },
+  {
+    id: 'solo-25-to-50',
+    label: 'Solo 25 NM to 50 NM',
+    sub: 'A.11 (repeated route) or A.9 + A.10 (new route)',
+    icon: <MapPin size={20} />,
+    color: '#2d7a4f',
+    required: ['A.9', 'A.10', 'A.11'],
   },
   {
     id: 'solo-beyond-50',
@@ -143,7 +153,9 @@ const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNo
 
 export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: EndorsementAdvisorProps) {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
+  const [showPrinter, setShowPrinter] = useState(false);
   const [classBChoice, setClassBChoice] = useState<'airspace' | 'airport' | 'both' | null>(null);
+  const [routeChoice, setRouteChoice] = useState<'repeated' | 'new' | null>(null);
   const [savedEndorsements, setSavedEndorsements] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
   // A.10 repeating log
@@ -242,6 +254,11 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
     if (scenario === 'first-solo') return ['A.3', 'A.4', 'A.6'];
     if (scenario === 'solo-night') return ['A.5'];
     if (scenario === 'solo-within-25') return ['A.8', 'A.11'];
+    if (scenario === 'solo-25-to-50') {
+      if (routeChoice === 'repeated') return ['A.11'];
+      if (routeChoice === 'new') return ['A.9', 'A.10'];
+      return [];
+    }
     if (scenario === 'solo-beyond-50') return ['A.9', 'A.10'];
     if (scenario === 'solo-90day') return ['A.7'];
     if (scenario === 'solo-classb') {
@@ -416,7 +433,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
         </div>
         {selectedScenario && (
           <button
-            onClick={() => { setSelectedScenario(null); setClassBChoice(null); }}
+            onClick={() => { setSelectedScenario(null); setClassBChoice(null); setRouteChoice(null); }}
             className="text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
           >
             <RefreshCw size={12} />
@@ -500,8 +517,31 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                 </div>
               )}
 
+              {/* 25-50 NM sub-choice */}
+              {selectedScenario === 'solo-25-to-50' && !routeChoice && (
+                <div className="space-y-3">
+                  <p className="text-sm font-bold text-[#1a3a5c]">What type of flight is this?</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setRouteChoice('repeated')}
+                      className="p-4 rounded-xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] text-left transition-all"
+                    >
+                      <p className="text-sm font-bold text-[#1c2333]">Repeated Route</p>
+                      <p className="text-[10px] text-[#6b7280] mt-0.5">Same airport, same route, already trained both directions → A.11</p>
+                    </button>
+                    <button
+                      onClick={() => setRouteChoice('new')}
+                      className="p-4 rounded-xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] text-left transition-all"
+                    >
+                      <p className="text-sm font-bold text-[#1c2333]">New Route</p>
+                      <p className="text-[10px] text-[#6b7280] mt-0.5">New destination or route not previously authorized → A.9 + A.10</p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Endorsement cards */}
-              {(selectedScenario !== 'solo-classb' || classBChoice) && (
+              {(selectedScenario !== 'solo-classb' || classBChoice) && (selectedScenario !== 'solo-25-to-50' || routeChoice) && (
                 <div className="space-y-4">
                   {getEndorsementsForScenario(selectedScenario).map(key => renderEndorsementCard(key))}
                 </div>
@@ -512,12 +552,27 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
       </div>
 
       {/* Footer */}
-      <div className="bg-[#f8fafc] px-6 py-4 border-t border-[#dde3ec] flex items-start gap-3">
-        <Award size={14} className="text-[#1a3a5c] shrink-0 mt-0.5" />
-        <p className="text-[10px] text-[#64748b] leading-relaxed">
-          All endorsements are from <strong>AC 61-65K</strong> Appendix A. Verify all requirements with the current FAR/AIM before signing any endorsement in the student's logbook.
-        </p>
+      <div className="bg-[#f8fafc] px-6 py-4 border-t border-[#dde3ec] space-y-3">
+        <button
+          onClick={() => setShowPrinter(true)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-[#1a3a5c] text-[#1a3a5c] text-sm font-bold hover:bg-[#1a3a5c] hover:text-white transition-all"
+        >
+          <Printer size={16} />
+          Print Endorsements
+        </button>
+        <div className="flex items-start gap-3">
+          <Award size={14} className="text-[#1a3a5c] shrink-0 mt-0.5" />
+          <p className="text-[10px] text-[#64748b] leading-relaxed">
+            All endorsements are from <strong>AC 61-65K</strong> Appendix A. Verify all requirements with the current FAR/AIM before signing any endorsement in the student's logbook.
+          </p>
+        </div>
       </div>
+
+      <AnimatePresence>
+        {showPrinter && (
+          <EndorsementPrinter onClose={() => setShowPrinter(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

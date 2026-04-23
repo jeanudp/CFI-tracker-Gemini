@@ -1,0 +1,380 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Printer, X, ChevronRight, Check } from 'lucide-react';
+import { cn } from '../lib/utils';
+
+// All PPL endorsements from AC 61-65K Appendix A
+// Each field in brackets becomes an editable input
+const PPL_ENDORSEMENTS: {
+  key: string;
+  title: string;
+  ref: string;
+  template: string;
+}[] = [
+  {
+    key: 'A.1',
+    title: 'Prerequisites for practical test',
+    ref: '14 CFR § 61.39(a)(6)(i) and (ii)',
+    template: 'I certify that {First name, MI, Last name} has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of {applicable certificate}.',
+  },
+  {
+    key: 'A.2',
+    title: 'Review of deficiencies on knowledge test',
+    ref: '14 CFR § 61.39(a)(6)(iii)',
+    template: 'I certify that {First name, MI, Last name} has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the {applicable} airman knowledge test.',
+  },
+  {
+    key: 'A.3',
+    title: 'Pre-solo aeronautical knowledge',
+    ref: '14 CFR § 61.87(b)',
+    template: 'I certify that {First name, MI, Last name} has satisfactorily completed the pre-solo knowledge test of 14 CFR § 61.87(b) for the {make and model} aircraft.',
+  },
+  {
+    key: 'A.4',
+    title: 'Pre-solo flight training',
+    ref: '14 CFR § 61.87(c)(1) and (2)',
+    template: 'I certify that {First name, MI, Last name} has received and logged pre-solo flight training for the maneuvers and procedures that are appropriate to the {make and model} aircraft. I have determined they have demonstrated satisfactory proficiency and safety on the maneuvers and procedures required by 14 CFR § 61.87 in this or similar make and model of aircraft to be flown.',
+  },
+  {
+    key: 'A.5',
+    title: 'Pre-solo flight training at night',
+    ref: '14 CFR § 61.87(o)',
+    template: 'I certify that {First name, MI, Last name} has received flight training at night on night flying procedures that include takeoffs, approaches, landings, and go-arounds at night at the {airport name} airport where the solo flight will be conducted; navigation training at night in the vicinity of the {airport name for navigation} airport where the solo flight will be conducted. This endorsement expires 90 calendar days from the date the flight training at night was received.',
+  },
+  {
+    key: 'A.6',
+    title: 'Solo flight — first 90-calendar-day period',
+    ref: '14 CFR § 61.87(n)',
+    template: 'I certify that {First name, MI, Last name} has received the required training to qualify for solo flying. I have determined they meet the applicable requirements of 14 CFR § 61.87(n) and are proficient to make solo flights in {make and model}.',
+  },
+  {
+    key: 'A.7',
+    title: 'Solo flight — each additional 90-calendar-day period',
+    ref: '14 CFR § 61.87(p)',
+    template: 'I certify that {First name, MI, Last name} has received the required training to qualify for solo flying. I have determined that they meet the applicable requirements of 14 CFR § 61.87(p) and are proficient to make solo flights in {make and model}.',
+  },
+  {
+    key: 'A.8',
+    title: 'Solo takeoffs and landings at another airport within 25 NM',
+    ref: '14 CFR § 61.93(b)(1)',
+    template: 'I certify that {First name, MI, Last name} has received the required training of 14 CFR § 61.93(b)(1). I have determined that they are proficient to practice solo takeoffs and landings at {airport name}. The takeoffs and landings at {airport name for conditions} are subject to the following conditions: {conditions or limitations}.',
+  },
+  {
+    key: 'A.9',
+    title: 'Solo cross-country flight — general authorization',
+    ref: '14 CFR § 61.93(c)(1) and (2)',
+    template: 'I certify that {First name, MI, Last name} has received the required solo cross-country training. I find they have met the applicable requirements of 14 CFR § 61.93 and are proficient to make solo cross-country flights in a {make and model} aircraft, {aircraft category}.',
+  },
+  {
+    key: 'A.10',
+    title: 'Solo cross-country flight — individual flight planning review',
+    ref: '14 CFR § 61.93(c)(3)',
+    template: 'I have reviewed the cross-country planning of {First name, MI, Last name}. I find the planning and preparation to be correct to make the solo flight from {origination airport} to {destination airport} via {route of flight} with landings at {names of airports} in a {make and model} aircraft on {date}. {Conditions or limitations, if any}.',
+  },
+  {
+    key: 'A.11',
+    title: 'Repeated solo cross-country flights not more than 50 NM',
+    ref: '14 CFR § 61.93(b)(2)',
+    template: 'I certify that {First name, MI, Last name} has received the required training in both directions between and at both {airport names}. I have determined that they are proficient of 14 CFR § 61.93(b)(2) to conduct repeated solo cross-country flights over that route, subject to the following conditions: {conditions or limitations}.',
+  },
+  {
+    key: 'A.12',
+    title: 'Solo flight in Class B airspace',
+    ref: '14 CFR § 61.95(a)',
+    template: 'I certify that {First name, MI, Last name} has received the required training of 14 CFR § 61.95(a). I have determined they are proficient to conduct solo flights in {name of Class B airspace} airspace. {Conditions or limitations, if any}.',
+  },
+  {
+    key: 'A.13',
+    title: 'Solo flight to, from, or at an airport in Class B airspace',
+    ref: '14 CFR §§ 61.95(b) and 91.131(b)(1)',
+    template: 'I certify that {First name, MI, Last name} has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at {name of airport}. {Conditions or limitations, if any}.',
+  },
+  {
+    key: 'A.36',
+    title: 'Aeronautical knowledge test',
+    ref: '14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105',
+    template: 'I certify that {First name, MI, Last name} has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the {name of} knowledge test.',
+  },
+  {
+    key: 'A.37',
+    title: 'Flight proficiency / practical test',
+    ref: '14 CFR §§ 61.103(f), 61.107(b), and 61.109',
+    template: 'I certify that {First name, MI, Last name} has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the {name of} practical test.',
+  },
+];
+
+// Parse template into parts: plain text or a {field} input
+function parseTemplate(template: string): { type: 'text' | 'field'; value: string }[] {
+  const parts: { type: 'text' | 'field'; value: string }[] = [];
+  const regex = /\{([^}]+)\}/g;
+  let last = 0;
+  let match;
+  while ((match = regex.exec(template)) !== null) {
+    if (match.index > last) {
+      parts.push({ type: 'text', value: template.slice(last, match.index) });
+    }
+    parts.push({ type: 'field', value: match[1] });
+    last = match.index + match[0].length;
+  }
+  if (last < template.length) {
+    parts.push({ type: 'text', value: template.slice(last) });
+  }
+  return parts;
+}
+
+interface EndorsementPrinterProps {
+  onClose: () => void;
+}
+
+export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps) {
+  const [step, setStep] = useState<'select' | 'fill'>('select');
+  const [selected, setSelected] = useState<string[]>([]);
+  // fieldValues[endorsementKey][fieldLabel] = value
+  const [fieldValues, setFieldValues] = useState<Record<string, Record<string, string>>>({});
+
+  const toggleSelect = (key: string) => {
+    setSelected(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const handleFieldChange = (endorsementKey: string, fieldLabel: string, value: string) => {
+    setFieldValues(prev => ({
+      ...prev,
+      [endorsementKey]: {
+        ...(prev[endorsementKey] || {}),
+        [fieldLabel]: value,
+      },
+    }));
+  };
+
+  const selectedEndorsements = PPL_ENDORSEMENTS.filter(e => selected.includes(e.key));
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <>
+      {/* Print styles — only the print-area is visible when printing */}
+      <style>{`
+        @media print {
+          body > * { display: none !important; }
+          .print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+          .no-print { display: none !important; }
+        }
+        @media screen {
+          .print-area { display: none; }
+        }
+      `}</style>
+
+      {/* Print area — hidden on screen, shown on print */}
+      <div className="print-area">
+        <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '12pt', lineHeight: '1.6', padding: '1in', maxWidth: '8.5in', margin: '0 auto' }}>
+          {selectedEndorsements.map((endorsement, idx) => {
+            const parts = parseTemplate(endorsement.template);
+            const values = fieldValues[endorsement.key] || {};
+            return (
+              <div key={endorsement.key} style={{ marginBottom: '32pt', pageBreakInside: 'avoid' }}>
+                <div style={{ marginBottom: '6pt' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '10pt' }}>AC 61-65K {endorsement.key}</span>
+                  <span style={{ color: '#555', fontSize: '10pt', marginLeft: '8pt' }}>{endorsement.ref}</span>
+                </div>
+                <p style={{ margin: '0 0 12pt 0', textAlign: 'justify' }}>
+                  {parts.map((part, pi) =>
+                    part.type === 'text'
+                      ? part.value
+                      : (values[part.value] || `[${part.value}]`)
+                  )}
+                </p>
+                <div style={{ marginTop: '16pt', borderTop: '1px solid #000', paddingTop: '4pt' }}>
+                  <div style={{ display: 'flex', gap: '32pt' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ borderBottom: '1px solid #000', marginBottom: '2pt', height: '20pt' }} />
+                      <span style={{ fontSize: '9pt', color: '#555' }}>Signature / Date</span>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ borderBottom: '1px solid #000', marginBottom: '2pt', height: '20pt' }} />
+                      <span style={{ fontSize: '9pt', color: '#555' }}>CFI Certificate Number</span>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ borderBottom: '1px solid #000', marginBottom: '2pt', height: '20pt' }} />
+                      <span style={{ fontSize: '9pt', color: '#555' }}>RE End Date / Exp. Date</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Screen UI */}
+      <div className="no-print fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+          style={{ maxHeight: '90vh' }}
+        >
+          {/* Modal header */}
+          <div className="px-6 py-4 border-b border-[#dde3ec] flex items-center justify-between bg-[#1a3a5c] shrink-0">
+            <div className="flex items-center gap-3">
+              <Printer size={20} className="text-[#e8a020]" />
+              <div>
+                <h2 className="text-white font-bold text-sm">
+                  {step === 'select' ? 'Select Endorsements to Print' : 'Fill In Endorsements'}
+                </h2>
+                <p className="text-white/60 text-[10px]">
+                  {step === 'select'
+                    ? `${selected.length} selected — Private Pilot (AC 61-65K)`
+                    : `${selectedEndorsements.length} endorsement${selectedEndorsements.length !== 1 ? 's' : ''} — fill in the fields then print`}
+                </p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Step: Select */}
+          {step === 'select' && (
+            <>
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {PPL_ENDORSEMENTS.map(e => {
+                  const isSelected = selected.includes(e.key);
+                  return (
+                    <button
+                      key={e.key}
+                      onClick={() => toggleSelect(e.key)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all",
+                        isSelected
+                          ? "border-[#1a3a5c] bg-[#d4e8f5]"
+                          : "border-[#dde3ec] bg-white hover:border-[#1a3a5c] hover:bg-[#f8fafc]"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-6 h-6 rounded border-2 flex items-center justify-center shrink-0 transition-all",
+                        isSelected ? "bg-[#1a3a5c] border-[#1a3a5c]" : "bg-white border-[#dde3ec]"
+                      )}>
+                        {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-black bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded shrink-0">{e.key}</span>
+                          <span className="text-sm font-bold text-[#1c2333] truncate">{e.title}</span>
+                        </div>
+                        <p className="text-[10px] text-[#6b7280] mt-0.5 font-mono">{e.ref}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="px-4 py-4 border-t border-[#dde3ec] flex gap-3 shrink-0 bg-[#f8fafc]">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] text-sm font-bold hover:bg-[#f4f5f7] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setStep('fill')}
+                  disabled={selected.length === 0}
+                  className="flex-[2] py-2.5 rounded-xl bg-[#1a3a5c] text-white text-sm font-bold hover:bg-[#2a5a8c] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  Fill In {selected.length > 0 ? `${selected.length} ` : ''}Endorsement{selected.length !== 1 ? 's' : ''}
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Step: Fill */}
+          {step === 'fill' && (
+            <>
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {selectedEndorsements.map(endorsement => {
+                  const parts = parseTemplate(endorsement.template);
+                  const values = fieldValues[endorsement.key] || {};
+                  // Collect unique field names for this endorsement
+                  const fields = Array.from(new Set(
+                    parts.filter(p => p.type === 'field').map(p => p.value)
+                  ));
+                  return (
+                    <div key={endorsement.key} className="bg-white rounded-xl border border-[#dde3ec] overflow-hidden shadow-sm">
+                      {/* Endorsement header */}
+                      <div className="px-4 py-3 bg-[#1a3a5c] flex items-center gap-2">
+                        <span className="text-[11px] font-black bg-white text-[#1a3a5c] px-1.5 py-0.5 rounded">{endorsement.key}</span>
+                        <span className="text-white text-sm font-bold">{endorsement.title}</span>
+                        <span className="text-white/50 text-[10px] font-mono ml-auto">{endorsement.ref}</span>
+                      </div>
+
+                      {/* Fields */}
+                      <div className="p-4 space-y-3">
+                        {fields.map(field => (
+                          <div key={field} className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                              {field}
+                            </label>
+                            <input
+                              type="text"
+                              value={values[field] || ''}
+                              onChange={e => handleFieldChange(endorsement.key, field, e.target.value)}
+                              placeholder={field}
+                              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] focus:bg-[#d4e8f5] transition-all"
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Preview */}
+                      <div className="px-4 pb-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-2">Preview</p>
+                        <p className="text-[12px] leading-relaxed text-[#1c2333] bg-[#f8fafc] rounded-lg p-3 border border-[#dde3ec]">
+                          {parts.map((part, pi) =>
+                            part.type === 'text' ? (
+                              <span key={pi}>{part.value}</span>
+                            ) : (
+                              <span
+                                key={pi}
+                                className={cn(
+                                  "font-bold rounded px-0.5",
+                                  values[part.value]
+                                    ? "text-[#1a3a5c] bg-[#d4e8f5]"
+                                    : "text-[#c0392b] bg-[#fdecea]"
+                                )}
+                              >
+                                {values[part.value] || `[${part.value}]`}
+                              </span>
+                            )
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="px-4 py-4 border-t border-[#dde3ec] flex gap-3 shrink-0 bg-[#f8fafc]">
+                <button
+                  onClick={() => setStep('select')}
+                  className="flex-1 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] text-sm font-bold hover:bg-[#f4f5f7] transition-all"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex-[2] py-2.5 rounded-xl bg-[#2d7a4f] text-white text-sm font-bold hover:bg-[#24633f] transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <Printer size={16} />
+                  Print Endorsements
+                </button>
+              </div>
+            </>
+          )}
+        </motion.div>
+      </div>
+    </>
+  );
+}
