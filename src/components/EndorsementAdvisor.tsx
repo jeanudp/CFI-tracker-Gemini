@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plane, CheckCircle, AlertTriangle, RefreshCw, MapPin, Moon, Clock, Repeat, Award, CloudLightning, Loader2, Plus, ChevronRight, Info, Printer } from 'lucide-react';
+import { Plane, CheckCircle, AlertTriangle, RefreshCw, MapPin, Moon, Clock, Repeat, Award, CloudLightning, Loader2, Plus, ChevronRight, ChevronLeft, Info, Printer } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import EndorsementPrinter from './EndorsementPrinter';
@@ -419,35 +419,19 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="bg-[#1a3a5c] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/10 rounded-lg">
-            <Plane size={20} className="text-[#e8a020]" />
-          </div>
-          <div>
-            <h3 className="text-white font-bold">Endorsement Advisor</h3>
-            <p className="text-white/60 text-[10px] uppercase tracking-widest">Based on AC 61-65K</p>
-          </div>
-        </div>
-        {selectedScenario && (
-          <button
-            onClick={() => { setSelectedScenario(null); setClassBChoice(null); setRouteChoice(null); }}
-            className="text-white/60 hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
-          >
-            <RefreshCw size={12} />
-            Back
-          </button>
-        )}
-      </div>
-
-      <div className="p-6 min-h-[300px]">
+    <div className="h-full flex flex-col">
+      <div className="p-8 flex-1">
         <AnimatePresence mode="wait">
           {!selectedScenario ? (
             <motion.div key="scenarios" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <p className="text-sm font-bold text-[#1a3a5c] mb-4">What does the student need to do?</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-[#1a3a5c]">Student Scenarios</h2>
+                  <p className="text-sm text-[#64748b]">Select a flight scenario to see required logbook endorsements</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {SCENARIOS.map(s => {
                   const endorsementsForScenario = s.id === 'solo-classb'
                     ? ['A.12', 'A.13']
@@ -459,7 +443,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                       key={s.id}
                       onClick={() => setSelectedScenario(s.id)}
                       className={cn(
-                        "flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+                        "flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg group",
                         allGiven
                           ? "border-[#2d7a4f] bg-[#f0fdf4]"
                           : someGiven
@@ -468,49 +452,67 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                       )}
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-white shadow-sm transition-transform group-hover:scale-110"
                         style={{ backgroundColor: s.color }}
                       >
                         {s.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#1c2333]">{s.label}</p>
-                        <p className="text-[10px] text-[#6b7280] font-mono">{s.sub}</p>
+                        <p className="text-base font-bold text-[#1c2333] leading-tight mb-1">{s.label}</p>
+                        <p className="text-[11px] text-[#6b7280] font-mono opacity-80 uppercase tracking-tighter">{s.sub}</p>
                       </div>
-                      {allGiven && <CheckCircle size={18} className="text-[#2d7a4f] shrink-0" />}
-                      {!allGiven && someGiven && <AlertTriangle size={18} className="text-[#e8a020] shrink-0" />}
+                      {allGiven && <CheckCircle size={20} className="text-[#2d7a4f] shrink-0" />}
+                      {!allGiven && someGiven && <AlertTriangle size={20} className="text-[#e8a020] shrink-0" />}
                     </button>
                   );
                 })}
               </div>
             </motion.div>
           ) : (
-            <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+            <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
               {/* Scenario title */}
-              <div>
-                <p className="text-lg font-bold text-[#1a3a5c]">
-                  {SCENARIOS.find(s => s.id === selectedScenario)?.label}
-                </p>
-                <p className="text-[11px] text-[#6b7280]">Required endorsements per AC 61-65K</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => { setSelectedScenario(null); setClassBChoice(null); setRouteChoice(null); }}
+                    className="p-2 hover:bg-[#f1f5f9] rounded-xl text-[#64748b] transition-colors"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <div>
+                    <p className="text-2xl font-black text-[#1a3a5c] tracking-tight decoration-[#e8a020] decoration-4 underline-offset-4">
+                      {SCENARIOS.find(s => s.id === selectedScenario)?.label}
+                    </p>
+                    <p className="text-sm text-[#64748b]">Found {getEndorsementsForScenario(selectedScenario).length} required endorsements for this scenario</p>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setShowPrinter(true)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1a3a5c] text-white rounded-xl font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md shadow-[#1a3a5c]/20"
+                >
+                  <Printer size={18} />
+                  Print Selected
+                </button>
               </div>
 
               {/* Class B sub-choice */}
               {selectedScenario === 'solo-classb' && !classBChoice && (
-                <div className="space-y-3">
-                  <p className="text-sm font-bold text-[#1a3a5c]">What type of Class B operation?</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-4 max-w-2xl">
+                  <h3 className="text-lg font-bold text-[#1a3a5c]">What type of Class B operation?</h3>
+                  <div className="grid grid-cols-1 gap-3">
                     {[
                       { id: 'airspace', label: 'Class B Airspace Only', sub: 'Flying through Class B — A.12', color: '#1a3a5c' },
-                      { id: 'airport', label: 'Class B Airport', sub: 'Landing at Class B airport — A.13', color: '#c0392b' },
-                      { id: 'both', label: 'Both', sub: 'Airspace + airport — A.12 + A.13', color: '#7c3aed' },
+                      { id: 'airport', label: 'Class B Airport', sub: 'Landing at or taking off from a Class B primary airport — A.13', color: '#c0392b' },
+                      { id: 'both', label: 'Both Airspace & Airport', sub: 'Airspace + airport — A.12 + A.13', color: '#7c3aed' },
                     ].map(choice => (
                       <button
                         key={choice.id}
                         onClick={() => setClassBChoice(choice.id as any)}
-                        className="p-4 rounded-xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] text-left transition-all"
+                        className="p-5 rounded-2xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] bg-white text-left transition-all hover:bg-[#f8fafc]"
                       >
-                        <p className="text-sm font-bold text-[#1c2333]">{choice.label}</p>
-                        <p className="text-[10px] text-[#6b7280] mt-0.5">{choice.sub}</p>
+                        <p className="text-base font-bold text-[#1c2333] mb-1">{choice.label}</p>
+                        <p className="text-xs text-[#64748b]">{choice.sub}</p>
                       </button>
                     ))}
                   </div>
@@ -519,22 +521,22 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
 
               {/* 25-50 NM sub-choice */}
               {selectedScenario === 'solo-25-to-50' && !routeChoice && (
-                <div className="space-y-3">
-                  <p className="text-sm font-bold text-[#1a3a5c]">What type of flight is this?</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-4 max-w-2xl">
+                  <h3 className="text-lg font-bold text-[#1a3a5c]">What type of flight is this?</h3>
+                  <div className="grid grid-cols-1 gap-3">
                     <button
                       onClick={() => setRouteChoice('repeated')}
-                      className="p-4 rounded-xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] text-left transition-all"
+                      className="p-5 rounded-2xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] bg-white text-left transition-all hover:bg-[#f8fafc]"
                     >
-                      <p className="text-sm font-bold text-[#1c2333]">Repeated Route</p>
-                      <p className="text-[10px] text-[#6b7280] mt-0.5">Same airport, same route, already trained both directions → A.11</p>
+                      <p className="text-base font-bold text-[#1c2333] mb-1">Repeated Route</p>
+                      <p className="text-xs text-[#64748b]">Flying between the same two airports over a route already trained — A.11</p>
                     </button>
                     <button
                       onClick={() => setRouteChoice('new')}
-                      className="p-4 rounded-xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] text-left transition-all"
+                      className="p-5 rounded-2xl border-2 border-[#dde3ec] hover:border-[#1a3a5c] bg-white text-left transition-all hover:bg-[#f8fafc]"
                     >
-                      <p className="text-sm font-bold text-[#1c2333]">New Route</p>
-                      <p className="text-[10px] text-[#6b7280] mt-0.5">New destination or route not previously authorized → A.9 + A.10</p>
+                      <p className="text-base font-bold text-[#1c2333] mb-1">New or One-Time Route</p>
+                      <p className="text-xs text-[#64748b]">Cross-country flight to a new destination or route — A.9 + A.10</p>
                     </button>
                   </div>
                 </div>
@@ -542,7 +544,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
 
               {/* Endorsement cards */}
               {(selectedScenario !== 'solo-classb' || classBChoice) && (selectedScenario !== 'solo-25-to-50' || routeChoice) && (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   {getEndorsementsForScenario(selectedScenario).map(key => renderEndorsementCard(key))}
                 </div>
               )}
@@ -551,19 +553,12 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
         </AnimatePresence>
       </div>
 
-      {/* Footer */}
-      <div className="bg-[#f8fafc] px-6 py-4 border-t border-[#dde3ec] space-y-3">
-        <button
-          onClick={() => setShowPrinter(true)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-[#1a3a5c] text-[#1a3a5c] text-sm font-bold hover:bg-[#1a3a5c] hover:text-white transition-all"
-        >
-          <Printer size={16} />
-          Print Endorsements
-        </button>
-        <div className="flex items-start gap-3">
-          <Award size={14} className="text-[#1a3a5c] shrink-0 mt-0.5" />
-          <p className="text-[10px] text-[#64748b] leading-relaxed">
-            All endorsements are from <strong>AC 61-65K</strong> Appendix A. Verify all requirements with the current FAR/AIM before signing any endorsement in the student's logbook.
+      {/* Simplified Footer */}
+      <div className="bg-[#f8fafc] px-8 py-4 border-t border-[#dde3ec]">
+        <div className="flex items-center gap-3">
+          <Award size={16} className="text-[#1a3a5c] shrink-0" />
+          <p className="text-[11px] text-[#64748b] leading-relaxed">
+            All endorsements are from <strong>AC 61-65K</strong> Appendix A. Verify all requirements with the current <strong>FAR/AIM</strong> before signing any endorsement in the student's logbook.
           </p>
         </div>
       </div>

@@ -79,7 +79,7 @@ export default function History() {
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'advisor'>('lesson');
+  const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'endorsements'>('lesson');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -399,7 +399,7 @@ export default function History() {
   const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
 
   useEffect(() => {
-    if (activeTab === 'advisor' && lessonRating !== 'ppl') {
+    if (activeTab === 'endorsements' && lessonRating !== 'ppl') {
       setActiveTab('lesson');
     }
   }, [lessonRating, activeTab]);
@@ -1080,16 +1080,16 @@ export default function History() {
                     </button>
                     {lessonRating === 'ppl' && (
                       <button
-                        onClick={() => setActiveTab('advisor')}
+                        onClick={() => setActiveTab('endorsements')}
                         className={cn(
                           "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                          activeTab === 'advisor' 
+                          activeTab === 'endorsements' 
                             ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                             : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
                         )}
                       >
-                        <Sparkles size={14} />
-                        Advisor
+                        <MapPin size={14} />
+                        Endorsements
                       </button>
                     )}
                     <button
@@ -1994,10 +1994,23 @@ export default function History() {
               </motion.div>
             )}
 
-            {activeTab === 'advisor' && lessonRating === 'ppl' && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <EndorsementAdvisor studentName={studentName} ratingCode={lessonRating} />
-              </motion.div>
+            {activeTab === 'endorsements' && (
+              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-xl overflow-hidden min-h-[600px] flex flex-col">
+                <div className="bg-[#1a3a5c] px-8 py-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-xl text-white">
+                      <MapPin size={24} />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-white tracking-tight">Endorsement Manager</h1>
+                      <p className="text-xs text-white/70">AC 61-65K Appendix A</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <EndorsementAdvisor studentName={studentName} ratingCode={lessonRating} />
+                </div>
+              </div>
             )}
 
             {activeTab === 'checkride' && (
@@ -2529,114 +2542,8 @@ export default function History() {
                               </div>
                             )}
 
-                            {SOLO_OPTIONS.map(section => {
-                              const isSectionComplete = (() => {
-                                if (section.id === '1') return isEndorsementMet('A.1');
-                                if (section.id === '2') return isEndorsementMet('A.3') && isEndorsementMet('A.4') && isEndorsementMet('A.6');
-                                if (section.id === '3') return isEndorsementMet('A.8') && isEndorsementMet('A.9') && isEndorsementMet('A.10');
-                                if (section.id === '4') return isEndorsementMet('A.12') || isEndorsementMet('A.13');
-                                if (section.id === '5') return isEndorsementMet('A.32');
-                                if (section.id === '6') return isEndorsementMet('A.33') && isEndorsementMet('A.34');
-                                return false;
-                              })();
-
-                              const sectionEndorsementsMet = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).length;
-                              const isSectionInProgress = sectionEndorsementsMet > 0;
-                              const isOpen = selectedSoloOption === section.id;
-
-                              const headerBg = isSectionComplete ? "bg-[#f0fdf4]" : "bg-[#1a3a5c]";
-                              const titleColor = isSectionComplete ? "text-[#166534]" : "text-white";
-                              const descColor = isSectionComplete ? "text-[#166534]/70" : "text-white/70";
-                              const iconBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white text-[#1a3a5c]";
-                              const badgeBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white/20 text-white";
-
-                              return (
-                                <div key={section.id} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                                  <button
-                                    onClick={() => setSelectedSoloOption(isOpen ? null : section.id)}
-                                    className={cn("w-full px-4 py-4 flex items-center justify-between transition-all", headerBg)}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", iconBg)}>
-                                        {isSectionComplete ? <Check size={16} strokeWidth={3} /> : section.id}
-                                      </div>
-                                      <div className="text-left">
-                                        <div className="flex items-center gap-2">
-                                          <h3 className={cn("text-sm font-bold", titleColor)}>
-                                            {section.label}
-                                          </h3>
-                                        </div>
-                                        <p className={cn("text-[10px] font-medium", descColor)}>{section.description}</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", badgeBg)}>
-                                        {sectionEndorsementsMet}/{section.endorsements.length}
-                                      </span>
-                                      <ChevronRight size={16} className={cn(isSectionComplete ? "text-white" : "text-white", "transition-transform", isOpen && "rotate-90")} />
-                                    </div>
-                                  </button>
-
-                                  <AnimatePresence>
-                                    {isOpen && (
-                                      <motion.div
-                                        initial={{ height: 0 }}
-                                        animate={{ height: 'auto' }}
-                                        exit={{ height: 0 }}
-                                        className="overflow-hidden"
-                                      >
-                                        <div className="p-2 space-y-1 bg-white border-t border-[#dde3ec]">
-                                          {section.endorsements.map((e: any) => {
-                                            const met = isEndorsementMet(e.key);
-                                            return (
-                                              <div
-                                                key={e.key}
-                                                onClick={() => handleToggleEndorsement(e.key, `AC 61-65K ${e.key}: ${e.text}`)}
-                                                className={cn(
-                                                  "p-4 flex items-start gap-4 cursor-pointer transition-all rounded-xl",
-                                                  met ? "bg-[#fafffe]" : "hover:bg-[#f4f5f7]"
-                                                )}
-                                              >
-                                                <div className="mt-0.5 shrink-0">
-                                                  {met ? <CheckSquare size={18} className="text-[#2d7a4f]" /> : <Square size={18} className="text-[#dde3ec]" />}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                  <div className="flex items-start gap-2">
-                                                    <span className="text-[10px] font-mono font-bold bg-[#f1f5f9] text-[#475569] px-1.5 py-0.5 rounded border border-[#e2e8f0] shrink-0">
-                                                      AC 61-65K {e.key}
-                                                    </span>
-                                                    <div className={cn("text-[13px] font-medium leading-relaxed", met ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
-                                                      {e.text}
-                                                    </div>
-                                                  </div>
-                                                  {met && (
-                                                    <div className="text-[10px] text-[#6b7280] mt-2 ml-14">
-                                                      Completed on {new Date(endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name)?.completed_date || '').toLocaleDateString()}
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-                              );
-                            })}
-
-                            {/* Endorsement Summary */}
+                            {/* Endorsements Summary */}
                             {(() => {
-                              const summaryLabels: Record<string, string> = {
-                                '1': 'Prerequisites',
-                                '2': 'Pre-Solo',
-                                '3': 'Cross-Country',
-                                '4': 'Class B',
-                                '5': 'Knowledge Test',
-                                '6': 'Checkride'
-                              };
-
                               const summarySections = SOLO_OPTIONS.map(section => {
                                 const givenInSection = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).map((e: any) => {
                                   const record = endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name);
@@ -2647,17 +2554,29 @@ export default function History() {
                                 });
                                 return {
                                   id: section.id,
-                                  label: summaryLabels[section.id] || section.label,
+                                  label: section.label,
                                   endorsements: givenInSection
                                 };
                               }).filter(s => s.endorsements.length > 0);
 
-                              if (summarySections.length === 0) return null;
+                              if (summarySections.length === 0) return (
+                                <div className="p-12 text-center bg-white border border-[#dde3ec] rounded-2xl border-dashed">
+                                  <div className="text-3xl mb-4 opacity-10">📜</div>
+                                  <h4 className="text-sm font-bold text-[#1a3a5c] mb-1">No Endorsements Found</h4>
+                                  <p className="text-xs text-[#64748b]">Go to the Endorsements tab to manage and add new logbook endorsements.</p>
+                                </div>
+                              );
 
                               return (
-                                <div className="mt-8 bg-white rounded-2xl border border-[#dde3ec] border-l-4 border-l-[#2d7a4f] shadow-sm overflow-hidden">
-                                  <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f8fafc]">
+                                <div className="bg-white rounded-2xl border border-[#dde3ec] border-l-4 border-l-[#2d7a4f] shadow-sm overflow-hidden mb-6">
+                                  <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f8fafc] flex justify-between items-center">
                                     <h3 className="text-sm font-bold text-[#1a3a5c]">Endorsements Given</h3>
+                                    <button 
+                                      onClick={() => setActiveTab('endorsements')}
+                                      className="text-[10px] font-bold text-[#1a3a5c] hover:underline uppercase tracking-wider"
+                                    >
+                                      Manage All
+                                    </button>
                                   </div>
                                   <div className="p-4 space-y-4">
                                     {summarySections.map(s => (
@@ -2665,21 +2584,21 @@ export default function History() {
                                         <div className="text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest ml-1">{s.label}</div>
                                         <div className="space-y-1">
                                           {s.endorsements.map(e => (
-                                            <div key={e.key} className="h-9 px-3 flex items-center justify-between bg-[#f8fafc] rounded-lg border border-[#f1f5f9]">
+                                            <div key={e.key} className="p-3 flex items-center justify-between bg-[#f8fafc] rounded-xl border border-[#f1f5f9]">
                                               <div className="flex items-center gap-3 overflow-hidden">
                                                 <span className="text-[9px] font-bold bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded shrink-0">
-                                                  {e.key.replace('A.', 'A.')}
+                                                  {e.key}
                                                 </span>
                                                 <span className="text-[11px] font-medium text-[#1c2333] truncate">
-                                                  {e.text.split(' — ')[1]?.split(': ')[0] || e.text.substring(0, 40) + '...'}
+                                                  {e.text.length > 80 ? e.text.substring(0, 80) + '...' : e.text}
                                                 </span>
                                               </div>
                                               <div className="flex items-center gap-3 shrink-0 ml-4">
                                                 <span className="text-[10px] text-[#6b7280] font-medium">
-                                                  {new Date(e.completed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                                  {new Date(e.completed_date).toLocaleDateString()}
                                                 </span>
-                                                <div className="w-4 h-4 rounded-full bg-[#2d7a4f]/10 flex items-center justify-center text-[#2d7a4f]">
-                                                  <Check size={10} strokeWidth={3} />
+                                                <div className="w-5 h-5 rounded-full bg-[#2d7a4f]/10 flex items-center justify-center text-[#2d7a4f]">
+                                                  <Check size={12} strokeWidth={3} />
                                                 </div>
                                               </div>
                                             </div>
@@ -2854,124 +2773,8 @@ export default function History() {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {SOLO_OPTIONS.map(section => {
-                              const isSectionComplete = (() => {
-                                if (lessonRating === 'ir') {
-                                  if (section.id === '1') return isEndorsementMet('A.42');
-                                  if (section.id === '2') return isEndorsementMet('A.1') && isEndorsementMet('A.44');
-                                  if (section.id === '3') return isEndorsementMet('A.43');
-                                }
-                                if (lessonRating === 'cpl') {
-                                  if (section.id === '1') return isEndorsementMet('A.38');
-                                  if (section.id === '2') return isEndorsementMet('A.1') && isEndorsementMet('A.2');
-                                  if (section.id === '3') return isEndorsementMet('A.39');
-                                  if (section.id === '4') return isEndorsementMet('A.77');
-                                }
-                                if (lessonRating === 'cfi') {
-                                  if (section.id === '1') return isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49');
-                                }
-                                if (lessonRating === 'cfii') {
-                                  if (section.id === '1') return isEndorsementMet('A.1') && isEndorsementMet('A.48');
-                                }
-                                if (lessonRating === 'mei') {
-                                  if (section.id === '1') return isEndorsementMet('A.1') && isEndorsementMet('A.47');
-                                }
-                                return false;
-                              })();
-
-                              const sectionEndorsementsMet = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).length;
-                              const isSectionInProgress = sectionEndorsementsMet > 0;
-                              const isOpen = selectedSoloOption === section.id;
-
-                              const headerBg = isSectionComplete ? "bg-[#f0fdf4]" : (!isSectionInProgress ? "bg-[#f4f5f7]" : "bg-[#1a3a5c]");
-                              const titleColor = isSectionComplete ? "text-[#166534]" : (!isSectionInProgress ? "text-[#1c2333]" : "text-white");
-                              const descColor = isSectionComplete ? "text-[#166534]/70" : (!isSectionInProgress ? "text-[#6b7280]" : "text-white/70");
-                              const iconBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white text-[#1a3a5c]";
-                              const badgeBg = isSectionComplete ? "bg-[#2d7a4f] text-white" : "bg-white/20 text-white";
-
-                              return (
-                                <div key={section.id} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                                  <button
-                                    onClick={() => setSelectedSoloOption(isOpen ? null : section.id)}
-                                    className={cn("w-full px-4 py-4 flex items-center justify-between transition-all", headerBg)}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", iconBg)}>
-                                        {isSectionComplete ? <Check size={16} strokeWidth={3} /> : section.id}
-                                      </div>
-                                      <div className="text-left">
-                                        <h3 className={cn("text-sm font-bold", titleColor)}>
-                                          {section.label}
-                                        </h3>
-                                        <p className={cn("text-[10px] font-medium", descColor)}>{section.description}</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", badgeBg)}>
-                                        {sectionEndorsementsMet}/{section.endorsements.length}
-                                      </span>
-                                      <ChevronRight size={16} className={cn(isSectionComplete || isSectionInProgress ? "text-white" : "text-[#6b7280]", "transition-transform", isOpen && "rotate-90")} />
-                                    </div>
-                                  </button>
-
-                                  <AnimatePresence>
-                                    {isOpen && (
-                                      <motion.div
-                                        initial={{ height: 0 }}
-                                        animate={{ height: 'auto' }}
-                                        exit={{ height: 0 }}
-                                        className="overflow-hidden"
-                                      >
-                                        <div className="p-2 space-y-1 bg-white border-t border-[#dde3ec]">
-                                          {section.endorsements.map((e: any) => {
-                                            const met = isEndorsementMet(e.key);
-                                            return (
-                                              <div
-                                                key={e.key}
-                                                onClick={() => handleToggleEndorsement(e.key, `AC 61-65K ${e.key}: ${e.text}`)}
-                                                className={cn(
-                                                  "p-4 flex items-start gap-4 cursor-pointer transition-all rounded-xl",
-                                                  met ? "bg-[#fafffe]" : "hover:bg-[#f4f5f7]"
-                                                )}
-                                              >
-                                                <div className="mt-0.5 shrink-0">
-                                                  {met ? <CheckSquare size={18} className="text-[#2d7a4f]" /> : <Square size={18} className="text-[#dde3ec]" />}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                  <div className="flex items-start gap-2">
-                                                    <span className="text-[10px] font-mono font-bold bg-[#f1f5f9] text-[#475569] px-1.5 py-0.5 rounded border border-[#e2e8f0] shrink-0">
-                                                      AC 61-65K {e.key}
-                                                    </span>
-                                                    <div className={cn("text-[13px] font-medium leading-relaxed", met ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
-                                                      {e.text}
-                                                    </div>
-                                                  </div>
-                                                  {met && (
-                                                    <div className="text-[10px] text-[#6b7280] mt-2 ml-14">
-                                                      Completed on {new Date(endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name)?.completed_date || '').toLocaleDateString()}
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-                              );
-                            })}
-
-                            {/* Endorsement Summary */}
+                            {/* Endorsement Summary — Non-PPL */}
                             {(() => {
-                              const summaryLabels: Record<string, string> = {
-                                '1': lessonRating === 'cpl' ? 'Knowledge Test' : 'Knowledge Test',
-                                '2': lessonRating === 'cpl' ? 'Prerequisites' : 'Prerequisites',
-                                '3': lessonRating === 'cpl' ? 'Practical Test' : 'Checkride',
-                                '4': 'Retesting'
-                              };
-
                               const summarySections = SOLO_OPTIONS.map(section => {
                                 const givenInSection = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).map((e: any) => {
                                   const record = endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name);
@@ -2982,17 +2785,29 @@ export default function History() {
                                 });
                                 return {
                                   id: section.id,
-                                  label: summaryLabels[section.id] || section.label,
+                                  label: section.label,
                                   endorsements: givenInSection
                                 };
                               }).filter(s => s.endorsements.length > 0);
 
-                              if (summarySections.length === 0) return null;
+                              if (summarySections.length === 0) return (
+                                <div className="p-12 text-center bg-white border border-[#dde3ec] rounded-2xl border-dashed">
+                                  <div className="text-3xl mb-4 opacity-10">📜</div>
+                                  <h4 className="text-sm font-bold text-[#1a3a5c] mb-1">No Endorsements Found</h4>
+                                  <p className="text-xs text-[#64748b]">Go to the Endorsements tab to manage and add new logbook endorsements.</p>
+                                </div>
+                              );
 
                               return (
-                                <div className="mt-8 bg-white rounded-2xl border border-[#dde3ec] border-l-4 border-l-[#2d7a4f] shadow-sm overflow-hidden">
-                                  <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f8fafc]">
+                                <div className="bg-white rounded-2xl border border-[#dde3ec] border-l-4 border-l-[#2d7a4f] shadow-sm overflow-hidden mb-6">
+                                  <div className="px-4 py-3 border-b border-[#dde3ec] bg-[#f8fafc] flex justify-between items-center">
                                     <h3 className="text-sm font-bold text-[#1a3a5c]">Endorsements Given</h3>
+                                    <button 
+                                      onClick={() => setActiveTab('endorsements')}
+                                      className="text-[10px] font-bold text-[#1a3a5c] hover:underline uppercase tracking-wider"
+                                    >
+                                      Manage All
+                                    </button>
                                   </div>
                                   <div className="p-4 space-y-4">
                                     {summarySections.map(s => (
@@ -3000,21 +2815,21 @@ export default function History() {
                                         <div className="text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest ml-1">{s.label}</div>
                                         <div className="space-y-1">
                                           {s.endorsements.map(e => (
-                                            <div key={e.key} className="h-9 px-3 flex items-center justify-between bg-[#f8fafc] rounded-lg border border-[#f1f5f9]">
+                                            <div key={e.key} className="p-3 flex items-center justify-between bg-[#f8fafc] rounded-xl border border-[#f1f5f9]">
                                               <div className="flex items-center gap-3 overflow-hidden">
                                                 <span className="text-[9px] font-bold bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded shrink-0">
                                                   {e.key}
                                                 </span>
                                                 <span className="text-[11px] font-medium text-[#1c2333] truncate">
-                                                  {e.text.split(' — ')[1]?.split(': ')[0] || e.text.substring(0, 40) + '...'}
+                                                  {typeof e.text === 'string' && e.text.length > 80 ? e.text.substring(0, 80) + '...' : (e.label || (typeof e.text === 'string' ? e.text : 'Endorsement'))}
                                                 </span>
                                               </div>
                                               <div className="flex items-center gap-3 shrink-0 ml-4">
                                                 <span className="text-[10px] text-[#6b7280] font-medium">
-                                                  {new Date(e.completed_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                                  {new Date(e.completed_date).toLocaleDateString()}
                                                 </span>
-                                                <div className="w-4 h-4 rounded-full bg-[#2d7a4f]/10 flex items-center justify-center text-[#2d7a4f]">
-                                                  <Check size={10} strokeWidth={3} />
+                                                <div className="w-5 h-5 rounded-full bg-[#2d7a4f]/10 flex items-center justify-center text-[#2d7a4f]">
+                                                  <Check size={12} strokeWidth={3} />
                                                 </div>
                                               </div>
                                             </div>

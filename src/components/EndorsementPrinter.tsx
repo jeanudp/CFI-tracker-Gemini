@@ -151,66 +151,91 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
   const selectedEndorsements = PPL_ENDORSEMENTS.filter(e => selected.includes(e.key));
 
   const handlePrint = () => {
-    window.print();
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) return;
+
+    const endorsementHTML = selectedEndorsements.map(endorsement => {
+      const parts = parseTemplate(endorsement.template);
+      const values = fieldValues[endorsement.key] || {};
+      const filledText = parts.map(part =>
+        part.type === 'text' ? part.value : (values[part.value] || `[${part.value}]`)
+      ).join('');
+
+      return `
+        <div style="margin-bottom: 36pt; page-break-inside: avoid;">
+          <div style="margin-bottom: 6pt;">
+            <span style="font-weight: bold; font-size: 10pt;">AC 61-65K ${endorsement.key}</span>
+            <span style="color: #555; font-size: 10pt; margin-left: 8pt;">${endorsement.ref}</span>
+          </div>
+          <p style="margin: 0 0 16pt 0; text-align: justify; font-size: 11pt; line-height: 1.6;">${filledText}</p>
+          <div style="margin-top: 20pt; border-top: 1px solid #000; padding-top: 12pt;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="width: 50%; padding-right: 24pt; padding-bottom: 16pt;">
+                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
+                  <span style="font-size: 9pt; color: #555;">Signature</span>
+                </td>
+                <td style="width: 50%; padding-left: 24pt; padding-bottom: 16pt;">
+                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
+                  <span style="font-size: 9pt; color: #555;">Date</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 50%; padding-right: 24pt;">
+                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
+                  <span style="font-size: 9pt; color: #555;">CFI #</span>
+                </td>
+                <td style="width: 50%; padding-left: 24pt;">
+                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
+                  <span style="font-size: 9pt; color: #555;">Exp / RE Date</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Endorsements</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              font-size: 12pt;
+              line-height: 1.6;
+              padding: 1in;
+              max-width: 8.5in;
+              margin: 0 auto;
+              color: #000;
+            }
+            @media print {
+              body { padding: 0.75in; }
+            }
+          </style>
+        </head>
+        <body>
+          ${endorsementHTML}
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
     <>
-      {/* Print styles — only the print-area is visible when printing */}
-      <style>{`
-        @media print {
-          body > * { display: none !important; }
-          .print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
-          .no-print { display: none !important; }
-        }
-        @media screen {
-          .print-area { display: none; }
-        }
-      `}</style>
 
-      {/* Print area — hidden on screen, shown on print */}
-      <div className="print-area">
-        <div style={{ fontFamily: 'Arial, sans-serif', fontSize: '12pt', lineHeight: '1.6', padding: '1in', maxWidth: '8.5in', margin: '0 auto' }}>
-          {selectedEndorsements.map((endorsement, idx) => {
-            const parts = parseTemplate(endorsement.template);
-            const values = fieldValues[endorsement.key] || {};
-            return (
-              <div key={endorsement.key} style={{ marginBottom: '32pt', pageBreakInside: 'avoid' }}>
-                <div style={{ marginBottom: '6pt' }}>
-                  <span style={{ fontWeight: 'bold', fontSize: '10pt' }}>AC 61-65K {endorsement.key}</span>
-                  <span style={{ color: '#555', fontSize: '10pt', marginLeft: '8pt' }}>{endorsement.ref}</span>
-                </div>
-                <p style={{ margin: '0 0 12pt 0', textAlign: 'justify' }}>
-                  {parts.map((part, pi) =>
-                    part.type === 'text'
-                      ? part.value
-                      : (values[part.value] || `[${part.value}]`)
-                  )}
-                </p>
-                <div style={{ marginTop: '16pt', borderTop: '1px solid #000', paddingTop: '4pt' }}>
-                  <div style={{ display: 'flex', gap: '32pt' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ borderBottom: '1px solid #000', marginBottom: '2pt', height: '20pt' }} />
-                      <span style={{ fontSize: '9pt', color: '#555' }}>Signature / Date</span>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ borderBottom: '1px solid #000', marginBottom: '2pt', height: '20pt' }} />
-                      <span style={{ fontSize: '9pt', color: '#555' }}>CFI Certificate Number</span>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ borderBottom: '1px solid #000', marginBottom: '2pt', height: '20pt' }} />
-                      <span style={{ fontSize: '9pt', color: '#555' }}>RE End Date / Exp. Date</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Screen UI */}
-      <div className="no-print fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
