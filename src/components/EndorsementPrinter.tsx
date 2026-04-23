@@ -131,6 +131,7 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
   const [selected, setSelected] = useState<string[]>([]);
   // fieldValues[endorsementKey][fieldLabel] = value
   const [fieldValues, setFieldValues] = useState<Record<string, Record<string, string>>>({});
+  const [cfiInfo, setCfiInfo] = useState({ name: '', cert: '', reDate: '', date: new Date().toISOString().split('T')[0] });
 
   const toggleSelect = (key: string) => {
     setSelected(prev =>
@@ -161,6 +162,10 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
         part.type === 'text' ? part.value : (values[part.value] || `[${part.value}]`)
       ).join('');
 
+      const dateDisplay = cfiInfo.date
+        ? new Date(cfiInfo.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : '_______________';
+
       return `
         <div style="margin-bottom: 36pt; page-break-inside: avoid;">
           <div style="margin-bottom: 6pt;">
@@ -176,18 +181,21 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
                   <span style="font-size: 9pt; color: #555;">Signature</span>
                 </td>
                 <td style="width: 50%; padding-left: 24pt; padding-bottom: 16pt;">
-                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
+                  <div style="font-size: 11pt; font-weight: bold; height: 24pt; display: flex; align-items: flex-end; padding-bottom: 3pt;">${dateDisplay}</div>
+                  <div style="border-bottom: 1px solid #000; margin-bottom: 3pt;"></div>
                   <span style="font-size: 9pt; color: #555;">Date</span>
                 </td>
               </tr>
               <tr>
                 <td style="width: 50%; padding-right: 24pt;">
-                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
-                  <span style="font-size: 9pt; color: #555;">CFI #</span>
+                  <div style="font-size: 11pt; font-weight: bold; height: 24pt; display: flex; align-items: flex-end; padding-bottom: 3pt;">${cfiInfo.cert || '_______________'}</div>
+                  <div style="border-bottom: 1px solid #000; margin-bottom: 3pt;"></div>
+                  <span style="font-size: 9pt; color: #555;">CFI #${cfiInfo.name ? ' — ' + cfiInfo.name : ''}</span>
                 </td>
                 <td style="width: 50%; padding-left: 24pt;">
-                  <div style="border-bottom: 1px solid #000; height: 24pt; margin-bottom: 3pt;"></div>
-                  <span style="font-size: 9pt; color: #555;">Exp / RE Date</span>
+                  <div style="font-size: 11pt; font-weight: bold; height: 24pt; display: flex; align-items: flex-end; padding-bottom: 3pt;">${cfiInfo.reDate || '_______________'}</div>
+                  <div style="border-bottom: 1px solid #000; margin-bottom: 3pt;"></div>
+                  <span style="font-size: 9pt; color: #555;">RE End Date / Exp. Date</span>
                 </td>
               </tr>
             </table>
@@ -344,6 +352,33 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
           {step === 'fill' && (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {/* CFI Info — applies to all endorsements */}
+                <div className="bg-[#1a3a5c] rounded-xl overflow-hidden shadow-sm">
+                  <div className="px-4 py-3 flex items-center gap-2">
+                    <span className="text-white text-sm font-bold">CFI Information</span>
+                    <span className="text-white/50 text-[10px]">Prints on every endorsement</span>
+                  </div>
+                  <div className="bg-white p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { label: 'CFI Name', key: 'name', placeholder: 'e.g. John J. Smith' },
+                      { label: 'CFI Certificate #', key: 'cert', placeholder: 'e.g. 987654321CFI' },
+                      { label: 'RE End Date / Exp. Date', key: 'reDate', placeholder: 'e.g. 12-31-2026' },
+                      { label: 'Date of Endorsement', key: 'date', placeholder: '', type: 'date' },
+                    ].map(field => (
+                      <div key={field.key} className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
+                        <input
+                          type={field.type || 'text'}
+                          value={cfiInfo[field.key as keyof typeof cfiInfo]}
+                          onChange={e => setCfiInfo(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder={field.placeholder}
+                          className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {selectedEndorsements.map(endorsement => {
                   const parts = parseTemplate(endorsement.template);
                   const values = fieldValues[endorsement.key] || {};

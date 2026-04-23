@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plane, CheckCircle, AlertTriangle, RefreshCw, MapPin, Moon, Clock, Repeat, Award, CloudLightning, Loader2, Plus, ChevronRight, ChevronLeft, Info, Printer } from 'lucide-react';
+import { Plane, CheckCircle, AlertTriangle, RefreshCw, MapPin, Moon, Clock, Repeat, Award, CloudLightning, Loader2, Plus, X, ChevronRight, ChevronLeft, Info, Printer } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import EndorsementPrinter from './EndorsementPrinter';
@@ -198,21 +198,42 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
   };
 
   const handleMarkAsGiven = async (key: string) => {
-    if (!studentName || savedEndorsements[key]) return;
+    if (!studentName) return;
     setSaving(key);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setSaving(null); return; }
-    const { error } = await supabase.from('endorsements').insert({
-      user_id: session.user.id,
-      student_name: studentName,
-      rating: ratingCode,
-      endorsement_key: key,
-      endorsement_label: `AC 61-65K ${key} — ${ENDORSEMENTS_DATA[key].title}`,
-      completed: true,
-      completed_date: new Date().toISOString(),
-    });
-    if (!error) {
-      setSavedEndorsements(prev => ({ ...prev, [key]: new Date().toISOString() }));
+
+    const isSaved = !!savedEndorsements[key];
+
+    if (isSaved) {
+      // Undo — delete the endorsement record
+      const { error } = await supabase
+        .from('endorsements')
+        .delete()
+        .eq('student_name', studentName)
+        .eq('rating', ratingCode)
+        .eq('endorsement_key', key);
+      if (!error) {
+        setSavedEndorsements(prev => {
+          const updated = { ...prev };
+          delete updated[key];
+          return updated;
+        });
+      }
+    } else {
+      // Mark as given
+      const { error } = await supabase.from('endorsements').insert({
+        user_id: session.user.id,
+        student_name: studentName,
+        rating: ratingCode,
+        endorsement_key: key,
+        endorsement_label: `AC 61-65K ${key} — ${ENDORSEMENTS_DATA[key].title}`,
+        completed: true,
+        completed_date: new Date().toISOString(),
+      });
+      if (!error) {
+        setSavedEndorsements(prev => ({ ...prev, [key]: new Date().toISOString() }));
+      }
     }
     setSaving(null);
   };
@@ -356,17 +377,17 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
               )}
             </div>
             <button
-              onClick={() => !isSaved && handleMarkAsGiven(key)}
-              disabled={isSaved || saving === key}
+              onClick={() => handleMarkAsGiven(key)}
+              disabled={saving === key}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shrink-0",
                 isSaved
-                  ? "bg-[#e4f5ec] text-[#2d7a4f] cursor-default"
+                  ? "bg-[#fdecea] text-[#c0392b] hover:bg-[#f5c6c2]"
                   : "bg-[#1a3a5c] text-white hover:bg-[#2a5a8c] shadow-sm"
               )}
             >
-              {saving === key ? <Loader2 size={11} className="animate-spin" /> : isSaved ? <CheckCircle size={11} /> : <Plus size={11} />}
-              {isSaved ? 'Given' : 'Mark Given'}
+              {saving === key ? <Loader2 size={11} className="animate-spin" /> : isSaved ? <X size={11} /> : <Plus size={11} />}
+              {isSaved ? 'Undo' : 'Mark Given'}
             </button>
           </div>
           {isSaved && savedDate && (
