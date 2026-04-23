@@ -12,18 +12,6 @@ const PPL_ENDORSEMENTS: {
   template: string;
 }[] = [
   {
-    key: 'A.1',
-    title: 'Prerequisites for practical test',
-    ref: '14 CFR § 61.39(a)(6)(i) and (ii)',
-    template: 'I certify that {First name, MI, Last name} has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of {applicable certificate}.',
-  },
-  {
-    key: 'A.2',
-    title: 'Review of deficiencies on knowledge test',
-    ref: '14 CFR § 61.39(a)(6)(iii)',
-    template: 'I certify that {First name, MI, Last name} has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the {applicable} airman knowledge test.',
-  },
-  {
     key: 'A.3',
     title: 'Pre-solo aeronautical knowledge',
     ref: '14 CFR § 61.87(b)',
@@ -90,14 +78,26 @@ const PPL_ENDORSEMENTS: {
     template: 'I certify that {First name, MI, Last name} has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at {name of airport}. {Conditions or limitations, if any}.',
   },
   {
+    key: 'A.1',
+    title: 'Prerequisites for practical test',
+    ref: '14 CFR § 61.39(a)(6)(i) and (ii)',
+    template: 'I certify that {First name, MI, Last name} has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of {applicable certificate}.',
+  },
+  {
+    key: 'A.2',
+    title: 'Review of deficiencies identified on knowledge test',
+    ref: '14 CFR § 61.39(a)(6)(iii)',
+    template: 'I certify that {First name, MI, Last name} has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the {applicable} airman knowledge test.',
+  },
+  {
     key: 'A.36',
-    title: 'Aeronautical knowledge test',
+    title: 'Aeronautical knowledge test — Private Pilot',
     ref: '14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105',
     template: 'I certify that {First name, MI, Last name} has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the {name of} knowledge test.',
   },
   {
     key: 'A.37',
-    title: 'Flight proficiency / practical test',
+    title: 'Flight proficiency / practical test — Private Pilot',
     ref: '14 CFR §§ 61.103(f), 61.107(b), and 61.109',
     template: 'I certify that {First name, MI, Last name} has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the {name of} practical test.',
   },
