@@ -398,11 +398,6 @@ export default function History() {
   const studentName = selectedLesson?.student_name;
   const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
 
-  useEffect(() => {
-    if (activeTab === 'endorsements' && lessonRating !== 'ppl') {
-      setActiveTab('lesson');
-    }
-  }, [lessonRating, activeTab]);
 
   useEffect(() => {
     if (selectedLesson && studentName) {
@@ -1078,20 +1073,18 @@ export default function History() {
                       <CheckCircle2 size={14} />
                       Checkride
                     </button>
-                    {lessonRating === 'ppl' && (
-                      <button
-                        onClick={() => setActiveTab('endorsements')}
-                        className={cn(
-                          "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
-                          activeTab === 'endorsements' 
-                            ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
-                            : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
-                        )}
-                      >
-                        <MapPin size={14} />
-                        Endorsements
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setActiveTab('endorsements')}
+                      className={cn(
+                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                        activeTab === 'endorsements' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
+                      )}
+                    >
+                      <MapPin size={14} />
+                      Endorsements
+                    </button>
                     <button
                       onClick={() => navigate(`/student/${studentName}`)}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2"
