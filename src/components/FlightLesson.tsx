@@ -142,11 +142,17 @@ export default function FlightLesson() {
     })
   };
 
-  const steps = [
+  const showLessonTypeStep = rating?.code !== 'ir';
+
+  const steps = showLessonTypeStep ? [
     { number: 1, label: 'Lesson Setup', icon: ClipboardList },
     { number: 2, label: 'Lesson Type', icon: Plane },
     { number: 3, label: 'Flight Time Log', icon: Clock },
     { number: 4, label: 'ACS Grading', icon: CheckCircle2 }
+  ] : [
+    { number: 1, label: 'Lesson Setup', icon: ClipboardList },
+    { number: 2, label: 'Flight Time Log', icon: Clock },
+    { number: 3, label: 'ACS Grading', icon: CheckCircle2 }
   ];
 
   const resetLessonState = () => {
@@ -831,16 +837,26 @@ export default function FlightLesson() {
         setStepValidationError('Please fill in the lesson label and date before continuing.');
         return;
       }
+      // For IR: skip step 2 (lesson type) — jump straight to flight log
+      if (!showLessonTypeStep) {
+        setStepValidationError(null);
+        setDirection(1);
+        setCurrentStep(2);
+        window.scrollTo(0, 0);
+        return;
+      }
     }
 
-    if (currentStep === 2) {
+    if (currentStep === 2 && showLessonTypeStep) {
       if (!lessonType) {
         setStepValidationError('Please select a lesson type before continuing.');
         return;
       }
     }
 
-    if (currentStep === 3) {
+    // Flight log step: step 3 with lesson type, step 2 without
+    const flightLogStep = showLessonTypeStep ? 3 : 2;
+    if (currentStep === flightLogStep) {
       const hasNightActivity =
         parseInt(meta.ldgNight || '0') > 0 ||
         parseFloat(meta.nightDual || '0') > 0 ||
@@ -1177,14 +1193,14 @@ export default function FlightLesson() {
                   onClick={handleNext}
                   className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2"
                 >
-                  Next: Lesson Type
+                  {showLessonTypeStep ? 'Next: Lesson Type' : 'Next: Flight Log'}
                   <ChevronRight size={18} />
                 </button>
               </div>
             </>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 2 && showLessonTypeStep && (
             <>
               <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
                 <h2 className="text-lg font-bold text-[#1a3a5c] mb-1">What type of lesson is this?</h2>
@@ -1250,7 +1266,7 @@ export default function FlightLesson() {
             </>
           )}
 
-          {currentStep === 3 && (
+          {((showLessonTypeStep && currentStep === 3) || (!showLessonTypeStep && currentStep === 2)) && (
             <>
               <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
         <div
@@ -2358,7 +2374,7 @@ export default function FlightLesson() {
     </>
   )}
 
-  {currentStep === 4 && (
+  {((showLessonTypeStep && currentStep === 4) || (!showLessonTypeStep && currentStep === 3)) && (
     <>
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
