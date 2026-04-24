@@ -187,6 +187,9 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
   const [routeChoice, setRouteChoice] = useState<'repeated' | 'new' | null>(null);
   const [savedEndorsements, setSavedEndorsements] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [showSoloChecklist, setShowSoloChecklist] = useState(false);
+  const [soloChecklist, setSoloChecklist] = useState({ tsa: false, medical: false, photoId: false });
+  const [savingChecklist, setSavingChecklist] = useState(false);
   // A.10 repeating log
   const [a10Reviews, setA10Reviews] = useState<{ date: string; route: string }[]>([]);
   const [newA10Date, setNewA10Date] = useState(new Date().toISOString().split('T')[0]);
@@ -197,8 +200,44 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
     if (studentName) {
       fetchEndorsements();
       fetchA10Reviews();
+      fetchSoloChecklist();
     }
   }, [studentName, ratingCode]);
+
+  const fetchSoloChecklist = async () => {
+    if (!studentName) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase
+      .from('solo_checklist')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .eq('student_name', studentName)
+      .maybeSingle();
+    if (data) {
+      setSoloChecklist({
+        tsa: data.tsa_checked || false,
+        medical: data.medical_checked || false,
+        photoId: data.photo_id_checked || false,
+      });
+    }
+  };
+
+  const saveSoloChecklist = async (updated: typeof soloChecklist) => {
+    if (!studentName) return;
+    setSavingChecklist(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setSavingChecklist(false); return; }
+    await supabase.from('solo_checklist').upsert({
+      user_id: session.user.id,
+      student_name: studentName,
+      tsa_checked: updated.tsa,
+      medical_checked: updated.medical,
+      photo_id_checked: updated.photoId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,student_name' });
+    setSavingChecklist(false);
+  };
 
   const fetchEndorsements = async () => {
     const { data } = await supabase
@@ -492,7 +531,13 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                   return (
                     <button
                       key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
+                      onClick={() => {
+                      if (s.id === 'first-solo') {
+                        setShowSoloChecklist(true);
+                      } else {
+                        setSelectedScenario(s.id);
+                      }
+                    }}
                       className={cn(
                         "flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all hover:-translate-y-1 hover:shadow-lg group",
                         allGiven
@@ -617,6 +662,125 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
       <AnimatePresence>
         {showPrinter && (
           <EndorsementPrinter onClose={() => setShowPrinter(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Pre-Solo Checklist Modal */}
+      <AnimatePresence>
+        {showSoloChecklist && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="bg-[#1a3a5c] px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/10 rounded-lg">
+                    <CheckCircle size={18} className="text-[#e8a020]" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Pre-Solo Requirements</h3>
+                    <p className="text-white/60 text-[10px]">Verify before authorizing solo flight — §61.87</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Checklist */}
+              <div className="p-6 space-y-3">
+                <p className="text-xs text-[#6b7280] mb-4 leading-relaxed">
+                  Confirm the following before issuing solo endorsements. You may override and continue if any item is pending.
+                </p>
+                {[
+                  {
+                    key: 'tsa' as const,
+                    label: 'TSA Citizenship Verification',
+                    sub: 'Student has provided proof of U.S. citizenship or completed TSA vetting — 49 CFR § 1552.3',
+                  },
+                  {
+                    key: 'medical' as const,
+                    label: 'Valid FAA Medical Certificate',
+                    sub: 'Student holds a current and appropriate class medical certificate — 14 CFR § 61.23',
+                  },
+                  {
+                    key: 'photoId' as const,
+                    label: 'Government-Issued Photo ID',
+                    sub: 'Student presented valid government-issued photo identification — 14 CFR § 61.87(a)',
+                  },
+                ].map(item => {
+                  const checked = soloChecklist[item.key as keyof typeof soloChecklist];
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={async () => {
+                        const updated = { ...soloChecklist, [item.key]: !checked };
+                        setSoloChecklist(updated);
+                        await saveSoloChecklist(updated);
+                      }}
+                      className={cn(
+                        "w-full flex items-start gap-4 p-4 rounded-xl border-2 text-left transition-all",
+                        checked
+                          ? "border-[#2d7a4f] bg-[#f0fdf4]"
+                          : "border-[#dde3ec] bg-white hover:border-[#1a3a5c]"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-6 h-6 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all",
+                        checked ? "bg-[#2d7a4f] border-[#2d7a4f]" : "bg-white border-[#dde3ec]"
+                      )}>
+                        {checked && <CheckCircle size={14} className="text-white" />}
+                      </div>
+                      <div>
+                        <p className={cn("text-sm font-bold", checked ? "text-[#2d7a4f]" : "text-[#1c2333]")}>
+                          {item.label}
+                        </p>
+                        <p className="text-[10px] text-[#6b7280] mt-0.5 leading-relaxed">{item.sub}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {/* Warning if not all checked */}
+                {(!soloChecklist.tsa || !soloChecklist.medical || !soloChecklist.photoId) && (
+                  <div className="flex items-start gap-2 p-3 bg-[#fffbeb] border border-[#fef3c7] rounded-xl">
+                    <AlertTriangle size={14} className="text-[#e8a020] shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-[#92400e] leading-relaxed">
+                      One or more items are unchecked. You may still proceed but ensure all requirements are met before the student flies solo.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 pb-6 flex gap-3">
+                <button
+                  onClick={() => setShowSoloChecklist(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] text-sm font-bold hover:bg-[#f8fafc] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSoloChecklist(false);
+                    setSelectedScenario('first-solo');
+                  }}
+                  className={cn(
+                    "flex-[2] py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                    soloChecklist.tsa && soloChecklist.medical && soloChecklist.photoId
+                      ? "bg-[#2d7a4f] text-white hover:bg-[#24633f] shadow-md"
+                      : "bg-[#1a3a5c] text-white hover:bg-[#2a5a8c] shadow-md"
+                  )}
+                >
+                  {soloChecklist.tsa && soloChecklist.medical && soloChecklist.photoId
+                    ? <><CheckCircle size={16} /> All Clear — View Endorsements</>
+                    : <><AlertTriangle size={16} /> Override — View Endorsements</>
+                  }
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
