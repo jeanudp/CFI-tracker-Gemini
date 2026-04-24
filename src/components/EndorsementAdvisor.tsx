@@ -72,6 +72,26 @@ const ENDORSEMENTS_DATA: Record<string, { ref: string; title: string; text: stri
     text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.95(b)(1). I have determined that they are proficient to conduct solo flight operations at [name of airport]. [List any applicable conditions or limitations.]',
     expires: '90 calendar days from date of endorsement',
   },
+  'A.1': {
+    ref: '14 CFR § 61.39(a)(6)(i) and (ii)',
+    title: 'Prerequisites for practical test',
+    text: 'I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of [applicable] certificate.',
+  },
+  'A.2': {
+    ref: '14 CFR § 61.39(a)(6)(iii)',
+    title: 'Review of deficiencies identified on knowledge test',
+    text: 'I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the [applicable] airman knowledge test.',
+  },
+  'A.36': {
+    ref: '14 CFR §§ 61.35(a)(1), 61.103(d), and 61.105',
+    title: 'Aeronautical knowledge test — Private Pilot',
+    text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.105. I have determined they are prepared for the [name of] knowledge test.',
+  },
+  'A.37': {
+    ref: '14 CFR §§ 61.103(f), 61.107(b), and 61.109',
+    title: 'Flight proficiency / practical test — Private Pilot',
+    text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.',
+  },
 };
 
 type Scenario =
@@ -82,7 +102,8 @@ type Scenario =
   | 'solo-beyond-50'
   | 'solo-90day'
   | 'solo-classb'
-  | 'xc-review';
+  | 'xc-review'
+  | 'checkride';
 
 const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
   {
@@ -148,6 +169,14 @@ const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNo
     icon: <Clock size={20} />,
     color: '#e8a020',
     required: ['A.10'],
+  },
+  {
+    id: 'checkride',
+    label: 'Checkride',
+    sub: 'A.1, A.2, A.36, A.37',
+    icon: <Award size={20} />,
+    color: '#2d7a4f',
+    required: ['A.1', 'A.2', 'A.36', 'A.37'],
   },
 ];
 
@@ -289,6 +318,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
       return [];
     }
     if (scenario === 'xc-review') return ['A.10'];
+    if (scenario === 'checkride') return ['A.1', 'A.2', 'A.36', 'A.37'];
     return [];
   };
 
