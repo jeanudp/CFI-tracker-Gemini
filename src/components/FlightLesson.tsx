@@ -285,7 +285,7 @@ export default function FlightLesson() {
       subtitle: 'S-turns, rectangular course, turns around a point',
       emoji: '🔄',
       color: '#2d7a4f',
-      taskCodes: ['PA.V.B'],
+      taskCodes: ['PA.V.B1', 'PA.V.B2', 'PA.V.B3'],
     },
     {
       id: 'performance',

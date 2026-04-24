@@ -129,6 +129,12 @@ interface EndorsementPrinterProps {
 export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps) {
   const [step, setStep] = useState<'select' | 'fill'>('select');
   const [selected, setSelected] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = original; };
+  }, []);
   // fieldValues[endorsementKey][fieldLabel] = value
   const [fieldValues, setFieldValues] = useState<Record<string, Record<string, string>>>({});
   const [cfiInfo, setCfiInfo] = useState({ name: '', cert: '', reDate: '', date: new Date().toISOString().split('T')[0] });
@@ -243,7 +249,10 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
 
 
       {/* Screen UI */}
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onWheel={e => e.stopPropagation()}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

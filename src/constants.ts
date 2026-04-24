@@ -480,19 +480,47 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
           ]
         },
         {
-          name: "Ground Reference Maneuvers",
-          code: "PA.V.B",
+          name: "Rectangular Course",
+          code: "PA.V.B1",
           references: "FAA-H-8083-2, FAA-H-8083-3",
-          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with ground reference maneuvers.",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with the rectangular course.",
           stds: [
-            { code: "PA.V.B.K1", category: "K", description: "Ground reference maneuver procedures and wind correction" },
-            { code: "PA.V.B.K1a", category: "K", description: "Rectangular course" },
-            { code: "PA.V.B.K1b", category: "K", description: "S-turns" },
-            { code: "PA.V.B.K1c", category: "K", description: "Turns around a point" },
-            { code: "PA.V.B.K1d", category: "K", description: "Wind correction" },
-            { code: "PA.V.B.K1e", category: "K", description: "Altitude and airspeed control" },
-            { code: "PA.V.B.R1", category: "R", description: "Collision avoidance and low-level hazards" },
-            { code: "PA.V.B.S1", category: "S", description: "Perform ground reference maneuvers within standards" }
+            { code: "PA.V.B1.K1", category: "K", description: "Rectangular course procedures and wind correction" },
+            { code: "PA.V.B1.K1a", category: "K", description: "Entry and exit procedures" },
+            { code: "PA.V.B1.K1b", category: "K", description: "Wind correction on each leg" },
+            { code: "PA.V.B1.K1c", category: "K", description: "Altitude and airspeed control" },
+            { code: "PA.V.B1.R1", category: "R", description: "Collision avoidance and low-level hazards" },
+            { code: "PA.V.B1.S1", category: "S", description: "Perform a rectangular course within standards" }
+          ]
+        },
+        {
+          name: "S-Turns",
+          code: "PA.V.B2",
+          references: "FAA-H-8083-2, FAA-H-8083-3",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with S-turns.",
+          stds: [
+            { code: "PA.V.B2.K1", category: "K", description: "S-turn procedures and wind correction" },
+            { code: "PA.V.B2.K1a", category: "K", description: "Entry and exit procedures" },
+            { code: "PA.V.B2.K1b", category: "K", description: "Constant radius on each semicircle" },
+            { code: "PA.V.B2.K1c", category: "K", description: "Wind correction and bank variation" },
+            { code: "PA.V.B2.K1d", category: "K", description: "Altitude and airspeed control" },
+            { code: "PA.V.B2.R1", category: "R", description: "Collision avoidance and low-level hazards" },
+            { code: "PA.V.B2.S1", category: "S", description: "Perform S-turns within standards" }
+          ]
+        },
+        {
+          name: "Turns Around a Point",
+          code: "PA.V.B3",
+          references: "FAA-H-8083-2, FAA-H-8083-3",
+          objective: "To determine that the applicant exhibits satisfactory knowledge, risk management, and skills associated with turns around a point.",
+          stds: [
+            { code: "PA.V.B3.K1", category: "K", description: "Turns around a point procedures and wind correction" },
+            { code: "PA.V.B3.K1a", category: "K", description: "Entry and exit procedures" },
+            { code: "PA.V.B3.K1b", category: "K", description: "Constant radius from selected point" },
+            { code: "PA.V.B3.K1c", category: "K", description: "Wind correction and bank variation" },
+            { code: "PA.V.B3.K1d", category: "K", description: "Altitude and airspeed control" },
+            { code: "PA.V.B3.R1", category: "R", description: "Collision avoidance and low-level hazards" },
+            { code: "PA.V.B3.S1", category: "S", description: "Perform turns around a point within standards" }
           ]
         }
       ] 
