@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, Users, BookOpen, Plus, ArrowLeft, ArrowRight, Wifi, WifiOff, GraduationCap, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, GraduationCap, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 
 interface LayoutProps {
@@ -19,6 +19,10 @@ export default function Layout({ children, user }: LayoutProps) {
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
   const [maydaySuccess, setMaydaySuccess] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('dark_mode') === 'true';
@@ -42,11 +46,26 @@ export default function Layout({ children, user }: LayoutProps) {
         setIsOnline(false);
       }
     };
-
     checkStatus();
-    const interval = setInterval(checkStatus, 30000); // Check every 30s
+    const interval = setInterval(checkStatus, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setNavOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Close dropdowns on route change
+  useEffect(() => {
+    setNavOpen(false);
+    setUserOpen(false);
+  }, [path]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -83,213 +102,216 @@ export default function Layout({ children, user }: LayoutProps) {
     }
   };
 
-  const buttonClass = "text-[12px] px-[12px] py-[6px] rounded-[6px] border hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 flex items-center gap-2 font-medium";
+  const NAV_ITEMS = [
+    { label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> },
+    { label: 'Student Progress', path: '/history', icon: <HistoryIcon size={14} /> },
+    { label: 'Ground Lesson', path: '/ground', icon: <BookOpen size={14} /> },
+    { label: 'Flight Lesson', path: '/flight', icon: <Plane size={14} /> },
+    { label: 'CFI Hours', path: '/cfi-hours', icon: <GraduationCap size={14} /> },
+  ];
+
+  const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';
+  const shortName = displayName.split(' ')[0];
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col font-sans"
       style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
     >
-      <header 
+      <header
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
         className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
       >
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            {/* 61 numeral mark */}
-            <div className="relative">
-              <span
-                className="block font-black leading-none select-none"
-                style={{
-                  fontSize: '34px',
-                  color: 'var(--navy)',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  letterSpacing: '-1.5px',
-                  lineHeight: 1,
-                }}
-              >
-                61
-              </span>
-              <div
-                className="absolute rounded-full"
-                style={{
-                  bottom: '-3px',
-                  left: 0,
-                  width: '100%',
-                  height: '3px',
-                  backgroundColor: '#e8a020',
-                }}
-              />
-            </div>
-
-            {/* Amber divider */}
-            <div
+        {/* Logo */}
+        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+          <div className="relative">
+            <span
+              className="block font-black leading-none select-none"
               style={{
-                width: '2px',
-                height: '30px',
-                backgroundColor: '#e8a020',
-                opacity: 0.3,
-                borderRadius: '1px',
-                flexShrink: 0,
+                fontSize: '34px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
               }}
+            >
+              61
+            </span>
+            <div
+              className="absolute rounded-full"
+              style={{ bottom: '-3px', left: 0, width: '100%', height: '3px', backgroundColor: '#e8a020' }}
             />
+          </div>
+          <div style={{ width: '2px', height: '30px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
+          <div className="flex flex-col justify-center gap-0.5">
+            <span
+              className="font-black uppercase leading-none"
+              style={{ fontSize: '13px', color: 'var(--navy)', letterSpacing: '1.5px' }}
+            >
+              TRACKER
+            </span>
+            <span
+              className="font-bold"
+              style={{ fontSize: '7px', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase' }}
+            >
+              BUILT FOR CFI<span style={{ textTransform: 'none' }}>s</span>
+            </span>
+          </div>
+        </Link>
 
-            {/* TRACKER + subtitle */}
-            <div className="flex flex-col justify-center gap-0.5">
-              <span
-                className="font-black uppercase leading-none"
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--navy)',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  letterSpacing: '1.5px',
-                }}
-              >
-                TRACKER
-              </span>
-              <span
-                className="font-bold"
-                style={{
-                  fontSize: '7px',
-                  color: 'var(--text-muted)',
-                  letterSpacing: '2px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                BUILT FOR CFI<span style={{ textTransform: 'none' }}>s</span>
-              </span>
-            </div>
-          </Link>
-        </div>
+        {/* Right side */}
         <div className="flex items-center gap-2">
-          {/* Mayday Button */}
+
+          {/* Offline indicator */}
+          {!isOnline && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-500 uppercase tracking-widest">
+              <WifiOff size={10} />
+              <span className="hidden sm:inline">Offline</span>
+            </div>
+          )}
+
+          {/* Mayday button — icon only */}
           <button
             onClick={() => setMaydayOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md border"
-            style={{
-              backgroundColor: 'rgba(220,38,38,0.08)',
-              borderColor: 'rgba(220,38,38,0.25)',
-              color: '#dc2626',
-            }}
+            className="w-9 h-9 flex items-center justify-center rounded-lg border transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderColor: 'rgba(220,38,38,0.25)', color: '#dc2626' }}
             title="Report a problem"
           >
-            <AlertTriangle size={13} />
-            <span className="hidden sm:inline">Mayday</span>
+            <AlertTriangle size={15} />
           </button>
-          {!isOnline && (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-100 uppercase tracking-widest mr-4">
-              <WifiOff size={10} />
-              Offline
-            </div>
-          )}
+
+          {/* Navigation dropdown */}
+          <div className="relative" ref={navRef}>
+            <button
+              onClick={() => { setNavOpen(!navOpen); setUserOpen(false); }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: navOpen ? 'var(--bg-tertiary)' : 'transparent' }}
+            >
+              <Menu size={14} />
+              <span className="hidden sm:inline">Menu</span>
+              <ChevronDown size={12} className={cn("transition-transform", navOpen && "rotate-180")} />
+            </button>
+
+            {navOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 w-52 rounded-2xl border shadow-xl overflow-hidden z-50"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+              >
+                <div className="p-1.5 space-y-0.5">
+                  {NAV_ITEMS.map(item => {
+                    const isActive = path === item.path;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all",
+                          isActive
+                            ? "text-white"
+                            : "hover:bg-[var(--bg-tertiary)]"
+                        )}
+                        style={isActive ? { backgroundColor: 'var(--navy)', color: 'white' } : { color: 'var(--text-primary)' }}
+                      >
+                        <span style={isActive ? { color: '#e8a020' } : { color: 'var(--text-muted)' }}>
+                          {item.icon}
+                        </span>
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User dropdown */}
           {user && (
-            <div className="flex items-center gap-3">
-              <Link 
-                to="/cfi-hours" 
-                title="My Hours"
-                style={{ color: 'var(--text-primary)' }}
-                className="hidden lg:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer"
-              >
-                <BarChart3 size={12} />
-                <span>{user.user_metadata?.full_name || user.email}</span>
-              </Link>
+            <div className="relative" ref={userRef}>
               <button
-                onClick={() => setDarkMode(!darkMode)}
-                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
-                className="p-2 rounded-lg border hover:bg-[var(--bg-tertiary)] transition-all"
-                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                onClick={() => { setUserOpen(!userOpen); setNavOpen(false); }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border text-[11px] font-bold transition-all hover:-translate-y-0.5 hover:shadow-md"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: userOpen ? 'var(--bg-tertiary)' : 'transparent' }}
               >
-                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0"
+                  style={{ backgroundColor: 'var(--navy)' }}
+                >
+                  {shortName.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden sm:inline max-w-[100px] truncate">{shortName}</span>
+                <ChevronDown size={12} className={cn("transition-transform", userOpen && "rotate-180")} />
               </button>
+
+              {userOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-xl overflow-hidden z-50"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
+                  {/* User info header */}
+                  <div
+                    className="px-4 py-3 border-b"
+                    style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}
+                  >
+                    <p className="text-[11px] font-black truncate" style={{ color: 'var(--text-primary)' }}>
+                      {user.user_metadata?.full_name || 'CFI'}
+                    </p>
+                    <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
+                      {user.email}
+                    </p>
+                  </div>
+
+                  <div className="p-1.5 space-y-0.5">
+                    <Link
+                      to="/cfi-hours"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-[var(--bg-tertiary)]"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <GraduationCap size={14} style={{ color: 'var(--text-muted)' }} />
+                      My CFI Hours
+                    </Link>
+
+                    {/* Dark mode toggle */}
+                    <button
+                      onClick={() => setDarkMode(!darkMode)}
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-[var(--bg-tertiary)]"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <div className="flex items-center gap-3">
+                        {darkMode ? <Sun size={14} style={{ color: 'var(--text-muted)' }} /> : <Moon size={14} style={{ color: 'var(--text-muted)' }} />}
+                        {darkMode ? 'Light Mode' : 'Dark Mode'}
+                      </div>
+                      <div
+                        className={cn(
+                          "w-8 h-4 rounded-full transition-colors relative",
+                          darkMode ? "bg-[var(--navy)]" : "bg-[#dde3ec]"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform",
+                            darkMode ? "translate-x-4" : "translate-x-0.5"
+                          )}
+                        />
+                      </div>
+                    </button>
+
+                    <div className="h-px mx-3 my-1" style={{ backgroundColor: 'var(--border-color)' }} />
+
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-red-50 text-red-500"
+                    >
+                      <LogOut size={14} />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          
-          {/* Dynamic Navigation Buttons */}
-          {path.startsWith('/student/') && (
-            <Link to="/history" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-              <ArrowLeft size={14} />
-              <span>Back to Student Progress</span>
-            </Link>
-          )}
-
-          {path !== '/dashboard' && (
-            <Link to="/dashboard" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-              <Users size={14} />
-              <span>Home</span>
-            </Link>
-          )}
-
-          {path === '/rating' && (
-            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
-          )}
-
-          {path === '/lesson-type' && (
-            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
-          )}
-
-          {path === '/ground' && (
-            <>
-              <Link to="/lesson-type" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <BookOpen size={14} />
-                <span>Lesson Type</span>
-              </Link>
-              <Link to="/flight" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <Plane size={14} />
-                <span>Flight</span>
-              </Link>
-              <Link to="/history" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <HistoryIcon size={14} />
-                <span>Student Progress</span>
-              </Link>
-              <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <LogOut size={14} />
-                <span>Sign Out</span>
-              </button>
-            </>
-          )}
-
-          {path === '/flight' && (
-            <>
-              <Link to="/lesson-type" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <BookOpen size={14} />
-                <span>Lesson Type</span>
-              </Link>
-              <Link to="/ground" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <BookOpen size={14} />
-                <span>Ground</span>
-              </Link>
-              <Link to="/history" className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <HistoryIcon size={14} />
-                <span>Student Progress</span>
-              </Link>
-              <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-                <LogOut size={14} />
-                <span>Sign Out</span>
-              </button>
-            </>
-          )}
-
-          {path === '/history' && (
-            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
-          )}
-
-          {(path === '/dashboard' || path.startsWith('/student/')) && (
-            <button onClick={handleSignOut} className={buttonClass} style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}>
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
           )}
         </div>
       </header>
+
       <main className="flex-1 overflow-auto">
         {children}
       </main>
@@ -301,7 +323,6 @@ export default function Layout({ children, user }: LayoutProps) {
             className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
             style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
           >
-            {/* Header */}
             <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderBottom: '1px solid rgba(220,38,38,0.15)' }}>
               <div className="flex items-center gap-2">
                 <AlertTriangle size={18} className="text-[#dc2626]" />
@@ -318,8 +339,6 @@ export default function Layout({ children, user }: LayoutProps) {
                 <X size={14} />
               </button>
             </div>
-
-            {/* Body */}
             <div className="p-6 space-y-4">
               <div className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
                 📍 Page: {path}
@@ -331,11 +350,7 @@ export default function Layout({ children, user }: LayoutProps) {
                 rows={5}
                 autoFocus
                 className="w-full text-sm rounded-xl px-4 py-3 border resize-none focus:outline-none transition-all"
-                style={{
-                  backgroundColor: 'var(--bg-tertiary)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-primary)',
-                }}
+                style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                 onFocus={e => e.target.style.borderColor = '#dc2626'}
                 onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
               />
@@ -343,8 +358,6 @@ export default function Layout({ children, user }: LayoutProps) {
                 Your feedback is sent directly to the 61 Tracker developer.
               </p>
             </div>
-
-            {/* Footer */}
             <div className="px-6 py-4 flex gap-3" style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
               <button
                 onClick={() => { setMaydayOpen(false); setMaydayText(''); }}
