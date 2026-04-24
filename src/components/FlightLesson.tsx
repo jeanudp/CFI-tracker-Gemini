@@ -122,6 +122,7 @@ export default function FlightLesson() {
   const [newAircraftClass, setNewAircraftClass] = useState('ASEL');
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [lessonType, setLessonType] = useState<string>('review');
   const [stepValidationError, setStepValidationError] = useState<string | null>(null);
   const [nightWarning, setNightWarning] = useState(false);
   const navigate = useNavigate();
@@ -143,8 +144,9 @@ export default function FlightLesson() {
 
   const steps = [
     { number: 1, label: 'Lesson Setup', icon: ClipboardList },
-    { number: 2, label: 'Flight Time Log', icon: Clock },
-    { number: 3, label: 'ACS Grading', icon: CheckCircle2 }
+    { number: 2, label: 'Lesson Type', icon: Plane },
+    { number: 3, label: 'Flight Time Log', icon: Clock },
+    { number: 4, label: 'ACS Grading', icon: CheckCircle2 }
   ];
 
   const resetLessonState = () => {
@@ -237,6 +239,8 @@ export default function FlightLesson() {
       setInstructorName(editLesson.instructor || '');
       setLessonLabel(editLesson.label || '');
       setLessonNum(editLesson.lesson_num || 1);
+      setLessonType(editLesson.meta?.lessonType || 'review');
+      setCurrentStep(3); // Skip to flight log in edit mode
       // Auto-open logbook if any field is filled
       const hasLogData = Object.entries(editLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v);
       if (hasLogData) setIsFlightLogOpen(true);
@@ -265,6 +269,78 @@ export default function FlightLesson() {
       }
     });
   }, [navigate]);
+
+  const LESSON_TYPE_TILES = [
+    {
+      id: 'landings',
+      label: 'Landings',
+      subtitle: 'Takeoffs, approaches, go-arounds',
+      emoji: '🛬',
+      color: '#1a3a5c',
+      taskCodes: ['PA.IV.A','PA.IV.B','PA.IV.C','PA.IV.D','PA.IV.E','PA.IV.F','PA.IV.G','PA.IV.H'],
+    },
+    {
+      id: 'ground-maneuvers',
+      label: 'Ground Maneuvers',
+      subtitle: 'S-turns, rectangular course, turns around a point',
+      emoji: '🔄',
+      color: '#2d7a4f',
+      taskCodes: ['PA.V.B'],
+    },
+    {
+      id: 'performance',
+      label: 'Performance',
+      subtitle: 'Steep turns, stalls, slow flight, spin awareness',
+      emoji: '⚡',
+      color: '#7c3aed',
+      taskCodes: ['PA.V.A','PA.VII.A','PA.VII.B','PA.VII.C','PA.VII.D'],
+    },
+    {
+      id: 'instrument',
+      label: 'Basic Instrument',
+      subtitle: 'Straight & level, climbs, descents, unusual attitudes',
+      emoji: '🎯',
+      color: '#0891b2',
+      taskCodes: ['PA.VIII.A','PA.VIII.B','PA.VIII.C','PA.VIII.D','PA.VIII.E','PA.VIII.F'],
+    },
+    {
+      id: 'cross-country',
+      label: 'Cross-Country',
+      subtitle: 'Pilotage, nav systems, diversion, lost procedures',
+      emoji: '🗺️',
+      color: '#e67e22',
+      taskCodes: ['PA.VI.A','PA.VI.B','PA.VI.C','PA.VI.D'],
+    },
+    {
+      id: 'emergencies',
+      label: 'Emergencies',
+      subtitle: 'Emergency descent, engine out, systems malfunctions',
+      emoji: '🚨',
+      color: '#c0392b',
+      taskCodes: ['PA.IX.A','PA.IX.B','PA.IX.C','PA.IX.D'],
+    },
+    {
+      id: 'review',
+      label: 'Full Review',
+      subtitle: 'All ACS tasks — use for checkride prep or general review',
+      emoji: '📋',
+      color: '#475569',
+      taskCodes: [],
+    },
+  ];
+
+  const PREFLIGHT_POSTFLIGHT_CODES = [
+    'PA.II.A','PA.II.B','PA.II.C','PA.II.E',
+    'PA.III.A','PA.III.B','PA.III.C',
+    'PA.XII.A',
+  ];
+
+  const EMERGENCY_EXTRA_TASKS = [
+    'Wing Fire',
+    'Engine Fire',
+    'Engine Failure',
+    'Alternator Failure',
+  ];
 
   const flightTasks = rating ? ALL_ACS[rating.code].flatMap((area, ai) => 
     area.tasks
@@ -579,6 +655,7 @@ export default function FlightLesson() {
       cfi: meta.cfi,
       rating_code: rating?.code || 'ppl',
       rating_label: rating?.label || 'Private Pilot ASEL',
+      lessonType: lessonType || 'review',
       studentFlewSolo: meta.studentFlewSolo,
       notes: meta.notes,
       simDeviceType: meta.simDeviceType,
@@ -757,6 +834,13 @@ export default function FlightLesson() {
     }
 
     if (currentStep === 2) {
+      if (!lessonType) {
+        setStepValidationError('Please select a lesson type before continuing.');
+        return;
+      }
+    }
+
+    if (currentStep === 3) {
       const hasNightActivity =
         parseInt(meta.ldgNight || '0') > 0 ||
         parseFloat(meta.nightDual || '0') > 0 ||
@@ -1093,7 +1177,7 @@ export default function FlightLesson() {
                   onClick={handleNext}
                   className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2"
                 >
-                  Next: Flight Log
+                  Next: Lesson Type
                   <ChevronRight size={18} />
                 </button>
               </div>
@@ -1101,6 +1185,72 @@ export default function FlightLesson() {
           )}
 
           {currentStep === 2 && (
+            <>
+              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+                <h2 className="text-lg font-bold text-[#1a3a5c] mb-1">What type of lesson is this?</h2>
+                <p className="text-xs text-[#6b7280] mb-6">Preflight and postflight tasks are always included. Tap a tile to auto-advance.</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {LESSON_TYPE_TILES.map(tile => {
+                    const isSelected = lessonType === tile.id;
+                    return (
+                      <button
+                        key={tile.id}
+                        onClick={() => {
+                          setLessonType(tile.id);
+                          setStepValidationError(null);
+                          setTimeout(() => {
+                            setDirection(1);
+                            setCurrentStep(3);
+                            window.scrollTo(0, 0);
+                          }, 150);
+                        }}
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border-2 transition-all hover:-translate-y-0.5 hover:shadow-lg text-center",
+                          isSelected
+                            ? "border-transparent shadow-lg scale-[1.02]"
+                            : "border-[#dde3ec] bg-white hover:border-[#1a3a5c]"
+                        )}
+                        style={isSelected ? { backgroundColor: tile.color, borderColor: tile.color } : {}}
+                      >
+                        <span className="text-3xl">{tile.emoji}</span>
+                        <span className={cn(
+                          "text-sm font-bold leading-tight",
+                          isSelected ? "text-white" : "text-[#1c2333]"
+                        )}>
+                          {tile.label}
+                        </span>
+                        <span className={cn(
+                          "text-[10px] leading-tight",
+                          isSelected ? "text-white/70" : "text-[#6b7280]"
+                        )}>
+                          {tile.subtitle}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-8">
+                <button
+                  onClick={handlePrev}
+                  className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2"
+                >
+                  <ChevronLeft size={18} />
+                  Back
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center gap-2"
+                >
+                  Next: Flight Log
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {currentStep === 3 && (
             <>
               <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
         <div
@@ -2208,7 +2358,7 @@ export default function FlightLesson() {
     </>
   )}
 
-  {currentStep === 3 && (
+  {currentStep === 4 && (
     <>
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -2259,105 +2409,126 @@ export default function FlightLesson() {
         </div>
 
         <div className="divide-y divide-[#dde3ec]">
-          {flightAreas.map((area, fi) => {
-            const ai = fi + 1;
-            if (area.tasks.length === 0) return null;
-            return (
-              <React.Fragment key={area.area}>
-                <div
-                  className="bg-[#1a3a5c] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center"
-                >
-                  <span>{area.area}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="opacity-60 font-normal text-[10px]">{area.tasks.length} tasks</span>
+          {(() => {
+            const selectedTile = LESSON_TYPE_TILES.find(t => t.id === lessonType);
+            const isReview = !lessonType || lessonType === 'review';
+
+            const shouldShowTask = (taskCode: string) => {
+              if (isReview) return true;
+              const specificCodes = selectedTile?.taskCodes || [];
+              return specificCodes.includes(taskCode) || PREFLIGHT_POSTFLIGHT_CODES.includes(taskCode);
+            };
+
+            return flightAreas.map((area, fi) => {
+              const ai = fi + 1;
+              const visibleTasks = area.tasks.filter(task => shouldShowTask(task.code));
+              if (visibleTasks.length === 0) return null;
+              return (
+                <React.Fragment key={area.area}>
+                  <div className="bg-[#1a3a5c] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center">
+                    <span>{area.area}</span>
+                    <span className="opacity-60 font-normal text-[10px]">{visibleTasks.length} tasks</span>
                   </div>
-                </div>
-                {area.tasks.map((task, ti) => {
-                  const id = `${ai}_${ti}`;
-                  const g = grades[id] || '';
-                  const n = notes[id] || '';
-                  const isExpanded = expandedTasks[id];
-                  return (
-                    <div key={id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
-                      <div className="p-4">
-                        <div
-                          onClick={() => toggleExpand(id)}
-                          className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
-                        >
-                          {task.name}
-                          {task.stds && task.stds.length > 0 && (
-                            <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
+                  {visibleTasks.map((task) => {
+                    const ti = area.tasks.indexOf(task);
+                    const id = `${ai}_${ti}`;
+                    const g = grades[id] || '';
+                    const n = notes[id] || '';
+                    const isExpanded = expandedTasks[id];
+                    const isEmergencyMalfunction = task.code === 'PA.IX.C';
+                    return (
+                      <div key={id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
+                        <div className="p-4">
+                          <div
+                            onClick={() => toggleExpand(id)}
+                            className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
+                          >
+                            {task.name}
+                            {(task.stds && task.stds.length > 0) || isEmergencyMalfunction ? (
+                              <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
+                            ) : null}
+                          </div>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              className="mt-3 p-3 bg-[#d4e8f5] rounded-lg border-l-4 border-[#2a5a8c] space-y-1.5"
+                            >
+                              {task.stds && task.stds.map((std, idx) => (
+                                <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
+                                  <span className="opacity-40 shrink-0">·</span>
+                                  <span>{std.code} — {std.description}</span>
+                                </div>
+                              ))}
+                              {isEmergencyMalfunction && lessonType === 'emergencies' && (
+                                <div className="mt-2 pt-2 border-t border-[#2a5a8c]/20">
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] opacity-60 mb-1.5">Also includes:</p>
+                                  {EMERGENCY_EXTRA_TASKS.map((extra, idx) => (
+                                    <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
+                                      <span className="opacity-40 shrink-0">·</span>
+                                      <span>{extra}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </motion.div>
                           )}
                         </div>
-                        {isExpanded && task.stds && task.stds.length > 0 && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            className="mt-3 p-3 bg-[#d4e8f5] rounded-lg border-l-4 border-[#2a5a8c] space-y-1.5"
+                        <div className="flex items-start justify-center p-2 pt-4 border-x border-[#dde3ec]">
+                          <button
+                            onClick={() => handleGradeCycle(id)}
+                            className={cn(
+                              "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
+                              g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                              g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
+                              "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                            )}
                           >
-                            {task.stds.map((std, idx) => (
-                              <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
-                                <span className="opacity-40 shrink-0">·</span>
-                                <span>{std.code} — {std.description}</span>
-                              </div>
-                            ))}
-                          </motion.div>
-                        )}
-                      </div>
-                      <div className="flex items-start justify-center p-2 pt-4 border-x border-[#dde3ec]">
-                        <button
-                          onClick={() => handleGradeCycle(id)}
-                          className={cn(
-                            "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
-                            g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                            g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
-                            "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                            {g || '—'}
+                          </button>
+                        </div>
+                        <div className="p-2 pt-3 pr-4 relative group">
+                          <textarea
+                            value={n}
+                            onChange={(e) => handleNoteChange(id, e.target.value)}
+                            placeholder="Notes..."
+                            rows={expandedNotes[id] ? undefined : 1}
+                            className={cn(
+                              "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
+                              expandedNotes[id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
+                            )}
+                            onInput={(e) => {
+                              if (expandedNotes[id]) {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = target.scrollHeight + 'px';
+                              }
+                            }}
+                            ref={(el) => {
+                              if (el && expandedNotes[id]) {
+                                el.style.height = 'auto';
+                                el.style.height = el.scrollHeight + 'px';
+                              }
+                            }}
+                          />
+                          {!expandedNotes[id] && n.length > 0 && (
+                            <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
                           )}
-                        >
-                          {g || '—'}
-                        </button>
+                          <button
+                            onClick={() => toggleNoteExpand(id)}
+                            className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
+                            title={expandedNotes[id] ? "Collapse Notes" : "Expand Notes"}
+                          >
+                            {expandedNotes[id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                        </div>
                       </div>
-                      <div className="p-2 pt-3 pr-4 relative group">
-                        <textarea
-                          value={n}
-                          onChange={(e) => handleNoteChange(id, e.target.value)}
-                          placeholder="Notes..."
-                          rows={expandedNotes[id] ? undefined : 1}
-                          className={cn(
-                            "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
-                            expandedNotes[id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
-                          )}
-                          onInput={(e) => {
-                            if (expandedNotes[id]) {
-                              const target = e.target as HTMLTextAreaElement;
-                              target.style.height = 'auto';
-                              target.style.height = target.scrollHeight + 'px';
-                            }
-                          }}
-                          ref={(el) => {
-                            if (el && expandedNotes[id]) {
-                              el.style.height = 'auto';
-                              el.style.height = el.scrollHeight + 'px';
-                            }
-                          }}
-                        />
-                        {!expandedNotes[id] && n.length > 0 && (
-                          <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
-                        )}
-                        <button
-                          onClick={() => toggleNoteExpand(id)}
-                          className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
-                          title={expandedNotes[id] ? "Collapse Notes" : "Expand Notes"}
-                        >
-                          {expandedNotes[id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            );
-          })}
+                    );
+                  })}
+                </React.Fragment>
+              );
+            });
+          })()}
         </div>
       </div>
 
