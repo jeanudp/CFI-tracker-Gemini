@@ -274,13 +274,14 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
       <div
         className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         onWheel={e => e.stopPropagation()}
+        onTouchMove={e => e.stopPropagation()}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-          style={{ maxHeight: '90vh' }}
+          style={{ height: '85vh', maxHeight: '700px' }}
         >
           {/* Modal header */}
           <div className="px-6 py-4 border-b border-[#dde3ec] flex items-center justify-between bg-[#1a3a5c] shrink-0">
@@ -305,7 +306,7 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
           {/* Step: Select */}
           {step === 'select' && (
             <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-2">
                 {(() => {
                   const CHECKRIDE_KEYS = ['A.1', 'A.2', 'A.36', 'A.37'];
                   const checkrideEndorsements = PPL_ENDORSEMENTS.filter(e => CHECKRIDE_KEYS.includes(e.key));
@@ -382,7 +383,7 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
           {/* Step: Fill */}
           {step === 'fill' && (
             <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-6">
                 {/* CFI Info — applies to all endorsements */}
                 <div className="bg-[#1a3a5c] rounded-xl overflow-hidden shadow-sm">
                   <div className="px-4 py-3 flex items-center gap-2">
