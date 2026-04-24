@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
 import { Printer, X, ChevronRight, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -156,6 +157,27 @@ export default function EndorsementPrinter({ onClose }: EndorsementPrinterProps)
   };
 
   const selectedEndorsements = PPL_ENDORSEMENTS.filter(e => selected.includes(e.key));
+
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase
+        .from('cfi_profile')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      if (data) {
+        setCfiInfo(prev => ({
+          ...prev,
+          name: data.full_name || '',
+          cert: data.cert_number || '',
+          reDate: data.re_exp_date || '',
+        }));
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank', 'width=900,height=700');

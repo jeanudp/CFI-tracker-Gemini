@@ -23,6 +23,10 @@ export default function CFIHours() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ flights: number, error: string | null } | null>(null);
   const [mfbSummary, setMfbSummary] = useState<any>(null);
+  const [cfiProfile, setCfiProfile] = useState<{ full_name: string; cert_number: string; re_exp_date: string } | null>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '' });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,6 +80,7 @@ export default function CFIHours() {
     runBackfill();
     fetchEntries();
     fetchMfbSummary();
+    fetchCfiProfile();
   }, []);
 
   const fetchMfbSummary = async () => {
@@ -177,6 +182,43 @@ export default function CFIHours() {
       setImporting(false);
       e.target.value = '';
     }
+  };
+
+  const fetchCfiProfile = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase
+      .from('cfi_profile')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (data) {
+      setCfiProfile(data);
+      setProfileDraft({ full_name: data.full_name || '', cert_number: data.cert_number || '', re_exp_date: data.re_exp_date || '' });
+    }
+  };
+
+  const saveCfiProfile = async () => {
+    setIsSavingProfile(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const payload = {
+      user_id: session.user.id,
+      full_name: profileDraft.full_name,
+      cert_number: profileDraft.cert_number,
+      re_exp_date: profileDraft.re_exp_date,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase
+      .from('cfi_profile')
+      .upsert(payload, { onConflict: 'user_id' })
+      .select()
+      .single();
+    if (!error && data) {
+      setCfiProfile(data);
+      setIsEditingProfile(false);
+    }
+    setIsSavingProfile(false);
   };
 
   const fetchFlightReviewDate = async (userId: string) => {
@@ -556,6 +598,86 @@ export default function CFIHours() {
           </div>
         </div>
       )}
+
+      {/* CFI Profile */}
+      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+        <div className="px-6 py-4 flex items-center justify-between border-b border-[#dde3ec] bg-[#f8fafc]">
+          <div>
+            <h3 className="text-sm font-bold text-[#1a3a5c]">CFI Profile</h3>
+            <p className="text-[10px] text-[#64748b]">Used to auto-fill endorsement print pages</p>
+          </div>
+          {!isEditingProfile && (
+            <button
+              onClick={() => setIsEditingProfile(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#1a3a5c] transition-all text-[10px] font-bold"
+            >
+              <Pencil size={12} />
+              {cfiProfile ? 'Edit' : 'Add Profile'}
+            </button>
+          )}
+        </div>
+        <div className="p-6">
+          {isEditingProfile ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith' },
+                  { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI' },
+                  { label: 'RE End Date / Exp. Date', key: 're_exp_date', placeholder: 'e.g. 12-31-2026' },
+                ].map(field => (
+                  <div key={field.key} className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
+                    <input
+                      type="text"
+                      value={profileDraft[field.key as keyof typeof profileDraft]}
+                      onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder}
+                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={saveCfiProfile}
+                  disabled={isSavingProfile}
+                  className="flex items-center gap-2 px-5 py-2 bg-[#1a3a5c] text-white text-xs font-bold rounded-xl hover:bg-[#2a5a8c] transition-all shadow-md disabled:opacity-50"
+                >
+                  {isSavingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  Save Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    if (cfiProfile) setProfileDraft({ full_name: cfiProfile.full_name || '', cert_number: cfiProfile.cert_number || '', re_exp_date: cfiProfile.re_exp_date || '' });
+                  }}
+                  className="px-5 py-2 bg-white text-[#6b7280] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : cfiProfile ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: 'Full Name', value: cfiProfile.full_name },
+                { label: 'CFI Certificate #', value: cfiProfile.cert_number },
+                { label: 'RE End Date / Exp. Date', value: cfiProfile.re_exp_date },
+              ].map(item => (
+                <div key={item.label}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">{item.label}</div>
+                  <div className="text-sm font-bold text-[#1a3a5c]">{item.value || '—'}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-[#94a3b8]">No profile saved yet. Click <strong>Add Profile</strong> to save your CFI details.</p>
+              <p className="text-[10px] text-[#94a3b8] mt-1">These will auto-fill when you print endorsements.</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
