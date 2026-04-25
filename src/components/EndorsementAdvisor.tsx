@@ -761,7 +761,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
 
       <AnimatePresence>
         {showPrinter && (
-          <EndorsementPrinter onClose={() => setShowPrinter(false)} />
+          <EndorsementPrinter onClose={() => setShowPrinter(false)} ratingCode={ratingCode} />
         )}
       </AnimatePresence>
 
