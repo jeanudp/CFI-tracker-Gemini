@@ -197,7 +197,7 @@ export default function EndorsementPrinter({ onClose, ratingCode = 'ppl' }: Endo
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overscroll-none touch-none"
       onWheel={e => e.stopPropagation()}
       onTouchMove={e => e.stopPropagation()}
     >

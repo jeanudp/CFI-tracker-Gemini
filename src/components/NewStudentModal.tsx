@@ -548,6 +548,10 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                     })}
                   </div>
 
+                  <p className="text-center text-[10px] mt-4" style={{ color: '#6b7280' }}>
+                    ASEL only · MEI includes AMEL · Other classes not yet supported.
+                  </p>
+
                   {/* Upgrade prompt */}
                   {subscription?.plan === 'free' && (
                     <div className="mt-5 space-y-3">

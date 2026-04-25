@@ -80,7 +80,7 @@ export default function About() {
             </p>
 
             <p>
-              Today, 61 Tracker is a dedicated platform for CFIs to manage their business without the clutter. It’s moving toward being an even more comprehensive digital assistant—one that not only tracks where your students are, but helps you predict when they'll be ready for the ride. It’s a tool built for the reality of flight training.
+              Today, 61 Tracker is a dedicated platform for CFIs to manage their business without the clutter. While the app currently focuses on ASEL and AMEL fixed-wing training, expansion to other aircraft classes is on the roadmap. It’s moving toward being an even more comprehensive digital assistant—one that not only tracks where your students are, but helps you predict when they'll be ready for the ride. It’s a tool built for the reality of flight training.
             </p>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun } from 'lucide-react';
 import TermsModal from './TermsModal';
@@ -308,6 +308,10 @@ export default function Landing() {
             </motion.div>
           ))}
         </motion.div>
+        
+        <p className="text-center text-[10px] mb-12" style={{ color: 'var(--text-muted)' }}>
+          Currently supports ASEL · MEI includes AMEL · Helicopters, gliders, and sport aircraft not yet supported.
+        </p>
       </div>
 
       {/* Pricing Section */}
@@ -554,22 +558,26 @@ export default function Landing() {
           61 Tracker · Built for CFIs · FAR Part 61
         </p>
         <div className="flex items-center justify-center gap-1 mt-2">
-          {['About', 'Contact', 'Privacy Policy', 'Terms of Service'].map((label, i, arr) => (
-            <React.Fragment key={label}>
-              <a
-                href="#"
-                className="text-[10px] transition-colors duration-200"
-                style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-              >
-                {label}
-              </a>
-              {i < arr.length - 1 && (
-                <span className="text-[10px]" style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
-              )}
-            </React.Fragment>
-          ))}
+          {['About', 'Contact', 'Privacy Policy', 'Terms of Service'].map((label, i, arr) => {
+            const path = label.toLowerCase().replace(/ /g, '-');
+            const to = `/${path === 'about' ? 'about' : path === 'contact' ? 'contact' : path === 'privacy-policy' ? 'privacy' : 'terms'}`;
+            return (
+              <React.Fragment key={label}>
+                <Link
+                  to={to}
+                  className="text-[10px] transition-colors duration-200"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  {label}
+                </Link>
+                {i < arr.length - 1 && (
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
       </footer>
     </div>
