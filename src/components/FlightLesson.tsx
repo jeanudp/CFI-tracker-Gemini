@@ -125,6 +125,7 @@ export default function FlightLesson() {
   const [direction, setDirection] = useState(1);
   const [lessonType, setLessonType] = useState<string>('review');
   const [stepValidationError, setStepValidationError] = useState<string | null>(null);
+  const [totalFlightError, setTotalFlightError] = useState(false);
   const [nightWarning, setNightWarning] = useState(false);
   const navigate = useNavigate();
 
@@ -929,6 +930,13 @@ export default function FlightLesson() {
     // Flight log step: step 3 with lesson type, step 2 without
     const flightLogStep = showLessonTypeStep ? 3 : 2;
     if (currentStep === flightLogStep) {
+      if (!meta.totalFlight || parseFloat(meta.totalFlight) <= 0) {
+        setTotalFlightError(true);
+        setStepValidationError('Total flight time is required.');
+        return;
+      }
+      setTotalFlightError(false);
+
       const hasNightActivity =
         parseInt(meta.ldgNight || '0') > 0 ||
         parseFloat(meta.nightDual || '0') > 0 ||
@@ -1377,16 +1385,32 @@ export default function FlightLesson() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={meta.totalFlight}
-                          onChange={(e) => handleMetaChange('totalFlight', e.target.value)}
-                          className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-                          placeholder="0.0"
-                        />
-                        <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={meta.totalFlight}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              handleMetaChange('totalFlight', val);
+                              if (parseFloat(val) > 0) {
+                                setTotalFlightError(false);
+                              }
+                            }}
+                            className={cn(
+                              "w-full text-sm font-bold font-mono border rounded-lg px-3 py-2 focus:outline-none transition-all",
+                              totalFlightError 
+                                ? "border-red-500 focus:border-red-500 bg-red-50" 
+                                : "border-[#dde3ec] focus:border-[#2a5a8c]"
+                            )}
+                            placeholder="0.0"
+                          />
+                          <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                        </div>
+                        {totalFlightError && (
+                          <p className="text-[9px] text-red-500 font-bold">Total flight time is required.</p>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-1.5">
