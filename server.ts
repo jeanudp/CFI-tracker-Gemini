@@ -50,6 +50,16 @@ async function startServer() {
     }
   });
 
+  app.post('/api/delete-account', async (req, res) => {
+    try {
+      const { default: handler } = await import('./api/delete-account.js');
+      await handler(req, res);
+    } catch (error) {
+      console.error('Error in delete-account handler:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   // API Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

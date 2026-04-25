@@ -44,47 +44,63 @@ export default function Auth() {
         if (error) throw error;
         navigate('/dashboard');
       } else {
-        // Validate invite code
         const code = inviteCode.trim().toUpperCase();
-        if (!code) throw new Error('An invite code is required to create an account.');
+        
+        // Validate invite code if provided
+        if (code) {
+          const { data: codeData, error: codeError } = await supabase
+            .from('invite_codes')
+            .select('*')
+            .eq('code', code)
+            .eq('used', false)
+            .single();
 
-        const { data: codeData, error: codeError } = await supabase
-          .from('invite_codes')
-          .select('*')
-          .eq('code', code)
-          .eq('used', false)
-          .single();
-
-        if (codeError || !codeData) {
-          throw new Error('Invalid or already used invite code. Please check your code and try again.');
+          if (codeError || !codeData) {
+            throw new Error('Invalid or already used invite code. Please check your code and try again.');
+          }
         }
 
         // Create the account
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { full_name: fullName } },
         });
         if (signUpError) throw signUpError;
 
-        // Mark invite code as used
-        await supabase
-          .from('invite_codes')
-          .update({
-            used: true,
-            used_by: email,
-            used_at: new Date().toISOString(),
-          })
-          .eq('code', code);
+        const { user, session } = signUpData;
 
-        // Set plan to invite for full access
-        await supabase
-          .from('user_subscriptions')
-          .update({
-            plan: 'invite',
-            ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
-          })
-          .eq('email', email);
+        if (code) {
+          // Mark invite code as used
+          await supabase
+            .from('invite_codes')
+            .update({
+              used: true,
+              used_by: email,
+              used_at: new Date().toISOString(),
+            })
+            .eq('code', code);
+
+          // Set plan to invite for full access
+          await supabase
+            .from('user_subscriptions')
+            .update({
+              plan: 'invite',
+              ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
+            })
+            .eq('email', email);
+        } else if (session && user) {
+          // No invite code: Free plan (only if session immediately available)
+          await supabase
+            .from('user_subscriptions')
+            .insert({
+              user_id: user.id,
+              email: email,
+              plan: 'free',
+              ratings_unlocked: ['ppl'],
+              status: 'active'
+            });
+        }
 
         setSuccess('Account created! Check your email to confirm, then sign in.');
         setIsLogin(true);
@@ -313,10 +329,9 @@ export default function Auth() {
                       <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                       <input
                         type="text"
-                        required
                         value={inviteCode}
                         onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                        placeholder="CFI-ALPHA-2024"
+                        placeholder="61T-XXXX-XXXX-XXXX"
                         className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border font-mono tracking-wider"
                         style={{
                           backgroundColor: 'var(--bg-tertiary)',
@@ -326,7 +341,7 @@ export default function Auth() {
                       />
                     </div>
                     <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                      61 Tracker is currently invite only. Contact us to request access.
+                      Optional — 61 Tracker is free until late 2026. Want all ratings? Email 61trckr@gmail.com for an invite code.
                     </p>
                   </div>
                 </>

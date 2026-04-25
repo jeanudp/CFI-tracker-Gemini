@@ -103,6 +103,19 @@ export default function Account() {
 
       await supabase.from('students').delete().eq('user_id', user.id);
       await supabase.from('user_subscriptions').delete().eq('user_id', user.id);
+
+      // Delete the Auth user account permanently
+      const deleteAuthResponse = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const deleteAuthData = await deleteAuthResponse.json();
+      if (!deleteAuthResponse.ok || deleteAuthData.error) {
+        throw new Error(deleteAuthData.error || 'Failed to delete authentication account');
+      }
+
       await supabase.auth.signOut();
       navigate('/');
     } catch (err: any) {
