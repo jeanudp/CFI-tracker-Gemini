@@ -15,6 +15,7 @@ export default function CFIHours() {
   const [entries, setEntries] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
+  const [isLogbookOpen, setIsLogbookOpen] = useState(false);
   const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
   const [flightReviewData, setFlightReviewData] = useState<any>(null);
   const [isEditingFlightReview, setIsEditingFlightReview] = useState(false);
@@ -960,106 +961,146 @@ export default function CFIHours() {
         </AnimatePresence>
       </div>
 
+      {/* Logbook Section */}
       <div className="space-y-4">
-        {/* Logbook Table */}
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={16} />
-            <input
-              type="text"
-              placeholder="Search by student name or date..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/10"
-            />
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#f8fafc] border-b border-[#dde3ec]">
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Date</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Student</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Aircraft</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Route</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Total</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Dual</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">XC PIC</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">R-ATP XC</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Night</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Inst</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Ldg</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f1f5f9]">
-                  {filteredEntries.map((e) => (
-                    <tr 
-                      key={e.id}
-                      onClick={() => navigate('/history')}
-                      className="hover:bg-[#f8fafc] cursor-pointer transition-colors group"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#1e293b]">
-                          <Calendar size={12} className="text-[#94a3b8]" />
-                          {e.date}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-[11px] font-bold text-[#1a3a5c]">{e.student_name}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="text-[11px] font-bold text-[#1e293b]">{e.aircraft}</span>
-                          <span className="text-[9px] text-[#64748b]">{e.aircraft_model}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 text-[11px] text-[#475569]">
-                          <MapPin size={12} className="text-[#94a3b8]" />
-                          {e.route || 'Local'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b]">{parseFloat(e.total_flight).toFixed(1)}</td>
-                      <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.dual_given).toFixed(1)}</td>
-                      <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-mono text-[#475569]">{parseFloat(e.ratp_xc || 0).toFixed(1)}</span>
-                          {e.ratp_xc_eligible && (
-                            <span className="text-[7px] font-bold bg-[#1a3a5c] text-white px-1 py-0.5 rounded uppercase tracking-tighter">R-ATP</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.night_dual).toFixed(1)}</td>
-                      <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.instrument_given).toFixed(1)}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-[10px] font-mono bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
-                          {e.day_landings}D/{e.night_landings}N
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-[#f8fafc] font-bold border-t border-[#dde3ec]">
-                    <td colSpan={4} className="px-4 py-3 text-[10px] uppercase tracking-widest text-[#64748b]">Totals</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalFlight.toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalDual.toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.xcPic.toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.ratpXc.toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.nightDual.toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.instrumentGiven.toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.dayLandings}D/{stats.nightLandings}N</td>
-                  </tr>
-                </tfoot>
-              </table>
+        <button
+          onClick={() => setIsLogbookOpen(!isLogbookOpen)}
+          className={cn(
+            "w-full px-6 py-4 flex items-center justify-between transition-colors bg-white rounded-2xl border border-[#dde3ec] shadow-sm",
+            isLogbookOpen && "bg-[#f8fafc] rounded-b-none border-b-0"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white border border-[#dde3ec] flex items-center justify-center text-[#1a3a5c] shadow-sm">
+              <Plane size={20} />
             </div>
-            {filteredEntries.length === 0 && (
-              <div className="p-8 text-center text-[#64748b] text-sm">
-                No CFI hours found matching your search.
-              </div>
-            )}
+            <div className="text-left">
+              <h3 className="text-sm font-bold text-[#1a3a5c]">Flight Logbook</h3>
+              <p className="text-[10px] text-[#64748b]">Historical instruction entries recorded in 61 Tracker</p>
+            </div>
           </div>
-        </div>
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1 rounded-full text-[10px] font-bold border border-[#dde3ec] bg-[#f8fafc] text-[#1a3a5c] shadow-sm">
+              {entries.length} Entries
+            </div>
+            <motion.div
+              animate={{ rotate: isLogbookOpen ? 180 : 0 }}
+              className="text-[#94a3b8]"
+            >
+              <ChevronDown size={20} />
+            </motion.div>
+          </div>
+        </button>
+
+        <AnimatePresence>
+          {isLogbookOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="bg-white rounded-b-2xl border border-t-0 border-[#dde3ec] shadow-sm overflow-hidden"
+            >
+              <div className="p-4 space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search by student name or date..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/10"
+                  />
+                </div>
+
+                <div className="border border-[#dde3ec] rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-[#f8fafc] border-b border-[#dde3ec]">
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Date</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Student</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Aircraft</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Route</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Total</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Dual</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">XC PIC</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">R-ATP XC</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Night</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Inst</th>
+                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Ldg</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#f1f5f9]">
+                        {filteredEntries.map((e) => (
+                          <tr 
+                            key={e.id}
+                            onClick={() => navigate('/history')}
+                            className="hover:bg-[#f8fafc] cursor-pointer transition-colors group"
+                          >
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#1e293b]">
+                                <Calendar size={12} className="text-[#94a3b8]" />
+                                {e.date}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-[11px] font-bold text-[#1a3a5c]">{e.student_name}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-col">
+                                <span className="text-[11px] font-bold text-[#1e293b]">{e.aircraft}</span>
+                                <span className="text-[9px] text-[#64748b]">{e.aircraft_model}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1 text-[11px] text-[#475569]">
+                                <MapPin size={12} className="text-[#94a3b8]" />
+                                {e.route || 'Local'}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b]">{parseFloat(e.total_flight).toFixed(1)}</td>
+                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.dual_given).toFixed(1)}</td>
+                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] font-mono text-[#475569]">{parseFloat(e.ratp_xc || 0).toFixed(1)}</span>
+                                {e.ratp_xc_eligible && (
+                                  <span className="text-[7px] font-bold bg-[#1a3a5c] text-white px-1 py-0.5 rounded uppercase tracking-tighter">R-ATP</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.night_dual).toFixed(1)}</td>
+                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.instrument_given).toFixed(1)}</td>
+                            <td className="px-4 py-3">
+                              <span className="text-[10px] font-mono bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
+                                {e.day_landings}D/{e.night_landings}N
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-[#f8fafc] font-bold border-t border-[#dde3ec]">
+                          <td colSpan={4} className="px-4 py-3 text-[10px] uppercase tracking-widest text-[#64748b]">Totals</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalFlight.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalDual.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.xcPic.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.ratpXc.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.nightDual.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.instrumentGiven.toFixed(1)}</td>
+                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.dayLandings}D/{stats.nightLandings}N</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  {filteredEntries.length === 0 && (
+                    <div className="p-8 text-center text-[#64748b] text-sm">
+                      No CFI hours found matching your search.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
