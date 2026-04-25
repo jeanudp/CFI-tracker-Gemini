@@ -146,6 +146,7 @@ export default function FlightLesson() {
 
   const isIR = rating?.code === 'ir';
   const isCPL = rating?.code === 'cpl';
+  const isCFI = ['cfi', 'cfii', 'mei'].includes(rating?.code);
 
   const CPL_LESSON_TYPE_TILES = [
     {
@@ -211,6 +212,69 @@ export default function FlightLesson() {
     'CA.II.A','CA.II.B','CA.II.C','CA.II.D','CA.II.E',
     'CA.III.A','CA.III.B','CA.III.C',
     'CA.XI.A',
+  ];
+
+  const CFI_LESSON_TYPE_TILES = [
+    {
+      id: 'landings',
+      label: 'Landings',
+      subtitle: 'Takeoffs, approaches, landings, power-off 180°',
+      emoji: '🛬',
+      color: '#1a3a5c',
+      taskCodes: ['AI.VI.A', 'AI.VI.B', 'AI.VII.A', 'AI.VII.B', 'AI.VII.C', 'AI.VII.D', 'AI.VII.E', 'AI.VII.F', 'AI.VII.M', 'AI.VII.N', 'AI.VII.O'],
+    },
+    {
+      id: 'ground-ref',
+      label: 'Ground Reference',
+      subtitle: 'Rectangular course, S-turns, turns around a point',
+      emoji: '🔄',
+      color: '#2d7a4f',
+      taskCodes: ['AI.IX.E.S3a', 'AI.IX.E.S3b', 'AI.IX.E.S3c', 'AI.IX.F'],
+    },
+    {
+      id: 'performance',
+      label: 'Performance',
+      subtitle: 'Steep turns, spirals, chandelles, lazy eights',
+      emoji: '⚡',
+      color: '#7c3aed',
+      taskCodes: ['AI.IX.A', 'AI.IX.B', 'AI.IX.C', 'AI.IX.D'],
+    },
+    {
+      id: 'stalls',
+      label: 'Slow Flight Stalls and Spins',
+      subtitle: 'Slow flight, various stalls, spin awareness',
+      emoji: '🌀',
+      color: '#0891b2',
+      taskCodes: ['AI.X.A', 'AI.X.B', 'AI.X.C', 'AI.X.D', 'AI.X.E', 'AI.X.F', 'AI.X.G', 'AI.X.H', 'AI.X.I'],
+    },
+    {
+      id: 'emergencies',
+      label: 'Emergencies',
+      subtitle: 'Emergency descent, approach, malfunctions',
+      emoji: '🚨',
+      color: '#c0392b',
+      taskCodes: ['AI.XII.A', 'AI.XII.B', 'AI.XII.C', 'AI.XII.D'],
+    },
+    {
+      id: 'instrument',
+      label: 'Basic Instrument',
+      subtitle: 'Straight & level, climbs, descents, unusual attitudes',
+      emoji: '🎯',
+      color: '#0d9488',
+      taskCodes: ['AI.VIII.A', 'AI.VIII.B', 'AI.VIII.C', 'AI.VIII.D', 'AI.XI.A', 'AI.XI.B', 'AI.XI.C', 'AI.XI.D', 'AI.XI.E'],
+    },
+    {
+      id: 'review',
+      label: 'Full Review',
+      subtitle: 'All CFI ACS tasks — use for checkride prep or general review',
+      emoji: '📋',
+      color: '#475569',
+      taskCodes: [],
+    },
+  ];
+
+  const CFI_PREFLIGHT_POSTFLIGHT_CODES = [
+    'AI.V.A', 'AI.V.B', 'AI.V.C', 'AI.V.D', 'AI.V.E', 'AI.V.F', 'AI.XIV.A'
   ];
 
   const LESSON_TYPE_TILES = [
@@ -279,8 +343,8 @@ export default function FlightLesson() {
   ];
 
   const showLessonTypeStep = rating?.code !== 'ir';
-  const activeTiles = isCPL ? CPL_LESSON_TYPE_TILES : LESSON_TYPE_TILES;
-  const activePrefPostCodes = isCPL ? CPL_PREFLIGHT_POSTFLIGHT_CODES : PREFLIGHT_POSTFLIGHT_CODES;
+  const activeTiles = isCFI ? CFI_LESSON_TYPE_TILES : (isCPL ? CPL_LESSON_TYPE_TILES : LESSON_TYPE_TILES);
+  const activePrefPostCodes = isCFI ? CFI_PREFLIGHT_POSTFLIGHT_CODES : (isCPL ? CPL_PREFLIGHT_POSTFLIGHT_CODES : PREFLIGHT_POSTFLIGHT_CODES);
 
   const steps = showLessonTypeStep ? [
     { number: 1, label: 'Lesson Setup', icon: ClipboardList },
