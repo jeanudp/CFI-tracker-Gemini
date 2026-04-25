@@ -92,6 +92,61 @@ const ENDORSEMENTS_DATA: Record<string, { ref: string; title: string; text: stri
     title: 'Flight proficiency / practical test — Private Pilot',
     text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.107 and 61.109. I have determined they are prepared for the [name of] practical test.',
   },
+  'A.38': {
+    ref: '14 CFR §§ 61.35(a)(1), 61.123(c), and 61.125',
+    title: 'Aeronautical knowledge test — Commercial Pilot',
+    text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR § 61.125. I have determined they are prepared for the [name of] knowledge test.',
+  },
+  'A.39': {
+    ref: '14 CFR §§ 61.123(e), 61.127, and 61.129',
+    title: 'Flight proficiency / practical test — Commercial Pilot',
+    text: 'I certify that [First name, MI, Last name] has received the required training in accordance with 14 CFR §§ 61.127 and 61.129. I have determined they are prepared for the [name of] practical test.',
+  },
+  'A.42': {
+    ref: '14 CFR §§ 61.35(a)(1) and 61.65(a) and (b)',
+    title: 'Aeronautical knowledge test — Instrument Rating',
+    text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.65(b). I have determined that they are prepared for the Instrument–airplane knowledge test.',
+  },
+  'A.43': {
+    ref: '14 CFR § 61.65(a)(6)',
+    title: 'Flight proficiency / practical test — Instrument Rating',
+    text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.65(c) and (d). I have determined they are prepared for the Instrument–airplane practical test.',
+  },
+  'A.44': {
+    ref: '14 CFR § 61.39(a)',
+    title: 'Prerequisites for instrument practical test',
+    text: 'I certify that [First name, MI, Last name] has received and logged the required flight time/training of 14 CFR § 61.39(a) in preparation for the practical test within 2 calendar months preceding the date of the test and has satisfactory knowledge of the subject areas in which they were shown to be deficient by the FAA Airman Knowledge Test Report. I have determined they are prepared for the Instrument–airplane practical test.',
+  },
+  'A.45': {
+    ref: '14 CFR § 61.183(d)',
+    title: 'Fundamentals of instructing knowledge test',
+    text: 'I certify that [First name, MI, Last name] has received a home study course on the fundamentals of instructing from [name of course]. I have reviewed the course and determined it meets the requirements of 14 CFR § 61.185(a)(1).',
+  },
+  'A.46': {
+    ref: '14 CFR § 61.183(f)',
+    title: 'Flight instructor aeronautical knowledge test',
+    text: 'I certify that [First name, MI, Last name] has received the required ground training of 14 CFR § 61.185. I have determined they are prepared for the flight instructor aeronautical knowledge test.',
+  },
+  'A.47': {
+    ref: '14 CFR § 61.183(g)',
+    title: 'Flight instructor ground and flight proficiency / practical test',
+    text: 'I certify that [First name, MI, Last name] has received the required ground and flight training of 14 CFR § 61.187. I have determined they are prepared for the [name of] flight instructor practical test.',
+  },
+  'A.48': {
+    ref: '14 CFR §§ 61.183(g) and 61.187(a) and (b)(7)',
+    title: 'Flight instructor with instrument rating / practical test',
+    text: 'I certify that [First name, MI, Last name] has received the required ground and flight training of 14 CFR § 61.187(b)(7). I have determined they are prepared for the flight instructor with instrument rating practical test.',
+  },
+  'A.49': {
+    ref: '14 CFR § 61.183(i)(1)',
+    title: 'Spin training',
+    text: 'I certify that [First name, MI, Last name] has received the required training in spin entry, spins, and spin recovery procedures in accordance with 14 CFR § 61.183(i)(1).',
+  },
+  'A.77': {
+    ref: '14 CFR § 61.49',
+    title: 'Retesting after failure of knowledge or practical test',
+    text: 'I certify that [First name, MI, Last name] has received the additional training required for retesting by 14 CFR § 61.49. I have determined that they are prepared for the [name of] [knowledge/practical] test.',
+  },
 };
 
 type Scenario =
@@ -180,8 +235,47 @@ const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNo
   },
 ];
 
+const IR_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+  { id: 'checkride', label: 'Knowledge Test', sub: 'A.42', icon: <Award size={20} />, color: '#7c3aed', required: ['A.42'] },
+  { id: 'xc-review', label: 'Practical Test Prerequisites', sub: 'A.1, A.2, A.44', icon: <CheckCircle size={20} />, color: '#1a3a5c', required: ['A.1', 'A.2', 'A.44'] },
+  { id: 'solo-90day', label: 'Practical Test Endorsement', sub: 'A.43', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.43'] },
+];
+
+const CPL_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+  { id: 'checkride', label: 'Knowledge Test', sub: 'A.38', icon: <Award size={20} />, color: '#2d7a4f', required: ['A.38'] },
+  { id: 'xc-review', label: 'Practical Test Prerequisites', sub: 'A.1, A.2', icon: <CheckCircle size={20} />, color: '#1a3a5c', required: ['A.1', 'A.2'] },
+  { id: 'solo-90day', label: 'Practical Test Endorsement', sub: 'A.39', icon: <Plane size={20} />, color: '#e67e22', required: ['A.39'] },
+  { id: 'solo-classb', label: 'Retesting After Failure', sub: 'A.77', icon: <RefreshCw size={20} />, color: '#c0392b', required: ['A.77'] },
+];
+
+const CFI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+  { id: 'checkride', label: 'FOI Knowledge Test', sub: 'A.45', icon: <Award size={20} />, color: '#1a3a5c', required: ['A.45'] },
+  { id: 'xc-review', label: 'CFI Knowledge Test', sub: 'A.46', icon: <CheckCircle size={20} />, color: '#7c3aed', required: ['A.46'] },
+  { id: 'solo-90day', label: 'Spin Training', sub: 'A.49', icon: <RefreshCw size={20} />, color: '#0891b2', required: ['A.49'] },
+  { id: 'solo-beyond-50', label: 'Practical Test Prerequisites', sub: 'A.1, A.2', icon: <MapPin size={20} />, color: '#e67e22', required: ['A.1', 'A.2'] },
+  { id: 'solo-classb', label: 'Practical Test Endorsement', sub: 'A.47', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.47'] },
+];
+
+const CFII_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+  { id: 'xc-review', label: 'CFI Knowledge Test', sub: 'A.46', icon: <CheckCircle size={20} />, color: '#7c3aed', required: ['A.46'] },
+  { id: 'solo-beyond-50', label: 'Practical Test Prerequisites', sub: 'A.1, A.2', icon: <MapPin size={20} />, color: '#1a3a5c', required: ['A.1', 'A.2'] },
+  { id: 'checkride', label: 'Practical Test Endorsement', sub: 'A.48', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.48'] },
+];
+
+const MEI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+  { id: 'xc-review', label: 'CFI Knowledge Test', sub: 'A.46', icon: <CheckCircle size={20} />, color: '#7c3aed', required: ['A.46'] },
+  { id: 'solo-beyond-50', label: 'Practical Test Prerequisites', sub: 'A.1, A.2', icon: <MapPin size={20} />, color: '#1a3a5c', required: ['A.1', 'A.2'] },
+  { id: 'checkride', label: 'Practical Test Endorsement', sub: 'A.47', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.47'] },
+];
+
 export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: EndorsementAdvisorProps) {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
+  const activeScenarios = ratingCode === 'ir' ? IR_SCENARIOS
+    : ratingCode === 'cpl' ? CPL_SCENARIOS
+    : ratingCode === 'cfi' ? CFI_SCENARIOS
+    : ratingCode === 'cfii' ? CFII_SCENARIOS
+    : ratingCode === 'mei' ? MEI_SCENARIOS
+    : SCENARIOS;
   const [showPrinter, setShowPrinter] = useState(false);
   const [classBChoice, setClassBChoice] = useState<'airspace' | 'airport' | 'both' | null>(null);
   const [routeChoice, setRouteChoice] = useState<'repeated' | 'new' | null>(null);
@@ -340,6 +434,12 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
   };
 
   const getEndorsementsForScenario = (scenario: Scenario): string[] => {
+    // For non-PPL ratings, look up the required keys from the active scenario list
+    if (ratingCode !== 'ppl') {
+      const found = activeScenarios.find(s => s.id === scenario);
+      return found?.required || [];
+    }
+    // PPL logic unchanged
     if (scenario === 'first-solo') return ['A.3', 'A.4', 'A.6'];
     if (scenario === 'solo-night') return ['A.5'];
     if (scenario === 'solo-within-25') return ['A.8', 'A.11'];
@@ -522,8 +622,8 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {SCENARIOS.map(s => {
-                  const endorsementsForScenario = s.id === 'solo-classb'
+                {activeScenarios.map(s => {
+                  const endorsementsForScenario = ratingCode === 'ppl' && s.id === 'solo-classb'
                     ? ['A.12', 'A.13']
                     : s.required;
                   const allGiven = endorsementsForScenario.every(k => savedEndorsements[k]);
@@ -532,7 +632,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                     <button
                       key={s.id}
                       onClick={() => {
-                      if (s.id === 'first-solo') {
+                      if (ratingCode === 'ppl' && s.id === 'first-solo') {
                         setShowSoloChecklist(true);
                       } else {
                         setSelectedScenario(s.id);
@@ -577,7 +677,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                   </button>
                   <div>
                     <p className="text-2xl font-black text-[#1a3a5c] tracking-tight decoration-[#e8a020] decoration-4 underline-offset-4">
-                      {SCENARIOS.find(s => s.id === selectedScenario)?.label}
+                      {activeScenarios.find(s => s.id === selectedScenario)?.label}
                     </p>
                     <p className="text-sm text-[#64748b]">Found {getEndorsementsForScenario(selectedScenario).length} required endorsements for this scenario</p>
                   </div>
@@ -593,7 +693,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
               </div>
 
               {/* Class B sub-choice */}
-              {selectedScenario === 'solo-classb' && !classBChoice && (
+              {ratingCode === 'ppl' && selectedScenario === 'solo-classb' && !classBChoice && (
                 <div className="space-y-4 max-w-2xl">
                   <h3 className="text-lg font-bold text-[#1a3a5c]">What type of Class B operation?</h3>
                   <div className="grid grid-cols-1 gap-3">
@@ -616,7 +716,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
               )}
 
               {/* 25-50 NM sub-choice */}
-              {selectedScenario === 'solo-25-to-50' && !routeChoice && (
+              {ratingCode === 'ppl' && selectedScenario === 'solo-25-to-50' && !routeChoice && (
                 <div className="space-y-4 max-w-2xl">
                   <h3 className="text-lg font-bold text-[#1a3a5c]">What type of flight is this?</h3>
                   <div className="grid grid-cols-1 gap-3">
@@ -639,7 +739,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
               )}
 
               {/* Endorsement cards */}
-              {(selectedScenario !== 'solo-classb' || classBChoice) && (selectedScenario !== 'solo-25-to-50' || routeChoice) && (
+              {(ratingCode !== 'ppl' || (selectedScenario !== 'solo-classb' || classBChoice) && (selectedScenario !== 'solo-25-to-50' || routeChoice)) && (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   {getEndorsementsForScenario(selectedScenario).map(key => renderEndorsementCard(key))}
                 </div>
