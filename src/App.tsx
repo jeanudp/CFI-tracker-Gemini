@@ -18,6 +18,10 @@ import CFIHours from './components/CFIHours';
 import Landing from './components/Landing';
 import Admin from './components/Admin';
 import Account from './components/Account';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import About from './pages/About';
+import Contact from './pages/Contact';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -112,6 +116,10 @@ export default function App() {
           path="/"
           element={<Landing />}
         />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
 
         <Route
           path="/dashboard"

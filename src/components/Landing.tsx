@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun } from 'lucide-react';
+import TermsModal from './TermsModal';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function Landing() {
         backgroundAttachment: 'fixed',
       }}
     >
+      <TermsModal />
       {/* Top bar */}
       <div
         className="flex justify-end px-6 py-4 border-b backdrop-blur-sm"
