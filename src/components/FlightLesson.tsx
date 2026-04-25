@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_ACS, RATINGS } from '../constants';
+import { IR_FLIGHT_ACS } from '../constants/irACS';
 import { AIRCRAFT_MODELS, isAMEL } from '../constants/aircraft';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -142,7 +143,143 @@ export default function FlightLesson() {
     })
   };
 
+  const isIR = rating?.code === 'ir';
+  const isCPL = rating?.code === 'cpl';
+
+  const CPL_LESSON_TYPE_TILES = [
+    {
+      id: 'landings',
+      label: 'Landings',
+      subtitle: 'Takeoffs, approaches, go-arounds, power-off 180°',
+      emoji: '🛬',
+      color: '#1a3a5c',
+      taskCodes: ['CA.IV.A','CA.IV.B','CA.IV.C','CA.IV.D','CA.IV.E','CA.IV.F','CA.IV.G','CA.IV.H','CA.IV.I'],
+    },
+    {
+      id: 'performance',
+      label: 'Performance & Ground Reference',
+      subtitle: 'Steep turns, spirals, chandelles, lazy eights, eights on pylons',
+      emoji: '⚡',
+      color: '#7c3aed',
+      taskCodes: ['CA.V.A','CA.V.B','CA.V.C','CA.V.D','CA.VI.A'],
+    },
+    {
+      id: 'stalls',
+      label: 'Slow Flight & Stalls',
+      subtitle: 'Slow flight, power-off/on stalls, accelerated stalls, spin awareness',
+      emoji: '🌀',
+      color: '#0891b2',
+      taskCodes: ['CA.VIII.A','CA.VIII.B','CA.VIII.C','CA.VIII.D','CA.VIII.E'],
+    },
+    {
+      id: 'instrument',
+      label: 'Basic Instrument',
+      subtitle: 'Full IR flight ACS — for students without instrument rating',
+      emoji: '🎯',
+      color: '#1a5c3a',
+      taskCodes: [],
+      isIRTasks: true,
+    },
+    {
+      id: 'cross-country',
+      label: 'Cross-Country',
+      subtitle: 'Pilotage, nav systems, diversion, lost procedures',
+      emoji: '🗺️',
+      color: '#e67e22',
+      taskCodes: ['CA.VII.A','CA.VII.B','CA.VII.C','CA.VII.D'],
+    },
+    {
+      id: 'emergencies',
+      label: 'Emergencies',
+      subtitle: 'Oxygen, pressurization, emergency descent, malfunctions',
+      emoji: '🚨',
+      color: '#c0392b',
+      taskCodes: ['CA.IX.A','CA.IX.B','CA.X.A','CA.X.B','CA.X.C','CA.X.D'],
+    },
+    {
+      id: 'review',
+      label: 'Full Review',
+      subtitle: 'All ACS tasks — use for checkride prep or general review',
+      emoji: '📋',
+      color: '#475569',
+      taskCodes: [],
+    },
+  ];
+
+  const CPL_PREFLIGHT_POSTFLIGHT_CODES = [
+    'CA.II.A','CA.II.B','CA.II.C','CA.II.D','CA.II.E',
+    'CA.III.A','CA.III.B','CA.III.C',
+    'CA.XI.A',
+  ];
+
+  const LESSON_TYPE_TILES = [
+    {
+      id: 'landings',
+      label: 'Landings',
+      subtitle: 'Takeoffs, approaches, go-arounds',
+      emoji: '🛬',
+      color: '#1a3a5c',
+      taskCodes: ['PA.IV.A','PA.IV.B','PA.IV.C','PA.IV.D','PA.IV.E','PA.IV.F','PA.IV.G','PA.IV.H'],
+    },
+    {
+      id: 'ground-maneuvers',
+      label: 'Ground Maneuvers',
+      subtitle: 'S-turns, rectangular course, turns around a point',
+      emoji: '🔄',
+      color: '#2d7a4f',
+      taskCodes: ['PA.V.B1', 'PA.V.B2', 'PA.V.B3'],
+    },
+    {
+      id: 'performance',
+      label: 'Performance',
+      subtitle: 'Steep turns, stalls, slow flight, spin awareness',
+      emoji: '⚡',
+      color: '#7c3aed',
+      taskCodes: ['PA.V.A','PA.VII.A','PA.VII.B','PA.VII.C','PA.VII.D'],
+    },
+    {
+      id: 'instrument',
+      label: 'Basic Instrument',
+      subtitle: 'Straight & level, climbs, descents, unusual attitudes',
+      emoji: '🎯',
+      color: '#0891b2',
+      taskCodes: ['PA.VIII.A','PA.VIII.B','PA.VIII.C','PA.VIII.D','PA.VIII.E','PA.VIII.F'],
+    },
+    {
+      id: 'cross-country',
+      label: 'Cross-Country',
+      subtitle: 'Pilotage, nav systems, diversion, lost procedures',
+      emoji: '🗺️',
+      color: '#e67e22',
+      taskCodes: ['PA.VI.A','PA.VI.B','PA.VI.C','PA.VI.D'],
+    },
+    {
+      id: 'emergencies',
+      label: 'Emergencies',
+      subtitle: 'Emergency descent, engine out, systems malfunctions',
+      emoji: '🚨',
+      color: '#c0392b',
+      taskCodes: ['PA.IX.A','PA.IX.B','PA.IX.C','PA.IX.D'],
+    },
+    {
+      id: 'review',
+      label: 'Full Review',
+      subtitle: 'All ACS tasks — use for checkride prep or general review',
+      emoji: '📋',
+      color: '#475569',
+      taskCodes: [],
+    },
+  ];
+
+  const PREFLIGHT_POSTFLIGHT_CODES = [
+    'PA.II.A','PA.II.B','PA.II.C','PA.II.E',
+    'PA.III.A','PA.III.B','PA.III.C',
+    'PA.XII.A',
+  ];
+
   const showLessonTypeStep = rating?.code !== 'ir';
+  const activeTiles = isCPL ? CPL_LESSON_TYPE_TILES : LESSON_TYPE_TILES;
+  const activePrefPostCodes = isCPL ? CPL_PREFLIGHT_POSTFLIGHT_CODES : PREFLIGHT_POSTFLIGHT_CODES;
 
   const steps = showLessonTypeStep ? [
     { number: 1, label: 'Lesson Setup', icon: ClipboardList },
@@ -275,71 +412,6 @@ export default function FlightLesson() {
       }
     });
   }, [navigate]);
-
-  const LESSON_TYPE_TILES = [
-    {
-      id: 'landings',
-      label: 'Landings',
-      subtitle: 'Takeoffs, approaches, go-arounds',
-      emoji: '🛬',
-      color: '#1a3a5c',
-      taskCodes: ['PA.IV.A','PA.IV.B','PA.IV.C','PA.IV.D','PA.IV.E','PA.IV.F','PA.IV.G','PA.IV.H'],
-    },
-    {
-      id: 'ground-maneuvers',
-      label: 'Ground Maneuvers',
-      subtitle: 'S-turns, rectangular course, turns around a point',
-      emoji: '🔄',
-      color: '#2d7a4f',
-      taskCodes: ['PA.V.B1', 'PA.V.B2', 'PA.V.B3'],
-    },
-    {
-      id: 'performance',
-      label: 'Performance',
-      subtitle: 'Steep turns, stalls, slow flight, spin awareness',
-      emoji: '⚡',
-      color: '#7c3aed',
-      taskCodes: ['PA.V.A','PA.VII.A','PA.VII.B','PA.VII.C','PA.VII.D'],
-    },
-    {
-      id: 'instrument',
-      label: 'Basic Instrument',
-      subtitle: 'Straight & level, climbs, descents, unusual attitudes',
-      emoji: '🎯',
-      color: '#0891b2',
-      taskCodes: ['PA.VIII.A','PA.VIII.B','PA.VIII.C','PA.VIII.D','PA.VIII.E','PA.VIII.F'],
-    },
-    {
-      id: 'cross-country',
-      label: 'Cross-Country',
-      subtitle: 'Pilotage, nav systems, diversion, lost procedures',
-      emoji: '🗺️',
-      color: '#e67e22',
-      taskCodes: ['PA.VI.A','PA.VI.B','PA.VI.C','PA.VI.D'],
-    },
-    {
-      id: 'emergencies',
-      label: 'Emergencies',
-      subtitle: 'Emergency descent, engine out, systems malfunctions',
-      emoji: '🚨',
-      color: '#c0392b',
-      taskCodes: ['PA.IX.A','PA.IX.B','PA.IX.C','PA.IX.D'],
-    },
-    {
-      id: 'review',
-      label: 'Full Review',
-      subtitle: 'All ACS tasks — use for checkride prep or general review',
-      emoji: '📋',
-      color: '#475569',
-      taskCodes: [],
-    },
-  ];
-
-  const PREFLIGHT_POSTFLIGHT_CODES = [
-    'PA.II.A','PA.II.B','PA.II.C','PA.II.E',
-    'PA.III.A','PA.III.B','PA.III.C',
-    'PA.XII.A',
-  ];
 
   const EMERGENCY_EXTRA_TASKS = [
     'Wing Fire',
@@ -1206,7 +1278,7 @@ export default function FlightLesson() {
                 <h2 className="text-lg font-bold text-[#1a3a5c] mb-1">What type of lesson is this?</h2>
                 <p className="text-xs text-[#6b7280] mb-6">Preflight and postflight tasks are always included. Tap a tile to auto-advance.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {LESSON_TYPE_TILES.map(tile => {
+                  {activeTiles.map(tile => {
                     const isSelected = lessonType === tile.id;
                     return (
                       <button
@@ -2426,15 +2498,158 @@ export default function FlightLesson() {
 
         <div className="divide-y divide-[#dde3ec]">
           {(() => {
-            const selectedTile = LESSON_TYPE_TILES.find(t => t.id === lessonType);
+            const selectedTile = activeTiles.find(t => t.id === lessonType);
             const isReview = !lessonType || lessonType === 'review';
+            const isIRInstrumentTile = isCPL && lessonType === 'instrument';
 
             const shouldShowTask = (taskCode: string) => {
               if (isReview) return true;
+              if (isIRInstrumentTile) return activePrefPostCodes.includes(taskCode);
               const specificCodes = selectedTile?.taskCodes || [];
-              return specificCodes.includes(taskCode) || PREFLIGHT_POSTFLIGHT_CODES.includes(taskCode);
+              return specificCodes.includes(taskCode) || activePrefPostCodes.includes(taskCode);
             };
 
+            const renderTaskRow = (task: any, id: string) => {
+              const g = grades[id] || '';
+              const n = notes[id] || '';
+              const isExpanded = expandedTasks[id];
+              const isEmergencyMalfunction = task.code === 'CA.X.C' || task.code === 'PA.IX.C';
+              return (
+                <div key={id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
+                  <div className="p-4">
+                    <div
+                      onClick={() => toggleExpand(id)}
+                      className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
+                    >
+                      {task.name}
+                      {(task.stds && task.stds.length > 0) || isEmergencyMalfunction ? (
+                        <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
+                      ) : null}
+                    </div>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        className="mt-3 p-3 bg-[#d4e8f5] rounded-lg border-l-4 border-[#2a5a8c] space-y-1.5"
+                      >
+                        {task.stds && task.stds.map((std: any, idx: number) => (
+                          <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
+                            <span className="opacity-40 shrink-0">·</span>
+                            <span>{std.code} — {std.description}</span>
+                          </div>
+                        ))}
+                        {isEmergencyMalfunction && lessonType === 'emergencies' && (
+                          <div className="mt-2 pt-2 border-t border-[#2a5a8c]/20">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] opacity-60 mb-1.5">Also includes:</p>
+                            {EMERGENCY_EXTRA_TASKS.map((extra, idx) => (
+                              <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
+                                <span className="opacity-40 shrink-0">·</span>
+                                <span>{extra}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="flex items-start justify-center p-2 pt-4 border-x border-[#dde3ec]">
+                    <button
+                      onClick={() => handleGradeCycle(id)}
+                      className={cn(
+                        "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
+                        g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                        g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
+                        "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                      )}
+                    >
+                      {g || '—'}
+                    </button>
+                  </div>
+                  <div className="p-2 pt-3 pr-4 relative group">
+                    <textarea
+                      value={n}
+                      onChange={(e) => handleNoteChange(id, e.target.value)}
+                      placeholder="Notes..."
+                      rows={expandedNotes[id] ? undefined : 1}
+                      className={cn(
+                        "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
+                        expandedNotes[id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
+                      )}
+                      onInput={(e) => {
+                        if (expandedNotes[id]) {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = target.scrollHeight + 'px';
+                        }
+                      }}
+                      ref={(el) => {
+                        if (el && expandedNotes[id]) {
+                          el.style.height = 'auto';
+                          el.style.height = el.scrollHeight + 'px';
+                        }
+                      }}
+                    />
+                    {!expandedNotes[id] && n.length > 0 && (
+                      <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
+                    )}
+                    <button
+                      onClick={() => toggleNoteExpand(id)}
+                      className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
+                      title={expandedNotes[id] ? "Collapse Notes" : "Expand Notes"}
+                    >
+                      {expandedNotes[id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                  </div>
+                </div>
+              );
+            };
+
+            // CPL Basic Instrument tile — render CPL preflight tasks + full IR_FLIGHT_ACS
+            if (isIRInstrumentTile) {
+              return (
+                <>
+                  {/* CPL preflight/postflight tasks first */}
+                  {flightAreas.map((area, fi) => {
+                    const ai = fi + 1;
+                    const visibleTasks = area.tasks.filter(task => activePrefPostCodes.includes(task.code));
+                    if (visibleTasks.length === 0) return null;
+                    return (
+                      <React.Fragment key={area.area}>
+                        <div className="bg-[#1a3a5c] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center">
+                          <span>{area.area}</span>
+                          <span className="opacity-60 font-normal text-[10px]">{visibleTasks.length} tasks</span>
+                        </div>
+                        {visibleTasks.map((task) => {
+                          const ti = area.tasks.indexOf(task);
+                          return renderTaskRow(task, `${ai}_${ti}`);
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                  {/* IR flight ACS areas */}
+                  <div className="bg-[#1a5c3a] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider">
+                    ── Instrument Training (IR ACS) ──
+                  </div>
+                  {IR_FLIGHT_ACS.map((area, ari) => {
+                    if (area.tasks.length === 0) return null;
+                    return (
+                      <React.Fragment key={`ir_${area.area}`}>
+                        <div className="bg-[#1a5c3a] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center opacity-90">
+                          <span>{area.area}</span>
+                          <span className="opacity-60 font-normal text-[10px]">{area.tasks.length} tasks</span>
+                        </div>
+                        {area.tasks.map((task, ti) => {
+                          const id = `ir_${ari}_${ti}`;
+                          return renderTaskRow(task, id);
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </>
+              );
+            }
+
+            // Standard CPL or PPL filter
             return flightAreas.map((area, fi) => {
               const ai = fi + 1;
               const visibleTasks = area.tasks.filter(task => shouldShowTask(task.code));
@@ -2448,98 +2663,7 @@ export default function FlightLesson() {
                   {visibleTasks.map((task) => {
                     const ti = area.tasks.indexOf(task);
                     const id = `${ai}_${ti}`;
-                    const g = grades[id] || '';
-                    const n = notes[id] || '';
-                    const isExpanded = expandedTasks[id];
-                    const isEmergencyMalfunction = task.code === 'PA.IX.C';
-                    return (
-                      <div key={id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
-                        <div className="p-4">
-                          <div
-                            onClick={() => toggleExpand(id)}
-                            className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
-                          >
-                            {task.name}
-                            {(task.stds && task.stds.length > 0) || isEmergencyMalfunction ? (
-                              <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
-                            ) : null}
-                          </div>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              className="mt-3 p-3 bg-[#d4e8f5] rounded-lg border-l-4 border-[#2a5a8c] space-y-1.5"
-                            >
-                              {task.stds && task.stds.map((std, idx) => (
-                                <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
-                                  <span className="opacity-40 shrink-0">·</span>
-                                  <span>{std.code} — {std.description}</span>
-                                </div>
-                              ))}
-                              {isEmergencyMalfunction && lessonType === 'emergencies' && (
-                                <div className="mt-2 pt-2 border-t border-[#2a5a8c]/20">
-                                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] opacity-60 mb-1.5">Also includes:</p>
-                                  {EMERGENCY_EXTRA_TASKS.map((extra, idx) => (
-                                    <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
-                                      <span className="opacity-40 shrink-0">·</span>
-                                      <span>{extra}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </motion.div>
-                          )}
-                        </div>
-                        <div className="flex items-start justify-center p-2 pt-4 border-x border-[#dde3ec]">
-                          <button
-                            onClick={() => handleGradeCycle(id)}
-                            className={cn(
-                              "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
-                              g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                              g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
-                              "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
-                            )}
-                          >
-                            {g || '—'}
-                          </button>
-                        </div>
-                        <div className="p-2 pt-3 pr-4 relative group">
-                          <textarea
-                            value={n}
-                            onChange={(e) => handleNoteChange(id, e.target.value)}
-                            placeholder="Notes..."
-                            rows={expandedNotes[id] ? undefined : 1}
-                            className={cn(
-                              "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
-                              expandedNotes[id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
-                            )}
-                            onInput={(e) => {
-                              if (expandedNotes[id]) {
-                                const target = e.target as HTMLTextAreaElement;
-                                target.style.height = 'auto';
-                                target.style.height = target.scrollHeight + 'px';
-                              }
-                            }}
-                            ref={(el) => {
-                              if (el && expandedNotes[id]) {
-                                el.style.height = 'auto';
-                                el.style.height = el.scrollHeight + 'px';
-                              }
-                            }}
-                          />
-                          {!expandedNotes[id] && n.length > 0 && (
-                            <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
-                          )}
-                          <button
-                            onClick={() => toggleNoteExpand(id)}
-                            className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
-                            title={expandedNotes[id] ? "Collapse Notes" : "Expand Notes"}
-                          >
-                            {expandedNotes[id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                          </button>
-                        </div>
-                      </div>
-                    );
+                    return renderTaskRow(task, id);
                   })}
                 </React.Fragment>
               );
