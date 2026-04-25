@@ -95,6 +95,7 @@ export default function Dashboard() {
   const [paywallInviteLoading, setPaywallInviteLoading] = useState(false);
   const [paywallInviteError, setPaywallInviteError] = useState<string | null>(null);
   const [paywallInviteSuccess, setPaywallInviteSuccess] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<number>(() => {
     return localStorage.getItem('onboarding_done') ? 0 : 1;
   });
@@ -676,108 +677,140 @@ export default function Dashboard() {
             </div>
           )}
           {user && (
-            <div className="relative hidden lg:flex">
-              <Link
-                to="/cfi-hours"
+            <div className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen(prev => !prev)}
                 className={cn(
-                  "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest transition-all hover:opacity-70",
-                  onboardingStep === 3 && "ring-2 ring-[#e8a020] ring-offset-2 rounded-lg px-1 animate-pulse"
+                  "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer",
+                  onboardingStep === 3 && "ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
                 )}
-                style={{ color: 'var(--text-secondary)' }}
-                title="My CFI Hours"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
               >
-                <BarChart3 size={12} />
-                <div className="relative">
-                  <span>{user?.user_metadata?.full_name || user?.email}</span>
-                  {(userSubscription?.plan === 'all_monthly' || userSubscription?.plan === 'all_annual' || userSubscription?.plan === 'invite') && (
-                    <div
-                      className="absolute rounded-full"
-                      style={{
-                        bottom: '-3px',
-                        left: 0,
-                        width: '100%',
-                        height: '2px',
-                        backgroundColor: '#e8a020',
-                        boxShadow: '0 1px 4px rgba(232,160,32,0.5)',
-                      }}
-                    />
-                  )}
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: 'var(--navy)' }}>
+                  {(user?.user_metadata?.full_name || user?.email || '?')[0].toUpperCase()}
                 </div>
-              </Link>
+                <span className="hidden sm:inline text-[11px] font-bold max-w-[120px] truncate" style={{ color: 'var(--text-primary)' }}>
+                  {user?.user_metadata?.full_name || user?.email}
+                </span>
+                {(userSubscription?.plan === 'all_monthly' || userSubscription?.plan === 'all_annual' || userSubscription?.plan === 'invite') && (
+                  <span className="hidden sm:inline text-[8px] font-black px-1.5 py-0.5 rounded-full text-white uppercase tracking-wider" style={{ backgroundColor: '#e8a020' }}>PRO</span>
+                )}
+                <ChevronDown size={12} className={cn("transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
+              </button>
               <AnimatePresence>
                 {onboardingStep === 3 && (
                   <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom" />
                 )}
               </AnimatePresence>
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[30]"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-52 rounded-2xl border overflow-hidden z-[40]"
+                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
+                    >
+                      <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Signed in as</p>
+                        <p className="text-xs font-bold truncate mt-0.5" style={{ color: 'var(--text-primary)' }}>{user?.user_metadata?.full_name || user?.email}</p>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          to="/cfi-hours"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          <BarChart3 size={14} style={{ color: 'var(--navy)' }} />
+                          CFI Hours
+                        </Link>
+                        <Link
+                          to="/account"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          <User size={14} style={{ color: 'var(--navy)' }} />
+                          Account
+                        </Link>
+                        {user?.email === 'jeanudp@gmail.com' && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                            style={{ color: 'var(--text-primary)' }}
+                          >
+                            <Shield size={14} style={{ color: 'var(--navy)' }} />
+                            Admin
+                          </Link>
+                        )}
+                      </div>
+                      <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
+                        <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Dark Mode</span>
+                        <button
+                          onClick={() => setDarkMode(!darkMode)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg border transition-all"
+                          style={{ backgroundColor: darkMode ? 'var(--navy)' : 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: darkMode ? 'white' : 'var(--text-secondary)' }}
+                        >
+                          {darkMode ? <Moon size={12} /> : <Sun size={12} />}
+                          <span className="text-[10px] font-bold">{darkMode ? 'On' : 'Off'}</span>
+                        </button>
+                      </div>
+                      <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                        <button
+                          onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-red-50 cursor-pointer"
+                          style={{ color: '#c0392b' }}
+                        >
+                          <LogOut size={14} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           )}
-          {user && (
-            <Link
-              to="/account"
-              className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-all hover:opacity-80 border"
-              style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}
-              title="My Account"
-            >
-              <User size={12} />
-              <span className="hidden sm:inline">Account</span>
-            </Link>
-          )}
-          {user?.email === 'jeanudp@gmail.com' && (
-            <Link
-              to="/admin"
-              className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-all hover:opacity-80"
-              style={{ backgroundColor: 'rgba(26,58,92,0.08)', color: 'var(--navy)', border: '1px solid rgba(26,58,92,0.15)' }}
-              title="Admin Panel"
-            >
-              <Shield size={12} />
-              Admin
-            </Link>
-          )}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-lg border hover:bg-[var(--bg-tertiary)] transition-all"
-            style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
-            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <div className="relative">
-            <button
-              onClick={() => setIsNewStudentOpen(true)}
-              className={cn(
-                "w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer",
-                onboardingStep === 1 && "ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
-              )}
-              style={{ backgroundColor: 'var(--navy)' }}
-              title="Add Student"
-            >
-              <Plus size={18} />
-            </button>
-            <AnimatePresence>
-              {onboardingStep === 1 && (
-                <OnboardingTooltip step={onboardingStep} targetStep={1} text="Start here — add your first student to begin tracking lessons and hours" position="bottom" />
-              )}
-            </AnimatePresence>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border hover:-translate-y-0.5 hover:shadow-md transition-all font-medium cursor-pointer"
-            style={{ color: 'var(--navy)', borderColor: 'var(--border-color)', backgroundColor: 'transparent' }}
-          >
-            <LogOut size={14} />
-            <span className="hidden sm:inline">Sign Out</span>
-          </button>
         </div>
       </header>
 
       {/* Search */}
-      <div className="px-4 py-3 sticky top-[64px] z-10 backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="px-4 py-3 sticky top-[64px] z-10 backdrop-blur-sm flex items-center gap-2" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <div className="relative">
+          <button
+            onClick={() => setIsNewStudentOpen(true)}
+            className={cn(
+              "w-9 h-9 text-white rounded-xl flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer shrink-0",
+              onboardingStep === 1 && "ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
+            )}
+            style={{ backgroundColor: 'var(--navy)' }}
+            title="Add Student"
+          >
+            <Plus size={18} />
+          </button>
+          <AnimatePresence>
+            {onboardingStep === 1 && (
+              <OnboardingTooltip step={onboardingStep} targetStep={1} text="Start here — add your first student to begin tracking lessons and hours" position="bottom" />
+            )}
+          </AnimatePresence>
+        </div>
         <input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search students..."
-          className="w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#1a3a5c] transition-all"
+          className="flex-1 text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#1a3a5c] transition-all"
           style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
         />
       </div>
