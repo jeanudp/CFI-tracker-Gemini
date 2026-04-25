@@ -102,9 +102,15 @@ export default function EndorsementPrinter({ onClose, ratingCode = 'ppl' }: Endo
 
   // Lock body scroll
   useEffect(() => {
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     const original = document.body.style.overflow;
+    const originalPadding = document.body.style.paddingRight;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    return () => {
+      document.body.style.overflow = original;
+      document.body.style.paddingRight = originalPadding;
+    };
   }, []);
 
   // Load CFI profile

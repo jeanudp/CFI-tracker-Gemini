@@ -551,6 +551,24 @@ export default function Landing() {
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
           61 Tracker · Built for CFIs · FAR Part 61
         </p>
+        <div className="flex items-center justify-center gap-1 mt-2">
+          {['About', 'Contact', 'Privacy Policy', 'Terms of Service'].map((label, i, arr) => (
+            <React.Fragment key={label}>
+              <a
+                href="#"
+                className="text-[10px] transition-colors duration-200"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                {label}
+              </a>
+              {i < arr.length - 1 && (
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
       </footer>
     </div>
   );
