@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { Printer, X, ChevronRight, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -195,7 +196,7 @@ export default function EndorsementPrinter({ onClose, ratingCode = 'ppl' }: Endo
 
   const hasGroups = Object.keys(groups).length > 1 || (Object.keys(groups).length === 1 && Object.keys(groups)[0] !== 'General');
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overscroll-none touch-none"
       onWheel={e => e.stopPropagation()}
@@ -396,6 +397,7 @@ export default function EndorsementPrinter({ onClose, ratingCode = 'ppl' }: Endo
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
