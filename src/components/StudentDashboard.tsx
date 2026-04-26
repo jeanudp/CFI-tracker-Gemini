@@ -199,11 +199,13 @@ export default function StudentDashboard() {
     const gradedTasksCount = currentGrades.length;
     let scoreTotal = 0;
     currentGrades.forEach(g => {
-      if (g === '4') scoreTotal += 1;
-      else if (['S', '3'].includes(g)) scoreTotal += 0.5;
+      if (g === '4') scoreTotal += 4;
+      else if (['S', '3'].includes(g)) scoreTotal += 3;
+      else if (g === '2') scoreTotal += 2;
+      else if (['N', '1'].includes(g)) scoreTotal += 1;
     });
-    const lessonScore = gradedTasksCount > 0 
-      ? Math.round((scoreTotal / gradedTasksCount) * 1000) / 10 
+    const lessonAvg = gradedTasksCount > 0 
+      ? scoreTotal / gradedTasksCount
       : 0;
 
     return {
@@ -211,7 +213,7 @@ export default function StudentDashboard() {
       mastery: masteryPercentage,
       lessonLabel: lesson.label || 'Lesson',
       overallGrade: lesson.meta?.overallGrade || 'N',
-      lessonScore: lessonScore
+      lessonAvg: lessonAvg
     };
   });
 
@@ -523,11 +525,7 @@ export default function StudentDashboard() {
             <div className="overflow-x-auto pb-8 -mx-4 px-4 custom-scrollbar">
               <div className="relative min-w-max pb-4">
                 {/* Progress Line */}
-                <div className="absolute top-[7px] left-6 right-6 h-[2px] bg-[#f1f5f9] z-0">
-                  {timelineTrend === 'improving' && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-green-500 rounded-full" />
-                  )}
-                </div>
+                <div className="absolute top-[7px] left-0 right-0 h-0.5 bg-[#e2e8f0]" />
 
                 <div className="flex justify-start items-start gap-12 pt-0">
                   {timelineData.map((item, idx) => (
@@ -668,8 +666,8 @@ export default function StudentDashboard() {
                               <span className="text-[10px] font-black text-white">{data.mastery}%</span>
                             </div>
                             <div className="flex items-center justify-between gap-4">
-                              <span className="text-[10px] text-white/70">Lesson Score</span>
-                              <span className="text-[10px] font-black text-[#e8a020]">{data.lessonScore}%</span>
+                              <span className="text-[10px] text-white/70">Lesson Avg Grade</span>
+                              <span className="text-[10px] font-black text-[#e8a020]">{data.lessonAvg.toFixed(1)}</span>
                             </div>
                             <div className="flex items-center justify-between gap-4 mt-1 pt-1 border-t border-white/10">
                               <span className="text-[10px] text-white/70">Overall Grade</span>
@@ -697,7 +695,7 @@ export default function StudentDashboard() {
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="lessonScore" 
+                  dataKey="lessonAvg" 
                   stroke="#e8a020" 
                   strokeWidth={1}
                   strokeDasharray="4 4"
@@ -792,7 +790,6 @@ export default function StudentDashboard() {
                                           "w-7 h-7 rounded-md flex items-center justify-center transition-transform hover:scale-110",
                                           getGradeColor(gradeInfo.numericGrade)
                                         )}
-                                        title={`${gradeInfo.lessonLabel} (${gradeInfo.date}): ${gradeDescriptions[gradeInfo.grade || ''] || 'No grade'}`}
                                       >
                                         <span className="text-[10px] font-black">
                                           {gradeInfo.grade}
@@ -882,12 +879,12 @@ export default function StudentDashboard() {
                     </div>
 
                     <div className="flex-1">
-                      <div className="h-2 w-full bg-[#f1f5f9] rounded-full overflow-hidden flex">
-                        <div style={{ width: `${area.distribution[1]}%` }} className="h-full bg-[#c0392b]" title="Grade 1" />
-                        <div style={{ width: `${area.distribution[2]}%` }} className="h-full bg-[#e8a020]" title="Grade 2" />
-                        <div style={{ width: `${area.distribution[3]}%` }} className="h-full bg-[#5a9e6f]" title="Grade 3" />
-                        <div style={{ width: `${area.distribution[4]}%` }} className="h-full bg-[#2d7a4f]" title="Grade 4" />
-                        <div style={{ width: `${area.distribution.ungraded}%` }} className="h-full bg-[#f1f5f9]" title="Ungraded" />
+                      <div className="flex w-full h-2 rounded-full overflow-hidden">
+                        {area.distribution[1] > 0 && <div style={{ width: area.distribution[1] + '%' }} className="h-full bg-[#c0392b]" />}
+                        {area.distribution[2] > 0 && <div style={{ width: area.distribution[2] + '%' }} className="h-full bg-[#e8a020]" />}
+                        {area.distribution[3] > 0 && <div style={{ width: area.distribution[3] + '%' }} className="h-full bg-[#5a9e6f]" />}
+                        {area.distribution[4] > 0 && <div style={{ width: area.distribution[4] + '%' }} className="h-full bg-[#2d7a4f]" />}
+                        {area.distribution.ungraded > 0 && <div style={{ width: area.distribution.ungraded + '%' }} className="h-full bg-[#e2e8f0]" />}
                       </div>
                     </div>
 
