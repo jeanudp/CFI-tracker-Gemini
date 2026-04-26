@@ -57,6 +57,7 @@ export interface LessonMeta {
   meDual?: string;
   meNight?: string;
   overallGrade?: string;
+  lessonType?: string;
 }
 
 export interface Lesson {
