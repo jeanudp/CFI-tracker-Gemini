@@ -15,8 +15,30 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
   const [profileDraft, setProfileDraft] = useState({ 
     full_name: '', 
     cert_number: '', 
-    re_exp_date: '' 
+    re_exp_date: `01/${new Date().getFullYear().toString().slice(-2)}` 
   });
+  
+  const [reExpMonth, setReExpMonth] = useState(() => {
+    const parts = profileDraft.re_exp_date.split('/');
+    return parts.length === 2 ? parts[0] : '01';
+  });
+  const [reExpYear, setReExpYear] = useState(() => {
+    const parts = profileDraft.re_exp_date.split('/');
+    return parts.length === 2 ? parts[1] : new Date().getFullYear().toString().slice(-2);
+  });
+
+  const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  const years = Array.from({ length: 11 }, (_, i) => (new Date().getFullYear() + i).toString().slice(-2));
+
+  const handleMonthChange = (month: string) => {
+    setReExpMonth(month);
+    setProfileDraft(prev => ({ ...prev, re_exp_date: `${month}/${reExpYear}` }));
+  };
+
+  const handleYearChange = (year: string) => {
+    setReExpYear(year);
+    setProfileDraft(prev => ({ ...prev, re_exp_date: `${reExpMonth}/${year}` }));
+  };
   const navigate = useNavigate();
 
   const handleSaveProfile = async () => {
@@ -90,7 +112,6 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
                 {[
                   { label: 'Full Name', key: 'full_name' as const, placeholder: 'e.g. John J. Smith' },
                   { label: 'CFI Certificate #', key: 'cert_number' as const, placeholder: 'e.g. 987654321CFI' },
-                  { label: 'RE End Date / Exp. Date', key: 're_exp_date' as const, placeholder: 'e.g. 12-31-2026' },
                 ].map(field => (
                   <div key={field.key} className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
@@ -103,6 +124,27 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
                     />
                   </div>
                 ))}
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">RE End Date / Exp. Date</label>
+                  <div className="flex items-center gap-4">
+                    <select
+                      value={reExpMonth}
+                      onChange={(e) => handleMonthChange(e.target.value)}
+                      className="flex-1 text-sm border border-[#dde3ec] rounded-xl px-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc] hover:bg-white focus:bg-white appearance-none cursor-pointer"
+                    >
+                      {months.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <span className="text-[#64748b] font-bold">/</span>
+                    <select
+                      value={reExpYear}
+                      onChange={(e) => handleYearChange(e.target.value)}
+                      className="flex-1 text-sm border border-[#dde3ec] rounded-xl px-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc] hover:bg-white focus:bg-white appearance-none cursor-pointer"
+                    >
+                      {years.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-4">
