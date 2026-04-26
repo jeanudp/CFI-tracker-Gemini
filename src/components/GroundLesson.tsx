@@ -20,6 +20,7 @@ export default function GroundLesson() {
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
+  const [overallGrade, setOverallGrade] = useState<'' | 'S' | 'N'>('');
   const [rating, setRating] = useState<any>(null);
   const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade, pendingGrade: Grade } | null>(null);
   const [lessonLabel, setLessonLabel] = useState('');
@@ -68,6 +69,7 @@ export default function GroundLesson() {
       setInstructorName(editLesson.instructor || '');
       setLessonLabel(editLesson.label || '');
       setLessonNum(editLesson.lesson_num || 1);
+      setOverallGrade(editLesson.meta?.overallGrade || '');
       // Clear edit lesson from storage so it doesn't persist on next new lesson
       localStorage.removeItem('faa_edit_lesson');
     } else {
@@ -195,6 +197,12 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
 
   const handleSave = async () => {
     if (!studentName) return;
+
+    if (!overallGrade) {
+      alert('Please select an overall lesson grade before saving');
+      return;
+    }
+
     setSaving(true);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -215,7 +223,8 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
         date: lessonDate,
         notes: lessonNotes,
         rating_code: rating?.code || 'ppl',
-        rating_label: rating?.label || 'Private Pilot ASEL'
+        rating_label: rating?.label || 'Private Pilot ASEL',
+        overallGrade
       },
       grades,
       notes
@@ -465,6 +474,36 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
             );
           })}
         </div>
+      </div>
+
+      {/* Overall Assessment */}
+      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3 text-center">Overall Lesson Assessment</div>
+        <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+          <button
+            onClick={() => setOverallGrade('S')}
+            className={cn(
+              "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
+              overallGrade === 'S' 
+                ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/20" 
+                : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2d7a4f] hover:text-[#2d7a4f]"
+            )}
+          >
+            <span className="text-sm font-bold">S — Satisfactory</span>
+          </button>
+          <button
+            onClick={() => setOverallGrade('N')}
+            className={cn(
+              "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
+              overallGrade === 'N' 
+                ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/20" 
+                : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#c0392b] hover:text-[#c0392b]"
+            )}
+          >
+            <span className="text-sm font-bold">N — Needs Improvement</span>
+          </button>
+        </div>
+        <p className="text-[10px] text-[#94a3b8] text-center mt-3 font-medium">Required before saving.</p>
       </div>
 
       <div className="flex justify-end gap-3">

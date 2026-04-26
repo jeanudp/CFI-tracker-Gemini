@@ -127,6 +127,7 @@ export default function FlightLesson() {
   const [stepValidationError, setStepValidationError] = useState<string | null>(null);
   const [totalFlightError, setTotalFlightError] = useState(false);
   const [nightWarning, setNightWarning] = useState(false);
+  const [overallGrade, setOverallGrade] = useState<'' | 'S' | 'N'>('');
   const navigate = useNavigate();
 
   const variants = {
@@ -454,6 +455,7 @@ export default function FlightLesson() {
       setLessonLabel(editLesson.label || '');
       setLessonNum(editLesson.lesson_num || 1);
       setLessonType(editLesson.meta?.lessonType || 'review');
+      setOverallGrade(editLesson.meta?.overallGrade || '');
       setCurrentStep(3); // Skip to flight log in edit mode
       // Auto-open logbook if any field is filled
       const hasLogData = Object.entries(editLesson.meta || {}).some(([k, v]) => k !== 'date' && k !== 'notes' && v);
@@ -766,6 +768,12 @@ export default function FlightLesson() {
 
   const handleSave = async () => {
     if (!studentName) return;
+
+    if (!overallGrade) {
+      setStepValidationError('Please select an overall lesson grade before saving');
+      return;
+    }
+
     setSaving(true);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -831,7 +839,8 @@ export default function FlightLesson() {
       aircraftClass: meta.aircraftClass || 'ASEL',
       mePic: meta.mePic,
       meDual: meta.meDual,
-      meNight: meta.meNight
+      meNight: meta.meNight,
+      overallGrade,
     };
 
     const lessonData: any = {
@@ -1403,7 +1412,37 @@ export default function FlightLesson() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-8">
+              {/* Overall Assessment */}
+            <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3 text-center">Overall Lesson Assessment</div>
+              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                <button
+                  onClick={() => setOverallGrade('S')}
+                  className={cn(
+                    "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
+                    overallGrade === 'S' 
+                      ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/20" 
+                      : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2d7a4f] hover:text-[#2d7a4f]"
+                  )}
+                >
+                  <span className="text-sm font-bold">S — Satisfactory</span>
+                </button>
+                <button
+                  onClick={() => setOverallGrade('N')}
+                  className={cn(
+                    "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
+                    overallGrade === 'N' 
+                      ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/20" 
+                      : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#c0392b] hover:text-[#c0392b]"
+                  )}
+                >
+                  <span className="text-sm font-bold">N — Needs Improvement</span>
+                </button>
+              </div>
+              <p className="text-[10px] text-[#94a3b8] text-center mt-3 font-medium">Required before saving.</p>
+            </div>
+
+            <div className="flex justify-between items-center mt-8">
                 <button
                   onClick={handlePrev}
                   className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2"

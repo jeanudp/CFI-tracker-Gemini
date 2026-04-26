@@ -232,6 +232,14 @@ export default function History() {
             {lesson.student_name ? ` · ${lesson.student_name}` : ''}
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            {lesson.meta?.overallGrade && (
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white",
+                lesson.meta.overallGrade === 'S' ? "bg-[#2d7a4f]" : "bg-[#c0392b]"
+              )}>
+                {lesson.meta.overallGrade}
+              </span>
+            )}
             {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g)).length > 0 && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full">3-4: {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g)).length}</span>
             )}
@@ -1150,7 +1158,35 @@ export default function History() {
                   {selectedLesson.student_name} · CFI: {selectedLesson.instructor || '—'}
                 </p>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
+                  {selectedLesson.meta?.overallGrade ? (
+                    <div className={cn(
+                      "col-span-2 flex items-center justify-between p-4 rounded-xl border-2 transition-all",
+                      selectedLesson.meta.overallGrade === 'S' 
+                        ? "bg-[#f0fdf4] border-[#2d7a4f] text-[#166534] shadow-sm" 
+                        : "bg-[#fef2f2] border-[#c0392b] text-[#991b1b] shadow-sm"
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center text-white",
+                          selectedLesson.meta.overallGrade === 'S' ? "bg-[#2d7a4f]" : "bg-[#c0392b]"
+                        )}>
+                          {selectedLesson.meta.overallGrade === 'S' ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Overall Assessment</p>
+                          <p className="text-lg font-black">{selectedLesson.meta.overallGrade === 'S' ? "Satisfactory" : "Needs Improvement"}</p>
+                        </div>
+                      </div>
+                      <div className="text-[10px] font-black uppercase tracking-widest opacity-40">Section 61.39</div>
+                    </div>
+                  ) : (
+                    <div className="col-span-2 bg-[#f8fafc] border border-[#dde3ec] p-4 rounded-xl text-center">
+                      <p className="text-xs font-bold text-[#64748b]">No overall grade recorded</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Satisfactory</div>
                     <div className="text-xl font-mono font-bold text-[#2d7a4f]">{Object.values(selectedLesson.grades || {}).filter(v => ['S', '3', '4'].includes(v)).length || '—'}</div>
@@ -1162,6 +1198,7 @@ export default function History() {
                     <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
                   </div>
                 </div>
+              </div>
 
                 {selectedLesson.meta?.notes && (
                   <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
@@ -1469,8 +1506,20 @@ export default function History() {
             {activeTab === 'cumulative' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
-                    Cumulative — {selectedLesson.student_name}
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
+                      Cumulative — {selectedLesson.student_name}
+                    </div>
+                    {(() => {
+                      const lessonsWithGrade = studentLessons.filter(l => l.meta?.overallGrade);
+                      if (lessonsWithGrade.length === 0) return null;
+                      const sCount = lessonsWithGrade.filter(l => l.meta?.overallGrade === 'S').length;
+                      return (
+                        <div className="text-[11px] text-[#64748b] mt-1 font-medium italic">
+                          {sCount} of {lessonsWithGrade.length} lessons rated S ({Math.round((sCount / lessonsWithGrade.length) * 100)}% pass rate)
+                        </div>
+                      );
+                    })()}
                   </div>
                   <ExportButton
                     onExportCSV={() => {

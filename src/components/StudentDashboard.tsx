@@ -230,6 +230,25 @@ export default function StudentDashboard() {
             <div className="text-[11px] text-[#6b7280] mt-1 font-medium italic">
               {taskAnalysis.filter(t => ['S', '3', '4'].includes(t.mostRecentGrade || '')).length} of {taskAnalysis.length} tasks mastered
             </div>
+            {(() => {
+              const sLessons = studentLessons.filter(l => l.meta?.overallGrade === 'S').length;
+              const nLessons = studentLessons.filter(l => l.meta?.overallGrade === 'N').length;
+              if (sLessons === 0 && nLessons === 0) return null;
+              return (
+                <div className="flex gap-2 mt-2">
+                  {sLessons > 0 && (
+                    <div className="bg-[#f0fdf4] text-[#166534] text-[9px] font-black px-2 py-0.5 rounded-full border border-[#bbf7d0] uppercase tracking-wider">
+                      S: {sLessons} lessons
+                    </div>
+                  )}
+                  {nLessons > 0 && (
+                    <div className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-black px-2 py-0.5 rounded-full border border-[#fecaca] uppercase tracking-wider">
+                      N: {nLessons} lessons
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -338,6 +357,21 @@ export default function StudentDashboard() {
             </div>
             
             <div className="p-6">
+              {(() => {
+                const last3 = [...studentLessons].sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime()).slice(0, 3);
+                const nInLast3 = last3.filter(l => l.meta?.overallGrade === 'N').length;
+                if (nInLast3 > 0) {
+                  return (
+                    <div className="mb-6 p-4 bg-[#fff7ed] border border-[#ffedd5] rounded-xl flex items-center gap-3 text-[#9a3412]">
+                      <AlertTriangle size={18} />
+                      <p className="text-xs font-bold">
+                        Note: {nInLast3} of your last {last3.length} lessons were rated N overall.
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {strugglingTasks.length > 0 ? (
                 <div className="space-y-6">
                   <AnimatePresence mode="popLayout">
