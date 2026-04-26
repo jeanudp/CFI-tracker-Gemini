@@ -943,6 +943,7 @@ export default function FlightLesson() {
           day_landings: meta.cfiDidLandings ? parseInt(meta.cfiDayLandings || '0') || 0 : 0,
           night_landings: meta.cfiDidLandings ? parseInt(meta.cfiNightLandings || '0') || 0 : 0,
           xc_pic: parseFloat(meta.xcDual || '0') || 0,
+          xc_time: parseFloat(meta.xcDual || '0') || null,
           ratp_xc: parseFloat(meta.ratpXCTime || '0') || 0,
           ratp_xc_eligible: meta.ratpXCEligible || false,
           aircraft_class: meta.aircraftClass || 'ASEL',
@@ -2506,6 +2507,13 @@ export default function FlightLesson() {
                                 <p className="text-[8px] text-[#94a3b8]">Auto-filled from Simulated Instrument</p>
                               </div>
                             </div>
+
+                            {parseFloat(meta.xcDual || '0') > 0 && (
+                              <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9]">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">XC Time</span>
+                                <span className="text-[10px] font-bold text-[#1a3a5c]">{meta.xcDual}h</span>
+                              </div>
+                            )}
 
                             <div className="h-px bg-[#e2e8f0]" />
 
