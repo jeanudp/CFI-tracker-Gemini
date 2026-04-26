@@ -738,7 +738,7 @@ export default function Dashboard() {
                       className="absolute right-0 top-full mt-2 w-52 rounded-2xl border overflow-hidden z-[100]"
                       style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
                     >
-                      <div className="px-4 py-3 border-b" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+                      <div className="px-4 py-3 border-b" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', position: 'relative', zIndex: 1 }}>
                         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Signed in as</p>
                         <p className="text-xs font-bold truncate mt-0.5" style={{ color: 'var(--text-primary)' }}>{user?.user_metadata?.full_name || user?.email}</p>
                       </div>
