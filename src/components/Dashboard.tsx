@@ -617,9 +617,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {(onboardingStep === 1 || onboardingStep === 3) && (
-        <div className="fixed inset-0 bg-black/40 z-[280] pointer-events-none" />
-      )}
       {showBirthdayBalloons && <FloatingBalloons />}
 
       {/* Success banner */}
@@ -661,8 +658,6 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Header */}
       <header
         className="sticky top-0 z-20 px-4 sm:px-6 h-16 border-b flex items-center justify-between shrink-0 backdrop-blur-md transition-colors duration-300"
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
@@ -743,7 +738,7 @@ export default function Dashboard() {
               onClick={() => setIsNewStudentOpen(true)}
               className={cn(
                 "px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer",
-                onboardingStep === 1 && "scale-110 shadow-[0_0_30px_8px_rgba(232,160,32,0.6)] ring-4 ring-[#e8a020] ring-offset-2 animate-pulse"
+                onboardingStep === 1 && "shadow-[0_0_50px_16px_rgba(232,160,32,0.8)] ring-4 ring-[#e8a020] ring-offset-4 animate-pulse scale-110"
               )}
             >
               <Plus size={14} />
@@ -757,7 +752,7 @@ export default function Dashboard() {
                 onClick={() => setIsUserMenuOpen(prev => !prev)}
                 className={cn(
                   "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer",
-                  onboardingStep === 3 && "scale-110 shadow-[0_0_30px_8px_rgba(232,160,32,0.6)] ring-4 ring-[#e8a020] ring-offset-2 animate-pulse"
+                  onboardingStep === 3 && "shadow-[0_0_50px_16px_rgba(232,160,32,0.8)] ring-4 ring-[#e8a020] ring-offset-4 animate-pulse scale-110"
                 )}
                 style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
               >
@@ -813,14 +808,16 @@ export default function Dashboard() {
       </div>
 
       <div className="px-4 py-3 sticky top-[calc(64px+4px)] z-10 backdrop-blur-sm flex items-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          placeholder="Search students..."
-          className="w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#1a3a5c] transition-all"
-          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-        />
+        <div className={cn("w-full transition-all", onboardingStep === 2 && "ring-4 ring-[#e8a020] ring-offset-2 rounded-xl animate-pulse")}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search students..."
+            className="w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#1a3a5c] transition-all"
+            style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+          />
+        </div>
       </div>
 
       {/* Content */}
@@ -866,7 +863,7 @@ export default function Dashboard() {
             )}
           </div>
         ) : (
-          <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative", onboardingStep === 2 && "ring-4 ring-[#e8a020] ring-offset-4 rounded-2xl animate-pulse")}>
+          <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative")}>
             {sortedStudents.map(student => {
               const ratingAccents: Record<string, string> = {
                 ppl:  '#2563eb',
@@ -1873,6 +1870,7 @@ export default function Dashboard() {
             exit={{ opacity: 0, y: 50, x: '-50%' }}
             className="fixed bottom-6 left-1/2 z-[300] text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-3"
             style={{ 
+              position: 'relative',
               minWidth: '300px', 
               maxWidth: '360px', 
               backgroundColor: '#1a3a5c',
@@ -1880,6 +1878,9 @@ export default function Dashboard() {
             }}
           >
             <div className="flex items-center gap-2">
+              <span className="absolute top-2 right-3 text-[#e8a020] text-lg font-black animate-bounce">
+                {onboardingStep === 2 ? '↑' : '↗'}
+              </span>
               {[1, 2, 3].map((s) => (
                 <div
                   key={s}
@@ -1892,7 +1893,7 @@ export default function Dashboard() {
             </div>
             <p className="text-xs font-medium leading-relaxed">
               {onboardingStep === 1 && "👆 Tap the glowing Add Student button in the top right to add your first student and get started."}
-              {onboardingStep === 2 && "👆 Tap any student card to open their profile, start a lesson, or view their progress."}
+              {onboardingStep === 2 && "👆 Use the search bar above to find students, or tap any student card to open their profile and start a lesson."}
               {onboardingStep === 3 && "👆 Tap your name in the top right to access your CFI hours, account settings, and dark mode."}
             </p>
             <button
