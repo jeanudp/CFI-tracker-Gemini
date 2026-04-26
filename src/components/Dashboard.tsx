@@ -254,7 +254,7 @@ export default function Dashboard() {
     if (onboardingStep === 2 && sortedStudents.length === 0) {
       const timer = setTimeout(() => {
         dismissOnboarding(2);
-      }, 2000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [onboardingStep, sortedStudents.length]);
@@ -600,41 +600,6 @@ export default function Dashboard() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  const OnboardingTooltip = ({ step, targetStep, text, position = 'bottom' }: { step: number, targetStep: number, text: string, position?: 'bottom' | 'left' | 'bottom-right' | 'fixed-left' }) => {
-    if (step !== targetStep) return null;
-    
-    const containerClasses = {
-      'bottom': 'top-full mt-2 left-1/2 -translate-x-1/2',
-      'left': 'right-full mr-3 top-1/2 -translate-y-1/2',
-      'bottom-right': 'top-full mt-2 right-0',
-      'fixed-left': 'fixed top-[140px] left-4'
-    }[position];
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        onClick={() => dismissOnboarding(targetStep)}
-        className={`${position.startsWith('fixed') ? '' : 'absolute'} z-[300] cursor-pointer ${containerClasses}`}
-        style={{ minWidth: '200px', maxWidth: '240px' }}
-      >
-        <div className="bg-[#1a3a5c] text-white text-xs font-medium rounded-xl px-4 py-3 shadow-2xl leading-relaxed relative">
-          {text}
-          <div className="mt-2 text-[10px] text-white/50 font-bold uppercase tracking-widest">{targetStep}/3 · Tap to dismiss</div>
-          {(position === 'bottom' || position === 'bottom-right') && (
-            <div className={`absolute -top-1.5 w-3 h-3 bg-[#1a3a5c] rotate-45 ${position === 'bottom' ? 'left-1/2 -translate-x-1/2' : 'right-4'}`} />
-          )}
-          {position === 'left' && (
-            <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
-          )}
-          {position === 'fixed-left' && (
-            <div className="absolute left-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
-          )}
-        </div>
-      </motion.div>
-    );
-  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -767,11 +732,7 @@ export default function Dashboard() {
               <Plus size={14} />
               Add Student
             </button>
-            <AnimatePresence>
-              {onboardingStep === 1 && (
-                <OnboardingTooltip step={onboardingStep} targetStep={1} text="Tap here to add your first student ↑" position="bottom-right" />
-              )}
-            </AnimatePresence>
+
           </div>
           {user && (
             <div className="relative">
@@ -794,11 +755,7 @@ export default function Dashboard() {
                 )}
                 <ChevronDown size={12} className={cn("transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
               </button>
-              <AnimatePresence>
-                {onboardingStep === 3 && (
-                  <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom-right" />
-                )}
-              </AnimatePresence>
+
             </div>
           )}
         </div>
@@ -851,11 +808,7 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-4 pb-8">
-        <AnimatePresence>
-          {onboardingStep === 2 && (
-            <OnboardingTooltip step={onboardingStep} targetStep={2} text="Tap a student card to start a lesson or view their progress" position="fixed-left" />
-          )}
-        </AnimatePresence>
+
         {!loading && sortedStudents.length > 0 && (
           <div className="flex items-center justify-between px-1 mb-4">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
@@ -1891,6 +1844,47 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Onboarding Toast */}
+      <AnimatePresence>
+        {onboardingStep > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className="fixed bottom-6 left-1/2 z-[300] text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-3"
+            style={{ 
+              minWidth: '300px', 
+              maxWidth: '360px', 
+              backgroundColor: '#1a3a5c',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            <div className="flex items-center gap-2">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={cn(
+                    "h-1 rounded-full transition-all duration-300",
+                    s === onboardingStep ? "bg-[#e8a020] w-6" : "bg-white/20 w-2"
+                  )}
+                />
+              ))}
+            </div>
+            <p className="text-xs font-medium leading-relaxed">
+              {onboardingStep === 1 && "👆 Tap the glowing Add Student button in the top right to add your first student and get started."}
+              {onboardingStep === 2 && "👆 Tap any student card to open their profile, start a lesson, or view their progress."}
+              {onboardingStep === 3 && "👆 Tap your name in the top right to access your CFI hours, account settings, and dark mode."}
+            </p>
+            <button
+              onClick={() => dismissOnboarding(onboardingStep)}
+              className="self-end px-4 py-1.5 bg-[#e8a020] text-[#1a3a5c] text-[10px] font-black uppercase tracking-wider rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Got it
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
 
