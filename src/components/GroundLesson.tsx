@@ -119,15 +119,14 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
     }));
   };
 
-  const handleGradeCycle = (taskId: string) => {
-    const cycle: Grade[] = ['', '1', '2', '3', '4'];
+  const handleGradeSet = (taskId: string, grade: Grade) => {
     let current: Grade = (grades[taskId] as Grade) || '';
 
     // Backwards compatibility normalization
     if (current === 'S') current = '3';
     if (current === 'N') current = '2';
 
-    const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    const next = current === grade ? '' : grade;
     
     if (next === '1' || next === '2') {
       const task = groundTasks.find(t => t.id === taskId);
@@ -388,51 +387,62 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                   <span>{area.area}</span>
                   <span className="opacity-60 font-normal">{areaTasks.length} tasks</span>
                 </div>
-                {areaTasks.map(task => {
-                  const g = grades[task.id] || '';
-                  const n = notes[task.id] || '';
-                  const isExpanded = expandedTasks[task.id];
-                  return (
-                    <div key={task.id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
-                      <div className="p-4">
-                        <div
-                          onClick={() => toggleExpand(task.id)}
-                          className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
-                        >
-                          {task.name}
-                          <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
-                        </div>
-                        {isExpanded && task.stds && task.stds.length > 0 && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            className="mt-3 p-3 bg-[#e4f5ec] rounded-lg border-l-4 border-[#2d7a4f] space-y-1.5"
+                  {areaTasks.map(task => {
+                    const g = grades[task.id] || '';
+                    const displayGrade = g === 'S' ? '3' : g === 'N' ? '2' : g;
+                    const n = notes[task.id] || '';
+                    const isExpanded = expandedTasks[task.id];
+                    return (
+                      <div key={task.id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
+                        <div className="p-4">
+                          <div
+                            onClick={() => toggleExpand(task.id)}
+                            className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
                           >
-                            {task.stds.map((std, idx) => (
-                              <div key={idx} className="text-[11px] text-[#1a4a2e] leading-relaxed flex gap-2">
-                                <span className="opacity-40 shrink-0">·</span>
-                                <span>{std.code} — {std.description}</span>
-                              </div>
-                            ))}
-                          </motion.div>
-                        )}
-                      </div>
-                      <div className="flex items-start justify-center p-2 pt-4 border-x border-[#dde3ec]">
-                        <button
-                          onClick={() => handleGradeCycle(task.id)}
-                          className={cn(
-                            "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all",
-                            g === '4' || g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
-                            g === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white" :
-                            g === '2' ? "bg-[#e8a020] border-[#e8a020] text-white" :
-                            g === '1' || g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
-                            "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                            {task.name}
+                            <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
+                          </div>
+                          {isExpanded && task.stds && task.stds.length > 0 && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              className="mt-3 p-3 bg-[#e4f5ec] rounded-lg border-l-4 border-[#2d7a4f] space-y-1.5"
+                            >
+                              {task.stds.map((std, idx) => (
+                                <div key={idx} className="text-[11px] text-[#1a4a2e] leading-relaxed flex gap-2">
+                                  <span className="opacity-40 shrink-0">·</span>
+                                  <span>{std.code} — {std.description}</span>
+                                </div>
+                              ))}
+                            </motion.div>
                           )}
-                        >
-                          {g || '—'}
-                        </button>
-                      </div>
-                      <div className="p-2 pt-3 pr-4 relative group">
+                        </div>
+                        <div className="flex items-start justify-center px-0.5 pt-3 border-x border-[#dde3ec]">
+                          <div className="grid grid-cols-2 gap-0.5">
+                            {[1, 2, 3, 4].map((gVal) => {
+                              const gradeStr = gVal.toString();
+                              const isSelected = displayGrade === gradeStr;
+                              return (
+                                <button
+                                  key={gVal}
+                                  onClick={() => handleGradeSet(task.id, gradeStr as Grade)}
+                                  className={cn(
+                                    "w-8 h-7 rounded-md border font-mono text-[10px] font-bold transition-all active:scale-95",
+                                    isSelected 
+                                      ? gVal === 4 ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm" :
+                                        gVal === 3 ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-sm" :
+                                        gVal === 2 ? "bg-[#e8a020] border-[#e8a020] text-white shadow-sm" :
+                                        "bg-[#c0392b] border-[#c0392b] text-white shadow-sm"
+                                      : "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                                  )}
+                                >
+                                  {gVal}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className="p-2 pt-3 pr-4 relative group">
                         <textarea
                           value={n}
                           onChange={(e) => handleNoteChange(task.id, e.target.value)}

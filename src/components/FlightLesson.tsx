@@ -514,18 +514,24 @@ export default function FlightLesson() {
     }));
   };
 
-  const handleGradeCycle = (taskId: string) => {
-    const cycle: Grade[] = ['', '1', '2', '3', '4'];
+  const handleGradeSet = (taskId: string, grade: Grade) => {
     let current: Grade = (grades[taskId] as Grade) || '';
 
     // Backwards compatibility normalization
     if (current === 'S') current = '3';
     if (current === 'N') current = '2';
 
-    const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    const next = current === grade ? '' : grade;
     
     if (next === '1' || next === '2') {
-      const task = flightTasks.find(t => t.id === taskId);
+      let task;
+      if (taskId.startsWith('ir_')) {
+        const [_, ari, ti] = taskId.split('_');
+        task = IR_FLIGHT_ACS[parseInt(ari)].tasks[parseInt(ti)];
+      } else {
+        task = flightTasks.find(t => t.id === taskId);
+      }
+      
       if (task) {
         setActiveACSTask({ task, id: taskId, prevGrade: current, pendingGrade: next });
         return;
@@ -1412,37 +1418,8 @@ export default function FlightLesson() {
                 </div>
               </div>
 
-              {/* Overall Assessment */}
-            <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3 text-center">Overall Lesson Assessment</div>
-              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                <button
-                  onClick={() => setOverallGrade('S')}
-                  className={cn(
-                    "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
-                    overallGrade === 'S' 
-                      ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/20" 
-                      : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2d7a4f] hover:text-[#2d7a4f]"
-                  )}
-                >
-                  <span className="text-sm font-bold">S — Satisfactory</span>
-                </button>
-                <button
-                  onClick={() => setOverallGrade('N')}
-                  className={cn(
-                    "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
-                    overallGrade === 'N' 
-                      ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/20" 
-                      : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#c0392b] hover:text-[#c0392b]"
-                  )}
-                >
-                  <span className="text-sm font-bold">N — Needs Improvement</span>
-                </button>
-              </div>
-              <p className="text-[10px] text-[#94a3b8] text-center mt-3 font-medium">Required before saving.</p>
-            </div>
-
-            <div className="flex justify-between items-center mt-8">
+              {/* Step Navigation */}
+              <div className="flex justify-between items-center mt-8">
                 <button
                   onClick={handlePrev}
                   className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2"
@@ -2694,20 +2671,30 @@ export default function FlightLesson() {
                       </motion.div>
                     )}
                   </div>
-                  <div className="flex items-start justify-center p-2 pt-4 border-x border-[#dde3ec]">
-                    <button
-                      onClick={() => handleGradeCycle(id)}
-                      className={cn(
-                        "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
-                        displayGrade === '4' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                        displayGrade === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-md shadow-[#5a9e6f]/30" :
-                        displayGrade === '2' ? "bg-[#e8a020] border-[#e8a020] text-white shadow-md shadow-[#e8a020]/30" :
-                        displayGrade === '1' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
-                        "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
-                      )}
-                    >
-                      {displayGrade || '—'}
-                    </button>
+                  <div className="flex items-start justify-center px-0.5 pt-3 border-x border-[#dde3ec]">
+                    <div className="grid grid-cols-2 gap-0.5">
+                      {[1, 2, 3, 4].map((g) => {
+                        const gradeStr = g.toString();
+                        const isSelected = displayGrade === gradeStr;
+                        return (
+                          <button
+                            key={g}
+                            onClick={() => handleGradeSet(id, gradeStr as Grade)}
+                            className={cn(
+                              "w-8 h-7 rounded-md border font-mono text-[10px] font-bold transition-all active:scale-95",
+                              isSelected 
+                                ? g === 4 ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm" :
+                                  g === 3 ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-sm" :
+                                  g === 2 ? "bg-[#e8a020] border-[#e8a020] text-white shadow-sm" :
+                                  "bg-[#c0392b] border-[#c0392b] text-white shadow-sm"
+                                : "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                            )}
+                          >
+                            {g}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div className="p-2 pt-3 pr-4 relative group">
                     <textarea
@@ -2814,6 +2801,36 @@ export default function FlightLesson() {
             });
           })()}
         </div>
+      </div>
+
+      {/* Overall Assessment */}
+      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3 text-center">Overall Lesson Assessment</div>
+        <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+          <button
+            onClick={() => setOverallGrade('S')}
+            className={cn(
+              "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
+              overallGrade === 'S' 
+                ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/20" 
+                : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2d7a4f] hover:text-[#2d7a4f]"
+            )}
+          >
+            <span className="text-sm font-bold">S — Satisfactory</span>
+          </button>
+          <button
+            onClick={() => setOverallGrade('N')}
+            className={cn(
+              "flex flex-col items-center gap-1 py-3 rounded-xl border transition-all",
+              overallGrade === 'N' 
+                ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/20" 
+                : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#c0392b] hover:text-[#c0392b]"
+            )}
+          >
+            <span className="text-sm font-bold">N — Needs Improvement</span>
+          </button>
+        </div>
+        <p className="text-[10px] text-[#94a3b8] text-center mt-3 font-medium">Required before saving.</p>
       </div>
 
       <div className="flex justify-between items-center mt-8">
