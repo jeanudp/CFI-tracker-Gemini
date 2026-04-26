@@ -83,7 +83,7 @@ export default function Contact() {
               </div>
               <div className="text-left">
                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Email Me</p>
-                <p className="text-xl md:text-2xl font-black dark:text-white" style={{ color: 'var(--navy)' }}>
+                <p className="text-xl md:text-2xl font-black group-hover:underline transition-all" style={{ color: 'var(--text-primary)' }}>
                   61trckr@gmail.com
                 </p>
               </div>
