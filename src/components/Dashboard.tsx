@@ -603,6 +603,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {(onboardingStep === 1 || onboardingStep === 3) && (
+        <div className="fixed inset-0 bg-black/40 z-[280] pointer-events-none" />
+      )}
       {showBirthdayBalloons && <FloatingBalloons />}
 
       {/* Success banner */}
@@ -726,7 +729,7 @@ export default function Dashboard() {
               onClick={() => setIsNewStudentOpen(true)}
               className={cn(
                 "px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer",
-                onboardingStep === 1 && "ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
+                onboardingStep === 1 && "scale-110 shadow-[0_0_30px_8px_rgba(232,160,32,0.6)] ring-4 ring-[#e8a020] ring-offset-2 animate-pulse"
               )}
             >
               <Plus size={14} />
@@ -740,9 +743,9 @@ export default function Dashboard() {
                 onClick={() => setIsUserMenuOpen(prev => !prev)}
                 className={cn(
                   "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer",
-                  onboardingStep === 3 && "ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
+                  onboardingStep === 3 && "scale-110 shadow-[0_0_30px_8px_rgba(232,160,32,0.6)] ring-4 ring-[#e8a020] ring-offset-2 animate-pulse"
                 )}
-                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
               >
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: 'var(--navy)' }}>
                   {(user?.user_metadata?.full_name || user?.email || '?')[0].toUpperCase()}
@@ -849,7 +852,7 @@ export default function Dashboard() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative">
+          <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative", onboardingStep === 2 && "ring-4 ring-[#e8a020] ring-offset-4 rounded-2xl animate-pulse")}>
             {sortedStudents.map(student => {
               const ratingAccents: Record<string, string> = {
                 ppl:  '#2563eb',
