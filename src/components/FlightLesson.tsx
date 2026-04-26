@@ -99,7 +99,7 @@ export default function FlightLesson() {
     xc: false,
     night: false,
     sim: false,
-    cfiHours: false
+    cfiHours: true
   });
   const [approachSearch, setApproachSearch] = useState('');
   const [cfiApproachSearch, setCfiApproachSearch] = useState('');
@@ -485,6 +485,29 @@ export default function FlightLesson() {
       }
     });
   }, [navigate]);
+
+  useEffect(() => {
+    // Auto-expand groups based on rating and lesson type when entering the flight log step
+    const isLogStep = (showLessonTypeStep && currentStep === 3) || (!showLessonTypeStep && currentStep === 2);
+    
+    if (isLogStep) {
+      const isIRLesson = rating?.code === 'ir' || lessonType === 'instrument';
+      const isNightLesson = lessonType.toLowerCase().includes('night') || parseFloat(meta.night || '0') > 0;
+      const isDualLesson = !meta.studentFlewSolo;
+
+      setExpandedGroups({
+        solo: false,
+        pic: false,
+        dual: false,
+        instrument: isIRLesson,
+        approachesHolds: isIRLesson,
+        xc: false,
+        night: isNightLesson,
+        sim: false,
+        cfiHours: isDualLesson
+      });
+    }
+  }, [currentStep, rating?.code, lessonType, meta.night, meta.studentFlewSolo, showLessonTypeStep]);
 
   const EMERGENCY_EXTRA_TASKS = [
     { name: 'Wing Fire', id: 'extra_wing_fire', stds: [] },
@@ -1470,62 +1493,65 @@ export default function FlightLesson() {
             >
               {/* Main Visible Fields */}
               <div className="p-4 border-b border-[#dde3ec] bg-white">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Route (From → To, via)</label>
-                    <input
-                      type="text"
-                      value={meta.route}
-                      onChange={(e) => handleMetaChange('route', e.target.value.toUpperCase())}
-                      placeholder="e.g. KORD → KMDW → KORD"
-                      className="w-full text-sm font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={meta.totalFlight}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              handleMetaChange('totalFlight', val);
-                              if (parseFloat(val) > 0) {
-                                setTotalFlightError(false);
-                              }
-                            }}
-                            className={cn(
-                              "w-full text-sm font-bold font-mono border rounded-lg px-3 py-2 focus:outline-none transition-all",
-                              totalFlightError 
-                                ? "border-red-500 focus:border-red-500 bg-red-50" 
-                                : "border-[#dde3ec] focus:border-[#2a5a8c]"
-                            )}
-                            placeholder="0.0"
-                          />
-                          <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                        </div>
-                        {totalFlightError && (
-                          <p className="text-[9px] text-red-500 font-bold">Total flight time is required.</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Day Landings</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
+                    <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
-                          step="1"
-                          min="0"
-                          value={meta.ldgDay}
-                          onChange={(e) => handleMetaChange('ldgDay', e.target.value)}
-                          className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-                          placeholder="0"
+                          step="0.1"
+                          value={meta.totalFlight}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleMetaChange('totalFlight', val);
+                            if (parseFloat(val) > 0) {
+                              setTotalFlightError(false);
+                            }
+                          }}
+                          className={cn(
+                            "w-full text-sm font-bold font-mono border rounded-lg px-3 py-2 focus:outline-none transition-all",
+                            totalFlightError 
+                              ? "border-red-500 focus:border-red-500 bg-red-50" 
+                              : "border-[#dde3ec] focus:border-[#2a5a8c]"
+                          )}
+                          placeholder="0.0"
                         />
-                        <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                        <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                       </div>
+                      {totalFlightError && (
+                        <p className="text-[9px] text-red-500 font-bold">Total flight time is required.</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Day Landings</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={meta.ldgDay}
+                        onChange={(e) => handleMetaChange('ldgDay', e.target.value)}
+                        className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                        placeholder="0"
+                      />
+                      <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={meta.ldgNight}
+                        onChange={(e) => handleMetaChange('ldgNight', e.target.value)}
+                        className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                        placeholder="0"
+                      />
+                      <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                     </div>
                   </div>
                 </div>
@@ -1665,6 +1691,16 @@ export default function FlightLesson() {
                       >
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Route (From → To, via)</label>
+                            <input
+                              type="text"
+                              value={meta.route}
+                              onChange={(e) => handleMetaChange('route', e.target.value.toUpperCase())}
+                              placeholder="KORD → KMDW"
+                              className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1"
+                            />
+                          </div>
+                          <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Dual Received</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
@@ -1691,124 +1727,7 @@ export default function FlightLesson() {
                   </AnimatePresence>
                 </div>
 
-                {/* CFI Hours */}
-                {(() => {
-                  const hasDualTime = parseFloat(meta.dual || '0') > 0;
-                  if (!hasDualTime) return null;
 
-                  return (
-                    <div className="bg-white border-t border-[#f1f5f9]">
-                      <button
-                        onClick={() => setExpandedGroups(prev => ({ ...prev, cfiHours: !prev.cfiHours }))}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#f4f5f7] hover:to-[#f8fafc] transition-all duration-200"
-                      >
-                        <div className="flex items-center gap-2">
-                          <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.cfiHours && "rotate-90")} />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Hours</span>
-                        </div>
-                        <div className="text-[10px] font-mono text-[#6b7280]">
-                          {meta.totalFlight || '0.0'} hrs
-                        </div>
-                      </button>
-                      <AnimatePresence>
-                        {expandedGroups.cfiHours && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden bg-[#f8fafc]"
-                          >
-                            <div className="p-4 space-y-4">
-                              <p className="text-[10px] text-[#64748b] italic">These hours are automatically logged to your CFI record when this lesson is saved.</p>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Flight Time</label>
-                                  <div className="flex items-center gap-2">
-                                    <input type="text" readOnly value={meta.totalFlight || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
-                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                  </div>
-                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Dual Given</label>
-                                  <div className="flex items-center gap-2">
-                                    <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
-                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                  </div>
-                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Dual Received</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Time</label>
-                                  <div className="flex items-center gap-2">
-                                    <input type="text" readOnly value={meta.nightDual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
-                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                  </div>
-                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Night Dual</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Instrument Given</label>
-                                  <div className="flex items-center gap-2">
-                                    <input type="text" readOnly value={meta.simInst || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
-                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                  </div>
-                                  <p className="text-[8px] text-[#94a3b8]">Auto-filled from Simulated Instrument</p>
-                                </div>
-                              </div>
-
-                              <div className="h-px bg-[#e2e8f0]" />
-
-                              <div className="space-y-3">
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Landings</h4>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                  <input 
-                                    type="checkbox" 
-                                    checked={meta.cfiDidLandings} 
-                                    onChange={(e) => handleMetaChange('cfiDidLandings', e.target.checked)}
-                                    className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
-                                  />
-                                  <span className="text-[11px] text-[#334155] group-hover:text-[#0ea5e9] transition-colors">I performed landings this lesson</span>
-                                </label>
-
-                                {meta.cfiDidLandings && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                                    <div className="space-y-1">
-                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Day Landings</label>
-                                      <input 
-                                        type="number" 
-                                        step="1"
-                                        min="0"
-                                        value={meta.cfiDayLandings} 
-                                        onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value)} 
-                                        className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
-                                        placeholder="0" 
-                                      />
-                                    </div>
-                                    <div className="space-y-1">
-                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Landings</label>
-                                      <input 
-                                        type="number" 
-                                        step="1"
-                                        min="0"
-                                        value={meta.cfiNightLandings} 
-                                        onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value)} 
-                                        className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
-                                        placeholder="0" 
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                                <p className="text-[9px] text-[#64748b] bg-[#f1f5f9] p-2 rounded border border-[#e2e8f0]">
-                                  Only log landings where you as the CFI physically performed the landing. Leave unchecked if the student did all landings.
-                                </p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })()}
 
                 {/* Instrument */}
                 <div className="bg-white border-t border-[#f1f5f9]">
@@ -2256,13 +2175,6 @@ export default function FlightLesson() {
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Landings</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="1" min="0" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">count</span>
-                            </div>
-                          </div>
                         </div>
                         <div className="px-4 pb-4">
                           <p className="text-[9px] text-[#6b7280] italic">Night Dual is logged in the Dual Instruction group above.</p>
@@ -2522,6 +2434,120 @@ export default function FlightLesson() {
                                   <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                 </div>
                               </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {/* CFI Hours — Always last group unless student flew solo */}
+                {!meta.studentFlewSolo && (
+                  <div className="bg-white border-t border-[#f1f5f9]">
+                    <button
+                      onClick={() => setExpandedGroups(prev => ({ ...prev, cfiHours: !prev.cfiHours }))}
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#f4f5f7] hover:to-[#f8fafc] transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.cfiHours && "rotate-90")} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Hours</span>
+                      </div>
+                      <div className="text-[10px] font-mono text-[#6b7280]">
+                        {meta.totalFlight || '0.0'} hrs
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {expandedGroups.cfiHours && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden bg-[#f8fafc]"
+                        >
+                          <div className="p-4 space-y-4">
+                            <p className="text-[10px] text-[#64748b] italic">These hours are automatically logged to your CFI record when this lesson is saved.</p>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Flight Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="text" readOnly value={meta.totalFlight || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time</p>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Dual Given</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from Dual Received</p>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="text" readOnly value={meta.nightDual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from Night Dual</p>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Instrument Given</label>
+                                <div className="flex items-center gap-2">
+                                  <input type="text" readOnly value={meta.simInst || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from Simulated Instrument</p>
+                              </div>
+                            </div>
+
+                            <div className="h-px bg-[#e2e8f0]" />
+
+                            <div className="space-y-3">
+                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Landings</h4>
+                              <label className="flex items-center gap-2 cursor-pointer group">
+                                <input 
+                                  type="checkbox" 
+                                  checked={meta.cfiDidLandings} 
+                                  onChange={(e) => handleMetaChange('cfiDidLandings', e.target.checked)}
+                                  className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
+                                />
+                                <span className="text-[11px] text-[#334155] group-hover:text-[#0ea5e9] transition-colors">I performed landings this lesson</span>
+                              </label>
+
+                              {meta.cfiDidLandings && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Day Landings</label>
+                                    <input 
+                                      type="number" 
+                                      step="1"
+                                      min="0"
+                                      value={meta.cfiDayLandings} 
+                                      onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value)} 
+                                      className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                      placeholder="0" 
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Landings</label>
+                                    <input 
+                                      type="number" 
+                                      step="1"
+                                      min="0"
+                                      value={meta.cfiNightLandings} 
+                                      onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value)} 
+                                      className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                      placeholder="0" 
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              <p className="text-[9px] text-[#64748b] bg-[#f1f5f9] p-2 rounded border border-[#e2e8f0]">
+                                Only log landings where you as the CFI physically performed the landing. Leave unchecked if the student did all landings.
+                              </p>
                             </div>
                           </div>
                         </motion.div>
