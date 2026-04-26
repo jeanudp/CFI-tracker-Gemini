@@ -176,6 +176,16 @@ export default function Dashboard() {
   });
   const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
 
+  const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
+  const filteredStudents = students.filter(s =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const sortedStudents = [...filteredStudents].sort((a, b) => {
+    const ratingDiff = ratingOrder.indexOf(a.current_rating) - ratingOrder.indexOf(b.current_rating);
+    if (ratingDiff !== 0) return ratingDiff;
+    return a.name.localeCompare(b.name);
+  });
+
   const dismissOnboarding = (step: number) => {
     if (step >= 3) {
       localStorage.setItem('onboarding_done', 'true');
@@ -239,6 +249,15 @@ export default function Dashboard() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (onboardingStep === 2 && sortedStudents.length === 0) {
+      const timer = setTimeout(() => {
+        dismissOnboarding(2);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [onboardingStep, sortedStudents.length]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -576,41 +595,41 @@ export default function Dashboard() {
     return task ? task.name : taskId;
   };
 
-  const filteredStudents = students.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
-  const sortedStudents = [...filteredStudents].sort((a, b) => {
-    const ratingDiff = ratingOrder.indexOf(a.current_rating) - ratingOrder.indexOf(b.current_rating);
-    if (ratingDiff !== 0) return ratingDiff;
-    return a.name.localeCompare(b.name);
-  });
-
-  const OnboardingTooltip = ({ step, targetStep, text, position = 'bottom' }: { step: number, targetStep: number, text: string, position?: 'bottom' | 'left' }) => {
+  const OnboardingTooltip = ({ step, targetStep, text, position = 'bottom' }: { step: number, targetStep: number, text: string, position?: 'bottom' | 'left' | 'bottom-right' | 'fixed-left' }) => {
     if (step !== targetStep) return null;
+    
+    const containerClasses = {
+      'bottom': 'top-full mt-2 left-1/2 -translate-x-1/2',
+      'left': 'right-full mr-3 top-1/2 -translate-y-1/2',
+      'bottom-right': 'top-full mt-2 right-0',
+      'fixed-left': 'fixed top-[140px] left-4'
+    }[position];
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         onClick={() => dismissOnboarding(targetStep)}
-        className={`absolute z-[300] cursor-pointer ${position === 'left' ? 'right-full mr-3 top-1/2 -translate-y-1/2' : 'top-full mt-2 left-1/2 -translate-x-1/2'}`}
+        className={`${position.startsWith('fixed') ? '' : 'absolute'} z-[300] cursor-pointer ${containerClasses}`}
         style={{ minWidth: '200px', maxWidth: '240px' }}
       >
         <div className="bg-[#1a3a5c] text-white text-xs font-medium rounded-xl px-4 py-3 shadow-2xl leading-relaxed relative">
           {text}
           <div className="mt-2 text-[10px] text-white/50 font-bold uppercase tracking-widest">{targetStep}/3 · Tap to dismiss</div>
-          {position !== 'left' && (
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
+          {(position === 'bottom' || position === 'bottom-right') && (
+            <div className={`absolute -top-1.5 w-3 h-3 bg-[#1a3a5c] rotate-45 ${position === 'bottom' ? 'left-1/2 -translate-x-1/2' : 'right-4'}`} />
           )}
           {position === 'left' && (
             <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
+          )}
+          {position === 'fixed-left' && (
+            <div className="absolute left-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-[#1a3a5c] rotate-45" />
           )}
         </div>
       </motion.div>
@@ -750,7 +769,7 @@ export default function Dashboard() {
             </button>
             <AnimatePresence>
               {onboardingStep === 1 && (
-                <OnboardingTooltip step={onboardingStep} targetStep={1} text="Tap here to add your first student ↑" position="bottom" />
+                <OnboardingTooltip step={onboardingStep} targetStep={1} text="Tap here to add your first student ↑" position="bottom-right" />
               )}
             </AnimatePresence>
           </div>
@@ -777,7 +796,7 @@ export default function Dashboard() {
               </button>
               <AnimatePresence>
                 {onboardingStep === 3 && (
-                  <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom" />
+                  <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom-right" />
                 )}
               </AnimatePresence>
             </div>
@@ -832,6 +851,11 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-4 pb-8">
+        <AnimatePresence>
+          {onboardingStep === 2 && (
+            <OnboardingTooltip step={onboardingStep} targetStep={2} text="Tap a student card to start a lesson or view their progress" position="fixed-left" />
+          )}
+        </AnimatePresence>
         {!loading && sortedStudents.length > 0 && (
           <div className="flex items-center justify-between px-1 mb-4">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
@@ -873,13 +897,6 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative">
-            <AnimatePresence>
-              {onboardingStep === 2 && sortedStudents.length > 0 && (
-                <div className="absolute -top-8 left-0 z-[300]">
-                  <OnboardingTooltip step={onboardingStep} targetStep={2} text="Tap a student card to start a lesson or view their progress" position="bottom" />
-                </div>
-              )}
-            </AnimatePresence>
             {sortedStudents.map(student => {
               const ratingAccents: Record<string, string> = {
                 ppl:  '#2563eb',
