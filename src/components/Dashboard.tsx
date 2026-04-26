@@ -175,11 +175,19 @@ export default function Dashboard() {
   const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
 
   useEffect(() => {
-    const startGuide = localStorage.getItem('61t_start_guide');
-    if (startGuide === 'true') {
-      setOnboardingStep(1);
-      localStorage.removeItem('61t_start_guide');
-    }
+    const checkGuide = () => {
+      const startGuide = localStorage.getItem('61t_start_guide');
+      if (startGuide === 'true') {
+        setTimeout(() => {
+          setOnboardingStep(1);
+          localStorage.removeItem('61t_start_guide');
+        }, 300);
+      }
+    };
+
+    checkGuide();
+    window.addEventListener('storage', checkGuide);
+    return () => window.removeEventListener('storage', checkGuide);
   }, []);
 
   const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
