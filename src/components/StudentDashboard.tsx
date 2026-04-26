@@ -43,6 +43,7 @@ export default function StudentDashboard() {
   const [rating, setRating] = useState<any>({ ...Object.values(RATINGS)[0], code: Object.keys(RATINGS)[0] });
   const [student, setStudent] = useState<Student | null>(null);
   const [showMoreStruggles, setShowMoreStruggles] = useState(false);
+  const [expandedAreas, setExpandedAreas] = useState<Record<number, boolean>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -334,8 +335,6 @@ export default function StudentDashboard() {
     if (score >= 40) return '#e8a020';
     return '#c0392b';
   };
-
-  const [expandedAreas, setExpandedAreas] = useState<Record<number, boolean>>({});
 
   const heatmapAreas = acsData.map((area, ai) => ({
     areaName: area.area,
