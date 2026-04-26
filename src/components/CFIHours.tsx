@@ -291,6 +291,42 @@ export default function CFIHours() {
     e.date.includes(search)
   );
 
+  // Additional Stats Calculations
+  const now = new Date();
+  const getStartOfWeek = (d: Date) => {
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+    const start = new Date(d.setDate(diff));
+    start.setHours(0, 0, 0, 0);
+    return start;
+  };
+  
+  const startOfWeek = getStartOfWeek(new Date(now));
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  const hoursThisWeek = entries
+    .filter(e => new Date(e.date) >= startOfWeek)
+    .reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0);
+  
+  const hoursThisMonth = entries
+    .filter(e => new Date(e.date) >= startOfMonth)
+    .reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0);
+  
+  const hoursThisYear = entries
+    .filter(e => new Date(e.date) >= startOfYear)
+    .reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0);
+    
+  const studentsThisMonth = new Set(
+    entries
+      .filter(e => new Date(e.date) >= startOfMonth)
+      .map(e => e.student_name)
+  ).size;
+
+  const lastLessonDate = entries.length > 0 
+    ? new Date(entries[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : 'None';
+
   const stats = {
     totalFlight: entries.reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0) + (mfbSummary?.totalFlight || 0),
     totalDual: entries.reduce((sum, e) => sum + (parseFloat(e.dual_given) || 0), 0) + (mfbSummary?.dualGiven || 0),
@@ -504,375 +540,141 @@ export default function CFIHours() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1a3a5c] flex items-center gap-2">
-            <GraduationCap className="text-[#e8a020]" />
-            My CFI Hours
-          </h1>
-          <p className="text-sm text-[#64748b]">Cumulative flight hours as an instructor</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <label className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold cursor-not-allowed transition-all opacity-40 select-none pointer-events-none",
-              "border-[#dde3ec] text-[#94a3b8] bg-[#f8fafc]"
-            )}>
-              <Upload size={14} />
-              Import MyFlightBook
-              <input
-                type="file"
-                accept=".csv"
-                className="hidden"
-                disabled={true}
-                onChange={handleMFBImport}
-              />
-            </label>
-            <span className="absolute -top-2 -right-2 bg-[#e8a020] text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-sm">
-              Soon
-            </span>
-          </div>
-          <div className="relative">
-            <div className="opacity-40 pointer-events-none select-none">
-              <ExportButton 
-                onExportCSV={exportToMyFlightBook}
-                buttonText="Export CFI Hours"
-              />
-            </div>
-            <span className="absolute -top-2 -right-2 bg-[#e8a020] text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-sm">
-              Soon
-            </span>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto p-6 space-y-10">
+      {/* Page Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-[#1a3a5c] flex items-center gap-2">
+          <GraduationCap className="text-[#e8a020]" />
+          My Profile
+        </h1>
+        <p className="text-sm text-[#64748b]">View your certificates, currency status, and instruction statistics.</p>
       </div>
 
-      {importResult && (
-        <div className={cn(
-          "px-4 py-3 rounded-xl border text-xs font-medium flex items-center justify-between",
-          importResult.error
-            ? "bg-red-50 border-red-200 text-red-700"
-            : "bg-green-50 border-green-200 text-green-700"
-        )}>
-          <span>
-            {importResult.error
-              ? `Import failed: ${importResult.error}`
-              : `✓ Imported ${importResult.flights} flights from MyFlightBook — totals updated below`
-            }
-          </span>
-          <button onClick={() => setImportResult(null)} className="ml-4 opacity-60 hover:opacity-100">✕</button>
+      {/* Section 1: Profile & Currency */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Profile & Currency</div>
+          <div className="h-[1px] w-full bg-[#dde3ec] opacity-50" />
         </div>
-      )}
 
-      {mfbSummary && (
-        <div className="bg-[#f0f4ff] border border-[#c7d4f0] rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <RefreshCw size={14} className="text-[#1a3a5c]" />
-              <span className="text-[11px] font-bold uppercase tracking-widest text-[#1a3a5c]">MyFlightBook Import Summary</span>
-              <span className="text-[10px] text-[#64748b]">— {mfbSummary.flightCount} flights · imported {mfbSummary.importedAt}</span>
-            </div>
-            <label className="flex items-center gap-1.5 text-[10px] font-bold text-[#1a3a5c] cursor-pointer hover:underline">
-              <RefreshCw size={11} />
-              Re-import
-              <input type="file" accept=".csv" className="hidden" onChange={handleMFBImport} />
-            </label>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-3">
-            {[
-              { label: 'Total Flight', value: mfbSummary.totalFlight?.toFixed(1), unit: 'hrs' },
-              { label: 'CFI Dual', value: mfbSummary.dualGiven?.toFixed(1), unit: 'hrs' },
-              { label: 'PIC', value: mfbSummary.pic?.toFixed(1), unit: 'hrs' },
-              { label: 'Night', value: mfbSummary.night?.toFixed(1), unit: 'hrs' },
-              { label: 'Sim Inst', value: mfbSummary.simInst?.toFixed(1), unit: 'hrs' },
-              { label: 'IMC', value: mfbSummary.imc?.toFixed(1), unit: 'hrs' },
-              { label: 'XC', value: mfbSummary.xc?.toFixed(1), unit: 'hrs' },
-              { label: 'Day Ldg', value: mfbSummary.dayLandings, unit: '' },
-              { label: 'Night Ldg', value: mfbSummary.nightLandings, unit: '' },
-              { label: 'Approaches', value: mfbSummary.approaches, unit: '' },
-            ].map(stat => (
-              <div key={stat.label} className="bg-white rounded-lg p-2 border border-[#c7d4f0]">
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[#64748b] mb-0.5">{stat.label}</div>
-                <div className="text-sm font-bold text-[#1a3a5c] font-mono">{stat.value} <span className="text-[9px] text-[#94a3b8]">{stat.unit}</span></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CFI Profile Card */}
+          <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden flex flex-col">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-[#dde3ec] bg-[#f8fafc]">
+              <div>
+                <h3 className="text-sm font-bold text-[#1a3a5c]">Instructor Information</h3>
+                <p className="text-[10px] text-[#64748b]">Used for endorsement auto-fill</p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* CFI Profile */}
-      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-        <div className="px-6 py-4 flex items-center justify-between border-b border-[#dde3ec] bg-[#f8fafc]">
-          <div>
-            <h3 className="text-sm font-bold text-[#1a3a5c]">CFI Profile</h3>
-            <p className="text-[10px] text-[#64748b]">Used to auto-fill endorsement print pages</p>
-          </div>
-          {!isEditingProfile && (
-            <button
-              onClick={() => setIsEditingProfile(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#1a3a5c] transition-all text-[10px] font-bold"
-            >
-              <Pencil size={12} />
-              {cfiProfile ? 'Edit' : 'Add Profile'}
-            </button>
-          )}
-        </div>
-        <div className="p-6">
-          {isEditingProfile ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith' },
-                  { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI' },
-                  { label: 'RE End Date / Exp. Date', key: 're_exp_date', placeholder: 'e.g. 12-31-2026' },
-                ].map(field => (
-                  <div key={field.key} className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
-                    <input
-                      type="text"
-                      value={profileDraft[field.key as keyof typeof profileDraft]}
-                      onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
-                      placeholder={field.placeholder}
-                      className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                    />
+              {!isEditingProfile && (
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#1a3a5c] transition-all text-[10px] font-bold"
+                >
+                  <Pencil size={12} />
+                  {cfiProfile ? 'Edit' : 'Add Info'}
+                </button>
+              )}
+            </div>
+            <div className="p-6 flex-1">
+              {isEditingProfile ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    {[
+                      { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith' },
+                      { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI' },
+                      { label: 'RE End Date / Exp. Date', key: 're_exp_date', placeholder: 'e.g. 12-31-2026' },
+                    ].map(field => (
+                      <div key={field.key} className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
+                        <input
+                          type="text"
+                          value={profileDraft[field.key as keyof typeof profileDraft]}
+                          onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder={field.placeholder}
+                          className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={saveCfiProfile}
-                  disabled={isSavingProfile}
-                  className="flex items-center gap-2 px-5 py-2 bg-[#1a3a5c] text-white text-xs font-bold rounded-xl hover:bg-[#2a5a8c] transition-all shadow-md disabled:opacity-50"
-                >
-                  {isSavingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  Save Profile
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditingProfile(false);
-                    if (cfiProfile) setProfileDraft({ full_name: cfiProfile.full_name || '', cert_number: cfiProfile.cert_number || '', re_exp_date: cfiProfile.re_exp_date || '' });
-                  }}
-                  className="px-5 py-2 bg-white text-[#6b7280] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : cfiProfile ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { label: 'Full Name', value: cfiProfile.full_name },
-                { label: 'CFI Certificate #', value: cfiProfile.cert_number },
-                { label: 'RE End Date / Exp. Date', value: cfiProfile.re_exp_date },
-              ].map(item => (
-                <div key={item.label}>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">{item.label}</div>
-                  <div className="text-sm font-bold text-[#1a3a5c]">{item.value || '—'}</div>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={saveCfiProfile}
+                      disabled={isSavingProfile}
+                      className="flex items-center gap-2 px-5 py-2 bg-[#1a3a5c] text-white text-xs font-bold rounded-xl hover:bg-[#2a5a8c] transition-all shadow-md disabled:opacity-50"
+                    >
+                      {isSavingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingProfile(false);
+                        if (cfiProfile) setProfileDraft({ full_name: cfiProfile.full_name || '', cert_number: cfiProfile.cert_number || '', re_exp_date: cfiProfile.re_exp_date || '' });
+                      }}
+                      className="px-5 py-2 bg-white text-[#6b7280] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-[#94a3b8]">No profile saved yet. Click <strong>Add Profile</strong> to save your CFI details.</p>
-              <p className="text-[10px] text-[#94a3b8] mt-1">These will auto-fill when you print endorsements.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
-      {[
-        { label: 'Total Flight Time', value: stats.totalFlight.toFixed(1), unit: 'hrs' },
-        { label: 'Total Dual Given', value: stats.totalDual.toFixed(1), unit: 'hrs' },
-        { label: 'Cross Country PIC', value: stats.xcPic.toFixed(1), unit: 'hrs' },
-        { 
-          label: 'R-ATP Eligible XC', 
-          value: stats.ratpXc.toFixed(1), 
-          unit: 'hrs',
-          badge: 'R-ATP'
-        },
-        { label: 'Multi Engine', value: stats.multiEngine.toFixed(1), unit: 'hrs', badge: 'AMEL' },
-        { label: 'Night Instruction', value: stats.nightDual.toFixed(1), unit: 'hrs' },
-        { label: 'Instrument Given', value: stats.instrumentGiven.toFixed(1), unit: 'hrs' },
-        { label: 'Day Landings', value: stats.dayLandings, unit: 'ldg' },
-        { label: 'Night Landings', value: stats.nightLandings, unit: 'ldg' },
-      ].map((stat, i) => (
-        <motion.div
-          key={stat.label}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.05 }}
-          className="bg-white p-4 rounded-xl border border-[#dde3ec] shadow-sm"
-        >
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-[#64748b]">{stat.label}</div>
-            {stat.badge && (
-              <span className="text-[8px] font-bold bg-[#1a3a5c] text-white px-1.5 py-0.5 rounded uppercase tracking-tighter">
-                {stat.badge}
-              </span>
-            )}
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-xl font-bold text-[#1a3a5c]">{stat.value}</span>
-            <span className="text-[10px] font-mono text-[#94a3b8]">{stat.unit}</span>
-          </div>
-        </motion.div>
-      ))}
-      </div>
-
-      {/* Currency Section */}
-      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-        <button
-          onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
-          className={cn(
-            "w-full px-6 py-4 flex items-center justify-between transition-colors",
-            headerBgStyle
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border",
-              activeCurrencies === totalCurrencies ? "bg-white border-[#bcf0da] text-[#059669]" :
-              activeCurrencies === 0 ? "bg-white border-[#fecaca] text-[#dc2626]" :
-              "bg-white border-[#fde68a] text-[#d97706]"
-            )}>
-              <Shield size={20} />
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-bold text-[#1a3a5c]">CFI Currency Status</h3>
-              <p className="text-[10px] text-[#64748b]">FAR/AIM §61.56, §61.57 compliance</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "px-3 py-1 rounded-full text-[10px] font-bold border shadow-sm",
-              activeCurrencies === totalCurrencies ? "bg-[#dcfce7] text-[#166534] border-[#bcf0da]" :
-              activeCurrencies === 0 ? "bg-[#fee2e2] text-[#991b1b] border-[#fecaca]" :
-              "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"
-            )}>
-              {activeCurrencies}/{totalCurrencies} Current
-            </div>
-            <motion.div
-              animate={{ rotate: isCurrencyOpen ? 180 : 0 }}
-              className="text-[#94a3b8]"
-            >
-              <ChevronDown size={20} />
-            </motion.div>
-          </div>
-        </button>
-
-        <AnimatePresence>
-          {isCurrencyOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-t border-[#dde3ec]"
-            >
-              <div className="p-4 space-y-4">
-                {categories.map((cat) => {
-                  const daysUntil = cat.expiryDate ? Math.ceil((new Date(cat.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
-                  return (
-                    <div key={cat.id} className="bg-[#f8fafc] rounded-xl border border-[#dde3ec] overflow-hidden">
-                      <button
-                        onClick={() => setExpandedCurrencyRow(expandedCurrencyRow === cat.id ? null : cat.id)}
-                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f1f5f9] transition-colors"
-                      >
-                        <div className="flex flex-col items-start">
-                          <span className="text-[11px] font-bold text-[#1e293b]">{cat.label}</span>
-                          <span className="text-[9px] text-[#64748b] tracking-wider uppercase">{cat.ref}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {cat.current ? (
-                            <span className="bg-[#dcfce7] text-[#166534] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#bcf0da]">CURRENT</span>
-                          ) : (
-                            <span className="bg-[#fee2e2] text-[#991b1b] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fecaca]">NOT CURRENT</span>
-                          )}
-                          <motion.div
-                            animate={{ rotate: expandedCurrencyRow === cat.id ? 90 : 0 }}
-                            className="text-[#94a3b8]"
-                          >
-                            <ChevronRight size={16} />
-                          </motion.div>
-                        </div>
-                      </button>
-                      <AnimatePresence>
-                        {expandedCurrencyRow === cat.id && (
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: 'auto' }}
-                            exit={{ height: 0 }}
-                            className="px-4 pb-4 border-t border-[#dde3ec]/10 space-y-3 pt-3"
-                          >
-                            <div className="grid grid-cols-2 gap-4">
-                              {cat.details.map((detail, idx) => (
-                                <div key={idx} className="flex items-center justify-between">
-                                  <span className="text-[10px] text-[#64748b]">{detail.label}</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={cn(
-                                      "text-[10px] font-bold font-mono",
-                                      detail.value >= detail.target ? "text-[#059669]" : "text-[#dc2626]"
-                                    )}>
-                                      {detail.value} / {detail.target}
-                                    </span>
-                                    {detail.value >= detail.target ? (
-                                      <Check size={12} className="text-[#059669]" />
-                                    ) : (
-                                      <X size={12} className="text-[#dc2626]" />
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="flex flex-col gap-1 border-t border-[#dde3ec]/50 pt-3">
-                              <div className="flex justify-between text-[10px]">
-                                <span className="text-[#64748b]">Last Currency Event</span>
-                                <span className="font-bold text-[#1e293b]">{cat.lastDate}</span>
-                              </div>
-                              {cat.expiryDate && (
-                                <div className="flex justify-between text-[10px]">
-                                  <span className="text-[#64748b]">Expiry Date</span>
-                                  <span className={cn(
-                                    "font-bold",
-                                    daysUntil < 15 && daysUntil > 0 ? "text-[#d97706]" : daysUntil <= 0 ? "text-[#dc2626]" : "text-[#1e293b]"
-                                  )}>
-                                    {cat.expiryDate} {daysUntil < 15 && `(${formatDaysUntil(daysUntil)})`}
-                                  </span>
-                                </div>
-                              )}
-                              {cat.customMsg && (
-                                <div className="mt-2 p-2 bg-[#fffbeb] border border-[#fef3c7] rounded-lg flex items-center gap-2">
-                                  <AlertTriangle size={12} className="text-[#d97706]" />
-                                  <span className="text-[10px] text-[#92400e] font-medium">{cat.customMsg}</span>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+              ) : cfiProfile ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {[
+                    { label: 'Full Name', value: cfiProfile.full_name },
+                    { label: 'CFI Certificate #', value: cfiProfile.cert_number },
+                    { label: 'RE End Date / Exp. Date', value: cfiProfile.re_exp_date },
+                  ].map(item => (
+                    <div key={item.label}>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">{item.label}</div>
+                      <div className="text-sm font-bold text-[#1a3a5c]">{item.value || '—'}</div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-[#94a3b8]">No profile info saved yet.</p>
+                  <button onClick={() => setIsEditingProfile(true)} className="mt-4 text-[#1a3a5c] text-xs font-bold hover:underline">Add Profile Info →</button>
+                </div>
+              )}
+            </div>
+          </div>
 
-                {/* Flight Review Row */}
-                <div className="bg-[#f8fafc] rounded-xl border border-[#dde3ec] overflow-hidden">
+          {/* Currency Status Card */}
+          <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-4 flex items-center justify-between border-b border-[#dde3ec] bg-[#f8fafc]">
+            <div>
+              <h3 className="text-sm font-bold text-[#1a3a5c]">Currency Snapshot</h3>
+              <p className="text-[10px] text-[#64748b]">Based on 61 Tracker flight history</p>
+            </div>
+            <div className={cn(
+              "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border shadow-sm transition-colors",
+              activeCurrencies === totalCurrencies ? "bg-green-50 text-green-700 border-green-200" :
+              activeCurrencies === 0 ? "bg-red-50 text-red-700 border-red-200" :
+              "bg-amber-50 text-amber-700 border-amber-200"
+            )}>
+              {activeCurrencies} / {totalCurrencies} Current
+            </div>
+          </div>
+          <div className="p-4 space-y-3 overflow-y-auto max-h-[400px]">
+            {categories.map((cat) => {
+              const daysUntil = cat.expiryDate ? Math.ceil((new Date(cat.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
+              return (
+                <div key={cat.id} className="bg-[#f8fafc] rounded-xl border border-[#dde3ec] overflow-hidden">
                   <button
-                    onClick={() => setExpandedCurrencyRow(expandedCurrencyRow === 'fr' ? null : 'fr')}
+                    onClick={() => setExpandedCurrencyRow(expandedCurrencyRow === cat.id ? null : cat.id)}
                     className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f1f5f9] transition-colors"
                   >
                     <div className="flex flex-col items-start">
-                      <span className="text-[11px] font-bold text-[#1e293b]">Flight Review</span>
-                      <span className="text-[9px] text-[#64748b] tracking-wider uppercase">§61.56</span>
+                      <span className="text-[11px] font-bold text-[#1e293b]">{cat.label}</span>
+                      <span className="text-[9px] text-[#64748b] tracking-wider uppercase">{cat.ref}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      {isFlightReviewCurrent ? (
+                      {cat.current ? (
                         <span className="bg-[#dcfce7] text-[#166534] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#bcf0da]">CURRENT</span>
                       ) : (
                         <span className="bg-[#fee2e2] text-[#991b1b] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fecaca]">EXPIRED</span>
                       )}
                       <motion.div
-                        animate={{ rotate: expandedCurrencyRow === 'fr' ? 90 : 0 }}
+                        animate={{ rotate: expandedCurrencyRow === cat.id ? 90 : 0 }}
                         className="text-[#94a3b8]"
                       >
                         <ChevronRight size={16} />
@@ -880,227 +682,205 @@ export default function CFIHours() {
                     </div>
                   </button>
                   <AnimatePresence>
-                    {expandedCurrencyRow === 'fr' && (
+                    {expandedCurrencyRow === cat.id && (
                       <motion.div
                         initial={{ height: 0 }}
                         animate={{ height: 'auto' }}
                         exit={{ height: 0 }}
-                        className="px-4 pb-4 border-t border-[#dde3ec]/10 pt-3"
+                        className="px-4 pb-4 border-t border-[#dde3ec]/10 space-y-3 pt-3"
                       >
-                        <div className="space-y-3">
-                          <div className="flex flex-col gap-1">
-                            {flightReviewDate ? (
-                              <>
-                                <div className="flex justify-between text-[10px]">
-                                  <span className="text-[#64748b]">Last Flight Review</span>
-                                  <span className="font-bold text-[#1e293b]">{flightReviewDate}</span>
-                                </div>
-                                <div className="flex justify-between text-[10px]">
-                                  <span className="text-[#64748b]">Expiry Date</span>
-                                  <span className={cn(
-                                    "font-bold",
-                                    frDaysUntilExpiry < 60 && frDaysUntilExpiry > 0 ? "text-[#d97706]" : frDaysUntilExpiry <= 0 ? "text-[#dc2626]" : "text-[#1e293b]"
-                                  )}>
-                                    {frExpiryDate?.toISOString().split('T')[0]} {frDaysUntilExpiry < 60 && `(${formatDaysUntil(frDaysUntilExpiry)})`}
-                                  </span>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="p-3 bg-[#fffbeb] border border-[#fef3c7] rounded-lg text-center">
-                                <p className="text-[11px] text-[#92400e] font-medium leading-relaxed">
-                                  No flight review date on record. Click Edit to add your most recent flight review date.
-                                </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          {cat.details.map((detail, idx) => (
+                            <div key={idx} className="flex items-center justify-between">
+                              <span className="text-[10px] text-[#64748b]">{detail.label}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className={cn(
+                                  "text-[10px] font-bold font-mono",
+                                  detail.value >= detail.target ? "text-[#059669]" : "text-[#dc2626]"
+                                )}>
+                                  {detail.value} / {detail.target}
+                                </span>
+                                {detail.value >= detail.target ? (
+                                  <Check size={12} className="text-[#059669]" />
+                                ) : (
+                                  <X size={12} className="text-[#dc2626]" />
+                                )}
                               </div>
-                            )}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex flex-col gap-1 border-t border-[#dde3ec]/50 pt-3">
+                          <div className="flex justify-between text-[10px]">
+                            <span className="text-[#64748b]">Last Event Date</span>
+                            <span className="font-bold text-[#1e293b]">{cat.lastDate}</span>
                           </div>
-
-                          <div className="flex items-center justify-between border-t border-[#dde3ec]/50 pt-3">
-                            {isEditingFlightReview ? (
-                              <div className="flex gap-2 w-full">
-                                <input
-                                  type="date"
-                                  value={newFlightReviewDate}
-                                  onChange={(e) => setNewFlightReviewDate(e.target.value)}
-                                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-[#dde3ec] rounded-lg focus:outline-none focus:border-[#1a3a5c]"
-                                />
-                                <button
-                                  onClick={saveFlightReviewDate}
-                                  disabled={isSavingFlightReview}
-                                  className="px-4 py-1.5 bg-[#1a3a5c] text-white text-[11px] font-bold rounded-lg hover:bg-[#2a5a8c] transition-all flex items-center gap-2"
-                                >
-                                  {isSavingFlightReview ? <Loader2 size={12} className="animate-spin" /> : 'Save'}
-                                </button>
-                                <button
-                                  onClick={() => setIsEditingFlightReview(false)}
-                                  className="px-4 py-1.5 bg-white text-[#64748b] text-[11px] font-bold rounded-lg border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <span className="text-[10px] text-[#64748b]">Update flight review details</span>
-                                <button
-                                  onClick={() => setIsEditingFlightReview(true)}
-                                  className="p-1.5 rounded-lg border border-[#dde3ec] text-[#64748b] hover:bg-[#f8fafc] hover:text-[#1a3a5c] transition-all flex items-center gap-1.5"
-                                >
-                                  <Pencil size={12} />
-                                  <span className="text-[10px] font-bold">Edit</span>
-                                </button>
-                              </>
-                            )}
-                          </div>
+                          {cat.expiryDate && (
+                            <div className="flex justify-between text-[10px]">
+                              <span className="text-[#64748b]">Expiry Date</span>
+                              <span className={cn(
+                                "font-bold",
+                                daysUntil < 15 && daysUntil > 0 ? "text-[#d97706]" : daysUntil <= 0 ? "text-[#dc2626]" : "text-[#1e293b]"
+                              )}>
+                                {cat.expiryDate} {daysUntil < 15 && `(${formatDaysUntil(daysUntil)})`}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              );
+            })}
+          </div>
+        </div>
+        </div>
       </div>
 
-      {/* Logbook Section */}
-      <div className="space-y-4">
-        <button
-          onClick={() => setIsLogbookOpen(!isLogbookOpen)}
-          className={cn(
-            "w-full px-6 py-4 flex items-center justify-between transition-colors bg-white rounded-2xl border border-[#dde3ec] shadow-sm",
-            isLogbookOpen && "bg-[#f8fafc] rounded-b-none border-b-0"
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-[#dde3ec] flex items-center justify-center text-[#1a3a5c] shadow-sm">
-              <Plane size={20} />
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-bold text-[#1a3a5c]">Flight Logbook</h3>
-              <p className="text-[10px] text-[#64748b]">Historical instruction entries recorded in 61 Tracker</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="px-3 py-1 rounded-full text-[10px] font-bold border border-[#dde3ec] bg-[#f8fafc] text-[#1a3a5c] shadow-sm">
-              {entries.length} Entries
-            </div>
-            <motion.div
-              animate={{ rotate: isLogbookOpen ? 180 : 0 }}
-              className="text-[#94a3b8]"
-            >
-              <ChevronDown size={20} />
-            </motion.div>
-          </div>
-        </button>
+      {/* Section 2: Flight Statistics */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Flight Statistics</div>
+          <div className="h-[1px] w-full bg-[#dde3ec] opacity-50" />
+        </div>
 
-        <AnimatePresence>
-          {isLogbookOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="bg-white rounded-b-2xl border border-t-0 border-[#dde3ec] shadow-sm overflow-hidden"
-            >
-              <div className="p-4 space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search by student name or date..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a5c]/10"
-                  />
-                </div>
+        {/* Top Priority Stats Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {[
+            { label: 'Hours This Week', value: hoursThisWeek.toFixed(1), color: 'text-[#1a3a5c]' },
+            { label: 'Hours This Month', value: hoursThisMonth.toFixed(1), color: 'text-[#1a3a5c]' },
+            { label: 'Hours This Year', value: hoursThisYear.toFixed(1), color: 'text-[#1a3a5c]' },
+            { label: 'Students This Month', value: studentsThisMonth, color: 'text-[#e8a020]' },
+            { label: 'Last Lesson', value: lastLessonDate, color: 'text-[#64748b]' },
+          ].map((stat, i) => (
+            <div key={stat.label} className="bg-white p-4 rounded-2xl border border-[#dde3ec] shadow-sm">
+              <div className="text-[9px] font-bold uppercase tracking-widest text-[#94a3b8] mb-1">{stat.label}</div>
+              <div className={cn("text-xl font-black", stat.color)}>{stat.value}</div>
+            </div>
+          ))}
+        </div>
 
-                <div className="border border-[#dde3ec] rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-[#f8fafc] border-b border-[#dde3ec]">
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Date</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Student</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Aircraft</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Route</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Total</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Dual</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">XC PIC</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">R-ATP XC</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Night</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Inst</th>
-                          <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Ldg</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#f1f5f9]">
-                        {filteredEntries.map((e) => (
-                          <tr 
-                            key={e.id}
-                            onClick={() => navigate('/history')}
-                            className="hover:bg-[#f8fafc] cursor-pointer transition-colors group"
-                          >
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#1e293b]">
-                                <Calendar size={12} className="text-[#94a3b8]" />
-                                {e.date}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-[11px] font-bold text-[#1a3a5c]">{e.student_name}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-col">
-                                <span className="text-[11px] font-bold text-[#1e293b]">{e.aircraft}</span>
-                                <span className="text-[9px] text-[#64748b]">{e.aircraft_model}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1 text-[11px] text-[#475569]">
-                                <MapPin size={12} className="text-[#94a3b8]" />
-                                {e.route || 'Local'}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b]">{parseFloat(e.total_flight).toFixed(1)}</td>
-                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.dual_given).toFixed(1)}</td>
-                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] font-mono text-[#475569]">{parseFloat(e.ratp_xc || 0).toFixed(1)}</span>
-                                {e.ratp_xc_eligible && (
-                                  <span className="text-[7px] font-bold bg-[#1a3a5c] text-white px-1 py-0.5 rounded uppercase tracking-tighter">R-ATP</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.night_dual).toFixed(1)}</td>
-                            <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.instrument_given).toFixed(1)}</td>
-                            <td className="px-4 py-3">
-                              <span className="text-[10px] font-mono bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
-                                {e.day_landings}D/{e.night_landings}N
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr className="bg-[#f8fafc] font-bold border-t border-[#dde3ec]">
-                          <td colSpan={4} className="px-4 py-3 text-[10px] uppercase tracking-widest text-[#64748b]">Totals</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalFlight.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.totalDual.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.xcPic.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.ratpXc.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.nightDual.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.instrumentGiven.toFixed(1)}</td>
-                          <td className="px-4 py-3 text-[11px] font-mono text-[#1a3a5c]">{stats.dayLandings}D/{stats.nightLandings}N</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  {filteredEntries.length === 0 && (
-                    <div className="p-8 text-center text-[#64748b] text-sm">
-                      No CFI hours found matching your search.
-                    </div>
-                  )}
-                </div>
+        {/* Detailed Breakdown */}
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+          {[
+            { label: 'Total Flight', value: stats.totalFlight.toFixed(1), unit: 'hrs' },
+            { label: 'Total Dual', value: stats.totalDual.toFixed(1), unit: 'hrs' },
+            { label: 'XC PIC', value: stats.xcPic.toFixed(1), unit: 'hrs' },
+            { label: 'R-ATP XC', value: stats.ratpXc.toFixed(1), unit: 'hrs', badge: 'R-ATP' },
+            { label: 'Multi-Engine', value: stats.multiEngine.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+            { label: 'Night Instruction', value: stats.nightDual.toFixed(1), unit: 'hrs' },
+            { label: 'Day Landings', value: stats.dayLandings, unit: 'ldg' },
+            { label: 'Night Landings', value: stats.nightLandings, unit: 'ldg' },
+          ].map((stat, i) => (
+            <div key={stat.label} className="bg-white p-3 rounded-xl border border-[#dde3ec] shadow-sm">
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="text-[8px] font-bold uppercase tracking-widest text-[#64748b]">{stat.label}</div>
+                {stat.badge && (
+                  <span className="text-[6px] font-black bg-[#1a3a5c] text-white px-1 py-0.25 rounded">
+                    {stat.badge}
+                  </span>
+                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-sm font-bold text-[#1a3a5c]">{stat.value}</span>
+                <span className="text-[8px] font-mono text-[#94a3b8]">{stat.unit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 3: Logbook */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Logbook</div>
+            <div className="h-[1px] w-full bg-[#dde3ec] opacity-50" />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] cursor-not-allowed opacity-50 hover:bg-[#f8fafc] transition-all">
+                <Upload size={12} />
+                Import
+                <input type="file" className="hidden" disabled />
+              </label>
+              <span className="absolute -top-1.5 -right-1.5 bg-[#e8a020] text-white text-[6px] font-black uppercase px-1 rounded-full">SOON</span>
+            </div>
+            <div className="relative">
+              <button disabled className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] cursor-not-allowed opacity-50 hover:bg-[#f8fafc] transition-all">
+                <Download size={12} />
+                Export
+              </button>
+              <span className="absolute -top-1.5 -right-1.5 bg-[#e8a020] text-white text-[6px] font-black uppercase px-1 rounded-full">SOON</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#dde3ec] bg-[#f8fafc] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm font-bold text-[#1a3a5c]">Recorded Sessions</h3>
+              <span className="px-2 py-0.5 bg-[#1a3a5c]/5 text-[#1a3a5c] text-[10px] font-bold rounded-full border border-[#1a3a5c]/10">
+                {entries.length} Entries
+              </span>
+            </div>
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" size={16} />
+              <input
+                type="text"
+                placeholder="Search student or date..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-sm focus:outline-none focus:border-[#1a3a5c] transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#f8fafc] border-b border-[#dde3ec]">
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Date</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Student</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Aircraft</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Route</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Total</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Dual</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">XC PIC</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">R-ATP XC</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Night</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Inst</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f1f5f9]">
+                {filteredEntries.map((e) => (
+                  <tr 
+                    key={e.id}
+                    onClick={() => navigate('/history')}
+                    className="hover:bg-[#f8fafc] cursor-pointer transition-colors group"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#1e293b]">
+                        <Calendar size={12} className="text-[#94a3b8]" />
+                        {e.date}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-[11px] font-bold text-[#1a3a5c]">{e.student_name}</td>
+                    <td className="px-4 py-3 text-[11px] text-[#475569]">{e.aircraft}</td>
+                    <td className="px-4 py-3 text-[11px] text-[#475569]">{e.route || 'Local'}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b]">{parseFloat(e.total_flight).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.dual_given).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.ratp_xc || 0).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.night_dual).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.instrument_given).toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

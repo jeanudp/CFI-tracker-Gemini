@@ -801,18 +801,10 @@ export default function Dashboard() {
                   <span className="text-xl">👋</span>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#1a3a5c]">Welcome! Add your first student to get started.</p>
-                  <p className="text-[10px] text-[#2a5a8c]/70 font-medium leading-tight">Click the plus button to add your first student and begin tracking their progress.</p>
+                  <p className="text-sm font-bold text-[#1a3a5c]">Welcome! Tap the + button above to add your first student. ↑</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsNewStudentOpen(true)}
-                  className="px-4 py-2 bg-[#1a3a5c] text-white text-[11px] font-bold rounded-xl hover:bg-[#2a5a8c] transition-colors flex items-center gap-2 shadow-md"
-                >
-                  <Plus size={14} />
-                  Add Student
-                </button>
+              <div className="flex items-center">
                 <button
                   onClick={() => {
                     localStorage.setItem('61t_banner_dismissed', 'true');
@@ -843,7 +835,7 @@ export default function Dashboard() {
           </button>
           <AnimatePresence>
             {onboardingStep === 1 && (
-              <OnboardingTooltip step={onboardingStep} targetStep={1} text="Start here — add your first student to begin tracking lessons and hours" position="bottom" />
+              <OnboardingTooltip step={onboardingStep} targetStep={1} text="Tap here to add your first student ↑" position="bottom" />
             )}
           </AnimatePresence>
         </div>
