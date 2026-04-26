@@ -1493,6 +1493,18 @@ export default function FlightLesson() {
             >
               {/* Main Visible Fields */}
               <div className="p-4 border-b border-[#dde3ec] bg-white">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Route (From → To, via)</label>
+                    <input
+                      type="text"
+                      value={meta.route}
+                      onChange={(e) => handleMetaChange('route', e.target.value.toUpperCase())}
+                      placeholder="e.g. KORD → KMDW → KORD"
+                      className="w-full text-sm font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
@@ -1532,7 +1544,8 @@ export default function FlightLesson() {
                         step="1"
                         min="0"
                         value={meta.ldgDay}
-                        onChange={(e) => handleMetaChange('ldgDay', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                        onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')}
                         className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
                         placeholder="0"
                       />
@@ -1547,7 +1560,8 @@ export default function FlightLesson() {
                         step="1"
                         min="0"
                         value={meta.ldgNight}
-                        onChange={(e) => handleMetaChange('ldgNight', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                        onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')}
                         className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
                         placeholder="0"
                       />
@@ -1689,17 +1703,7 @@ export default function FlightLesson() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden bg-[#f8fafc]"
                       >
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Route (From → To, via)</label>
-                            <input
-                              type="text"
-                              value={meta.route}
-                              onChange={(e) => handleMetaChange('route', e.target.value.toUpperCase())}
-                              placeholder="KORD → KMDW"
-                              className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1"
-                            />
-                          </div>
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Dual Received</label>
                             <div className="flex items-center gap-2">
@@ -2514,7 +2518,7 @@ export default function FlightLesson() {
                                   onChange={(e) => handleMetaChange('cfiDidLandings', e.target.checked)}
                                   className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
                                 />
-                                <span className="text-[11px] text-[#334155] group-hover:text-[#0ea5e9] transition-colors">I performed landings this lesson</span>
+                                <span className="text-[11px] transition-colors" style={{ color: 'var(--text-primary)' }}>I performed landings this lesson</span>
                               </label>
 
                               {meta.cfiDidLandings && (
@@ -2526,7 +2530,8 @@ export default function FlightLesson() {
                                       step="1"
                                       min="0"
                                       value={meta.cfiDayLandings} 
-                                      onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value)} 
+                                      onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                                      onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} 
                                       className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
                                       placeholder="0" 
                                     />
@@ -2538,7 +2543,8 @@ export default function FlightLesson() {
                                       step="1"
                                       min="0"
                                       value={meta.cfiNightLandings} 
-                                      onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value)} 
+                                      onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                                      onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} 
                                       className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
                                       placeholder="0" 
                                     />
