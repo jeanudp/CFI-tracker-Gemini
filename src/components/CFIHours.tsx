@@ -504,7 +504,50 @@ export default function CFIHours() {
 
   const medicalStatus = getMedicalStatus(cfiProfile?.medical_class || '', cfiProfile?.medical_exam_date || '', cfiProfile?.dob || '');
 
+  // Flight Instructor Certificate Currency
+  let reExpStatus: { current: boolean; expiryDate: Date | null; daysUntilExpiry: number | null } = { 
+    current: false, 
+    expiryDate: null, 
+    daysUntilExpiry: null 
+  };
+
+  if (cfiProfile?.re_exp_date) {
+    const [monthStr, yearStr] = cfiProfile.re_exp_date.split('/');
+    const month = parseInt(monthStr);
+    const year = 2000 + parseInt(yearStr);
+    const expiryDate = new Date(year, month, 0); 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiryDate.setHours(0, 0, 0, 0);
+    const diffTime = expiryDate.getTime() - today.getTime();
+    const daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    reExpStatus = {
+      current: daysUntilExpiry > 90,
+      expiryDate,
+      daysUntilExpiry
+    };
+  }
+
   const categories = [
+    {
+      id: 'cfi_cert',
+      label: 'Flight Instructor Certificate',
+      ref: '§61.197',
+      current: reExpStatus.expiryDate ? reExpStatus.current : false,
+      isNotApplicable: !cfiProfile?.re_exp_date,
+      show: true,
+      details: [
+        { 
+          label: 'Expiration Date', 
+          value: reExpStatus.expiryDate ? 1 : 0, 
+          target: 1, 
+          customValue: reExpStatus.expiryDate ? `${(reExpStatus.expiryDate.getMonth() + 1).toString().padStart(2, '0')}/${reExpStatus.expiryDate.getFullYear()}` : 'N/A' 
+        },
+      ],
+      lastDate: cfiProfile?.re_exp_date || 'None',
+      expiryDate: reExpStatus.expiryDate ? reExpStatus.expiryDate.toISOString().split('T')[0] : null,
+      customMsg: reExpStatus.expiryDate ? (reExpStatus.daysUntilExpiry! < 0 ? "Expired" : `${reExpStatus.daysUntilExpiry} days left`) : "No expiry date entered."
+    },
     {
       id: 'medical',
       label: 'Medical Certificate',

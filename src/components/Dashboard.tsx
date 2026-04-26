@@ -163,6 +163,7 @@ export default function Dashboard() {
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [userSubscription, setUserSubscription] = useState<any>(null);
+  const [reExpWarning, setReExpWarning] = useState<number | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showBirthdayBalloons, setShowBirthdayBalloons] = useState(false);
@@ -254,12 +255,28 @@ export default function Dashboard() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         setUser(session.user);
-        const { data: sub } = await supabase
-          .from('user_subscriptions')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-        setUserSubscription(sub);
+        
+        // Fetch subscription and CFI profile in parallel
+        const [subRes, profileRes] = await Promise.all([
+          supabase.from('user_subscriptions').select('*').eq('user_id', session.user.id).single(),
+          supabase.from('cfi_profile').select('re_exp_date').eq('user_id', session.user.id).maybeSingle()
+        ]);
+
+        setUserSubscription(subRes.data);
+
+        if (profileRes.data?.re_exp_date) {
+          const parts = profileRes.data.re_exp_date.split('/');
+          if (parts.length === 2) {
+            const month = parseInt(parts[0]);
+            const year = 2000 + parseInt(parts[1]);
+            const expiryDate = new Date(year, month, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            expiryDate.setHours(0, 0, 0, 0);
+            const diffTime = expiryDate.getTime() - today.getTime();
+            setReExpWarning(Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+          }
+        }
       }
     });
   }, []);
@@ -747,15 +764,27 @@ export default function Dashboard() {
 
           </div>
           {user && (
-            <div className="relative">
-              <button
-                onClick={() => setIsUserMenuOpen(prev => !prev)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer",
-                  onboardingStep === 3 && "shadow-[0_0_50px_16px_rgba(232,160,32,0.8)] ring-4 ring-[#e8a020] ring-offset-4 animate-pulse scale-110"
-                )}
-                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-              >
+            <div className="flex items-center gap-2">
+              {reExpWarning !== null && reExpWarning <= 90 && (
+                <div 
+                  className={cn(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight",
+                    reExpWarning <= 0 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-[#e8a020]/10 text-[#e8a020] border border-[#e8a020]/20"
+                  )}
+                >
+                  <AlertCircle size={10} />
+                  <span>CFI Exp</span>
+                </div>
+              )}
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(prev => !prev)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer",
+                    onboardingStep === 3 && "shadow-[0_0_50px_16px_rgba(232,160,32,0.8)] ring-4 ring-[#e8a020] ring-offset-4 animate-pulse scale-110"
+                  )}
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                >
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: 'var(--navy)' }}>
                   {(user?.user_metadata?.full_name || user?.email || '?')[0].toUpperCase()}
                 </div>
@@ -767,11 +796,11 @@ export default function Dashboard() {
                 )}
                 <ChevronDown size={12} className={cn("transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
               </button>
-
             </div>
-          )}
-        </div>
-      </header>
+          </div>
+        )}
+      </div>
+    </header>
 
       {/* Search */}
       <div className="px-4 pt-4 sticky top-[64px] z-20 backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-primary)' }}>
