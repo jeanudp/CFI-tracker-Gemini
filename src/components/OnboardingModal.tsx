@@ -48,6 +48,12 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
     navigate('/dashboard');
   };
 
+  const handleStartGuide = () => {
+    localStorage.setItem('61t_onboarded', 'true');
+    localStorage.setItem('61t_start_guide', 'true');
+    navigate('/dashboard');
+  };
+
   if (!user) return null;
 
   return (
@@ -149,7 +155,7 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
                   Go to Dashboard
                 </button>
                 <button
-                  onClick={handleFinish}
+                  onClick={handleStartGuide}
                   className="w-full py-4 bg-white text-[#64748b] border border-[#dde3ec] rounded-2xl font-bold text-sm hover:bg-[#f8fafc] transition-all active:scale-[0.98]"
                 >
                   Guide me through the app

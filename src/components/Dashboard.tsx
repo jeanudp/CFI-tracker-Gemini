@@ -171,10 +171,16 @@ export default function Dashboard() {
   const [paywallInviteError, setPaywallInviteError] = useState<string | null>(null);
   const [paywallInviteSuccess, setPaywallInviteSuccess] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState<number>(() => {
-    return localStorage.getItem('onboarding_done') ? 0 : 1;
-  });
+  const [onboardingStep, setOnboardingStep] = useState<number>(0);
   const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
+
+  useEffect(() => {
+    const startGuide = localStorage.getItem('61t_start_guide');
+    if (startGuide === 'true') {
+      setOnboardingStep(1);
+      localStorage.removeItem('61t_start_guide');
+    }
+  }, []);
 
   const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
   const filteredStudents = students.filter(s =>
