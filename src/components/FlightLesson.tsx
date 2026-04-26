@@ -487,10 +487,10 @@ export default function FlightLesson() {
   }, [navigate]);
 
   const EMERGENCY_EXTRA_TASKS = [
-    'Wing Fire',
-    'Engine Fire',
-    'Engine Failure',
-    'Alternator Failure',
+    { name: 'Wing Fire', id: 'extra_wing_fire', stds: [] },
+    { name: 'Engine Fire', id: 'extra_engine_fire', stds: [] },
+    { name: 'Engine Failure', id: 'extra_engine_failure', stds: [] },
+    { name: 'Alternator Failure', id: 'extra_alternator_failure', stds: [] },
   ];
 
   const flightTasks = rating ? ALL_ACS[rating.code].flatMap((area, ai) => 
@@ -525,7 +525,9 @@ export default function FlightLesson() {
     
     if (next === '1' || next === '2') {
       let task;
-      if (taskId.startsWith('ir_')) {
+      if (taskId.startsWith('extra_')) {
+        task = EMERGENCY_EXTRA_TASKS.find(t => t.id === taskId);
+      } else if (taskId.startsWith('ir_')) {
         const [_, ari, ti] = taskId.split('_');
         task = IR_FLIGHT_ACS[parseInt(ari)].tasks[parseInt(ti)];
       } else {
@@ -1063,7 +1065,8 @@ export default function FlightLesson() {
 
   const acsData = rating ? ALL_ACS[rating.code] : [];
   const flightAreas = acsData.slice(1);
-  const totalTasks = flightAreas.reduce((acc, area) => acc + area.tasks.length, 0);
+  const extraEmergenciesCount = (!isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review')) ? EMERGENCY_EXTRA_TASKS.length : 0;
+  const totalTasks = flightAreas.reduce((acc, area) => acc + area.tasks.length, 0) + extraEmergenciesCount;
   const gradedTasks = Object.values(grades).filter(v => v).length;
   const progressPct = totalTasks > 0 ? Math.round((gradedTasks / totalTasks) * 100) : 0;
 
@@ -2657,17 +2660,6 @@ export default function FlightLesson() {
                             <span>{std.code} — {std.description}</span>
                           </div>
                         ))}
-                        {isEmergencyMalfunction && lessonType === 'emergencies' && (
-                          <div className="mt-2 pt-2 border-t border-[#2a5a8c]/20">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] opacity-60 mb-1.5">Also includes:</p>
-                            {EMERGENCY_EXTRA_TASKS.map((extra, idx) => (
-                              <div key={idx} className="text-[11px] text-[#1a3a5c] leading-relaxed flex gap-2">
-                                <span className="opacity-40 shrink-0">·</span>
-                                <span>{extra}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </motion.div>
                     )}
                   </div>
@@ -2781,7 +2773,7 @@ export default function FlightLesson() {
             }
 
             // Standard CPL or PPL filter
-            return flightAreas.map((area, fi) => {
+            const standardAreas = flightAreas.map((area, fi) => {
               const ai = fi + 1;
               const visibleTasks = area.tasks.filter(task => shouldShowTask(task.code));
               if (visibleTasks.length === 0) return null;
@@ -2799,6 +2791,24 @@ export default function FlightLesson() {
                 </React.Fragment>
               );
             });
+
+            const showExtraEmergencies = !isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review');
+            const extraEmergencies = showExtraEmergencies ? (
+              <React.Fragment key="extra_emergencies">
+                <div className="bg-[#c0392b] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center">
+                  <span>Additional Emergency Tasks</span>
+                  <span className="opacity-60 font-normal text-[10px]">{EMERGENCY_EXTRA_TASKS.length} tasks</span>
+                </div>
+                {EMERGENCY_EXTRA_TASKS.map((task) => renderTaskRow(task, task.id))}
+              </React.Fragment>
+            ) : null;
+
+            return (
+              <>
+                {standardAreas}
+                {extraEmergencies}
+              </>
+            );
           })()}
         </div>
       </div>

@@ -606,11 +606,69 @@ export default function Dashboard() {
         className="sticky top-0 z-20 px-4 sm:px-6 h-16 border-b flex items-center justify-between shrink-0 backdrop-blur-md transition-colors duration-300"
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
-        <div className="flex flex-col">
-          <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>My Students</h1>
-          <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
-            {students.length} {students.length === 1 ? 'active student' : 'active students'}
-          </p>
+        <div className="flex items-center gap-3">
+          {/* 61 numeral mark */}
+          <div className="relative">
+            <span
+              className="block font-black leading-none select-none"
+              style={{
+                fontSize: '34px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
+              }}
+            >
+              61
+            </span>
+            <div
+              className="absolute rounded-full"
+              style={{
+                bottom: '-3px',
+                left: 0,
+                width: '100%',
+                height: '3px',
+                backgroundColor: '#e8a020',
+              }}
+            />
+          </div>
+
+          {/* Amber divider */}
+          <div
+            style={{
+              width: '2px',
+              height: '30px',
+              backgroundColor: '#e8a020',
+              opacity: 0.3,
+              borderRadius: '1px',
+              flexShrink: 0,
+            }}
+          />
+
+          {/* TRACKER + subtitle */}
+          <div className="flex flex-col justify-center gap-0.5">
+            <span
+              className="font-black uppercase leading-none"
+              style={{
+                fontSize: '13px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '1.5px',
+              }}
+            >
+              TRACKER
+            </span>
+            <span
+              className="font-bold uppercase"
+              style={{
+                fontSize: '7px',
+                color: 'var(--text-muted)',
+                letterSpacing: '2px',
+              }}
+            >
+              My Students
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {!isOnline && (
@@ -669,7 +727,7 @@ export default function Dashboard() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[55]"
+                      className="fixed inset-0 z-[99]"
                       onClick={() => setIsUserMenuOpen(false)}
                     />
                     <motion.div
@@ -677,10 +735,10 @@ export default function Dashboard() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-52 rounded-2xl border overflow-hidden z-[60]"
+                      className="absolute right-0 top-full mt-2 w-52 rounded-2xl border overflow-hidden z-[100]"
                       style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
                     >
-                      <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <div className="px-4 py-3 border-b" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Signed in as</p>
                         <p className="text-xs font-bold truncate mt-0.5" style={{ color: 'var(--text-primary)' }}>{user?.user_metadata?.full_name || user?.email}</p>
                       </div>
