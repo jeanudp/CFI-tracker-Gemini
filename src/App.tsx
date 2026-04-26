@@ -18,6 +18,7 @@ import CFIHours from './components/CFIHours';
 import Landing from './components/Landing';
 import Admin from './components/Admin';
 import Account from './components/Account';
+import OnboardingModal from './components/OnboardingModal';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import About from './pages/About';
@@ -106,8 +107,12 @@ export default function App() {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <>
+      {session && !localStorage.getItem('61t_onboarded') && (
+        <OnboardingModal user={session.user} />
+      )}
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
         <Route 
           path="/auth" 
           element={!session ? <Auth /> : <Navigate to="/dashboard" />} 
@@ -274,6 +279,7 @@ export default function App() {
         <Route path="/account" element={<Account />} />
       </Routes>
     </AnimatePresence>
+    </>
   );
 }
 

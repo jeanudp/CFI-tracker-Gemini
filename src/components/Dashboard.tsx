@@ -99,6 +99,7 @@ export default function Dashboard() {
   const [onboardingStep, setOnboardingStep] = useState<number>(() => {
     return localStorage.getItem('onboarding_done') ? 0 : 1;
   });
+  const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
 
   const dismissOnboarding = (step: number) => {
     if (step >= 3) {
@@ -786,7 +787,48 @@ export default function Dashboard() {
       </header>
 
       {/* Search */}
-      <div className="px-4 py-3 sticky top-[64px] z-10 backdrop-blur-sm flex items-center gap-2" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="px-4 pt-4 sticky top-[64px] z-20 backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <AnimatePresence>
+          {students.length === 0 && !loading && localStorage.getItem('61t_onboarded') === 'true' && !bannerDismissed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginBottom: 16 }}
+              exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+              className="bg-[#d4e8f5] border border-[#a8d0ed] rounded-2xl p-4 flex items-center justify-between shadow-sm overflow-hidden mx-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/50 rounded-xl flex items-center justify-center shrink-0">
+                  <span className="text-xl">👋</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#1a3a5c]">Welcome! Add your first student to get started.</p>
+                  <p className="text-[10px] text-[#2a5a8c]/70 font-medium leading-tight">Click the plus button to add your first student and begin tracking their progress.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsNewStudentOpen(true)}
+                  className="px-4 py-2 bg-[#1a3a5c] text-white text-[11px] font-bold rounded-xl hover:bg-[#2a5a8c] transition-colors flex items-center gap-2 shadow-md"
+                >
+                  <Plus size={14} />
+                  Add Student
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem('61t_banner_dismissed', 'true');
+                    setBannerDismissed(true);
+                  }}
+                  className="w-10 h-10 rounded-xl hover:bg-black/5 flex items-center justify-center text-[#1a3a5c]/40 hover:text-[#1a3a5c] transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="px-4 py-3 sticky top-[calc(64px+4px)] z-10 backdrop-blur-sm flex items-center gap-2" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <div className="relative">
           <button
             onClick={() => setIsNewStudentOpen(true)}
