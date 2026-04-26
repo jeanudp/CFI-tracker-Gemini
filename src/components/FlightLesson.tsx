@@ -598,6 +598,10 @@ export default function FlightLesson() {
       newMeta.aircraftClass = detectedClass;
     }
 
+    if (field === 'ldgDay' || field === 'ldgNight') {
+      newMeta.ldgTotal = (parseInt(newMeta.ldgDay || '0') + parseInt(newMeta.ldgNight || '0')).toString();
+    }
+
     if (['night', 'ldgNight', 'nightDual', 'nightPic', 'nightTakeoffs', 'meNight', 'nightSolo'].includes(field)) {
       setNightWarning(false);
     }
@@ -1477,7 +1481,7 @@ export default function FlightLesson() {
                       className="w-full text-sm font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
                       <div className="flex flex-col gap-1">
@@ -1506,21 +1510,6 @@ export default function FlightLesson() {
                         {totalFlightError && (
                           <p className="text-[9px] text-red-500 font-bold">Total flight time is required.</p>
                         )}
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Landings</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          step="1"
-                          min="0"
-                          value={meta.ldgTotal}
-                          onChange={(e) => handleMetaChange('ldgTotal', e.target.value)}
-                          className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
-                          placeholder="0"
-                        />
-                        <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                       </div>
                     </div>
                     <div className="space-y-1.5">
