@@ -905,7 +905,13 @@ export default function CFIHours() {
                       {cat.current ? (
                         <span className="bg-[#dcfce7] text-[#166534] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#bcf0da]">CURRENT</span>
                       ) : (
-                        <span className="bg-[#fee2e2] text-[#991b1b] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fecaca]">EXPIRED</span>
+                        cat.id === 'cfi_cert' && cat.expiryDate && daysUntil >= 0 ? (
+                          <span className="bg-[#fef3c7] text-[#92400e] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fde68a]">EXPIRING SOON {daysUntil}d</span>
+                        ) : (
+                          <span className="bg-[#fee2e2] text-[#991b1b] text-[9px] font-bold px-2 py-0.5 rounded shadow-sm border border-[#fecaca]">
+                            {cat.id === 'cfi_cert' ? "NOT CURRENT" : "EXPIRED"}
+                          </span>
+                        )
                       )}
                       <motion.div
                         animate={{ rotate: expandedCurrencyRow === cat.id ? 90 : 0 }}

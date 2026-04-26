@@ -769,11 +769,11 @@ export default function Dashboard() {
                 <div 
                   className={cn(
                     "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight",
-                    reExpWarning <= 0 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-[#e8a020]/10 text-[#e8a020] border border-[#e8a020]/20"
+                    reExpWarning < 0 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-[#e8a020]/10 text-[#e8a020] border border-[#e8a020]/20"
                   )}
                 >
                   <AlertCircle size={10} />
-                  <span>CFI Exp</span>
+                  <span>{reExpWarning < 0 ? "CFI Exp" : `Expiring ${reExpWarning}d`}</span>
                 </div>
               )}
               <div className="relative">
