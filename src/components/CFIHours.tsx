@@ -9,6 +9,82 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
+import { Heart } from 'lucide-react';
+
+function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: string) {
+  if (!medicalClass || !examDateStr || !dobStr) return null;
+
+  const examDate = new Date(examDateStr);
+  const dob = new Date(dobStr);
+  const today = new Date();
+
+  // Age at time of exam
+  let ageAtExam = examDate.getFullYear() - dob.getFullYear();
+  const m = examDate.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && examDate.getDate() < dob.getDate())) {
+    ageAtExam--;
+  }
+
+  let monthsOfValidity = 0;
+  let firstClassMonths = 0;
+  let secondClassMonths = 12;
+
+  if (medicalClass === 'First Class') {
+    firstClassMonths = ageAtExam < 40 ? 12 : 6;
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'Second Class') {
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'Third Class') {
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'BasicMed') {
+    monthsOfValidity = 48;
+  } else if (medicalClass === 'Sport Pilot') {
+    monthsOfValidity = 1440; // 120 years
+  }
+
+  const expiryDate = new Date(examDate);
+  expiryDate.setMonth(expiryDate.getMonth() + monthsOfValidity + 1);
+  expiryDate.setDate(0);
+
+  const diffTime = expiryDate.getTime() - today.getTime();
+  const daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const isExpired = daysUntilExpiry < 0;
+
+  let currentPrivileges = medicalClass;
+  if (medicalClass === 'First Class') {
+    const firstExpiry = new Date(examDate);
+    firstExpiry.setMonth(firstExpiry.getMonth() + firstClassMonths + 1);
+    firstExpiry.setDate(0);
+    if (today > firstExpiry) {
+      currentPrivileges = "1st — 3rd Class Privileges";
+    }
+  } else if (medicalClass === 'Second Class') {
+    const secondExpiry = new Date(examDate);
+    secondExpiry.setMonth(secondExpiry.getMonth() + secondClassMonths + 1);
+    secondExpiry.setDate(0);
+    if (today > secondExpiry) {
+      currentPrivileges = "2nd — 3rd Class Privileges";
+    }
+  }
+
+  if (isExpired) currentPrivileges = "Expired";
+
+  let statusColor = "green";
+  if (isExpired || daysUntilExpiry < 30) {
+    statusColor = "red";
+  } else if (daysUntilExpiry <= 60) {
+    statusColor = "amber";
+  }
+
+  return {
+    currentClass: medicalClass,
+    currentPrivileges,
+    isExpired,
+    expiryDate,
+    daysUntilExpiry,
+    statusColor
+  };
+}
 
 export default function CFIHours() {
   const [loading, setLoading] = useState(true);
@@ -24,9 +100,9 @@ export default function CFIHours() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ flights: number, error: string | null } | null>(null);
   const [mfbSummary, setMfbSummary] = useState<any>(null);
-  const [cfiProfile, setCfiProfile] = useState<{ full_name: string; cert_number: string; re_exp_date: string } | null>(null);
+  const [cfiProfile, setCfiProfile] = useState<{ full_name: string; cert_number: string; re_exp_date: string; dob?: string; medical_class?: string; medical_exam_date?: string } | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '' });
+  const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '', dob: '', medical_class: '', medical_exam_date: '' });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const navigate = useNavigate();
 
@@ -195,7 +271,14 @@ export default function CFIHours() {
       .maybeSingle();
     if (data) {
       setCfiProfile(data);
-      setProfileDraft({ full_name: data.full_name || '', cert_number: data.cert_number || '', re_exp_date: data.re_exp_date || '' });
+      setProfileDraft({ 
+        full_name: data.full_name || '', 
+        cert_number: data.cert_number || '', 
+        re_exp_date: data.re_exp_date || '',
+        dob: data.dob || '',
+        medical_class: data.medical_class || '',
+        medical_exam_date: data.medical_exam_date || ''
+      });
     }
   };
 
@@ -208,6 +291,9 @@ export default function CFIHours() {
       full_name: profileDraft.full_name,
       cert_number: profileDraft.cert_number,
       re_exp_date: profileDraft.re_exp_date,
+      dob: profileDraft.dob || null,
+      medical_class: profileDraft.medical_class || null,
+      medical_exam_date: profileDraft.medical_exam_date || null,
       updated_at: new Date().toISOString(),
     };
     const { data, error } = await supabase
@@ -396,7 +482,24 @@ export default function CFIHours() {
   const frDaysUntilExpiry = frExpiryDate ? 
     Math.ceil((frExpiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
+  const medicalStatus = getMedicalStatus(cfiProfile?.medical_class || '', cfiProfile?.medical_exam_date || '', cfiProfile?.dob || '');
+
   const categories = [
+    {
+      id: 'medical',
+      label: 'Medical Certificate',
+      ref: '§61.23',
+      current: medicalStatus ? !medicalStatus.isExpired : false,
+      show: !!(cfiProfile?.medical_class && cfiProfile?.medical_exam_date),
+      details: [
+        { label: 'Medical Class', value: medicalStatus ? 1 : 0, target: 1, customValue: medicalStatus?.currentClass || 'None' },
+        { label: 'Current Privileges', value: (medicalStatus && !medicalStatus.isExpired) ? 1 : 0, target: 1, customValue: medicalStatus?.currentPrivileges || 'N/A' },
+      ],
+      lastDate: cfiProfile?.medical_exam_date ? new Date(cfiProfile.medical_exam_date).toLocaleDateString() : 'None',
+      expiryDate: medicalStatus?.expiryDate ? medicalStatus.expiryDate.toISOString().split('T')[0] : null,
+      customMsg: medicalStatus?.isExpired ? "Medical expired. You cannot exercise pilot privileges." : 
+                 (medicalStatus && medicalStatus.currentClass !== medicalStatus.currentPrivileges) ? `First class privileges downgraded to ${medicalStatus.currentPrivileges}.` : null
+    },
     { 
       id: 'asel_day', 
       label: 'Passenger Currency Day ASEL', 
@@ -580,21 +683,41 @@ export default function CFIHours() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     {[
-                      { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith' },
-                      { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI' },
-                      { label: 'RE End Date / Exp. Date', key: 're_exp_date', placeholder: 'e.g. 12-31-2026' },
+                      { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith', type: 'text' },
+                      { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI', type: 'text' },
+                      { label: 'RE End Date / Exp. Date', key: 're_exp_date', placeholder: 'e.g. 12-31-2026', type: 'text' },
+                      { label: 'Date of Birth', key: 'dob', type: 'date' },
+                      { label: 'Medical Exam Date', key: 'medical_exam_date', type: 'date', helper: 'Expiry is calculated automatically based on class and age.' },
                     ].map(field => (
                       <div key={field.key} className="space-y-1.5">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
-                        <input
-                          type="text"
-                          value={profileDraft[field.key as keyof typeof profileDraft]}
-                          onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
-                          placeholder={field.placeholder}
-                          className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                        />
+                        {field.key === 'medical_class' ? null : ( // Handled below
+                          <input
+                            type={field.type}
+                            value={profileDraft[field.key as keyof typeof profileDraft] || ''}
+                            onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                            placeholder={field.placeholder}
+                            className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
+                          />
+                        )}
+                        {field.helper && <p className="text-[9px] text-[#6b7280]">{field.helper}</p>}
                       </div>
                     ))}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Class</label>
+                      <select
+                        value={profileDraft.medical_class}
+                        onChange={e => setProfileDraft(prev => ({ ...prev, medical_class: e.target.value }))}
+                        className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all bg-white"
+                      >
+                        <option value="">Select Class</option>
+                        <option value="First Class">First Class</option>
+                        <option value="Second Class">Second Class</option>
+                        <option value="Third Class">Third Class</option>
+                        <option value="BasicMed">BasicMed</option>
+                        <option value="Sport Pilot">Sport Pilot</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <button
@@ -608,7 +731,14 @@ export default function CFIHours() {
                     <button
                       onClick={() => {
                         setIsEditingProfile(false);
-                        if (cfiProfile) setProfileDraft({ full_name: cfiProfile.full_name || '', cert_number: cfiProfile.cert_number || '', re_exp_date: cfiProfile.re_exp_date || '' });
+                        if (cfiProfile) setProfileDraft({ 
+                          full_name: cfiProfile.full_name || '', 
+                          cert_number: cfiProfile.cert_number || '', 
+                          re_exp_date: cfiProfile.re_exp_date || '',
+                          dob: cfiProfile.dob || '',
+                          medical_class: cfiProfile.medical_class || '',
+                          medical_exam_date: cfiProfile.medical_exam_date || ''
+                        });
                       }}
                       className="px-5 py-2 bg-white text-[#6b7280] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
                     >
@@ -622,6 +752,9 @@ export default function CFIHours() {
                     { label: 'Full Name', value: cfiProfile.full_name },
                     { label: 'CFI Certificate #', value: cfiProfile.cert_number },
                     { label: 'RE End Date / Exp. Date', value: cfiProfile.re_exp_date },
+                    { label: 'Date of Birth', value: cfiProfile.dob },
+                    { label: 'Medical Class', value: cfiProfile.medical_class },
+                    { label: 'Medical Exam Date', value: cfiProfile.medical_exam_date },
                   ].map(item => (
                     <div key={item.label}>
                       <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">{item.label}</div>
@@ -698,7 +831,7 @@ export default function CFIHours() {
                                   "text-[10px] font-bold font-mono",
                                   detail.value >= detail.target ? "text-[#059669]" : "text-[#dc2626]"
                                 )}>
-                                  {detail.value} / {detail.target}
+                                  { (detail as any).customValue !== undefined ? (detail as any).customValue : `${detail.value} / ${detail.target}` }
                                 </span>
                                 {detail.value >= detail.target ? (
                                   <Check size={12} className="text-[#059669]" />

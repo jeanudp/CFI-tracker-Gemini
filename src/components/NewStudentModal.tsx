@@ -26,6 +26,81 @@ const ratingColors: Record<string, { bg: string, text: string, border: string, l
   mei:  { bg: '#c0392b', text: 'white', border: '#c0392b', light: '#fdecea' },
 };
 
+function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: string) {
+  if (!medicalClass || !examDateStr || !dobStr) return null;
+
+  const examDate = new Date(examDateStr);
+  const dob = new Date(dobStr);
+  const today = new Date();
+
+  // Age at time of exam
+  let ageAtExam = examDate.getFullYear() - dob.getFullYear();
+  const m = examDate.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && examDate.getDate() < dob.getDate())) {
+    ageAtExam--;
+  }
+
+  let monthsOfValidity = 0;
+  let firstClassMonths = 0;
+  let secondClassMonths = 12; // Standard 2nd class window is 12 months for 2nd class privileges
+
+  if (medicalClass === 'First Class') {
+    firstClassMonths = ageAtExam < 40 ? 12 : 6;
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'Second Class') {
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'Third Class') {
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'BasicMed') {
+    monthsOfValidity = 48;
+  } else if (medicalClass === 'Sport Pilot') {
+    monthsOfValidity = 1440; // 120 years
+  }
+
+  const expiryDate = new Date(examDate);
+  expiryDate.setMonth(expiryDate.getMonth() + monthsOfValidity + 1);
+  expiryDate.setDate(0);
+
+  const diffTime = expiryDate.getTime() - today.getTime();
+  const daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const isExpired = daysUntilExpiry < 0;
+
+  let currentPrivileges = medicalClass;
+  if (medicalClass === 'First Class') {
+    const firstExpiry = new Date(examDate);
+    firstExpiry.setMonth(firstExpiry.getMonth() + firstClassMonths + 1);
+    firstExpiry.setDate(0);
+    if (today > firstExpiry) {
+      currentPrivileges = "1st — 3rd Class Privileges";
+    }
+  } else if (medicalClass === 'Second Class') {
+    const secondExpiry = new Date(examDate);
+    secondExpiry.setMonth(secondExpiry.getMonth() + secondClassMonths + 1);
+    secondExpiry.setDate(0);
+    if (today > secondExpiry) {
+      currentPrivileges = "2nd — 3rd Class Privileges";
+    }
+  }
+
+  if (isExpired) currentPrivileges = "Expired";
+
+  let statusColor = "green";
+  if (isExpired || daysUntilExpiry < 30) {
+    statusColor = "red";
+  } else if (daysUntilExpiry <= 60) {
+    statusColor = "amber";
+  }
+
+  return {
+    currentClass: medicalClass,
+    currentPrivileges,
+    isExpired,
+    expiryDate,
+    daysUntilExpiry,
+    statusColor
+  };
+}
+
 const PRIOR_FIELDS = [
   { group: 'Totals', fields: [
     { key: 'prior_totalFlight', label: 'Total Flight Time', unit: 'hrs' },
@@ -158,7 +233,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   const [dob, setDob] = useState('');
   const [studentCertNumber, setStudentCertNumber] = useState('');
   const [medicalClass, setMedicalClass] = useState('');
-  const [medicalExpiry, setMedicalExpiry] = useState('');
+  const [medicalExamDate, setMedicalExamDate] = useState('');
   const [notes, setNotes] = useState('');
 
   // Step 2 — Rating
@@ -176,7 +251,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     setDob('');
     setStudentCertNumber('');
     setMedicalClass('');
-    setMedicalExpiry('');
+    setMedicalExamDate('');
     setNotes('');
     setSelectedRating('ppl');
     setPriorHours({});
@@ -229,7 +304,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
           dob: dob || null,
           student_cert_number: studentCertNumber || null,
           medical_class: medicalClass || null,
-          medical_expiry: medicalExpiry || null,
+          medical_exam_date: medicalExamDate || null,
           notes: notes || null,
         })
         .select()
@@ -422,16 +497,17 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Expiry</label>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Exam Date</label>
                       <div className="relative">
                         <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
                         <input
                           type="date"
-                          value={medicalExpiry}
-                          onChange={e => setMedicalExpiry(e.target.value)}
+                          value={medicalExamDate}
+                          onChange={e => setMedicalExamDate(e.target.value)}
                           className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc]"
                         />
                       </div>
+                      <p className="text-[9px] text-[#6b7280] ml-1">We calculate your expiry automatically based on class and age.</p>
                     </div>
 
                     <div className="sm:col-span-2 space-y-1.5">

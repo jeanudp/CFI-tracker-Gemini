@@ -18,6 +18,81 @@ const ratingConfig: Record<string, { bg: string, text: string, light: string, bo
   mei:  { bg: '#c0392b', text: 'white', light: '#fdecea', border: '#c0392b', icon: Navigation,   label: 'MEI' },
 };
 
+function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: string) {
+  if (!medicalClass || !examDateStr || !dobStr) return null;
+
+  const examDate = new Date(examDateStr);
+  const dob = new Date(dobStr);
+  const today = new Date();
+
+  // Age at time of exam
+  let ageAtExam = examDate.getFullYear() - dob.getFullYear();
+  const m = examDate.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && examDate.getDate() < dob.getDate())) {
+    ageAtExam--;
+  }
+
+  let monthsOfValidity = 0;
+  let firstClassMonths = 0;
+  let secondClassMonths = 12;
+
+  if (medicalClass === 'First Class') {
+    firstClassMonths = ageAtExam < 40 ? 12 : 6;
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'Second Class') {
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'Third Class') {
+    monthsOfValidity = ageAtExam < 40 ? 60 : 24;
+  } else if (medicalClass === 'BasicMed') {
+    monthsOfValidity = 48;
+  } else if (medicalClass === 'Sport Pilot') {
+    monthsOfValidity = 1440; // 120 years
+  }
+
+  const expiryDate = new Date(examDate);
+  expiryDate.setMonth(expiryDate.getMonth() + monthsOfValidity + 1);
+  expiryDate.setDate(0);
+
+  const diffTime = expiryDate.getTime() - today.getTime();
+  const daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const isExpired = daysUntilExpiry < 0;
+
+  let currentPrivileges = medicalClass;
+  if (medicalClass === 'First Class') {
+    const firstExpiry = new Date(examDate);
+    firstExpiry.setMonth(firstExpiry.getMonth() + firstClassMonths + 1);
+    firstExpiry.setDate(0);
+    if (today > firstExpiry) {
+      currentPrivileges = "1st — 3rd Class Privileges";
+    }
+  } else if (medicalClass === 'Second Class') {
+    const secondExpiry = new Date(examDate);
+    secondExpiry.setMonth(secondExpiry.getMonth() + secondClassMonths + 1);
+    secondExpiry.setDate(0);
+    if (today > secondExpiry) {
+      currentPrivileges = "2nd — 3rd Class Privileges";
+    }
+  }
+
+  if (isExpired) currentPrivileges = "Expired";
+
+  let statusColor = "green";
+  if (isExpired || daysUntilExpiry < 30) {
+    statusColor = "red";
+  } else if (daysUntilExpiry <= 60) {
+    statusColor = "amber";
+  }
+
+  return {
+    currentClass: medicalClass,
+    currentPrivileges,
+    isExpired,
+    expiryDate,
+    daysUntilExpiry,
+    statusColor
+  };
+}
+
 const CurrencyRow = ({ title, reference, isCurrent, isNotApplicable, classBadge, children, isExpanded, onToggle }: {
   title: string, reference: string, isCurrent: boolean, isNotApplicable?: boolean,
   classBadge?: 'ASEL' | 'AMEL', children: React.ReactNode, isExpanded: boolean, onToggle: () => void
@@ -269,7 +344,7 @@ export default function Dashboard() {
           dob: editForm.dob || null,
           student_cert_number: editForm.student_cert_number || null,
           medical_class: editForm.medical_class || null,
-          medical_expiry: editForm.medical_expiry || null,
+          medical_exam_date: editForm.medical_exam_date || null,
           notes: editForm.notes || null,
         })
         .eq('id', selectedStudent.id);
@@ -480,21 +555,6 @@ export default function Dashboard() {
       birthMonth === today.getMonth() &&
       birthDay === today.getDate()
     );
-  };
-
-  const isMedicalExpiringSoon = (medicalExpiry: string | null) => {
-    if (!medicalExpiry) return false;
-    const today = new Date();
-    const expiry = new Date(medicalExpiry);
-    const daysUntilExpiry = Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
-  };
-
-  const isMedicalExpired = (medicalExpiry: string | null) => {
-    if (!medicalExpiry) return false;
-    const today = new Date();
-    const expiry = new Date(medicalExpiry);
-    return expiry < today;
   };
 
   const getStudentStats = (name: string) => {
@@ -720,84 +780,6 @@ export default function Dashboard() {
                   <OnboardingTooltip step={onboardingStep} targetStep={3} text="Your own flight hours are tracked here automatically as you log lessons" position="bottom" />
                 )}
               </AnimatePresence>
-              <AnimatePresence>
-                {isUserMenuOpen && (
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[99]"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-1 w-52 rounded-2xl border overflow-hidden z-[100]"
-                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
-                    >
-                      <div className="px-4 py-3 border-b" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', position: 'relative', zIndex: 1 }}>
-                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Signed in as</p>
-                        <p className="text-xs font-bold truncate mt-0.5" style={{ color: 'var(--text-primary)' }}>{user?.user_metadata?.full_name || user?.email}</p>
-                      </div>
-                      <div className="py-1">
-                        <Link
-                          to="/cfi-hours"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          <BarChart3 size={14} style={{ color: 'var(--navy)' }} />
-                          CFI Hours
-                        </Link>
-                        <Link
-                          to="/account"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          <User size={14} style={{ color: 'var(--navy)' }} />
-                          Account
-                        </Link>
-                        {user?.email === 'jeanudp@gmail.com' && (
-                          <Link
-                            to="/admin"
-                            onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
-                            <Shield size={14} style={{ color: 'var(--navy)' }} />
-                            Admin
-                          </Link>
-                        )}
-                      </div>
-                      <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
-                        <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Dark Mode</span>
-                        <button
-                          onClick={() => setDarkMode(!darkMode)}
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg border transition-all"
-                          style={{ backgroundColor: darkMode ? 'var(--navy)' : 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: darkMode ? 'white' : 'var(--text-secondary)' }}
-                        >
-                          {darkMode ? <Moon size={12} /> : <Sun size={12} />}
-                          <span className="text-[10px] font-bold">{darkMode ? 'On' : 'Off'}</span>
-                        </button>
-                      </div>
-                      <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                        <button
-                          onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-red-50 cursor-pointer"
-                          style={{ color: '#c0392b' }}
-                        >
-                          <LogOut size={14} />
-                          Sign Out
-                        </button>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
             </div>
           )}
         </div>
@@ -963,27 +945,37 @@ export default function Dashboard() {
                       </span>
                     </div>
 
-                    {/* Medical warning badge */}
-                    {isMedicalExpired((student as any).medical_expiry) && (
-                      <div
-                        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}
-                        title="Medical expired"
-                      >
-                        <span className="text-xs">❌</span>
-                      </div>
-                    )}
-                    {!isMedicalExpired((student as any).medical_expiry) && isMedicalExpiringSoon((student as any).medical_expiry) && (
-                      <motion.div
-                        animate={{ scale: [1, 1.15, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)' }}
-                        title={`Medical expiring soon — ${new Date((student as any).medical_expiry).toLocaleDateString()}`}
-                      >
-                        <span className="text-xs">✚</span>
-                      </motion.div>
-                    )}
+                    {/* Medical status badge */}
+                    {(() => {
+                      const status = getMedicalStatus((student as any).medical_class, (student as any).medical_exam_date, (student as any).dob);
+                      if (!status) return null;
+
+                      if (status.statusColor === 'red') {
+                        return (
+                          <div
+                            className="shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter"
+                            style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}
+                            title={status.isExpired ? "Medical Expired" : `Medical Expiring Soon: ${status.daysUntilExpiry} days`}
+                          >
+                            {status.isExpired ? "EXP" : `${status.daysUntilExpiry}d`}
+                          </div>
+                        );
+                      }
+                      if (status.statusColor === 'amber') {
+                        return (
+                          <motion.div
+                            animate={{ opacity: [1, 0.6, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter"
+                            style={{ backgroundColor: 'rgba(232,160,32,0.15)', border: '1px solid rgba(232,160,32,0.3)', color: '#e8a020' }}
+                            title={`Medical Expiring: ${status.daysUntilExpiry} days`}
+                          >
+                            {status.daysUntilExpiry}d
+                          </motion.div>
+                        );
+                      }
+                      return null;
+                    })()}
 
                     {/* Action buttons — visible on hover */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -1092,7 +1084,7 @@ export default function Dashboard() {
                         dob: (selectedStudent as any).dob || '',
                         student_cert_number: (selectedStudent as any).student_cert_number || '',
                         medical_class: (selectedStudent as any).medical_class || '',
-                        medical_expiry: (selectedStudent as any).medical_expiry || '',
+                        medical_exam_date: (selectedStudent as any).medical_exam_date || '',
                         notes: (selectedStudent as any).notes || '',
                       });
                     }}
@@ -1116,7 +1108,7 @@ export default function Dashboard() {
                       { key: 'email_address', label: 'Email', icon: Mail, type: 'email', placeholder: 'student@email.com' },
                       { key: 'dob', label: 'Date of Birth', icon: Calendar, type: 'date', placeholder: '' },
                       { key: 'student_cert_number', label: 'Student Cert Number', icon: FileText, type: 'text', placeholder: 'Certificate number' },
-                      { key: 'medical_expiry', label: 'Medical Expiry', icon: Calendar, type: 'date', placeholder: '' },
+                      { key: 'medical_exam_date', label: 'Medical Exam Date', icon: Calendar, type: 'date', placeholder: '' },
                     ].map(({ key, label, icon: Icon, type, placeholder }) => (
                       <div key={key} className="space-y-1">
                         <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
@@ -1176,8 +1168,6 @@ export default function Dashboard() {
                       { icon: Mail, label: 'Email', value: (selectedStudent as any).email_address },
                       { icon: Calendar, label: 'Date of Birth', value: (selectedStudent as any).dob ? formatDate((selectedStudent as any).dob) : null },
                       { icon: FileText, label: 'Student Cert Number', value: (selectedStudent as any).student_cert_number },
-                      { icon: Heart, label: 'Medical Class', value: (selectedStudent as any).medical_class },
-                      { icon: Calendar, label: 'Medical Expiry', value: (selectedStudent as any).medical_expiry ? formatDate((selectedStudent as any).medical_expiry) : null },
                     ].map(({ icon: Icon, label, value }) => (
                       value ? (
                         <div key={label} className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
@@ -1191,6 +1181,57 @@ export default function Dashboard() {
                         </div>
                       ) : null
                     ))}
+
+                    {/* Medical Section */}
+                    {(selectedStudent as any).medical_class && (selectedStudent as any).medical_exam_date && (
+                      <div className="py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                            <Heart size={14} style={{ color: 'var(--navy-light)' }} />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Medical Status</p>
+                              {(() => {
+                                const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
+                                if (!status) return null;
+                                return (
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider" style={{
+                                    backgroundColor: status.statusColor === 'green' ? 'rgba(74,222,128,0.1)' : status.statusColor === 'amber' ? 'rgba(232,160,32,0.1)' : 'rgba(239,68,68,0.1)',
+                                    color: status.statusColor === 'green' ? 'var(--green)' : status.statusColor === 'amber' ? 'var(--amber)' : 'var(--red)'
+                                  }}>
+                                    {status.isExpired ? 'Expired' : status.daysUntilExpiry <= 60 ? 'Expiring Soon' : 'Current'}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).medical_class}</p>
+                              {(() => {
+                                const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
+                                if (!status) return null;
+                                return (
+                                  <p className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+                                    {status.isExpired ? 'Expired' : `Expires ${status.expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                                  </p>
+                                );
+                              })()}
+                            </div>
+                            {(() => {
+                              const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
+                              if (status && status.currentClass !== status.currentPrivileges && !status.isExpired) {
+                                return (
+                                  <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--amber)' }}>
+                                    Exercising: {status.currentPrivileges}
+                                  </p>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {(selectedStudent as any).notes && (
                       <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                         <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
@@ -1754,6 +1795,85 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isUserMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[99]"
+              onClick={() => setIsUserMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="fixed top-16 right-4 w-52 rounded-2xl border overflow-hidden z-[100]"
+              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
+            >
+              <div className="px-4 py-3 border-b" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', position: 'relative', zIndex: 1 }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Signed in as</p>
+                <p className="text-xs font-bold truncate mt-0.5" style={{ color: 'var(--text-primary)' }}>{user?.user_metadata?.full_name || user?.email}</p>
+              </div>
+              <div className="py-1">
+                <Link
+                  to="/cfi-hours"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <BarChart3 size={14} style={{ color: 'var(--navy)' }} />
+                  CFI Hours
+                </Link>
+                <Link
+                  to="/account"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <User size={14} style={{ color: 'var(--navy)' }} />
+                  Account
+                </Link>
+                {user?.email === 'jeanudp@gmail.com' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    <Shield size={14} style={{ color: 'var(--navy)' }} />
+                    Admin
+                  </Link>
+                )}
+              </div>
+              <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
+                <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Dark Mode</span>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg border transition-all"
+                  style={{ backgroundColor: darkMode ? 'var(--navy)' : 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: darkMode ? 'white' : 'var(--text-secondary)' }}
+                >
+                  {darkMode ? <Moon size={12} /> : <Sun size={12} />}
+                  <span className="text-[10px] font-bold">{darkMode ? 'On' : 'Off'}</span>
+                </button>
+              </div>
+              <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-red-50 cursor-pointer"
+                  style={{ color: '#c0392b' }}
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
