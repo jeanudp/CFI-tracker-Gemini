@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, GraduationCap, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 
 interface LayoutProps {
@@ -107,7 +107,6 @@ export default function Layout({ children, user }: LayoutProps) {
     { label: 'Student Progress', path: '/history', icon: <HistoryIcon size={14} /> },
     { label: 'Ground Lesson', path: '/ground', icon: <BookOpen size={14} /> },
     { label: 'Flight Lesson', path: '/flight', icon: <Plane size={14} /> },
-    { label: 'CFI Hours', path: '/cfi-hours', icon: <GraduationCap size={14} /> },
   ];
 
   const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';
@@ -261,14 +260,7 @@ export default function Layout({ children, user }: LayoutProps) {
                   </div>
 
                   <div className="p-1.5 space-y-0.5">
-                    <Link
-                      to="/cfi-hours"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-[var(--bg-tertiary)]"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      <GraduationCap size={14} style={{ color: 'var(--text-muted)' }} />
-                      My CFI Hours
-                    </Link>
+
 
                     {/* Dark mode toggle */}
                     <button

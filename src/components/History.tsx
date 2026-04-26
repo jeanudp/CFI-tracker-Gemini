@@ -1156,31 +1156,33 @@ export default function History() {
                   {new Date(selectedLesson.saved_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                   <br />
                   {selectedLesson.student_name} · CFI: {selectedLesson.instructor || '—'}
+                  {selectedLesson.meta?.overallGrade === 'N' && (
+                    <>
+                      <br />
+                      <span className="text-[11px] text-[#6b7280] font-medium">Lesson outcome: needs further work</span>
+                    </>
+                  )}
                 </p>
 
                 <div className="space-y-3">
-                  {selectedLesson.meta?.overallGrade ? (
+                  {selectedLesson.meta?.overallGrade === 'S' && (
                     <div className={cn(
-                      "col-span-2 flex items-center justify-between p-4 rounded-xl border-2 transition-all",
-                      selectedLesson.meta.overallGrade === 'S' 
-                        ? "bg-[#f0fdf4] border-[#2d7a4f] text-[#166534] shadow-sm" 
-                        : "bg-[#fef2f2] border-[#c0392b] text-[#991b1b] shadow-sm"
+                      "col-span-2 flex items-center justify-between p-4 rounded-xl border-2 transition-all bg-[#f0fdf4] border-[#2d7a4f] text-[#166534] shadow-sm"
                     )}>
                       <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-10 h-10 rounded-full flex items-center justify-center text-white",
-                          selectedLesson.meta.overallGrade === 'S' ? "bg-[#2d7a4f]" : "bg-[#c0392b]"
-                        )}>
-                          {selectedLesson.meta.overallGrade === 'S' ? <CheckCircle2 size={24} /> : <XCircle size={24} />}
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white bg-[#2d7a4f]">
+                          <CheckCircle2 size={24} />
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Overall Assessment</p>
-                          <p className="text-lg font-black">{selectedLesson.meta.overallGrade === 'S' ? "Satisfactory" : "Needs Improvement"}</p>
+                          <p className="text-lg font-black">Satisfactory</p>
                         </div>
                       </div>
                       <div className="text-[10px] font-black uppercase tracking-widest opacity-40">Section 61.39</div>
                     </div>
-                  ) : (
+                  )}
+
+                  {!selectedLesson.meta?.overallGrade && (
                     <div className="col-span-2 bg-[#f8fafc] border border-[#dde3ec] p-4 rounded-xl text-center">
                       <p className="text-xs font-bold text-[#64748b]">No overall grade recorded</p>
                     </div>
