@@ -103,6 +103,21 @@ export default function CFIHours() {
   const [cfiProfile, setCfiProfile] = useState<{ full_name: string; cert_number: string; re_exp_date: string; dob?: string; medical_class?: string; medical_exam_date?: string } | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '', dob: '', medical_class: '', medical_exam_date: '' });
+  const [reExpMonth, setReExpMonth] = useState('01');
+  const [reExpYear, setReExpYear] = useState(() => new Date().getFullYear().toString().slice(-2));
+
+  const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  const years = Array.from({ length: 11 }, (_, i) => (new Date().getFullYear() + i).toString().slice(-2));
+
+  const handleMonthChange = (month: string) => {
+    setReExpMonth(month);
+    setProfileDraft(prev => ({ ...prev, re_exp_date: `${month}/${reExpYear}` }));
+  };
+
+  const handleYearChange = (year: string) => {
+    setReExpYear(year);
+    setProfileDraft(prev => ({ ...prev, re_exp_date: `${reExpMonth}/${year}` }));
+  };
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const navigate = useNavigate();
 
@@ -271,6 +286,11 @@ export default function CFIHours() {
       .maybeSingle();
     if (data) {
       setCfiProfile(data);
+      const parts = (data.re_exp_date || '').split('/');
+      if (parts.length === 2) {
+        setReExpMonth(parts[0]);
+        setReExpYear(parts[1]);
+      }
       setProfileDraft({ 
         full_name: data.full_name || '', 
         cert_number: data.cert_number || '', 
@@ -685,21 +705,52 @@ export default function CFIHours() {
                     {[
                       { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith', type: 'text' },
                       { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI', type: 'text' },
-                      { label: 'RE End Date / Exp. Date', key: 're_exp_date', placeholder: 'e.g. 12-31-2026', type: 'text' },
+                    ].map(field => (
+                      <div key={field.key} className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
+                        <input
+                          type={field.type}
+                          value={(profileDraft as any)[field.key] || ''}
+                          onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder={field.placeholder}
+                          className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
+                        />
+                      </div>
+                    ))}
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">RE End Date / Exp. Date</label>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={reExpMonth}
+                          onChange={(e) => handleMonthChange(e.target.value)}
+                          className="flex-1 text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all bg-white"
+                        >
+                          {months.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                        <span className="text-[#64748b] font-bold">/</span>
+                        <select
+                          value={reExpYear}
+                          onChange={(e) => handleYearChange(e.target.value)}
+                          className="flex-1 text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all bg-white"
+                        >
+                          {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    {[
                       { label: 'Date of Birth', key: 'dob', type: 'date' },
                       { label: 'Medical Exam Date', key: 'medical_exam_date', type: 'date', helper: 'Expiry is calculated automatically based on class and age.' },
                     ].map(field => (
                       <div key={field.key} className="space-y-1.5">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
-                        {field.key === 'medical_class' ? null : ( // Handled below
-                          <input
-                            type={field.type}
-                            value={profileDraft[field.key as keyof typeof profileDraft] || ''}
-                            onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
-                            placeholder={field.placeholder}
-                            className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                          />
-                        )}
+                        <input
+                          type={field.type}
+                          value={(profileDraft as any)[field.key] || ''}
+                          onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
+                        />
                         {field.helper && <p className="text-[9px] text-[#6b7280]">{field.helper}</p>}
                       </div>
                     ))}
@@ -731,14 +782,21 @@ export default function CFIHours() {
                     <button
                       onClick={() => {
                         setIsEditingProfile(false);
-                        if (cfiProfile) setProfileDraft({ 
-                          full_name: cfiProfile.full_name || '', 
-                          cert_number: cfiProfile.cert_number || '', 
-                          re_exp_date: cfiProfile.re_exp_date || '',
-                          dob: cfiProfile.dob || '',
-                          medical_class: cfiProfile.medical_class || '',
-                          medical_exam_date: cfiProfile.medical_exam_date || ''
-                        });
+                        if (cfiProfile) {
+                          const parts = (cfiProfile.re_exp_date || '').split('/');
+                          if (parts.length === 2) {
+                            setReExpMonth(parts[0]);
+                            setReExpYear(parts[1]);
+                          }
+                          setProfileDraft({ 
+                            full_name: cfiProfile.full_name || '', 
+                            cert_number: cfiProfile.cert_number || '', 
+                            re_exp_date: cfiProfile.re_exp_date || '',
+                            dob: cfiProfile.dob || '',
+                            medical_class: cfiProfile.medical_class || '',
+                            medical_exam_date: cfiProfile.medical_exam_date || ''
+                          });
+                        }
                       }}
                       className="px-5 py-2 bg-white text-[#6b7280] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#f8fafc] transition-all"
                     >
