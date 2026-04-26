@@ -11,6 +11,7 @@ interface ACSStandardsModalProps {
   taskName: string;
   onConfirm: (selectedStandards: ACSStandard[], notes: string) => void;
   onCancel: () => void;
+  pendingGrade?: string;
 }
 
 const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
@@ -19,6 +20,7 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
   taskName,
   onConfirm,
   onCancel,
+  pendingGrade,
 }) => {
   const [selectedStds, setSelectedStds] = useState<ACSStandard[]>([]);
   const [notes, setNotes] = useState('');
@@ -220,14 +222,22 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
         className="relative w-full h-full sm:h-auto sm:max-h-[85vh] sm:max-w-[600px] bg-white dark:bg-[#1c2333] sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="bg-red-600 px-6 py-4 flex items-center justify-between shrink-0">
+        <div className={`px-6 py-4 flex items-center justify-between shrink-0 ${
+          pendingGrade === '1' ? "bg-[#c0392b]" : pendingGrade === '2' ? "bg-[#e8a020]" : "bg-[#c0392b]"
+        }`}>
           <div className="flex flex-col">
             <h2 className="text-white font-bold text-lg leading-tight">
               {taskName}
             </h2>
-            <span className="text-red-100 text-xs font-medium uppercase tracking-widest">
-              {taskId}
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-red-100 text-[10px] font-medium uppercase tracking-widest">
+                {taskId}
+              </span>
+              <span className="text-white/70 text-[9px] font-medium uppercase tracking-widest">
+                {pendingGrade === '1' ? "Grade 1 — Unsatisfactory · Significant deficiency" : 
+                 pendingGrade === '2' ? "Grade 2 — Below ACS Standard · Needs improvement" : ""}
+              </span>
+            </div>
           </div>
           <button
             onClick={onCancel}
@@ -276,7 +286,7 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Explain why this task was graded as 'N'..."
+                  placeholder={`Explain why this task was graded ${pendingGrade || '1'}...`}
                   className="w-full h-32 p-4 text-sm bg-gray-50 dark:bg-[#151c2a] dark:text-[#ccd6e0] dark:border-[#2a3448] border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
                 />
               </div>

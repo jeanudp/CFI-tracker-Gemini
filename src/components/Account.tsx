@@ -94,13 +94,24 @@ export default function Account() {
         .eq('user_id', user.id);
 
       if (students) {
+        const studentNames = students.map(s => s.name);
         for (const student of students) {
           await supabase.from('lessons').delete().eq('student_name', student.name);
           await supabase.from('endorsements').delete().eq('student_name', student.name);
           await supabase.from('manual_hours').delete().eq('student_name', student.name);
         }
+        
+        if (studentNames.length > 0) {
+          await supabase.from('student_tests').delete().in('student_name', studentNames);
+        }
       }
 
+      // Delete user-centric data
+      await supabase.from('cfi_hours').delete().eq('user_id', user.id);
+      await supabase.from('cfi_profile').delete().eq('user_id', user.id);
+      await supabase.from('solo_checklist').delete().eq('user_id', user.id);
+      await supabase.from('saved_aircraft').delete().eq('user_id', user.id);
+      await supabase.from('endorsements').delete().eq('user_id', user.id);
       await supabase.from('students').delete().eq('user_id', user.id);
       await supabase.from('user_subscriptions').delete().eq('user_id', user.id);
 

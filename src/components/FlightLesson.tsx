@@ -109,7 +109,7 @@ export default function FlightLesson() {
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
-  const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
+  const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade, pendingGrade: Grade } | null>(null);
   const [lessonLabel, setLessonLabel] = useState('');
   const [lessonNum, setLessonNum] = useState(1);
   const [aircraftSearch, setAircraftSearch] = useState('');
@@ -147,6 +147,12 @@ export default function FlightLesson() {
   const isIR = rating?.code === 'ir';
   const isCPL = rating?.code === 'cpl';
   const isCFI = ['cfi', 'cfii', 'mei'].includes(rating?.code);
+
+  const isPassingGrade = (grade: any) => {
+    if (grade === null || grade === undefined || grade === '') return false;
+    const g = String(grade);
+    return ['S', '3', '4'].includes(g);
+  };
 
   const CPL_LESSON_TYPE_TILES = [
     {
@@ -507,14 +513,19 @@ export default function FlightLesson() {
   };
 
   const handleGradeCycle = (taskId: string) => {
-    const cycle: Grade[] = ['', 'S', 'N'];
-    const current = grades[taskId] || '';
+    const cycle: Grade[] = ['', '1', '2', '3', '4'];
+    let current: Grade = (grades[taskId] as Grade) || '';
+
+    // Backwards compatibility normalization
+    if (current === 'S') current = '3';
+    if (current === 'N') current = '2';
+
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     
-    if (next === 'N') {
+    if (next === '1' || next === '2') {
       const task = flightTasks.find(t => t.id === taskId);
       if (task) {
-        setActiveACSTask({ task, id: taskId, prevGrade: current });
+        setActiveACSTask({ task, id: taskId, prevGrade: current, pendingGrade: next });
         return;
       }
     }
@@ -528,7 +539,8 @@ export default function FlightLesson() {
     if (!activeACSTask) return;
     
     const taskId = activeACSTask.id;
-    const newGrades = { ...grades, [taskId]: 'N' as Grade };
+    const gradeToSave = activeACSTask.pendingGrade;
+    const newGrades = { ...grades, [taskId]: gradeToSave };
     
     // Format the note: Failed standards: PA.I.A.R1 Proficiency versus currency, PA.I.A.R2 Personal minimums. Notes: Student had difficulty explaining the difference.
     const stdsText = selectedStds.map(s => `${s.code} ${s.description}`).join(', ');
@@ -552,7 +564,7 @@ export default function FlightLesson() {
   };
 
   const handleFillAll = () => {
-    const cycle: Grade[] = ['', 'S', 'N'];
+    const cycle: Grade[] = ['', '3', '4', '1', '2'];
     const next = cycle[(cycle.indexOf(fillState) + 1) % cycle.length];
     setFillState(next);
     const newGrades = { ...grades };
@@ -1030,8 +1042,8 @@ export default function FlightLesson() {
   };
 
   const counts = {
-    s: Object.values(grades).filter(v => v === 'S').length,
-    n: Object.values(grades).filter(v => v === 'N').length,
+    s: Object.values(grades).filter(v => isPassingGrade(v)).length,
+    n: Object.values(grades).filter(v => ['1', '2', 'N'].includes(v)).length,
   };
 
   const acsData = rating ? ALL_ACS[rating.code] : [];
@@ -2556,11 +2568,11 @@ export default function FlightLesson() {
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
           <div className="text-2xl font-mono font-bold text-[#2d7a4f]">{counts.s}</div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Satisfactory</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Proficient</div>
         </div>
         <div className="bg-white rounded-xl border border-[#dde3ec] p-3 text-center shadow-sm">
           <div className="text-2xl font-mono font-bold text-[#c0392b]">{counts.n}</div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Needs Impr.</div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Below Standard</div>
         </div>
       </div>
 
@@ -2572,8 +2584,10 @@ export default function FlightLesson() {
               onClick={handleFillAll}
               className={cn(
                 "w-12 h-6 rounded border font-mono text-[11px] transition-all active:scale-95",
-                fillState === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                fillState === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
+                fillState === '4' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                fillState === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-md shadow-[#5a9e6f]/30" :
+                fillState === '2' ? "bg-[#e8a020] border-[#e8a020] text-white shadow-md shadow-[#e8a020]/30" :
+                fillState === '1' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
                 "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
               )}
             >
@@ -2598,7 +2612,8 @@ export default function FlightLesson() {
             };
 
             const renderTaskRow = (task: any, id: string) => {
-              const g = grades[id] || '';
+              const gValue = grades[id] || '';
+              const displayGrade = gValue === 'S' ? '3' : gValue === 'N' ? '2' : gValue;
               const n = notes[id] || '';
               const isExpanded = expandedTasks[id];
               const isEmergencyMalfunction = task.code === 'CA.X.C' || task.code === 'PA.IX.C';
@@ -2645,12 +2660,14 @@ export default function FlightLesson() {
                       onClick={() => handleGradeCycle(id)}
                       className={cn(
                         "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all active:scale-95 hover:scale-105 transition-transform duration-100",
-                        g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                        g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
+                        displayGrade === '4' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                        displayGrade === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-md shadow-[#5a9e6f]/30" :
+                        displayGrade === '2' ? "bg-[#e8a020] border-[#e8a020] text-white shadow-md shadow-[#e8a020]/30" :
+                        displayGrade === '1' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
                         "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
                       )}
                     >
-                      {g || '—'}
+                      {displayGrade || '—'}
                     </button>
                   </div>
                   <div className="p-2 pt-3 pr-4 relative group">
@@ -2797,6 +2814,7 @@ export default function FlightLesson() {
           taskName={activeACSTask.task.name}
           onConfirm={handleACSConfirm}
           onCancel={handleACSCancel}
+          pendingGrade={activeACSTask?.pendingGrade}
         />
       )}
 

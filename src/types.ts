@@ -1,4 +1,4 @@
-export type Grade = '' | 'S' | 'N';
+export type Grade = '' | '1' | '2' | '3' | '4' | 'S' | 'N';
 
 export interface LessonMeta {
   date?: string;

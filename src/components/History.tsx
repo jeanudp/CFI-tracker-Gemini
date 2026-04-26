@@ -232,11 +232,11 @@ export default function History() {
             {lesson.student_name ? ` · ${lesson.student_name}` : ''}
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-            {Object.values(lesson.grades || {}).filter(g => g === 'S').length > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full">S: {Object.values(lesson.grades || {}).filter(g => g === 'S').length}</span>
+            {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g)).length > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full">3-4: {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g)).length}</span>
             )}
-            {Object.values(lesson.grades || {}).filter(g => g === 'N').length > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#fdecea] text-[#c0392b] rounded-full">N: {Object.values(lesson.grades || {}).filter(g => g === 'N').length}</span>
+            {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g)).length > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#fdecea] text-[#c0392b] rounded-full">1-2: {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g)).length}</span>
             )}
             {lesson.meta?.totalFlight && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#d4e8f5] text-[#1a3a5c] rounded-full">{lesson.meta.totalFlight}h</span>
@@ -434,8 +434,8 @@ export default function History() {
     lessonList.forEach(l => {
       if (l.grades) {
         Object.values(l.grades).forEach(g => {
-          if (g === 'S') s++;
-          if (g === 'N') n++;
+          if (['S', '3', '4'].includes(g)) s++;
+          if (['N', '1', '2'].includes(g)) n++;
         });
       }
     });
@@ -445,10 +445,32 @@ export default function History() {
   const groundGrades = getSectionGrades(groundLessons);
   const flightGrades = getSectionGrades(flightLessons);
 
+  const getMostRecentGrade = (lessons: Lesson[], taskId: string) => {
+    const sortedLessons = [...lessons]
+      .filter(l => l.grades && l.grades[taskId])
+      .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+    return sortedLessons.length > 0 ? sortedLessons[0].grades[taskId] : null;
+  };
+
+  const isPassingGrade = (grade: any) => {
+    if (grade === null || grade === undefined || grade === '') return false;
+    const g = String(grade);
+    return ['S', '3', '4'].includes(g);
+  };
+
+  const gradeDisplayColor = (grade: any) => {
+    const g = String(grade);
+    if (g === '4' || g === 'S') return 'bg-[#2d7a4f]';
+    if (g === '3') return 'bg-[#5a9e6f]';
+    if (g === '2') return 'bg-[#e8a020]';
+    if (g === 'N' || g === '1') return 'bg-[#c0392b]';
+    return 'bg-[#94a3b8]';
+  };
+
   const studentStats = studentName ? {
     count: studentLessons.length,
     hours: studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.totalFlight || '0') || 0), 0),
-    sGrades: studentLessons.reduce((sum, l) => sum + Object.values(l.grades || {}).filter(g => g === 'S').length, 0)
+    sGrades: studentLessons.reduce((sum, l) => sum + Object.values(l.grades || {}).filter(g => isPassingGrade(g)).length, 0)
   } : null;
 
   // Infer rating from the most recent lesson or local storage
@@ -465,13 +487,6 @@ export default function History() {
 
   const rating = getRating();
   const acsData = ALL_ACS[rating.code] || ALL_ACS['ppl'];
-
-  const getMostRecentGrade = (lessons: Lesson[], taskId: string) => {
-    const sortedLessons = [...lessons]
-      .filter(l => l.grades && l.grades[taskId])
-      .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
-    return sortedLessons.length > 0 ? sortedLessons[0].grades[taskId] : null;
-  };
 
   const getMostRecentGradeInfo = (lessons: Lesson[], taskId: string) => {
     const sortedLessons = [...lessons]
@@ -863,7 +878,7 @@ export default function History() {
                     {studentStats?.hours.toFixed(1)} Hours
                   </div>
                   <div className="bg-[#fdf2f8] text-[#9d174d] text-[10px] font-bold px-2 py-1 rounded-full border border-[#fbcfe8]">
-                    {studentStats?.sGrades} S Grades
+                    {studentStats?.sGrades} Passing Grades
                   </div>
                 </div>
               </div>
@@ -906,8 +921,8 @@ export default function History() {
                     <span className="text-[10px] font-black text-[#059669] uppercase tracking-widest">Ground Lessons ({groundLessons.length})</span>
                   </div>
                   <div className="flex gap-1.5">
-                    {groundGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{groundGrades.s} S</span>}
-                    {groundGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{groundGrades.n} N</span>}
+                    {groundGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{groundGrades.s} 3-4</span>}
+                    {groundGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{groundGrades.n} 1-2</span>}
                   </div>
                 </button>
                 <AnimatePresence>
@@ -937,8 +952,8 @@ export default function History() {
                     <span className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Flight Lessons ({flightLessons.length})</span>
                   </div>
                   <div className="flex gap-1.5">
-                    {flightGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{flightGrades.s} S</span>}
-                    {flightGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{flightGrades.n} N</span>}
+                    {flightGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{flightGrades.s} 3-4</span>}
+                    {flightGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{flightGrades.n} 1-2</span>}
                   </div>
                 </button>
                 <AnimatePresence>
@@ -1138,12 +1153,12 @@ export default function History() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Satisfactory</div>
-                    <div className="text-xl font-mono font-bold text-[#2d7a4f]">{Object.values(selectedLesson.grades || {}).filter(v => v === 'S').length || '—'}</div>
+                    <div className="text-xl font-mono font-bold text-[#2d7a4f]">{Object.values(selectedLesson.grades || {}).filter(v => ['S', '3', '4'].includes(v)).length || '—'}</div>
                     <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
                   </div>
                   <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Needs Impr.</div>
-                    <div className="text-xl font-mono font-bold text-[#c0392b]">{Object.values(selectedLesson.grades || {}).filter(v => v === 'N').length || '—'}</div>
+                    <div className="text-xl font-mono font-bold text-[#c0392b]">{Object.values(selectedLesson.grades || {}).filter(v => ['N', '1', '2'].includes(v)).length || '—'}</div>
                     <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
                   </div>
                 </div>
@@ -1427,6 +1442,10 @@ export default function History() {
                               <div className="text-center">
                                 <span className={cn(
                                   "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white",
+                                  selectedLesson.grades[t.id] === '4' ? "bg-[#2d7a4f]" :
+                                  selectedLesson.grades[t.id] === '3' ? "bg-[#5a9e6f]" :
+                                  selectedLesson.grades[t.id] === '2' ? "bg-[#e8a020]" :
+                                  selectedLesson.grades[t.id] === '1' ? "bg-[#c0392b]" :
                                   selectedLesson.grades[t.id] === 'S' ? "bg-[#2d7a4f]" :
                                   selectedLesson.grades[t.id] === 'N' ? "bg-[#c0392b]" : ""
                                 )}>
@@ -1545,7 +1564,7 @@ export default function History() {
                             }, 0);
                             const totalSat = acsData.reduce((sum, area, ai) => {
                               const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
-                              const sat = tasks.filter((_, ti) => getMostRecentGrade(studentLessons, `${ai}_${ti}`) === 'S').length;
+                              const sat = tasks.filter((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai}_${ti}`))).length;
                               return sum + sat;
                             }, 0);
                             return totalTasks > 0 ? Math.round((totalSat / totalTasks) * 100) : 0;
@@ -1572,7 +1591,7 @@ export default function History() {
                             {acsData.map((area, ai) => {
                               const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
                               if (tasks.length === 0) return null;
-                              const sat = tasks.filter((_, ti) => getMostRecentGrade(studentLessons, `${ai}_${ti}`) === 'S').length;
+                              const sat = tasks.filter((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai}_${ti}`))).length;
                               const pct = Math.round((sat / tasks.length) * 100);
 
                               return (
@@ -1611,11 +1630,19 @@ export default function History() {
                                   <div className="flex flex-wrap gap-4 px-1">
                                     <div className="flex items-center gap-2">
                                       <div className="w-3 h-3 rounded bg-[#2d7a4f]" />
-                                      <span className="text-[10px] font-medium text-[#64748b]">Satisfactory</span>
+                                      <span className="text-[10px] font-medium text-[#64748b]">Grade 4 - Exceeds ACS</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 rounded bg-[#5a9e6f]" />
+                                      <span className="text-[10px] font-medium text-[#64748b]">Grade 3 - Meets ACS</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 rounded bg-[#e8a020]" />
+                                      <span className="text-[10px] font-medium text-[#64748b]">Grade 2 - Below ACS</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <div className="w-3 h-3 rounded bg-[#c0392b]" />
-                                      <span className="text-[10px] font-medium text-[#64748b]">Needs Improvement</span>
+                                      <span className="text-[10px] font-medium text-[#64748b]">Grade 1 - Unsatisfactory</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <div className="w-3 h-3 rounded bg-[#94a3b8]" />
@@ -1646,6 +1673,10 @@ export default function History() {
                                                 </div>
                                                 <span className={cn(
                                                   "inline-flex items-center justify-center px-2 py-0.5 rounded text-[9px] font-bold font-mono text-white shrink-0 min-w-[24px]",
+                                                  info?.grade === '4' ? "bg-[#2d7a4f]" :
+                                                  info?.grade === '3' ? "bg-[#5a9e6f]" :
+                                                  info?.grade === '2' ? "bg-[#e8a020]" :
+                                                  info?.grade === '1' ? "bg-[#c0392b]" :
                                                   info?.grade === 'S' ? "bg-[#2d7a4f]" :
                                                   info?.grade === 'N' ? "bg-[#c0392b]" : "bg-[#94a3b8]"
                                                 )}>
@@ -1922,7 +1953,7 @@ export default function History() {
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <div className="bg-[#f4f5f7] px-4 py-2 border-b border-[#dde3ec]">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Current Needs-Improvement Grades</div>
-                    <div className="text-[9px] text-[#94a3b8] font-medium">Only showing tasks where the most recent grade is N. Tasks improved to S are removed automatically.</div>
+                    <div className="text-[9px] text-[#94a3b8] font-medium">Only showing tasks where the most recent grade is below standard (N, 1, or 2). Tasks improved to 3 or 4 are removed automatically.</div>
                   </div>
                   <div className="p-4 space-y-2">
                     {(() => {
@@ -1940,16 +1971,17 @@ export default function History() {
                             const taskId = `${ai}_${ti}`;
                             const mostRecentGrade = getMostRecentGrade(studentLessons, taskId);
                        
-                            if (mostRecentGrade === 'N') {
-                              // Find the most recent lesson where this task was graded N
+                            if (['N', '1', '2'].includes(mostRecentGrade || '')) {
+                              // Find the most recent lesson where this task was graded N, 1, or 2
                               const mostRecentNLesson = [...studentLessons]
-                                .filter(l => l.grades && l.grades[taskId] === 'N')
+                                .filter(l => l.grades && ['N', '1', '2'].includes(l.grades[taskId] || ''))
                                 .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime())[0];
                        
                               if (mostRecentNLesson) {
                                 niGrades.push({
                                   task,
                                   area: area.area,
+                                  grade: mostRecentNLesson.grades[taskId],
                                   lesson: mostRecentNLesson.label,
                                   date: new Date(mostRecentNLesson.saved_at).toLocaleDateString('en-US', {
                                     month: 'short',
@@ -1962,13 +1994,16 @@ export default function History() {
                           });
                       });
 
-                      if (niGrades.length === 0) return <div className="text-sm text-[#6b7280] italic">No N grades yet.</div>;
+                      if (niGrades.length === 0) return <div className="text-sm text-[#6b7280] italic">No below-standard grades.</div>;
 
                       return niGrades.map((g, idx) => (
                         <div key={idx} className="flex flex-col gap-1 py-2 border-b border-[#dde3ec] last:border-0">
                           <div className="flex gap-3">
-                            <span className="bg-[#fdecea] text-[#c0392b] text-[9px] font-bold px-2 py-0.5 rounded h-fit whitespace-nowrap">
-                              N · {g.lesson} · {g.date}
+                            <span className={cn(
+                              "text-[9px] font-bold px-2 py-0.5 rounded h-fit whitespace-nowrap text-white",
+                              g.grade === '1' ? "bg-[#c0392b]" : g.grade === '2' ? "bg-[#e8a020]" : "bg-[#c0392b]"
+                            )}>
+                              {g.grade} · {g.lesson} · {g.date}
                             </span>
                             <span className="text-xs">
                               <strong className="text-[#1c2333]">{g.task.name}</strong> <span className="text-[#6b7280]">({g.area})</span>
@@ -2215,20 +2250,30 @@ export default function History() {
                   const allRows = REQS.flatMap(r => r.rows);
                   const metCount = allRows.filter(r => r.have >= r.need).length;
                   const endorsementsMet = ENDORSEMENTS.filter(e => isEndorsementMet(e.key)).length;
+
+                  const allAcsMet = acsData.every((area, ai) => {
+                    const tasks = area.tasks.filter(t => 
+                      !t.name.includes('N/A') && 
+                      !t.name.includes('ASEL') && 
+                      !t.name.includes('Seaplane') && 
+                      !t.name.includes('Water')
+                    );
+                    return tasks.every((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai}_${ti}`)));
+                  });
                   
                   let allMet = false;
                   if (lessonRating === 'ppl') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.37');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.37') && allAcsMet;
                   } else if (lessonRating === 'ir') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.43') && isEndorsementMet('A.44') && isEndorsementMet('A.1');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.43') && isEndorsementMet('A.44') && isEndorsementMet('A.1') && allAcsMet;
                   } else if (lessonRating === 'cpl') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.39');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.39') && allAcsMet;
                   } else if (lessonRating === 'cfi') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49') && allAcsMet;
                   } else if (lessonRating === 'cfii') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.48');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.48') && allAcsMet;
                   } else if (lessonRating === 'mei') {
-                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47');
+                    allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && allAcsMet;
                   }
 
                   // Fireworks logic

@@ -9,7 +9,8 @@ import { cn } from '../lib/utils';
 
 const parseFailedStandards = (notesString: string): { code: string, description: string }[] => {
   if (!notesString) return [];
-  const match = notesString.match(/Failed standards: (.+?)(?:\. Notes:|$)/);
+  // Match "Failed standards:", "Grade 1 — Failed standards:", or "Grade 2 — Below standard:"
+  const match = notesString.match(/(?:Grade [12] — )?(?:Failed standards|Below standard): (.+?)(?:\. Notes:|$)/);
   if (!match) return [];
   const standardsText = match[1];
   const standards = standardsText.split(', ').map(s => {
@@ -117,8 +118,8 @@ export default function StudentDashboard() {
         .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
       
       const mostRecentGrade = taskGrades[0]?.grades[id] || null;
-      const nGrades = taskGrades.filter(l => l.grades[id] === 'N');
-      const sGrades = taskGrades.filter(l => l.grades[id] === 'S');
+      const nGrades = taskGrades.filter(l => ['N', '1', '2'].includes(l.grades[id]));
+      const sGrades = taskGrades.filter(l => ['S', '3', '4'].includes(l.grades[id]));
       
       const mostRecentN = nGrades[0];
       const hadNBefore = nGrades.length > 0;
@@ -140,14 +141,14 @@ export default function StudentDashboard() {
     })
   );
 
-  const readinessScore = Math.round((taskAnalysis.filter(t => t.mostRecentGrade === 'S').length / taskAnalysis.length) * 100) || 0;
+  const readinessScore = Math.round((taskAnalysis.filter(t => ['S', '3', '4'].includes(t.mostRecentGrade || '')).length / taskAnalysis.length) * 100) || 0;
   
   const strugglingTasks = taskAnalysis
-    .filter(t => t.mostRecentGrade === 'N')
+    .filter(t => ['N', '1', '2'].includes(t.mostRecentGrade || ''))
     .sort((a, b) => b.nCount - a.nCount);
 
   const improvedTasks = taskAnalysis
-    .filter(t => t.mostRecentGrade === 'S' && t.mostRecentSDate && t.nCount > 0)
+    .filter(t => ['S', '3', '4'].includes(t.mostRecentGrade || '') && t.mostRecentSDate && t.nCount > 0)
     .sort((a, b) => new Date(b.mostRecentSDate!).getTime() - new Date(a.mostRecentSDate!).getTime());
 
   const uncoveredTasks = taskAnalysis.filter(t => t.neverGraded);
@@ -161,8 +162,8 @@ export default function StudentDashboard() {
 
   const getSummary = (tasks: typeof taskAnalysis) => ({
     total: tasks.length,
-    s: tasks.filter(t => t.mostRecentGrade === 'S').length,
-    n: tasks.filter(t => t.mostRecentGrade === 'N').length,
+    s: tasks.filter(t => ['S', '3', '4'].includes(t.mostRecentGrade || '')).length,
+    n: tasks.filter(t => ['N', '1', '2'].includes(t.mostRecentGrade || '')).length,
     none: tasks.filter(t => t.neverGraded).length
   });
 
@@ -227,7 +228,7 @@ export default function StudentDashboard() {
             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6b7280] mb-1">Overall Readiness</div>
             <div className="text-lg font-bold text-[#1a3a5c]">ACS Mastery Level</div>
             <div className="text-[11px] text-[#6b7280] mt-1 font-medium italic">
-              {taskAnalysis.filter(t => t.mostRecentGrade === 'S').length} of {taskAnalysis.length} tasks mastered
+              {taskAnalysis.filter(t => ['S', '3', '4'].includes(t.mostRecentGrade || '')).length} of {taskAnalysis.length} tasks mastered
             </div>
           </div>
         </div>
@@ -371,7 +372,7 @@ export default function StudentDashboard() {
                                 </div>
                               </div>
                               <div className="px-3 py-1.5 bg-[#c0392b] text-white rounded-xl text-xs font-black shadow-sm">
-                                N × {task.nCount}
+                                {task.mostRecentGrade} × {task.nCount}
                               </div>
                             </div>
                           </div>
@@ -451,7 +452,7 @@ export default function StudentDashboard() {
                           <p className="text-[10px] text-[#6b7280]">{task.areaName}</p>
                         </div>
                         <div className="px-2 py-1 bg-[#e4f5ec] text-[#2d7a4f] rounded text-[10px] font-bold">
-                          S
+                          {task.mostRecentGrade}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-[10px] font-bold text-[#2d7a4f] uppercase tracking-widest">

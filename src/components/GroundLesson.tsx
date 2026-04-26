@@ -21,7 +21,7 @@ export default function GroundLesson() {
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
-  const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade } | null>(null);
+  const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade, pendingGrade: Grade } | null>(null);
   const [lessonLabel, setLessonLabel] = useState('');
   const [lessonNum, setLessonNum] = useState(1);
   const navigate = useNavigate();
@@ -118,14 +118,19 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
   };
 
   const handleGradeCycle = (taskId: string) => {
-    const cycle: Grade[] = ['', 'S', 'N'];
-    const current = grades[taskId] || '';
+    const cycle: Grade[] = ['', '1', '2', '3', '4'];
+    let current: Grade = (grades[taskId] as Grade) || '';
+
+    // Backwards compatibility normalization
+    if (current === 'S') current = '3';
+    if (current === 'N') current = '2';
+
     const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
     
-    if (next === 'N') {
+    if (next === '1' || next === '2') {
       const task = groundTasks.find(t => t.id === taskId);
       if (task) {
-        setActiveACSTask({ task, id: taskId, prevGrade: current });
+        setActiveACSTask({ task, id: taskId, prevGrade: current, pendingGrade: next });
         return;
       }
     }
@@ -139,11 +144,13 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
     if (!activeACSTask) return;
     
     const taskId = activeACSTask.id;
-    const newGrades = { ...grades, [taskId]: 'N' as Grade };
+    const gradeToSave = activeACSTask.pendingGrade;
+    const newGrades = { ...grades, [taskId]: gradeToSave };
     
     // Format the note: Failed standards: PA.I.A.R1 Proficiency versus currency, PA.I.A.R2 Personal minimums. Notes: Student had difficulty explaining the difference.
     const stdsText = selectedStds.map(s => `${s.code} ${s.description}`).join(', ');
-    const formattedNote = `Failed standards: ${stdsText}.${acsNotes ? ` Notes: ${acsNotes}` : ''}`;
+    const prefix = gradeToSave === '1' ? "Grade 1 — Failed standards:" : "Grade 2 — Below standard:";
+    const formattedNote = `${prefix} ${stdsText}.${acsNotes ? ` Notes: ${acsNotes}` : ''}`;
     
     const newNotes = { ...notes, [taskId]: formattedNote };
     
@@ -163,7 +170,7 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
   };
 
   const handleFillAll = () => {
-    const cycle: Grade[] = ['', 'S', 'N'];
+    const cycle: Grade[] = ['', '3', '4', '1', '2'];
     const next = cycle[(cycle.indexOf(fillState) + 1) % cycle.length];
     setFillState(next);
     const newGrades = { ...grades };
@@ -242,8 +249,8 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
   };
 
   const counts = {
-    s: Object.values(grades).filter(v => v === 'S').length,
-    n: Object.values(grades).filter(v => v === 'N').length,
+    s: Object.values(grades).filter(v => ['S', '3', '4'].includes(v)).length,
+    n: Object.values(grades).filter(v => ['N', '1', '2'].includes(v)).length,
   };
 
   return (
@@ -348,8 +355,10 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
               onClick={handleFillAll}
               className={cn(
                 "w-12 h-6 rounded border font-mono text-[11px] transition-all active:scale-95",
-                fillState === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                fillState === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
+                fillState === '4' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
+                fillState === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-md shadow-[#5a9e6f]/30" :
+                fillState === '2' ? "bg-[#e8a020] border-[#e8a020] text-white shadow-md shadow-[#e8a020]/30" :
+                fillState === '1' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
                 "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
               )}
             >
@@ -404,8 +413,10 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                           onClick={() => handleGradeCycle(task.id)}
                           className={cn(
                             "w-12 h-7 rounded-md border font-mono text-xs font-bold transition-all",
-                            g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
-                            g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
+                            g === '4' || g === 'S' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" :
+                            g === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white" :
+                            g === '2' ? "bg-[#e8a020] border-[#e8a020] text-white" :
+                            g === '1' || g === 'N' ? "bg-[#c0392b] border-[#c0392b] text-white" :
                             "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
                           )}
                         >
@@ -480,6 +491,7 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
           taskName={activeACSTask.task.name}
           onConfirm={handleACSConfirm}
           onCancel={handleACSCancel}
+          pendingGrade={activeACSTask?.pendingGrade}
         />
       )}
     </div>
