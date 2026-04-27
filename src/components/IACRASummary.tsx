@@ -259,7 +259,7 @@ export default function IACRASummary() {
   };
 
   return (
-    <div className="bg-white min-h-screen p-4 sm:p-8 font-sans text-black">
+    <div className="bg-white min-h-screen p-4 sm:p-8 font-sans text-black" data-theme="light" style={{ backgroundColor: 'white', color: 'black' }}>
       {/* Action Buttons */}
       <div className="max-w-6xl mx-auto flex justify-between items-center mb-6 print:hidden">
         <button
@@ -296,22 +296,22 @@ export default function IACRASummary() {
         <div className="overflow-x-auto border-collapse">
           <table className="w-full border-collapse border border-black">
             <thead>
-              <tr className="bg-white">
-                <th className="border border-black p-2 w-[180px]"></th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center">Airplanes</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center">Rotorcraft</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center leading-tight">Powered<br/>Lift</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center">Gliders</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center leading-tight">Lighter<br/>than Air</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center">FTD</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center leading-tight">FFS<br/>(Simulator)</th>
-                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center">ATD</th>
+              <tr className="bg-white" style={{ backgroundColor: 'white' }}>
+                <th className="border border-black p-2 w-[180px]" style={{ color: 'black', backgroundColor: 'white' }}></th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center" style={{ color: 'black', backgroundColor: 'white' }}>Airplanes</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center" style={{ color: 'black', backgroundColor: 'white' }}>Rotorcraft</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center leading-tight" style={{ color: 'black', backgroundColor: 'white' }}>Powered<br/>Lift</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center" style={{ color: 'black', backgroundColor: 'white' }}>Gliders</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center leading-tight" style={{ color: 'black', backgroundColor: 'white' }}>Lighter<br/>than Air</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center" style={{ color: 'black', backgroundColor: 'white' }}>FTD</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center leading-tight" style={{ color: 'black', backgroundColor: 'white' }}>FFS<br/>(Simulator)</th>
+                <th className="border border-black p-2 text-black text-[11px] font-bold uppercase text-center" style={{ color: 'black', backgroundColor: 'white' }}>ATD</th>
               </tr>
             </thead>
             <tbody>
               {/* Row 1: Total */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Total</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Total</td>
                 <Cell className="font-mono">{totals.totalTime.toFixed(1)}{checkMet(totals.totalTime, 40)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -323,7 +323,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 2: Instruction Received */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Instruction Received</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Instruction Received</td>
                 <Cell className="font-mono">{totals.dualReceived.toFixed(1)}{checkMet(totals.dualReceived, 20)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -335,7 +335,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 3: Solo */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Solo</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Solo</td>
                 <Cell className="font-mono">{totals.soloTime.toFixed(1)}{checkMet(totals.soloTime, 10)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -347,7 +347,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 4: PIC and SIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">PIC and SIC</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>PIC and SIC</td>
                 <Cell className="font-mono" picSic>
                   {totals.picTime.toFixed(1)}<br/>
                   &nbsp;
@@ -362,7 +362,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 5: XC Instruction Received */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Cross Country Instruction Received</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Cross Country Instruction Received</td>
                 <Cell className="font-mono">{totals.xcDual.toFixed(1)}{checkMet(totals.xcDual, 3)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -374,7 +374,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 6: XC Solo */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Cross Country Solo</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Cross Country Solo</td>
                 <Cell className="font-mono">{totals.xcSolo.toFixed(1)}{checkMet(totals.xcSolo, 5)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -386,7 +386,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 7: XC PIC/SIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Cross Country PIC/SIC</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Cross Country PIC/SIC</td>
                 <Cell className="font-mono" picSic>
                   {totals.xcPic.toFixed(1)}<br/>
                   &nbsp;
@@ -401,7 +401,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 7.1: R-ATP Eligible XC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px] text-[#7c3aed]">R-ATP Eligible XC (§61.160)</td>
+                <td className="border border-black p-2 font-bold text-[12px] text-[#7c3aed]" style={{ backgroundColor: 'white', color: 'black' }}>R-ATP Eligible XC (§61.160)</td>
                 <Cell className="font-mono text-[#7c3aed]">{totals.ratpXC.toFixed(1)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -413,7 +413,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 7.2: Total XC for IACRA */}
               <tr className="bg-[#f8fafc]">
-                <td className="border border-black p-2 font-bold text-[12px] text-[#1a3a8c]">Total XC for IACRA</td>
+                <td className="border border-black p-2 font-bold text-[12px] text-[#1a3a8c]" style={{ backgroundColor: 'white', color: 'black' }}>Total XC for IACRA</td>
                 <Cell className="font-mono text-[#1a3a8c] font-bold">{totals.iacraXC.toFixed(1)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -425,7 +425,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 8: Instrument */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Instrument</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Instrument</td>
                 <Cell className="font-mono">{totals.instTotal.toFixed(1)}{checkMet(totals.instTotal, 3)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -437,7 +437,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 9: Night Instruction Received */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Night Instruction Received</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Night Instruction Received</td>
                 <Cell className="font-mono">{totals.nightDual.toFixed(1)}{checkMet(totals.nightDual, 3)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -449,7 +449,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 10: Night Take-off / Landing */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Night Take-off / Landing</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Night Take-off / Landing</td>
                 <Cell className="font-mono">{(totals.nightTakeoffs + totals.nightLandings)}{checkMet(totals.nightTakeoffs + totals.nightLandings, 10)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -461,7 +461,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 11: Night PIC/SIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Night PIC/SIC</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Night PIC/SIC</td>
                 <Cell className="font-mono" picSic>
                   {totals.nightPic.toFixed(1)}<br/>
                   &nbsp;
@@ -476,7 +476,7 @@ export default function IACRASummary() {
               </tr>
               {/* Row 12: Night Take-off/Landing PIC/SIC */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Night Take-off/Landing PIC/SIC</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Night Take-off/Landing PIC/SIC</td>
                 <Cell className="font-mono" picSic>
                   {totals.nightTakeoffs}<br/>
                   &nbsp;
@@ -491,8 +491,9 @@ export default function IACRASummary() {
               </tr>
               {/* Row 13: Number of Flights */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Number of Flights</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Number of Flights</td>
                 <Cell className="font-mono">{totals.numFlights}</Cell>
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -503,7 +504,8 @@ export default function IACRASummary() {
               </tr>
               {/* Row 14: Number of Aero-Tows */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Number of Aero-Tows</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Number of Aero-Tows</td>
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -515,7 +517,8 @@ export default function IACRASummary() {
               </tr>
               {/* Row 15: Number of Ground Launches */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Number of Ground Launches</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Number of Ground Launches</td>
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -527,7 +530,8 @@ export default function IACRASummary() {
               </tr>
               {/* Row 16: Number of Powered Launches */}
               <tr>
-                <td className="border border-black p-2 font-bold text-[12px]">Number of Powered Launches</td>
+                <td className="border border-black p-2 font-bold text-[12px]" style={{ backgroundColor: 'white', color: 'black' }}>Number of Powered Launches</td>
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -546,28 +550,28 @@ export default function IACRASummary() {
           <h2 className="text-[#1a3a8c] text-center font-bold text-sm mb-4 uppercase">Class Hours</h2>
           <div className="grid grid-cols-4 border-t border-l border-black">
             {/* Row 1 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL PIC: <span className="font-mono font-bold">{totals.picTimeASEL.toFixed(1)}</span></div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES PIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL PIC: <span className="font-mono font-bold">{totals.picTimeAMEL.toFixed(1)}</span></div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES PIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - SEL PIC: <span className="font-mono font-bold">{totals.picTimeASEL.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - SES PIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - MEL PIC: <span className="font-mono font-bold">{totals.picTimeAMEL.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - MES PIC:</div>
             {/* Row 2 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL SIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES SIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL SIC:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - SEL SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - SES SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - MEL SIC:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - MES SIC:</div>
             {/* Row 3 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceivedASEL.toFixed(1)}</span></div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - SES Instruct Rcvd:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceivedAMEL.toFixed(1)}</span></div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Airplane - MES Instruct Rcvd:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - SEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceivedASEL.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - SES Instruct Rcvd:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - MEL Instruct Rcvd: <span className="font-mono font-bold">{totals.dualReceivedAMEL.toFixed(1)}</span></div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Airplane - MES Instruct Rcvd:</div>
             {/* Row 4 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">Rotorcraft - HEL:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">Rotorcraft - GYRO:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Rotorcraft - HEL:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>Rotorcraft - GYRO:</div>
             <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
             <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
             {/* Row 5 */}
-            <div className="border-b border-r border-black p-1 text-[11px]">LTA - Balloon:</div>
-            <div className="border-b border-r border-black p-1 text-[11px]">LTA - Airship:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>LTA - Balloon:</div>
+            <div className="border-b border-r border-black p-1 text-[11px]" style={{ backgroundColor: 'white', color: 'black' }}>LTA - Airship:</div>
             <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
             <div className="border-b border-r border-black p-1 text-[11px] bg-[#CCCCCC]"></div>
             {/* Row 6 */}
@@ -589,7 +593,7 @@ export default function IACRASummary() {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-8 border border-black p-4 text-[11px] leading-relaxed italic">
+        <div className="mt-8 border border-black p-4 text-[11px] leading-relaxed italic" style={{ backgroundColor: 'white', color: 'black' }}>
           Class hours entered will go to the appropriate Record of Pilot Time on the 8710-1. Failure to enter the appropriate hours, if required, will render the applicant not eligible for the certificate/rating sought and will result in a Correction Notice from the Airmen Certification Branch.
         </div>
       </div>
