@@ -840,7 +840,7 @@ export default function History() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden overflow-x-hidden bg-[#f8fafc] relative">
+    <div className="flex h-full bg-[#f8fafc] relative overflow-hidden">
       {/* Sidebar Toggle Tab */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -865,8 +865,8 @@ export default function History() {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-white border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
-          sidebarOpen ? "w-[85%] md:w-[300px] translate-x-0" : "w-[85%] md:w-0 -translate-x-full md:translate-x-0"
+          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-white border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden w-[85%] md:w-[300px]",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="w-full min-w-[300px] h-full flex flex-col">
@@ -1042,7 +1042,7 @@ export default function History() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 w-full bg-[#f1f5f9] p-3 sm:p-8 overflow-y-auto">
+      <main className="flex-1 min-w-0 bg-[#f1f5f9] p-3 sm:p-8 overflow-y-auto">
         {!selectedLesson ? (
           <div className="h-full flex flex-col items-center justify-center text-[#6b7280]">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
