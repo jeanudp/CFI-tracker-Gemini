@@ -844,7 +844,7 @@ export default function History() {
       {/* Sidebar Toggle Tab */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] w-6 h-20 bg-[#1a3a5c] text-white flex items-center justify-center rounded-r-lg shadow-lg hover:bg-[#2a5a8c] transition-all duration-300 md:hidden"
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] w-6 h-20 bg-[#1a3a5c] text-white flex items-center justify-center rounded-r-lg shadow-lg hover:bg-[#2a5a8c] transition-all duration-300"
       >
         {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
       </button>
@@ -865,8 +865,8 @@ export default function History() {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-white border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden w-[85%] md:w-[300px]",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-white border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
+          sidebarOpen ? "w-[85%] md:w-[300px] translate-x-0" : "w-[85%] md:w-0 -translate-x-full md:translate-x-0"
         )}
       >
         <div className="w-full min-w-[300px] h-full flex flex-col">
