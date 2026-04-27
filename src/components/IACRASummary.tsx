@@ -353,10 +353,10 @@ export default function IACRASummary() {
                   {totals.picTime.toFixed(1)}<br/>
                   &nbsp;
                 </Cell>
-                <Cell type="disabled" picSic />
-                <Cell type="disabled" picSic />
-                <Cell type="disabled" picSic />
-                <Cell type="disabled" picSic />
+                <Cell type="dark" picSic />
+                <Cell type="dark" picSic />
+                <Cell type="dark" picSic />
+                <Cell type="dark" picSic />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -395,7 +395,8 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" picSic />
+                <Cell type="dark" />
+                <Cell type="dark" picSic />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -430,7 +431,7 @@ export default function IACRASummary() {
                 <Cell className="font-mono">{totals.instTotal.toFixed(1)}{checkMet(totals.instTotal, 3)}</Cell>
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell className="font-mono">{totals.ftdInst.toFixed(1)}</Cell>
                 <Cell className="font-mono">{totals.ffsInst.toFixed(1)}</Cell>
@@ -444,8 +445,8 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
+                <Cell type="dark" />
                 <Cell type="dark" />
               </tr>
               {/* Row 10: Night Take-off / Landing */}
@@ -456,9 +457,9 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
-                <Cell type="disabled" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
+                <Cell type="dark" />
+                <Cell type="dark" />
               </tr>
               {/* Row 11: Night PIC/SIC */}
               <tr>
@@ -470,9 +471,9 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" picSic />
-                <Cell type="disabled" picSic />
-                <Cell type="disabled" picSic />
+                <Cell type="dark" picSic />
+                <Cell type="dark" picSic />
+                <Cell type="dark" picSic />
                 <Cell type="dark" />
               </tr>
               {/* Row 12: Night Take-off/Landing PIC/SIC */}
@@ -485,9 +486,9 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" picSic />
+                <Cell type="dark" picSic />
                 <Cell type="dark" />
-                <Cell type="disabled" picSic />
+                <Cell type="dark" picSic />
                 <Cell type="dark" />
               </tr>
               {/* Row 13: Number of Flights */}
@@ -498,7 +499,7 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -510,7 +511,7 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -523,8 +524,8 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
@@ -537,7 +538,7 @@ export default function IACRASummary() {
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
-                <Cell type="disabled" />
+                <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
                 <Cell type="dark" />
