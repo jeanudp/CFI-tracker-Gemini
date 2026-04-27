@@ -191,7 +191,7 @@ export default function Account() {
         <div className="w-20" />
       </header>
 
-      <div className="max-w-lg mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 space-y-6">
 
         {error && (
           <div className="p-3 rounded-xl flex items-center gap-2 text-xs font-bold border"

@@ -254,7 +254,7 @@ export default function History() {
         <button
           type="button"
           onPointerDown={(e) => handleDeleteLesson(e, lesson.id, lesson.label)}
-          className="shrink-0 mt-1 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+          className="shrink-0 mt-1 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-100"
           title="Archive lesson"
         >
           <Trash2 size={15} />
@@ -1008,7 +1008,7 @@ export default function History() {
                             <div key={l.id} className="p-3 pl-6 group">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm font-medium text-[#64748b]">{l.label}</span>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1 opacity-100 transition-opacity">
                                   <button
                                     onClick={() => handleRestoreLesson(l.id)}
                                     className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -1042,7 +1042,7 @@ export default function History() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#f1f5f9] p-8 overflow-y-auto">
+      <main className="flex-1 bg-[#f1f5f9] p-3 sm:p-8 overflow-y-auto">
         {!selectedLesson ? (
           <div className="h-full flex flex-col items-center justify-center text-[#6b7280]">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
@@ -1057,13 +1057,13 @@ export default function History() {
           <div className="max-w-4xl mx-auto">
             <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
-              <div className="p-8">
+              <div className="p-4 sm:p-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                  <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-fit">
+                  <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-full sm:w-fit overflow-x-auto">
                     <button
                       onClick={() => setActiveTab('lesson')}
                       className={cn(
-                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                         activeTab === 'lesson' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1075,7 +1075,7 @@ export default function History() {
                     <button
                       onClick={() => setActiveTab('cumulative')}
                       className={cn(
-                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                         activeTab === 'cumulative' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1087,7 +1087,7 @@ export default function History() {
                     <button
                       onClick={() => setActiveTab('checkride')}
                       className={cn(
-                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                         activeTab === 'checkride' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1099,7 +1099,7 @@ export default function History() {
                     <button
                       onClick={() => setActiveTab('endorsements')}
                       className={cn(
-                        "px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                         activeTab === 'endorsements' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1110,7 +1110,7 @@ export default function History() {
                     </button>
                     <button
                       onClick={() => navigate(`/student/${studentName}`)}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2"
+                      className="px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2 whitespace-nowrap"
                     >
                       <BarChart3 size={14} />
                       Analytics
@@ -1476,11 +1476,11 @@ export default function History() {
                             {area.area}
                           </div>
                           {tasksInArea.map(t => (
-                            <div key={t.id} className="grid grid-cols-[1fr_50px_1fr] items-center min-h-[34px] border-b border-[#dde3ec] last:border-0">
+                            <div key={t.id} className="flex flex-col sm:grid sm:grid-cols-[1fr_50px_1fr] items-start sm:items-center min-h-[34px] border-b border-[#dde3ec] last:border-0">
                               <div className="px-4 py-2 text-xs font-medium text-[#1c2333]">{t.name}</div>
                               <div className="text-center">
                                 <span className={cn(
-                                  "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white",
+                                  "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white mx-4 sm:mx-auto my-1 sm:my-0",
                                   selectedLesson.grades[t.id] === '4' ? "bg-[#2d7a4f]" :
                                   selectedLesson.grades[t.id] === '3' ? "bg-[#5a9e6f]" :
                                   selectedLesson.grades[t.id] === '2' ? "bg-[#e8a020]" :
@@ -1491,7 +1491,7 @@ export default function History() {
                                   {(selectedLesson.grades[t.id] as any) === 'I' ? '' : selectedLesson.grades[t.id]}
                                 </span>
                               </div>
-                              <div className="px-4 py-2 text-[11px] text-[#6b7280] italic">{selectedLesson.notes?.[t.id] || ''}</div>
+                              <div className="px-4 py-1 sm:py-2 text-[11px] text-[#6b7280] italic">{selectedLesson.notes?.[t.id] || ''}</div>
                             </div>
                           ))}
                         </React.Fragment>
@@ -2416,7 +2416,7 @@ export default function History() {
                                       const met = row.have >= row.need;
                                       const pct = Math.min(100, Math.round((row.have / row.need) * 100));
                                       return (
-                                        <div key={row.label} className={cn("p-4 flex items-start gap-4", met && "bg-[#fafffe]")}>
+                                        <div key={row.label} className={cn("p-4 flex flex-col sm:flex-row items-start gap-3 sm:gap-4", met && "bg-[#fafffe]")}>
                                           <div className="mt-0.5 shrink-0">
                                             {met ? <CheckCircle2 size={18} className="text-[#2d7a4f]" /> : <XCircle size={18} className="text-[#c0392b]" />}
                                           </div>
@@ -2442,7 +2442,7 @@ export default function History() {
                                             </div>
                                           </div>
                                           {row.mk && (
-                                            <div className="shrink-0">
+                                            <div className="shrink-0 w-full sm:w-auto">
                                               {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' || row.mk === 'ifrXc250' ? (
                                                 met ? (
                                                   <div className="flex flex-col items-end gap-1">

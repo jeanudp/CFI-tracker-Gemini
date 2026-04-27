@@ -143,7 +143,7 @@ export default function RatingSelection() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 flex flex-col items-center">
+    <div className="max-w-4xl mx-auto px-6 py-8 sm:py-12 flex flex-col items-center">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-[#6b7280] mb-8 flex-wrap justify-center">
         <div className="flex items-center gap-1.5">
@@ -189,7 +189,7 @@ export default function RatingSelection() {
               whileHover={!isComingSoon ? { y: -3 } : {}}
               onClick={() => !isComingSoon && handleSelectRating(code)}
               className={cn(
-                "bg-white rounded-2xl border-2 p-6 text-center transition-all relative flex flex-col items-center gap-3",
+                "bg-white rounded-2xl border-2 p-4 sm:p-6 text-center transition-all relative flex flex-col items-center gap-3",
                 isComingSoon ? "opacity-50 cursor-default" : "cursor-pointer",
                 locked ? "border-[#dde3ec] opacity-75" : "border-[#dde3ec] hover:shadow-xl",
                 !locked && !isComingSoon && code === 'ppl' && "hover:border-[#2a5a8c]",
@@ -245,7 +245,7 @@ export default function RatingSelection() {
             >
               {/* Header */}
               <div
-                className="px-8 py-6 flex items-center justify-between"
+                className="px-5 sm:px-8 py-4 sm:py-6 flex items-center justify-between"
                 style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)' }}
               >
                 <div>

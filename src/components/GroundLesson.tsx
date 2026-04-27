@@ -268,10 +268,14 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
             <Link to="/dashboard" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
-            <ChevronRight size={10} />
-            <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
-            <ChevronRight size={10} />
-            <Link to="/lesson-type" className="hover:text-[#1a3a5c] transition-colors">Lesson Type</Link>
+            <span className="hidden sm:inline-flex items-center gap-2">
+              <ChevronRight size={10} />
+              <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
+            </span>
+            <span className="hidden sm:inline-flex items-center gap-2">
+              <ChevronRight size={10} />
+              <Link to="/lesson-type" className="hover:text-[#1a3a5c] transition-colors">Lesson Type</Link>
+            </span>
             <ChevronRight size={10} />
             <span className="text-[#1a3a5c]">Ground Lesson</span>
           </div>
@@ -356,7 +360,7 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
       </div>
 
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-lg overflow-hidden mb-8">
-        <div className="grid grid-cols-[1fr_72px_1.3fr] bg-[#f4f5f7] border-b border-[#dde3ec] text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+        <div className="hidden sm:grid grid-cols-[1fr_72px_1.3fr] bg-[#f4f5f7] border-b border-[#dde3ec] text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
           <div className="px-4 py-2 flex items-center">Task</div>
           <div className="px-2 py-2 flex flex-col items-center justify-center gap-1 border-x border-[#dde3ec]">
             <button
@@ -393,7 +397,7 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                     const n = notes[task.id] || '';
                     const isExpanded = expandedTasks[task.id];
                     return (
-                      <div key={task.id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
+                      <div key={task.id} className="flex flex-col sm:grid sm:grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors border-b border-[#dde3ec]">
                         <div className="p-4">
                           <div
                             onClick={() => toggleExpand(task.id)}
@@ -417,8 +421,8 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                             </motion.div>
                           )}
                         </div>
-                        <div className="flex items-start justify-center px-0.5 pt-3 border-x border-[#dde3ec]">
-                          <div className="grid grid-cols-2 gap-0.5">
+                        <div className="flex items-center justify-start px-4 sm:px-0.5 sm:pt-3 py-2 sm:border-x border-[#dde3ec]">
+                          <div className="grid grid-cols-4 sm:grid-cols-2 gap-1">
                             {[1, 2, 3, 4].map((gVal) => {
                               const gradeStr = gVal.toString();
                               const isSelected = displayGrade === gradeStr;
@@ -442,7 +446,7 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                             })}
                           </div>
                         </div>
-                        <div className="p-2 pt-3 pr-4 relative group">
+                        <div className="px-4 py-2 sm:p-2 sm:pt-3 sm:pr-4 relative group">
                         <textarea
                           value={n}
                           onChange={(e) => handleNoteChange(task.id, e.target.value)}

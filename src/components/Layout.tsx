@@ -119,10 +119,10 @@ export default function Layout({ children, user }: LayoutProps) {
     >
       <header
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
-        className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
+        className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-3 sm:px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
       >
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity min-w-0 shrink-0">
           <div className="relative">
             <span
               className="block font-black leading-none select-none"
@@ -159,7 +159,7 @@ export default function Layout({ children, user }: LayoutProps) {
         </Link>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
 
           {/* Offline indicator */}
           {!isOnline && (
@@ -193,7 +193,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
             {navOpen && (
               <div
-                className="absolute right-0 top-full mt-2 w-52 rounded-2xl border shadow-xl overflow-hidden z-50"
+                className="absolute right-0 top-full mt-2 w-52 max-w-[calc(100vw-1.5rem)] rounded-2xl border shadow-xl overflow-hidden z-50"
                 style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
               >
                 <div className="p-1.5 space-y-0.5">
@@ -243,7 +243,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
               {userOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-xl overflow-hidden z-50"
+                  className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl border shadow-xl overflow-hidden z-50"
                   style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
                 >
                   {/* User info header */}
@@ -310,7 +310,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
       {/* Mayday Modal */}
       {maydayOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm">
           <div
             className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
             style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}

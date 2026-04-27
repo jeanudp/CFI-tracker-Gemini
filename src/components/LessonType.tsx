@@ -42,7 +42,7 @@ export default function LessonType() {
   const flightAreas = acsData.length > 1 ? acsData.length - 1 : 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 flex flex-col items-center">
+    <div className="max-w-4xl mx-auto px-6 py-8 sm:py-12 flex flex-col items-center">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-[#6b7280] mb-8 flex-wrap justify-center">
         <div className="flex items-center gap-1.5">
@@ -79,7 +79,7 @@ export default function LessonType() {
         <motion.div
           whileHover={{ y: -3 }}
           onClick={() => handleSelectType('ground')}
-          className="bg-white rounded-2xl border-2 border-[#dde3ec] shadow-lg p-8 text-center cursor-pointer hover:border-[#2d7a4f] hover:shadow-xl transition-all flex flex-col items-center gap-4"
+          className="bg-white rounded-2xl border-2 border-[#dde3ec] shadow-lg p-5 sm:p-8 text-center cursor-pointer hover:border-[#2d7a4f] hover:shadow-xl transition-all flex flex-col items-center gap-4"
         >
           <div className="w-16 h-16 rounded-2xl bg-[#e4f5ec] text-[#2d7a4f] flex items-center justify-center text-3xl">
             <BookOpen size={30} />
@@ -98,7 +98,7 @@ export default function LessonType() {
         <motion.div
           whileHover={{ y: -3 }}
           onClick={() => handleSelectType('flight')}
-          className="bg-white rounded-2xl border-2 border-[#dde3ec] shadow-lg p-8 text-center cursor-pointer hover:border-[#2a5a8c] hover:shadow-xl transition-all flex flex-col items-center gap-4"
+          className="bg-white rounded-2xl border-2 border-[#dde3ec] shadow-lg p-5 sm:p-8 text-center cursor-pointer hover:border-[#2a5a8c] hover:shadow-xl transition-all flex flex-col items-center gap-4"
         >
           <div className="w-16 h-16 rounded-2xl bg-[#d4e8f5] text-[#2a5a8c] flex items-center justify-center text-3xl">
             <Plane size={30} />

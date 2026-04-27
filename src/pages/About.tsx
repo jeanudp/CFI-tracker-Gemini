@@ -60,7 +60,7 @@ export default function About() {
         <div className="w-16" />
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-16">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

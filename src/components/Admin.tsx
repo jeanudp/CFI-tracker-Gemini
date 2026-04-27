@@ -159,7 +159,7 @@ export default function Admin() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
         {error && (
           <div className="p-3 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-200">
@@ -244,7 +244,7 @@ export default function Admin() {
                     <span className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>{code.code}</span>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>Used</span>
                     {code.used_by && (
-                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{code.used_by}</span>
+                      <span className="text-[10px] truncate max-w-[120px] sm:max-w-none" style={{ color: 'var(--text-muted)' }}>{code.used_by}</span>
                     )}
                   </div>
                   <button
@@ -293,7 +293,7 @@ export default function Admin() {
                         {user.email?.[0]?.toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{user.email}</p>
+                        <p className="text-xs font-bold truncate max-w-[140px] sm:max-w-none" style={{ color: 'var(--text-primary)' }}>{user.email}</p>
                         <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
                           Joined {new Date(user.created_at).toLocaleDateString()}
                         </p>

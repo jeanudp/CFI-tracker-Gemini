@@ -995,7 +995,7 @@ export default function Dashboard() {
                     })()}
 
                     {/* Action buttons — visible on hover */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex items-center gap-1 opacity-100 transition-opacity shrink-0">
                       <button
                         onClick={e => { e.stopPropagation(); setSelectedStudent(student); setIsInfoOpen(true); }}
                         className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
@@ -1524,7 +1524,8 @@ export default function Dashboard() {
                   style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26,58,92,0.3)' }}
                 >
                   <FileText size={18} />
-                  IACRA Summary
+                  <span className="hidden sm:inline">IACRA Summary</span>
+                  <span className="sm:hidden">IACRA</span>
                 </Link>
               </div>
             </motion.div>
@@ -1538,7 +1539,7 @@ export default function Dashboard() {
       <AnimatePresence>
         {isCheckrideConfirmOpen && selectedStudent && (
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center border" style={{ borderColor: 'var(--border-color)' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-8 text-center border" style={{ borderColor: 'var(--border-color)' }}>
               <div className="w-16 h-16 bg-[#e4f5ec] text-[#2d7a4f] rounded-full flex items-center justify-center mb-6 mx-auto"><Award size={32} /></div>
               <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Confirm Checkride Pass</h3>
               <p className="text-sm mb-8 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
@@ -1561,7 +1562,7 @@ export default function Dashboard() {
       <AnimatePresence>
         {isUndoConfirmOpen && (
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center border" style={{ borderColor: 'var(--border-color)' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 sm:p-8 text-center border" style={{ borderColor: 'var(--border-color)' }}>
               <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto" style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: 'var(--red)' }}><AlertCircle size={32} /></div>
               <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Undo Checkride Pass?</h3>
               <p className="text-sm mb-8 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>Are you sure you want to undo the checkride pass for <strong>{ratingToUndo?.label}</strong>?</p>
@@ -1646,7 +1647,7 @@ export default function Dashboard() {
             >
               {/* Header */}
               <div
-                className="px-8 py-6 flex items-center justify-between"
+                className="px-5 sm:px-8 py-5 sm:py-6 flex items-center justify-between"
                 style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)' }}
               >
                 <div>
@@ -1664,8 +1665,8 @@ export default function Dashboard() {
               </div>
 
               {/* Plans */}
-              <div className="p-6 sm:p-8 overflow-y-auto flex-1">
-                <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="p-4 sm:p-8 overflow-y-auto flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   {[
                     {
                       id: 'all_monthly',
@@ -1902,10 +1903,8 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 50, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: 50, x: '-50%' }}
-            className="fixed bottom-6 left-1/2 z-[300] text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-3"
+            className="fixed bottom-6 left-1/2 z-[300] text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-3 w-[calc(100vw-2rem)] sm:w-auto"
             style={{ 
-              position: 'relative',
-              minWidth: '300px', 
               maxWidth: '360px', 
               backgroundColor: '#1a3a5c',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
@@ -1977,7 +1976,7 @@ export default function Dashboard() {
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
                 {[
                   {
                     id: 1,

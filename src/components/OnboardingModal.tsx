@@ -93,7 +93,7 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="p-8"
+              className="p-5 sm:p-8"
             >
               <div className="flex flex-col items-center text-center mb-8">
                 <div className="flex items-center gap-2 mb-4">
@@ -169,7 +169,7 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="p-8"
+              className="p-5 sm:p-8"
             >
               <div className="flex flex-col items-center text-center mb-8">
                 <div className="w-16 h-16 bg-[#dcfce7] rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-110 duration-500">

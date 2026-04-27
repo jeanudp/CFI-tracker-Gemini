@@ -61,14 +61,14 @@ export default function Landing() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex items-center gap-6 mb-8"
+          className="flex items-center gap-3 sm:gap-6 mb-8"
         >
           {/* Big 61 numeral */}
           <div className="relative">
             <span
               className="block font-black leading-none tracking-tighter select-none"
               style={{
-                fontSize: '96px',
+                fontSize: 'clamp(56px, 14vw, 96px)',
                 color: 'var(--navy)',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
                 letterSpacing: '-4px',
@@ -112,7 +112,7 @@ export default function Landing() {
             <span
               className="font-black uppercase tracking-wide leading-none"
               style={{
-                fontSize: '32px',
+                fontSize: 'clamp(20px, 6vw, 32px)',
                 color: 'var(--navy)',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
                 letterSpacing: '2px',
@@ -161,7 +161,7 @@ export default function Landing() {
                 : '0 2px 12px rgba(26,58,92,0.08)',
             }}
           >
-            The CFI tool that keeps<br />
+            The CFI tool that keeps{" "}
             <span style={{ color: 'var(--navy)' }}>you in the FARs.</span>
           </h2>
           <p className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
@@ -328,7 +328,7 @@ export default function Landing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.65 }}
-          className="flex items-center justify-center gap-0 mb-10 rounded-2xl overflow-hidden border"
+          className="flex items-center justify-center gap-0 mb-10 rounded-2xl overflow-hidden border overflow-x-auto"
           style={{
             borderColor: 'var(--border-color)',
             boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
@@ -340,7 +340,7 @@ export default function Landing() {
             style={{ backgroundColor: '#1a3a5c' }}
           >
             <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">61 Tracker</span>
-            <span className="text-3xl font-black text-white">$9.99</span>
+            <span className="text-2xl sm:text-3xl font-black text-white">$9.99</span>
             <span className="text-[10px] text-white/60 mt-0.5">per month</span>
             <div
               className="mt-2 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
@@ -364,7 +364,7 @@ export default function Landing() {
             style={{ backgroundColor: 'var(--bg-secondary)' }}
           >
             <span className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Competitors</span>
-            <span className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>$30–$50</span>
+            <span className="text-2xl sm:text-3xl font-black" style={{ color: 'var(--text-primary)' }}>$30–$50</span>
             <span className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>per month</span>
             <div
               className="mt-2 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
@@ -390,7 +390,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="rounded-2xl border-2 p-6 flex flex-col"
+            className="rounded-2xl border-2 p-4 sm:p-6 flex flex-col"
             style={{
               backgroundColor: 'var(--bg-secondary)',
               borderColor: 'var(--border-color)',
@@ -431,7 +431,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="rounded-2xl border-2 p-6 flex flex-col relative"
+            className="rounded-2xl border-2 p-4 sm:p-6 flex flex-col relative"
             style={{
               backgroundColor: '#1a3a5c',
               borderColor: '#1a3a5c',
@@ -480,7 +480,7 @@ export default function Landing() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 }}
-            className="rounded-2xl border-2 p-6 flex flex-col relative"
+            className="rounded-2xl border-2 p-4 sm:p-6 flex flex-col relative"
             style={{
               backgroundColor: 'var(--bg-secondary)',
               borderColor: '#2d7a4f',
@@ -557,7 +557,7 @@ export default function Landing() {
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
           61 Tracker · Built for CFIs · FAR Part 61
         </p>
-        <div className="flex items-center justify-center gap-1 mt-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 mt-2">
           {['About', 'Contact', 'Privacy Policy', 'Terms of Service'].map((label, i, arr) => {
             const path = label.toLowerCase().replace(/ /g, '-');
             const to = `/${path === 'about' ? 'about' : path === 'contact' ? 'contact' : path === 'privacy-policy' ? 'privacy' : 'terms'}`;

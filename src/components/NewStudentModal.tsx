@@ -751,9 +751,9 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                           </h4>
                           <div className="space-y-3">
                             {group.fields.map(field => (
-                              <div key={field.key} className="flex items-center justify-between gap-4">
+                              <div key={field.key} className="flex items-center justify-between gap-2">
                                 <label className="text-xs text-[#4b5563] flex-1">{field.label}</label>
-                                <div className="relative w-28">
+                                <div className="relative w-24 mr-8">
                                   <input
                                     type="number"
                                     step="0.1"

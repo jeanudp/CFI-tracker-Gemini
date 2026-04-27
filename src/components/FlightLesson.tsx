@@ -1114,10 +1114,14 @@ export default function FlightLesson() {
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
               <Link to="/dashboard" className="hover:text-[#1a3a5c] transition-colors">Home</Link>
-              <ChevronRight size={10} />
-              <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
-              <ChevronRight size={10} />
-              <Link to="/lesson-type" className="hover:text-[#1a3a5c] transition-colors">Lesson Type</Link>
+              <span className="hidden sm:inline-flex items-center gap-2">
+                <ChevronRight size={10} />
+                <Link to="/rating" className="hover:text-[#1a3a5c] transition-colors">Rating</Link>
+              </span>
+              <span className="hidden sm:inline-flex items-center gap-2">
+                <ChevronRight size={10} />
+                <Link to="/lesson-type" className="hover:text-[#1a3a5c] transition-colors">Lesson Type</Link>
+              </span>
               <ChevronRight size={10} />
               <span className="text-[#1a3a5c]">Flight Lesson</span>
             </div>
@@ -1170,7 +1174,7 @@ export default function FlightLesson() {
                       Step {step.number}
                     </span>
                     <span className={cn(
-                      "text-[11px] font-bold transition-colors whitespace-nowrap",
+                      "text-[11px] font-bold transition-colors whitespace-normal text-center max-w-[60px]",
                       isActive || isCompleted ? "text-[#1c2333]" : "text-[#6b7280]"
                     )}>
                       {step.label}
@@ -2634,7 +2638,7 @@ export default function FlightLesson() {
       </div>
 
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-lg overflow-hidden mb-8">
-        <div className="grid grid-cols-[1fr_72px_1.3fr] bg-[#f4f5f7] border-b border-[#dde3ec] text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+        <div className="hidden sm:grid grid-cols-[1fr_72px_1.3fr] bg-[#f4f5f7] border-b border-[#dde3ec] text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
           <div className="px-4 py-2 flex items-center">Area of Operation / Task</div>
           <div className="px-2 py-2 flex flex-col items-center justify-center gap-1 border-x border-[#dde3ec]">
             <button
@@ -2675,7 +2679,7 @@ export default function FlightLesson() {
               const isExpanded = expandedTasks[id];
               const isEmergencyMalfunction = task.code === 'CA.X.C' || task.code === 'PA.IX.C';
               return (
-                <div key={id} className="grid grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
+                <div key={id} className="flex flex-col sm:grid sm:grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors border-b border-[#dde3ec]">
                   <div className="p-4">
                     <div
                       onClick={() => toggleExpand(id)}
@@ -2701,8 +2705,8 @@ export default function FlightLesson() {
                       </motion.div>
                     )}
                   </div>
-                  <div className="flex items-start justify-center px-0.5 pt-3 border-x border-[#dde3ec]">
-                    <div className="grid grid-cols-2 gap-0.5">
+                  <div className="flex items-center justify-start px-4 sm:px-0.5 sm:pt-3 py-2 sm:border-x border-[#dde3ec]">
+                    <div className="grid grid-cols-4 sm:grid-cols-2 gap-1">
                       {[1, 2, 3, 4].map((g) => {
                         const gradeStr = g.toString();
                         const isSelected = displayGrade === gradeStr;
@@ -2726,7 +2730,7 @@ export default function FlightLesson() {
                       })}
                     </div>
                   </div>
-                  <div className="p-2 pt-3 pr-4 relative group">
+                  <div className="px-4 py-2 sm:p-2 sm:pt-3 sm:pr-4 relative group">
                     <textarea
                       value={n}
                       onChange={(e) => handleNoteChange(id, e.target.value)}
@@ -2881,15 +2885,15 @@ export default function FlightLesson() {
         <p className="text-[10px] text-[#94a3b8] text-center mt-3 font-medium">Required before saving.</p>
       </div>
 
-      <div className="flex justify-between items-center mt-8">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mt-8">
         <button
           onClick={handlePrev}
-          className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2"
+          className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all flex items-center gap-2 justify-center sm:justify-start"
         >
           <ChevronLeft size={18} />
           Back
         </button>
-        <div className="flex gap-3">
+        <div className="flex gap-2 justify-end">
           <button
             onClick={handleClear}
             className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all"
@@ -2941,7 +2945,7 @@ export default function FlightLesson() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft Model</label>
                   <input

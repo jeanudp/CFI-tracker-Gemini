@@ -76,7 +76,7 @@ export default function Contact() {
             <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-amber-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
             <a
               href="mailto:61trckr@gmail.com"
-              className="relative flex items-center gap-4 px-8 py-6 bg-white dark:bg-[#1a3a5c] rounded-2xl border border-amber-500/20 shadow-xl transition-all hover:-translate-y-1"
+              className="relative flex items-center gap-4 px-5 sm:px-8 py-6 bg-white dark:bg-[#1a3a5c] rounded-2xl border border-amber-500/20 shadow-xl transition-all hover:-translate-y-1"
             >
               <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30">
                 <Mail size={32} className="text-amber-600" />

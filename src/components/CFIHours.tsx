@@ -706,7 +706,7 @@ export default function CFIHours() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-10">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-10">
       {/* Page Header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-[#1a3a5c] flex items-center gap-2">
@@ -929,7 +929,7 @@ export default function CFIHours() {
                         exit={{ height: 0 }}
                         className="px-4 pb-4 border-t border-[#dde3ec]/10 space-y-3 pt-3"
                       >
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {cat.details.map((detail, idx) => (
                             <div key={idx} className="flex items-center justify-between">
                               <span className="text-[10px] text-[#64748b]">{detail.label}</span>
@@ -1032,7 +1032,7 @@ export default function CFIHours() {
 
       {/* Section 3: Logbook */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-4 flex-1">
             <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Logbook</div>
             <div className="h-[1px] w-full bg-[#dde3ec] opacity-50" />
@@ -1100,21 +1100,21 @@ export default function CFIHours() {
                     onClick={() => navigate('/history')}
                     className="hover:bg-[#f8fafc] cursor-pointer transition-colors group"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#1e293b]">
                         <Calendar size={12} className="text-[#94a3b8]" />
                         {e.date}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[11px] font-bold text-[#1a3a5c]">{e.student_name}</td>
-                    <td className="px-4 py-3 text-[11px] text-[#475569]">{e.aircraft}</td>
-                    <td className="px-4 py-3 text-[11px] text-[#475569]">{e.route || 'Local'}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b]">{parseFloat(e.total_flight).toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.dual_given).toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.ratp_xc || 0).toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.night_dual).toFixed(1)}</td>
-                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569]">{parseFloat(e.instrument_given).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-bold text-[#1a3a5c] whitespace-nowrap text-ellipsis overflow-hidden max-w-[120px]">{e.student_name}</td>
+                    <td className="px-4 py-3 text-[11px] text-[#475569] whitespace-nowrap">{e.aircraft}</td>
+                    <td className="px-4 py-3 text-[11px] text-[#475569] whitespace-nowrap">{e.route || 'Local'}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b] whitespace-nowrap">{parseFloat(e.total_flight).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.dual_given).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.ratp_xc || 0).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.night_dual).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.instrument_given).toFixed(1)}</td>
                   </tr>
                 ))}
               </tbody>

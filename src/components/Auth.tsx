@@ -115,7 +115,7 @@ export default function Auth() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-6 transition-colors duration-300"
+      className="min-h-screen flex items-center justify-center p-3 sm:p-6 transition-colors duration-300"
       style={{
         backgroundColor: 'var(--bg-primary)',
         backgroundImage: 'radial-gradient(ellipse at 20% 0%, rgba(42, 90, 140, 0.07) 0%, transparent 60%)',
@@ -157,7 +157,7 @@ export default function Auth() {
         >
           {/* Header */}
           <div
-            className="px-8 pt-8 pb-6"
+            className="px-5 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6"
             style={{ background: 'linear-gradient(135deg, #1a3a5c 0%, #2a5a8c 100%)' }}
           >
             {/* Logo lockup */}
@@ -238,7 +238,7 @@ export default function Auth() {
           </div>
 
           {/* Tab Toggle */}
-          <div className="px-8 pt-6">
+          <div className="px-5 sm:px-8 pt-5 sm:pt-6">
             <div
               className="flex rounded-xl p-1"
               style={{ backgroundColor: 'var(--bg-tertiary)' }}
@@ -269,7 +269,7 @@ export default function Auth() {
           </div>
 
           {/* Form */}
-          <div className="px-8 py-6">
+          <div className="px-5 sm:px-8 py-5 sm:py-6">
             {error && (
               <div
                 className="rounded-xl p-3 mb-5 flex items-start gap-2 text-xs border"
