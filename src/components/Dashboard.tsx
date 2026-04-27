@@ -1520,10 +1520,11 @@ export default function Dashboard() {
                 </button>
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent.name)}`}
-                  className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26,58,92,0.2)' }}
+                  className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26,58,92,0.3)' }}
                 >
                   <FileText size={18} />
+                  IACRA Summary
                 </Link>
               </div>
             </motion.div>
@@ -1847,22 +1848,6 @@ export default function Dashboard() {
                   <User size={14} style={{ color: 'var(--navy)' }} />
                   CFI Profile
                 </Link>
-                <button
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    const sel = localStorage.getItem('sb_selected_student');
-                    if (sel) {
-                      navigate(`/iacra/${encodeURIComponent(sel)}`);
-                    } else {
-                      navigate('/dashboard');
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  <FileText size={14} style={{ color: 'var(--navy)' }} />
-                  IACRA Summary
-                </button>
                 <Link
                   to="/account"
                   onClick={() => setIsUserMenuOpen(false)}
