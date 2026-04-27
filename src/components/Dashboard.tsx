@@ -1952,12 +1952,13 @@ export default function Dashboard() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+              className="relative w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+              style={{ backgroundColor: 'var(--bg-secondary)' }}
             >
               {/* Header */}
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="p-6 border-b flex items-center justify-between shrink-0" style={{ borderColor: 'var(--border-color)' }}>
                 <div>
-                  <h3 className="text-lg font-bold text-[#1a3a5c]">CFI Recent Experience Requirements — §61.197</h3>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>CFI Recent Experience Requirements — §61.197</h3>
                   <div className={cn(
                     "text-xs font-bold mt-1",
                     reExpWarning !== null && reExpWarning < 0 ? "text-red-500" : "text-[#e8a020]"
@@ -1967,7 +1968,8 @@ export default function Dashboard() {
                 </div>
                 <button
                   onClick={() => setShowReExpModal(false)}
-                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors"
+                  className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors"
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   <X size={20} />
                 </button>
@@ -2015,15 +2017,16 @@ export default function Dashboard() {
                 ].map((opt) => (
                   <div 
                     key={opt.id}
-                    className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 relative border-l-4 border-l-[#1a3a5c]"
+                    className="p-4 rounded-xl border relative border-l-4 border-l-[#1a3a5c]"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}
                   >
                     <div className="flex items-start justify-between gap-4 mb-2">
-                      <h4 className="text-sm font-black text-[#1a3a5c] leading-tight pr-12">{opt.title}</h4>
-                      <span className="bg-[#1a3a5c]/10 text-[#1a3a5c] px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider shrink-0">
+                      <h4 className="text-sm font-black leading-tight pr-12" style={{ color: 'var(--text-primary)' }}>{opt.title}</h4>
+                      <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider shrink-0" style={{ backgroundColor: 'var(--navy)', color: 'white' }}>
                         {opt.ref}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                       {opt.desc}
                     </p>
                   </div>
@@ -2032,7 +2035,7 @@ export default function Dashboard() {
                 {/* Important Note */}
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex gap-3">
                   <Info size={16} className="text-[#e8a020] shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-900 leading-relaxed">
+                  <p className="text-xs text-[#92400e] leading-relaxed">
                     <span className="font-bold">Important:</span> Under the new FAA rules effective December 1, 2024, flight instructor certificates no longer display an expiration date. Your Recent Experience End Date (REED) is tracked in the FAA Airmen Registry at FAA.gov. You must establish recent experience within your 24 calendar month REED period. If you miss your REED you enter a 3-month reinstatement period per §61.199 during which you may not exercise flight instructor privileges. After the 3-month reinstatement period you must pass a practical test to regain privileges per §61.199.
                   </p>
                 </div>
