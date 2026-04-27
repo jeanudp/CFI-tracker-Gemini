@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_ACS, RATINGS } from '../constants';
@@ -128,6 +128,8 @@ export default function FlightLesson() {
   const [totalFlightError, setTotalFlightError] = useState(false);
   const [nightWarning, setNightWarning] = useState(false);
   const [overallGrade, setOverallGrade] = useState<'' | 'S' | 'N'>('');
+  const [cfiXcTime, setCfiXcTime] = useState<string>('');
+  const cfiXcTimeManuallySet = useRef(false);
   const navigate = useNavigate();
 
   const variants = {
@@ -426,6 +428,12 @@ export default function FlightLesson() {
     localStorage.removeItem('faa_flight_notes');
     localStorage.removeItem('current_lesson_id');
   };
+
+  useEffect(() => {
+    if (!cfiXcTimeManuallySet.current) {
+      setCfiXcTime(meta.xcDual || '');
+    }
+  }, [meta.xcDual]);
 
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
@@ -943,7 +951,7 @@ export default function FlightLesson() {
           day_landings: meta.cfiDidLandings ? parseInt(meta.cfiDayLandings || '0') || 0 : 0,
           night_landings: meta.cfiDidLandings ? parseInt(meta.cfiNightLandings || '0') || 0 : 0,
           xc_pic: parseFloat(meta.xcDual || '0') || 0,
-          xc_time: parseFloat(meta.xcDual || '0') || null,
+          xc_time: parseFloat(cfiXcTime || '0') || null,
           ratp_xc: parseFloat(meta.ratpXCTime || '0') || 0,
           ratp_xc_eligible: meta.ratpXCEligible || false,
           aircraft_class: meta.aircraftClass || 'ASEL',
@@ -2509,9 +2517,22 @@ export default function FlightLesson() {
                             </div>
 
                             {parseFloat(meta.xcDual || '0') > 0 && (
-                              <div className="flex items-center justify-between py-2 border-b border-[#f1f5f9]">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">XC Time</span>
-                                <span className="text-[10px] font-bold text-[#1a3a5c]">{meta.xcDual}h</span>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={cfiXcTime} 
+                                    onChange={(e) => {
+                                      setCfiXcTime(e.target.value);
+                                      cfiXcTimeManuallySet.current = true;
+                                    }}
+                                    className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from XC Dual</p>
                               </div>
                             )}
 
