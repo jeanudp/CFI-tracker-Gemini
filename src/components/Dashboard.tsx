@@ -164,6 +164,8 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [userSubscription, setUserSubscription] = useState<any>(null);
   const [reExpWarning, setReExpWarning] = useState<number | null>(null);
+  const [reExpDate, setReExpDate] = useState<string>('');
+  const [showReExpModal, setShowReExpModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [showBirthdayBalloons, setShowBirthdayBalloons] = useState(false);
@@ -265,6 +267,7 @@ export default function Dashboard() {
         setUserSubscription(subRes.data);
 
         if (profileRes.data?.re_exp_date) {
+          setReExpDate(profileRes.data.re_exp_date);
           const parts = profileRes.data.re_exp_date.split('/');
           if (parts.length === 2) {
             const month = parseInt(parts[0]);
@@ -766,15 +769,16 @@ export default function Dashboard() {
           {user && (
             <div className="flex items-center gap-2">
               {reExpWarning !== null && reExpWarning <= 90 && (
-                <div 
+                <button 
+                  onClick={() => setShowReExpModal(true)}
                   className={cn(
-                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight transition-all hover:scale-105 active:scale-95 cursor-pointer",
                     reExpWarning < 0 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-[#e8a020]/10 text-[#e8a020] border border-[#e8a020]/20"
                   )}
                 >
                   <AlertCircle size={10} />
                   <span>{reExpWarning < 0 ? "CFI Exp" : `Expiring ${reExpWarning}d`}</span>
-                </div>
+                </button>
               )}
               <div className="relative">
                 <button
@@ -1932,6 +1936,109 @@ export default function Dashboard() {
               Got it
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showReExpModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReExpModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="text-lg font-bold text-[#1a3a5c]">CFI Recent Experience Requirements — §61.197</h3>
+                  <div className={cn(
+                    "text-xs font-bold mt-1",
+                    reExpWarning !== null && reExpWarning < 0 ? "text-red-500" : "text-[#e8a020]"
+                  )}>
+                    REED Expiry: {reExpDate}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReExpModal(false)}
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                {[
+                  {
+                    id: 1,
+                    title: "Pass a Practical Test",
+                    ref: "§61.197(b)(1)",
+                    desc: "Pass a practical test for one of the ratings listed on your flight instructor certificate, or for an additional flight instructor rating. Can be done in an FFS or FTD under a Part 142 approved course."
+                  },
+                  {
+                    id: 2,
+                    title: "80% Checkride Pass Rate",
+                    ref: "§61.197(b)(2)(i)",
+                    desc: "Within the preceding 24 calendar months endorse at least 5 applicants for a practical test and at least 80% of all applicants you endorsed passed on their first attempt."
+                  },
+                  {
+                    id: 3,
+                    title: "Part 121 or 135 Service",
+                    ref: "§61.197(b)(2)(ii)",
+                    desc: "Within the preceding 24 calendar months serve as a company check pilot, chief flight instructor, company check airman, or flight instructor in a Part 121 or 135 operation, or in a position involving the regular evaluation of pilots."
+                  },
+                  {
+                    id: 4,
+                    title: "Flight Instructor Refresher Course (FIRC)",
+                    ref: "§61.197(b)(2)(iii)",
+                    desc: "Within the preceding 3 calendar months successfully complete an approved FIRC consisting of ground training, flight training, or a combination of both."
+                  },
+                  {
+                    id: 5,
+                    title: "Military Instructor Proficiency Check",
+                    ref: "§61.197(b)(2)(iv)",
+                    desc: "Within the preceding 24 calendar months pass an official U.S. Armed Forces military instructor pilot or pilot examiner proficiency check in an aircraft for which you already hold a rating or for an additional rating."
+                  },
+                  {
+                    id: 6,
+                    title: "FAA Pilot Proficiency Program",
+                    ref: "§61.197(b)(2)(v)",
+                    desc: "Within the preceding 24 calendar months serve as a flight instructor in an FAA-sponsored pilot proficiency program. Must complete at least one phase of the program in the preceding 12 months and conduct at least 15 flight activities evaluating at least 5 different pilots."
+                  }
+                ].map((opt) => (
+                  <div 
+                    key={opt.id}
+                    className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 relative border-l-4 border-l-[#1a3a5c]"
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <h4 className="text-sm font-black text-[#1a3a5c] leading-tight pr-12">{opt.title}</h4>
+                      <span className="bg-[#1a3a5c]/10 text-[#1a3a5c] px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider shrink-0">
+                        {opt.ref}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      {opt.desc}
+                    </p>
+                  </div>
+                ))}
+
+                {/* Important Note */}
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex gap-3">
+                  <Info size={16} className="text-[#e8a020] shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    <span className="font-bold">Important:</span> Under the new FAA rules effective December 1, 2024, flight instructor certificates no longer display an expiration date. Your Recent Experience End Date (REED) is tracked in the FAA Airmen Registry at FAA.gov. You must establish recent experience within your 24 calendar month REED period. If you miss your REED you enter a 3-month reinstatement period per §61.199 during which you may not exercise flight instructor privileges. After the 3-month reinstatement period you must pass a practical test to regain privileges per §61.199.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
