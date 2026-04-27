@@ -840,7 +840,7 @@ export default function History() {
   }
 
   return (
-    <div className="flex h-full bg-[#f8fafc] relative overflow-hidden">
+    <div className="flex h-full w-full bg-[#f8fafc] relative overflow-hidden">
       {/* Sidebar Toggle Tab */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
