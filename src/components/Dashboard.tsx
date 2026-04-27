@@ -1847,6 +1847,22 @@ export default function Dashboard() {
                   <User size={14} style={{ color: 'var(--navy)' }} />
                   CFI Profile
                 </Link>
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    const sel = localStorage.getItem('sb_selected_student');
+                    if (sel) {
+                      navigate(`/iacra/${encodeURIComponent(sel)}`);
+                    } else {
+                      navigate('/dashboard');
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <FileText size={14} style={{ color: 'var(--navy)' }} />
+                  IACRA Summary
+                </button>
                 <Link
                   to="/account"
                   onClick={() => setIsUserMenuOpen(false)}
