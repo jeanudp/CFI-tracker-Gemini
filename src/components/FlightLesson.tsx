@@ -2514,27 +2514,15 @@ export default function FlightLesson() {
                                 </div>
                                 <p className="text-[8px] text-[#94a3b8]">Auto-filled from Simulated Instrument</p>
                               </div>
-                            </div>
-
-                            {parseFloat(meta.xcDual || '0') > 0 && (
                               <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC Time</label>
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI XC Time</label>
                                 <div className="flex items-center gap-2">
-                                  <input 
-                                    type="number" 
-                                    step="0.1" 
-                                    value={cfiXcTime} 
-                                    onChange={(e) => {
-                                      setCfiXcTime(e.target.value);
-                                      cfiXcTimeManuallySet.current = true;
-                                    }}
-                                    className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" 
-                                  />
+                                  <input type="text" readOnly value={cfiXcTime || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
                                   <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                 </div>
                                 <p className="text-[8px] text-[#94a3b8]">Auto-filled from XC Dual</p>
                               </div>
-                            )}
+                            </div>
 
                             <div className="h-px bg-[#e2e8f0]" />
 
