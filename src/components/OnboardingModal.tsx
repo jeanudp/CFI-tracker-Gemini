@@ -7,9 +7,10 @@ import { cn } from '../lib/utils';
 
 interface OnboardingModalProps {
   user: any;
+  onComplete: () => void;
 }
 
-export default function OnboardingModal({ user }: OnboardingModalProps) {
+export default function OnboardingModal({ user, onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [profileDraft, setProfileDraft] = useState({ 
@@ -67,6 +68,7 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
 
   const handleFinish = () => {
     localStorage.setItem('61t_onboarded', 'true');
+    onComplete();
     navigate('/dashboard');
   };
 
@@ -74,6 +76,7 @@ export default function OnboardingModal({ user }: OnboardingModalProps) {
     localStorage.setItem('61t_onboarded', 'true');
     localStorage.setItem('61t_start_guide', 'true');
     window.dispatchEvent(new Event('storage'));
+    onComplete();
     navigate('/dashboard');
   };
 

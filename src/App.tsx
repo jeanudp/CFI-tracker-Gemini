@@ -27,6 +27,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [session, setSession] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState(false);
   const location = useLocation();
@@ -49,6 +50,17 @@ export default function App() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
+        
+        if (session) {
+          const { data: profile } = await supabase
+            .from('cfi_profile')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          setShowOnboarding(!profile);
+        }
+        
         await checkConnection();
       } catch (err) {
         console.error('Supabase init error:', err);
@@ -108,8 +120,11 @@ export default function App() {
 
   return (
     <>
-      {session && !localStorage.getItem('61t_onboarded') && (
-        <OnboardingModal user={session.user} />
+      {session && showOnboarding && (
+        <OnboardingModal 
+          user={session.user} 
+          onComplete={() => setShowOnboarding(false)} 
+        />
       )}
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
