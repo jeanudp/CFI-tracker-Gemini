@@ -840,11 +840,11 @@ export default function History() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-[#f8fafc] relative">
+    <div className="flex h-full overflow-hidden overflow-x-hidden bg-[#f8fafc] relative">
       {/* Sidebar Toggle Tab */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] w-6 h-20 bg-[#1a3a5c] text-white flex items-center justify-center rounded-r-lg shadow-lg hover:bg-[#2a5a8c] transition-all duration-300"
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] w-6 h-20 bg-[#1a3a5c] text-white flex items-center justify-center rounded-r-lg shadow-lg hover:bg-[#2a5a8c] transition-all duration-300 md:hidden"
       >
         {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
       </button>
@@ -1042,7 +1042,7 @@ export default function History() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#f1f5f9] p-3 sm:p-8 overflow-y-auto">
+      <main className="flex-1 w-full bg-[#f1f5f9] p-3 sm:p-8 overflow-y-auto">
         {!selectedLesson ? (
           <div className="h-full flex flex-col items-center justify-center text-[#6b7280]">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">

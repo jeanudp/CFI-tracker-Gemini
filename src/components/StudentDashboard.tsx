@@ -426,14 +426,14 @@ export default function StudentDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header & Rating Filter */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6 sm:mb-12">
         <div className="flex items-center gap-4">
           <Link to="/history" className="flex items-center gap-2 px-4 py-2 bg-white border border-[#dde3ec] rounded-xl text-[#6b7280] hover:text-[#1a3a5c] hover:border-[#1a3a5c] transition-all shadow-sm font-bold text-xs uppercase tracking-widest">
             <ArrowLeft size={16} />
             <span>Back to Student Progress</span>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Proficiency Analytics</h1>
+            <h1 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Proficiency Analytics</h1>
             <div className="flex flex-wrap gap-2 mt-3">
               {ratingPills.map(p => (
                 <button
@@ -511,7 +511,7 @@ export default function StudentDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.02 }}
-        className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm mb-8"
+        className="bg-white rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm mb-8"
       >
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -626,7 +626,7 @@ export default function StudentDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm mb-8"
+        className="bg-white rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm mb-8"
       >
         <div className="mb-6">
           <h3 className="text-xl font-bold text-[#1a3a5c]">Mastery Trajectory</h3>
@@ -717,7 +717,7 @@ export default function StudentDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm mb-8"
+        className="bg-white rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm mb-8"
       >
         <div className="mb-6">
           <h3 className="text-xl font-bold text-[#1a3a5c]">ACS Task Heatmap</h3>
@@ -840,7 +840,7 @@ export default function StudentDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm"
+            className="bg-white rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm"
           >
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -1127,7 +1127,7 @@ export default function StudentDashboard() {
             transition={{ delay: 0.25 }}
             className="bg-white rounded-[2rem] border border-[#dde3ec] overflow-hidden shadow-sm"
           >
-            <div className="p-8 border-b border-[#dde3ec] flex items-center justify-between bg-gradient-to-r from-white to-[#f0fdf4]">
+            <div className="p-4 sm:p-8 border-b border-[#dde3ec] flex items-center justify-between bg-gradient-to-r from-white to-[#f0fdf4]">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-[#dcfce7] rounded-2xl flex items-center justify-center text-[#166534] shadow-sm">
                   <Trophy size={24} />
@@ -1142,7 +1142,7 @@ export default function StudentDashboard() {
               </div>
             </div>
             
-            <div className="p-8">
+            <div className="p-4 sm:p-8">
               {strengthTasks.length > 0 ? (
                 <div className="space-y-10">
                   {masteredTasks.length > 0 && (
