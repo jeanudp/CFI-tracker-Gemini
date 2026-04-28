@@ -89,7 +89,7 @@ export default function Auth() {
               ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
             })
             .eq('email', email);
-        } else if (session && user) {
+        } else if (user) {
           // No invite code: Free plan (only if session immediately available)
           await supabase
             .from('user_subscriptions')
