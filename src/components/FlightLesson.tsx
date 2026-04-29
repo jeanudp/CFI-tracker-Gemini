@@ -107,7 +107,6 @@ export default function FlightLesson() {
   const [isFlightLogOpen, setIsFlightLogOpen] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [fillState, setFillState] = useState<Grade>('');
   const [rating, setRating] = useState<any>(null);
   const [activeACSTask, setActiveACSTask] = useState<{ task: ACSTask, id: string, prevGrade: Grade, pendingGrade: Grade } | null>(null);
   const [lessonLabel, setLessonLabel] = useState('');
@@ -419,7 +418,6 @@ export default function FlightLesson() {
       meDual: '',
       meNight: '',
     });
-    setFillState('');
     setIsFlightLogOpen(true);
     
     localStorage.removeItem('faa_ground_grades');
@@ -612,47 +610,6 @@ export default function FlightLesson() {
     const selectedTile = activeTiles.find(t => t.id === lessonType);
     const specificCodes = selectedTile?.taskCodes || [];
     return specificCodes.includes(taskCode) || activePrefPostCodes.includes(taskCode);
-  };
-
-  const handleFillAll = () => {
-    const cycle: Grade[] = ['', '3', '4', '1', '2'];
-    const next = cycle[(cycle.indexOf(fillState) + 1) % cycle.length];
-    setFillState(next);
-    const newGrades = { ...grades };
-    
-    const gradedCodes: string[] = [];
-    
-    // 1. Grade visible standard flight tasks
-    flightTasks.forEach(t => { 
-      if (shouldShowTask(t.code || '')) {
-        newGrades[t.id] = next; 
-        gradedCodes.push(t.code || 'UNCODED');
-      }
-    });
-
-    console.log('Auto-grading visible tasks for lesson type:', lessonType, 'Task codes:', gradedCodes);
-
-    // 2. Grade IR tasks if in CPL instrument tile
-    const isIRInstrumentTile = isCPL && lessonType === 'instrument';
-    if (isIRInstrumentTile) {
-      IR_FLIGHT_ACS.forEach((area, ari) => {
-        area.tasks.forEach((task, ti) => {
-          const id = `ir_${ari}_${ti}`;
-          newGrades[id] = next;
-        });
-      });
-    }
-
-    // 3. Grade extra emergencies if visible
-    const showExtraEmergencies = !isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review');
-    if (showExtraEmergencies) {
-      EMERGENCY_EXTRA_TASKS.forEach(t => {
-        newGrades[t.id] = next;
-      });
-    }
-
-    setGrades(newGrades);
-    saveToLocal(newGrades);
   };
 
   const handleNoteChange = (taskId: string, val: string) => {
@@ -1424,16 +1381,6 @@ export default function FlightLesson() {
                       )}
                     </div>
                   </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Objectives / Notes</label>
-                  <textarea
-                    value={meta.notes}
-                    onChange={(e) => handleMetaChange('notes', e.target.value)}
-                    placeholder="Maneuvers practiced, airport used, weather..."
-                    rows={2}
-                    className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all resize-none"
-                  />
                 </div>
               </div>
 
@@ -2651,6 +2598,22 @@ export default function FlightLesson() {
   {((showLessonTypeStep && currentStep === 4) || (!showLessonTypeStep && currentStep === 3)) && (
     <>
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Lesson Notes</label>
+            <div className="h-px flex-1 bg-[#f1f5f9]" />
+          </div>
+          <textarea
+            value={meta.notes}
+            onChange={(e) => handleMetaChange('notes', e.target.value)}
+            placeholder="General observations, student performance, weather, anything conversational..."
+            rows={4}
+            className="w-full text-sm border border-[#dde3ec] rounded-lg px-4 py-3 focus:outline-none focus:border-[#2a5a8c] focus:ring-2 focus:ring-[#2a5a8c]/5 transition-all resize-none leading-relaxed"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm font-bold text-[#1c2333]">Flight Progress</div>
           <div className="text-xs text-[#6b7280]">{gradedTasks} of {totalTasks} graded</div>
@@ -2679,24 +2642,8 @@ export default function FlightLesson() {
       </div>
 
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-lg overflow-hidden mb-8">
-        <div className="hidden sm:grid grid-cols-[1fr_72px_1.3fr] bg-[#f4f5f7] border-b border-[#dde3ec] text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+        <div className="hidden sm:grid grid-cols-[1fr_1.3fr] bg-[#f4f5f7] border-b border-[#dde3ec] text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
           <div className="px-4 py-2 flex items-center">Area of Operation / Task</div>
-          <div className="px-2 py-2 flex flex-col items-center justify-center gap-1 border-x border-[#dde3ec]">
-            <button
-              onClick={handleFillAll}
-              className={cn(
-                "w-12 h-6 rounded border font-mono text-[11px] transition-all active:scale-95",
-                fillState === '4' ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-md shadow-[#2d7a4f]/30" :
-                fillState === '3' ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-md shadow-[#5a9e6f]/30" :
-                fillState === '2' ? "bg-[#e8a020] border-[#e8a020] text-white shadow-md shadow-[#e8a020]/30" :
-                fillState === '1' ? "bg-[#c0392b] border-[#c0392b] text-white shadow-md shadow-[#c0392b]/30" :
-                "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
-              )}
-            >
-              {fillState || '—'}
-            </button>
-            <span>Grade</span>
-          </div>
           <div className="px-4 py-2 flex items-center">Notes</div>
         </div>
 
@@ -2712,16 +2659,42 @@ export default function FlightLesson() {
               const isExpanded = expandedTasks[id];
               const isEmergencyMalfunction = task.code === 'CA.X.C' || task.code === 'PA.IX.C';
               return (
-                <div key={id} className="flex flex-col sm:grid sm:grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors border-b border-[#dde3ec]">
+                <div key={id} className="flex flex-col sm:grid sm:grid-cols-[1fr_1.3fr] hover:bg-[#fafbfd] transition-colors border-b border-[#dde3ec]">
                   <div className="p-4">
-                    <div
-                      onClick={() => toggleExpand(id)}
-                      className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
-                    >
-                      {task.name}
-                      {(task.stds && task.stds.length > 0) || isEmergencyMalfunction ? (
-                        <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
-                      ) : null}
+                    <div className="flex flex-col gap-3">
+                      <div
+                        onClick={() => toggleExpand(id)}
+                        className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
+                      >
+                        {task.name}
+                        {(task.stds && task.stds.length > 0) || isEmergencyMalfunction ? (
+                          <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
+                        ) : null}
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-1 w-fit">
+                        {[1, 2, 3, 4].map((g) => {
+                          const gradeStr = g.toString();
+                          const isSelected = displayGrade === gradeStr;
+                          return (
+                            <button
+                              key={g}
+                              onClick={() => handleGradeSet(id, gradeStr as Grade)}
+                              className={cn(
+                                "w-8 h-7 rounded-md border font-mono text-[10px] font-bold transition-all active:scale-95",
+                                isSelected 
+                                  ? g === 4 ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm" :
+                                    g === 3 ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-sm" :
+                                    g === 2 ? "bg-[#e8a020] border-[#e8a020] text-white shadow-sm" :
+                                    "bg-[#c0392b] border-[#c0392b] text-white shadow-sm"
+                                  : "bg-white border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                              )}
+                            >
+                              {g}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                     {isExpanded && (
                       <motion.div
@@ -2737,31 +2710,6 @@ export default function FlightLesson() {
                         ))}
                       </motion.div>
                     )}
-                  </div>
-                  <div className="flex items-center justify-start px-4 sm:px-0.5 sm:pt-3 py-2 sm:border-x border-[#dde3ec]">
-                    <div className="grid grid-cols-4 sm:grid-cols-2 gap-1">
-                      {[1, 2, 3, 4].map((g) => {
-                        const gradeStr = g.toString();
-                        const isSelected = displayGrade === gradeStr;
-                        return (
-                          <button
-                            key={g}
-                            onClick={() => handleGradeSet(id, gradeStr as Grade)}
-                            className={cn(
-                              "w-8 h-7 rounded-md border font-mono text-[10px] font-bold transition-all active:scale-95",
-                              isSelected 
-                                ? g === 4 ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm" :
-                                  g === 3 ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-sm" :
-                                  g === 2 ? "bg-[#e8a020] border-[#e8a020] text-white shadow-sm" :
-                                  "bg-[#c0392b] border-[#c0392b] text-white shadow-sm"
-                                : "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
-                            )}
-                          >
-                            {g}
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
                   <div className="px-4 py-2 sm:p-2 sm:pt-3 sm:pr-4 relative group">
                     <textarea

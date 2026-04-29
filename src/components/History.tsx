@@ -6,7 +6,7 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
 
@@ -79,6 +79,7 @@ export default function History() {
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [shareCopied, setShareCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'endorsements'>('lesson');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -793,6 +794,45 @@ export default function History() {
     navigate(lesson.type === 'ground' ? '/ground' : '/flight');
   };
 
+  const handleShareFromHistory = async () => {
+    if (!selectedLesson?.student_name) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const { data: existingToken } = await supabase
+        .from('student_share_tokens')
+        .select('token')
+        .eq('student_name', selectedLesson.student_name)
+        .eq('user_id', session.user.id)
+        .eq('active', true)
+        .maybeSingle();
+      
+      let token = existingToken?.token;
+      if (!token) {
+        const { data: newToken, error: insertError } = await supabase
+          .from('student_share_tokens')
+          .insert({ 
+            student_name: selectedLesson.student_name, 
+            user_id: session.user.id, 
+            active: true 
+          })
+          .select('token')
+          .single();
+        if (insertError) throw insertError;
+        token = newToken.token;
+      }
+      
+      const shareUrl = `${window.location.origin}/view/${token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (err: any) {
+      console.error('Share error:', err);
+      window.alert('Failed to share: ' + err.message);
+    }
+  };
+
   const handlePrev = () => {
     const idx = filteredLessons.findIndex(l => l.id === selectedLessonId);
     if (idx > 0) setSelectedLessonId(filteredLessons[idx - 1].id);
@@ -1118,6 +1158,24 @@ export default function History() {
                   </div>
 
                   <div className="flex gap-3">
+                    {activeTab === 'lesson' && (
+                      <button
+                        onClick={handleShareFromHistory}
+                        className="bg-white text-[#1a3a5c] border border-[#dde3ec] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center gap-2 shadow-sm"
+                      >
+                        {shareCopied ? (
+                          <>
+                            <Check size={14} className="text-green-500" />
+                            <span className="text-green-500">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 size={14} />
+                            <span>Share</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={() => handleEditLesson(selectedLesson)}
                       className="bg-white text-[#1a3a5c] border border-[#dde3ec] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center gap-2 shadow-sm"
