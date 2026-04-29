@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 import { ALL_ACS, RATINGS } from '../constants';
@@ -174,6 +174,7 @@ export default function Dashboard() {
   const [paywallInviteError, setPaywallInviteError] = useState<string | null>(null);
   const [paywallInviteSuccess, setPaywallInviteSuccess] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [copiedStudentId, setCopiedStudentId] = useState<string | null>(null);
   const [onboardingStep, setOnboardingStep] = useState<number>(0);
   const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
 
@@ -434,6 +435,49 @@ export default function Dashboard() {
         colors: ['#e8a020', '#1a3a5c', '#2d7a4f', '#7c3aed', '#ef4444'],
         shapes: ['circle'],
       });
+    }
+  };
+  
+  const handleShareStudent = async (e: React.MouseEvent, student: Student) => {
+    e.stopPropagation();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Query for existing active token
+      const { data: existingToken } = await supabase
+        .from('student_share_tokens')
+        .select('token')
+        .eq('student_name', student.name)
+        .eq('user_id', session.user.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      let token = existingToken?.token;
+
+      if (!token) {
+        // Insert new token if none exists
+        const { data: newToken, error: insertError } = await supabase
+          .from('student_share_tokens')
+          .insert({
+            student_name: student.name,
+            user_id: session.user.id,
+            active: true
+          })
+          .select('token')
+          .single();
+        
+        if (insertError) throw insertError;
+        token = newToken.token;
+      }
+
+      const shareUrl = `${window.location.origin}/view/${token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      
+      setCopiedStudentId(student.id);
+      setTimeout(() => setCopiedStudentId(null), 2000);
+    } catch (err) {
+      console.error('Error sharing student:', err);
     }
   };
 
@@ -1003,6 +1047,14 @@ export default function Dashboard() {
                         title="Student Info"
                       >
                         <Info size={11} />
+                      </button>
+                      <button
+                        onClick={e => handleShareStudent(e, student)}
+                        className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                        style={{ backgroundColor: 'rgba(45,122,79,0.1)', color: '#2d7a4f' }}
+                        title="Copy Student View Link"
+                      >
+                        {copiedStudentId === student.id ? <Check size={11} /> : <Share2 size={11} />}
                       </button>
                       <button
                         onClick={e => { e.stopPropagation(); handleDeleteStudent(student.id, student.name); }}

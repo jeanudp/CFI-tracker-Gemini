@@ -12,6 +12,7 @@ import GroundLesson from './components/GroundLesson';
 import FlightLesson from './components/FlightLesson';
 import History from './components/History';
 import StudentDashboard from './components/StudentDashboard';
+import StudentView from './components/StudentView';
 import IACRASummary from './components/IACRASummary';
 import PreSoloTest from './components/PreSoloTest';
 import CFIHours from './components/CFIHours';
@@ -140,6 +141,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/view/:token" element={<StudentView />} />
 
         <Route
           path="/dashboard"
