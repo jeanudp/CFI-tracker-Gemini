@@ -225,20 +225,7 @@ export default function App() {
             )
           }
         />
-        <Route
-          path="/student/:studentName"
-          element={
-            session ? (
-              <Layout user={session.user}>
-                <PageTransition>
-                  <StudentDashboard />
-                </PageTransition>
-              </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
-          }
-        />
+        <Route path="/student/:studentName" element={<StudentDashboard />} />
         <Route
           path="/iacra/:studentName"
           element={
