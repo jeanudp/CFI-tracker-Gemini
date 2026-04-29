@@ -526,14 +526,14 @@ export default function FlightLesson() {
 
   const flightTasks = rating ? ALL_ACS[rating.code].flatMap((area, ai) => 
     area.tasks
-      .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
       .map((task, ti) => ({
         ...task,
-        id: `${ai}_${ti}`,
+        id: `${ai + 1}_${ti}`,
         area: area.area,
-        ai,
+        ai: ai + 1,
         ti
       }))
+      .filter(task => !task.name.includes('N/A') && !task.name.includes('ASEL') && !task.name.includes('Seaplane') && !task.name.includes('Water'))
   ) : [];
 
   const saveToLocal = (newGrades = grades, newNotes = notes, newMeta = meta) => {
@@ -604,12 +604,48 @@ export default function FlightLesson() {
     setActiveACSTask(null);
   };
 
+  const shouldShowTask = (taskCode: string) => {
+    const isReview = !lessonType || lessonType === 'review';
+    const isIRInstrumentTile = isCPL && lessonType === 'instrument';
+    if (isReview) return true;
+    if (isIRInstrumentTile) return activePrefPostCodes.includes(taskCode);
+    const selectedTile = activeTiles.find(t => t.id === lessonType);
+    const specificCodes = selectedTile?.taskCodes || [];
+    return specificCodes.includes(taskCode) || activePrefPostCodes.includes(taskCode);
+  };
+
   const handleFillAll = () => {
     const cycle: Grade[] = ['', '3', '4', '1', '2'];
     const next = cycle[(cycle.indexOf(fillState) + 1) % cycle.length];
     setFillState(next);
     const newGrades = { ...grades };
-    flightTasks.forEach(t => { newGrades[t.id] = next; });
+    
+    // 1. Grade visible standard flight tasks
+    flightTasks.forEach(t => { 
+      if (shouldShowTask(t.code)) {
+        newGrades[t.id] = next; 
+      }
+    });
+
+    // 2. Grade IR tasks if in CPL instrument tile
+    const isIRInstrumentTile = isCPL && lessonType === 'instrument';
+    if (isIRInstrumentTile) {
+      IR_FLIGHT_ACS.forEach((area, ari) => {
+        area.tasks.forEach((task, ti) => {
+          const id = `ir_${ari}_${ti}`;
+          newGrades[id] = next;
+        });
+      });
+    }
+
+    // 3. Grade extra emergencies if visible
+    const showExtraEmergencies = !isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review');
+    if (showExtraEmergencies) {
+      EMERGENCY_EXTRA_TASKS.forEach(t => {
+        newGrades[t.id] = next;
+      });
+    }
+
     setGrades(newGrades);
     saveToLocal(newGrades);
   };
@@ -2662,15 +2698,7 @@ export default function FlightLesson() {
         <div className="divide-y divide-[#dde3ec]">
           {(() => {
             const selectedTile = activeTiles.find(t => t.id === lessonType);
-            const isReview = !lessonType || lessonType === 'review';
             const isIRInstrumentTile = isCPL && lessonType === 'instrument';
-
-            const shouldShowTask = (taskCode: string) => {
-              if (isReview) return true;
-              if (isIRInstrumentTile) return activePrefPostCodes.includes(taskCode);
-              const specificCodes = selectedTile?.taskCodes || [];
-              return specificCodes.includes(taskCode) || activePrefPostCodes.includes(taskCode);
-            };
 
             const renderTaskRow = (task: any, id: string) => {
               const gValue = grades[id] || '';
