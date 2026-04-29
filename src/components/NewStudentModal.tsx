@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { RATINGS } from '../constants';
-import { X, User, Phone, Mail, Calendar, FileText, Heart, ChevronRight, Check, Loader2, Plane, Cloud, Gauge, ClipboardList, Compass, Navigation, AlertCircle, Lock } from 'lucide-react';
+import { X, User, Phone, Mail, Calendar, FileText, Heart, ChevronRight, Check, Loader2, Plane, Cloud, Gauge, ClipboardList, Compass, Navigation, AlertCircle, Lock, Share2, Copy } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NewStudentModalProps {
@@ -11,7 +11,7 @@ interface NewStudentModalProps {
   onStudentCreated: (student: any) => void;
 }
 
-const STEPS = ['Details', 'Rating', 'Prior Hours'];
+const STEPS = ['Details', 'Rating', 'Prior Hours', 'Share'];
 
 const ratingIcons: Record<string, any> = {
   ppl: Plane, ir: Cloud, cpl: Gauge, cfi: ClipboardList, cfii: Compass, mei: Navigation
@@ -242,6 +242,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   // Step 3 — Prior Hours
   const [priorHours, setPriorHours] = useState<Record<string, string>>({});
   const [includePrior, setIncludePrior] = useState(false);
+  const [createdStudent, setCreatedStudent] = useState<any>(null);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   const resetForm = () => {
     setStep(0);
@@ -329,8 +331,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
         }
       }
 
-      onStudentCreated(student);
-      handleClose();
+      setCreatedStudent(student);
+      setStep(3);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -784,6 +786,82 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                   )}
                 </div>
               )}
+
+              {/* Step 3 — Share */}
+              {step === 3 && createdStudent && (
+                <div className="p-8 text-center flex flex-col items-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-6"
+                  >
+                    <Check size={40} />
+                  </motion.div>
+                  
+                  <h3 className="text-2xl font-bold text-[#1a3a5c] mb-2">{createdStudent.name} Added!</h3>
+                  <p className="text-gray-500 mb-8 max-w-[320px] mx-auto text-sm leading-relaxed">
+                    Student added successfully! Share their progress link with them so they can track their training.
+                  </p>
+
+                  <div className="w-full space-y-3 max-w-[320px]">
+                    <button
+                      onClick={async () => {
+                        if (!createdStudent) return;
+                        setSaving(true);
+                        try {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          if (!session) return;
+                          const { data: existingToken } = await supabase
+                            .from('student_share_tokens')
+                            .select('token')
+                            .eq('student_name', createdStudent.name)
+                            .eq('user_id', session.user.id)
+                            .eq('active', true)
+                            .maybeSingle();
+                          let token = existingToken?.token;
+                          if (!token) {
+                            const { data: newToken, error: insertError } = await supabase
+                              .from('student_share_tokens')
+                              .insert({ student_name: createdStudent.name, user_id: session.user.id, active: true })
+                              .select('token')
+                              .single();
+                            if (insertError) throw insertError;
+                            token = newToken.token;
+                          }
+                          const shareUrl = `${window.location.origin}/view/${token}`;
+                          await navigator.clipboard.writeText(shareUrl);
+                          setShareLinkCopied(true);
+                          setTimeout(() => setShareLinkCopied(false), 2000);
+                        } catch (err: any) {
+                          setError(err.message);
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-3 bg-[#f8fafc] border-2 border-[#dde3ec] text-[#1a3a5c] font-black py-4 rounded-2xl hover:border-[#1a3a5c] transition-all cursor-pointer group"
+                    >
+                      {shareLinkCopied ? (
+                        <>
+                          <Check size={20} className="text-green-500" />
+                          <span className="text-green-500">Link Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={20} className="text-[#94a3b8] group-hover:text-[#1a3a5c]" />
+                          <span>Copy Progress Link</span>
+                        </>
+                      )}
+                    </button>
+                    
+                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3 text-left">
+                      <Share2 size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-amber-900 leading-normal">
+                        Your student can view their syllabus progress, cumulative hours, and lesson notes without needing a login.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Error */}
@@ -798,7 +876,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-[#f0f4f8] flex gap-3 shrink-0">
-              {step > 0 && (
+              {step > 0 && step < 3 && (
                 <button
                   onClick={() => setStep(prev => prev - 1)}
                   className="px-5 py-3 rounded-xl border border-[#dde3ec] text-sm font-bold text-[#6b7280] hover:bg-[#f0f4f8] transition-all cursor-pointer"
@@ -806,7 +884,18 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                   Back
                 </button>
               )}
-              {step < STEPS.length - 1 ? (
+              
+              {step === 3 ? (
+                <button
+                  onClick={() => {
+                    onStudentCreated(createdStudent);
+                    handleClose();
+                  }}
+                  className="flex-1 bg-[#1a3a5c] text-white font-bold py-3 rounded-xl hover:bg-[#2a5a8c] transition-all shadow-lg cursor-pointer"
+                >
+                  Done
+                </button>
+              ) : step < 2 ? (
                 <button
                   onClick={handleNext}
                   className="flex-1 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl text-sm hover:bg-[#2a5a8c] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
