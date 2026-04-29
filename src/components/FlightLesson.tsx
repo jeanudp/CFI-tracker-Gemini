@@ -620,12 +620,17 @@ export default function FlightLesson() {
     setFillState(next);
     const newGrades = { ...grades };
     
+    const gradedCodes: string[] = [];
+    
     // 1. Grade visible standard flight tasks
     flightTasks.forEach(t => { 
-      if (shouldShowTask(t.code)) {
+      if (shouldShowTask(t.code || '')) {
         newGrades[t.id] = next; 
+        gradedCodes.push(t.code || 'UNCODED');
       }
     });
+
+    console.log('Auto-grading visible tasks for lesson type:', lessonType, 'Task codes:', gradedCodes);
 
     // 2. Grade IR tasks if in CPL instrument tile
     const isIRInstrumentTile = isCPL && lessonType === 'instrument';
