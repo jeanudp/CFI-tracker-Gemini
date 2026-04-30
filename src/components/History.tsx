@@ -1099,66 +1099,9 @@ export default function History() {
             <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
               <div className="p-4 sm:p-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                  <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-full sm:w-fit overflow-x-auto">
-                    <button
-                      onClick={() => setActiveTab('lesson')}
-                      className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'lesson' 
-                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
-                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
-                      )}
-                    >
-                      <BookOpen size={14} />
-                      This Lesson
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('cumulative')}
-                      className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'cumulative' 
-                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
-                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
-                      )}
-                    >
-                      <BarChart3 size={14} />
-                      Cumulative
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('checkride')}
-                      className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'checkride' 
-                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
-                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
-                      )}
-                    >
-                      <CheckCircle2 size={14} />
-                      Checkride
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('endorsements')}
-                      className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                        activeTab === 'endorsements' 
-                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
-                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
-                      )}
-                    >
-                      <MapPin size={14} />
-                      Endorsements
-                    </button>
-                    <button
-                      onClick={() => navigate(`/student/${studentName}`)}
-                      className="px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2 whitespace-nowrap"
-                    >
-                      <BarChart3 size={14} />
-                      Analytics
-                    </button>
-                  </div>
-
-                  <div className="flex gap-3">
+                <div className="flex flex-col gap-5 mb-8">
+                  {/* Action Buttons Row */}
+                  <div className="flex justify-end gap-3 order-1">
                     {activeTab === 'lesson' && selectedLesson && (
                       <button
                         onClick={handleShareFromHistory}
@@ -1174,6 +1117,65 @@ export default function History() {
                     >
                       <Edit size={14} />
                       Edit Lesson
+                    </button>
+                  </div>
+
+                  {/* Tabs Row */}
+                  <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-full overflow-x-auto order-2">
+                    <button
+                      onClick={() => setActiveTab('lesson')}
+                      className={cn(
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        activeTab === 'lesson' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
+                      )}
+                    >
+                      <BookOpen size={14} />
+                      This Lesson
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('cumulative')}
+                      className={cn(
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        activeTab === 'cumulative' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
+                      )}
+                    >
+                      <BarChart3 size={14} />
+                      Cumulative
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('checkride')}
+                      className={cn(
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        activeTab === 'checkride' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
+                      )}
+                    >
+                      <CheckCircle2 size={14} />
+                      Checkride
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('endorsements')}
+                      className={cn(
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        activeTab === 'endorsements' 
+                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
+                      )}
+                    >
+                      <MapPin size={14} />
+                      Endorsements
+                    </button>
+                    <button
+                      onClick={() => navigate(`/student/${studentName}`)}
+                      className="px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center"
+                    >
+                      <BarChart3 size={14} />
+                      Analytics
                     </button>
                   </div>
                 </div>
