@@ -43,7 +43,6 @@ export default function StudentDashboard() {
   const [rating, setRating] = useState<any>({ ...Object.values(RATINGS)[0], code: Object.keys(RATINGS)[0] });
   const [student, setStudent] = useState<Student | null>(null);
   const [showMoreStruggles, setShowMoreStruggles] = useState(false);
-  const [expandedAreas, setExpandedAreas] = useState<Record<number, boolean>>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -239,11 +238,41 @@ export default function StudentDashboard() {
   const masteredTasks = strengthTasks.filter(t => t.averageGrade >= 3.5 && t.mostRecentGrade === '4');
   const proficientTasks = strengthTasks.filter(t => !masteredTasks.find(mt => mt.id === t.id));
 
-  const uncoveredTasks = taskAnalysis.filter(t => t.neverGraded);
-  const uncoveredByArea = acsData.map((area, ai) => ({
-    area: area.area,
-    tasks: uncoveredTasks.filter(t => t.areaIndex === ai)
-  })).filter(a => a.tasks.length > 0);
+  // Needs Attention Logic
+  const needsAttentionConditions: string[] = [];
+  
+  // 1. Regressing and low grade
+  const regressingLowTasks = taskAnalysis.filter(t => t.trend === 'regressing' && (t.mostRecentGrade === '1' || t.mostRecentGrade === '2' || t.mostRecentGrade === 'N'));
+  if (regressingLowTasks.length > 0) {
+    needsAttentionConditions.push(`Regressing performance on key tasks: ${regressingLowTasks.slice(0, 2).map(t => t.name).join(', ')}${regressingLowTasks.length > 2 ? ' and others' : ''}`);
+  }
+
+  // 2. Graded 1/2 more than twice with no passing grade after
+  const stagnantLowTasks = taskAnalysis.filter(t => t.nCount > 2 && !['S', '3', '4'].includes(t.mostRecentGrade || ''));
+  if (stagnantLowTasks.length > 0) {
+    needsAttentionConditions.push(`Stagnant progress on tasks: ${stagnantLowTasks.slice(0, 2).map(t => t.name).join(', ')}${stagnantLowTasks.length > 2 ? ' and others' : ''}`);
+  }
+
+  // 3. Gap > 14 days between two most recent lessons
+  if (studentLessons.length >= 2) {
+    const lastLessonDate = new Date(studentLessons[studentLessons.length - 1].saved_at).getTime();
+    const secondLastLessonDate = new Date(studentLessons[studentLessons.length - 2].saved_at).getTime();
+    const gapDays = Math.round((lastLessonDate - secondLastLessonDate) / (1000 * 60 * 60 * 24));
+    if (gapDays > 14) {
+      needsAttentionConditions.push(`Prolonged gap of ${gapDays} days between recent lessons may impact retention`);
+    }
+  }
+
+  // 4. Last 3 lessons more than 2 rated N overall
+  if (studentLessons.length >= 3) {
+    const last3 = [...studentLessons].sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime()).slice(0, 3);
+    const nInLast3 = last3.filter(l => l.meta?.overallGrade === 'N').length;
+    if (nInLast3 > 2) {
+      needsAttentionConditions.push(`Last ${last3.length} lessons were predominantly rated "Needs Improvement" overall`);
+    }
+  }
+
+  const showAttentionAlert = needsAttentionConditions.length > 0;
 
   const groundTasks = taskAnalysis.filter(t => t.isGround);
   const flightTasks = taskAnalysis.filter(t => !t.isGround);
@@ -338,33 +367,6 @@ export default function StudentDashboard() {
     return '#c0392b';
   };
 
-  const heatmapAreas = acsData.map((area, ai) => ({
-    areaName: area.area,
-    areaIndex: ai,
-    tasks: area.tasks.map((task, ti) => {
-      const taskId = `${ai}_${ti}`;
-      return {
-        taskName: task.name,
-        taskId,
-        grades: studentLessons.map(lesson => {
-          const grade = lesson.grades?.[taskId] || null;
-          let numericGrade = 0;
-          if (grade === '4') numericGrade = 4;
-          else if (grade === '3' || grade === 'S') numericGrade = 3;
-          else if (grade === '2') numericGrade = 2;
-          else if (grade === '1' || grade === 'N') numericGrade = 1;
-          
-          return {
-            lessonLabel: lesson.label || 'Lesson',
-            date: new Date(lesson.saved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-            grade,
-            numericGrade
-          };
-        })
-      };
-    })
-  }));
-
   // Timeline Data
   const timelineData = studentLessons.map(lesson => {
     const grades = Object.values(lesson.grades || {}) as (string | number)[];
@@ -405,23 +407,6 @@ export default function StudentDashboard() {
     else if (avg1 - avg2 > 0.3) timelineTrend = 'regressing';
     else timelineTrend = 'plateau';
   }
-
-  const getAverageColor = (avg: number) => {
-    if (avg === 0) return 'bg-[#f1f5f9]';
-    if (avg < 2) return 'bg-[#c0392b]';
-    if (avg < 3) return 'bg-[#e8a020]';
-    if (avg < 4) return 'bg-[#5a9e6f]';
-    return 'bg-[#2d7a4f]';
-  };
-
-  const getGradeColor = (numericGrade: number) => {
-    if (numericGrade === 0) return 'bg-[#f1f5f9]';
-    if (numericGrade === 1) return 'bg-[#c0392b] text-white';
-    if (numericGrade === 2) return 'bg-[#e8a020] text-white';
-    if (numericGrade === 3) return 'bg-[#5a9e6f] text-white';
-    if (numericGrade === 4) return 'bg-[#2d7a4f] text-white';
-    return 'bg-[#f1f5f9]';
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -505,6 +490,30 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Needs Attention Alert */}
+      {showAttentionAlert && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-6 bg-[#fff7ed] border border-[#ffedd5] rounded-[2rem] shadow-sm flex items-start gap-4"
+        >
+          <div className="w-12 h-12 bg-[#ffedd5] rounded-2xl flex items-center justify-center text-[#9a3412] shrink-0">
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-[#9a3412] mb-2">Needs Attention</h3>
+            <ul className="space-y-1.5">
+              {needsAttentionConditions.map((condition, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-sm text-[#9a3412]/80 font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#9a3412]/40 mt-1.5 shrink-0" />
+                  {condition}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+      )}
 
       {/* Lesson Timeline */}
       <motion.div 
@@ -695,117 +704,6 @@ export default function StudentDashboard() {
         </div>
       </motion.div>
       
-      {/* ACS Task Heatmap */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="bg-white rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm mb-8"
-      >
-        <div className="mb-6">
-          <h3 className="text-xl font-bold text-[#1a3a5c]">ACS Task Heatmap</h3>
-          <p className="text-xs text-[#6b7280] font-bold uppercase tracking-widest">Grade per task per lesson — tap an area to expand</p>
-        </div>
-
-        <div className="space-y-3">
-          {heatmapAreas.map((area, ai) => {
-            const isExpanded = expandedAreas[ai];
-            return (
-              <div key={ai} className="border border-[#f1f5f9] rounded-2xl overflow-hidden">
-                <button
-                  onClick={() => setExpandedAreas(prev => ({ ...prev, [ai]: !prev[ai] }))}
-                  className="w-full flex items-center justify-between p-4 hover:bg-[#f8fafc] transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <ChevronRight size={16} className={cn("text-[#94a3b8] transition-transform", isExpanded && "rotate-90")} />
-                    <span className="text-sm font-bold text-[#1a3a5c] text-left">{area.areaName}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {studentLessons.map((_, li) => {
-                      const lessonGrades = area.tasks.map(t => t.grades[li].numericGrade).filter(g => g > 0);
-                      const avg = lessonGrades.length > 0 ? lessonGrades.reduce((a, b) => a + b, 0) / lessonGrades.length : 0;
-                      return (
-                        <div key={li} className={cn("w-2 h-2 rounded-full", getAverageColor(avg))} title={avg > 0 ? `Avg: ${avg.toFixed(1)}` : 'No data'} />
-                      );
-                    })}
-                  </div>
-                </button>
-
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: 'auto' }}
-                      exit={{ height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-4 pt-0">
-                        <div className="overflow-x-auto pb-4">
-                          <table className="min-w-full border-separate border-spacing-0">
-                            <thead>
-                              <tr>
-                                <th className="sticky left-0 bg-white z-10 text-left p-2 min-w-[200px] border-b border-[#f1f5f9]">
-                                  <span className="text-[10px] font-black uppercase text-[#6b7280] tracking-widest pl-2">Task</span>
-                                </th>
-                                {studentLessons.map((lesson, li) => (
-                                  <th key={li} className="p-2 border-b border-[#f1f5f9] h-16">
-                                    <div className="w-12 h-12 flex items-end justify-center relative">
-                                      <span className="absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-[#94a3b8] origin-bottom-left rotate-[-45deg]">
-                                        {new Date(lesson.saved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                      </span>
-                                    </div>
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {area.tasks.map((task, ti) => (
-                                <tr key={ti} className="hover:bg-[#f8fafc] group">
-                                  <td className="sticky left-0 bg-white group-hover:bg-[#f8fafc] z-10 p-2 border-b border-[#f1f5f9] max-w-[200px]">
-                                    <div className="text-[11px] font-medium text-[#1a3a5c] whitespace-nowrap overflow-hidden text-ellipsis pl-2" title={task.taskName}>
-                                      {task.taskName}
-                                    </div>
-                                  </td>
-                                  {task.grades.map((gradeInfo, gi) => (
-                                    <td key={gi} className="p-1 border-b border-[#f1f5f9]">
-                                      <div 
-                                        className={cn(
-                                          "w-7 h-7 rounded-md flex items-center justify-center transition-transform hover:scale-110",
-                                          getGradeColor(gradeInfo.numericGrade)
-                                        )}
-                                      >
-                                        <span className="text-[10px] font-black">
-                                          {gradeInfo.grade}
-                                        </span>
-                                      </div>
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        
-                        {ai === heatmapAreas.findIndex((_, index) => expandedAreas[index]) && (
-                          <div className="mt-6 flex flex-wrap gap-4 pt-4 border-t border-[#f1f5f9]">
-                            {['1', '2', '3', '4'].map(g => (
-                              <div key={g} className="flex items-center gap-2">
-                                <div className={cn("w-4 h-4 rounded shadow-sm", getGradeColor(parseInt(g)))} />
-                                <span className="text-[10px] font-medium text-[#6b7280]">{gradeDescriptions[g]}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
-
       {studentLessons.length === 0 ? (
         <div className="bg-white rounded-[2rem] border border-[#dde3ec] p-12 shadow-sm text-center">
           <div className="w-20 h-20 bg-[#f4f5f7] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -843,7 +741,19 @@ export default function StudentDashboard() {
                 return (
                   <div key={idx} className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 group">
                     <div className="md:w-1/3 min-w-0">
-                      <div className="text-sm font-bold text-[#1a3a5c] truncate mb-2" title={area.areaName}>{area.areaName}</div>
+                      {/* Area Name Color Logic */}
+                      {(() => {
+                        const areaNameColor = area.averageGrade === 0 ? 'text-[#1a3a5c]' :
+                          area.averageGrade < 2.5 ? 'text-[#c0392b]' :
+                          area.averageGrade < 3.0 ? 'text-[#e8a020]' :
+                          area.averageGrade >= 3.5 ? 'text-[#2d7a4f]' : 'text-[#1a3a5c]';
+                        
+                        return (
+                          <div className={cn("text-sm font-bold truncate mb-2", areaNameColor)} title={area.areaName}>
+                            {area.areaName}
+                          </div>
+                        );
+                      })()}
                       <div className="flex flex-wrap gap-1.5">
                         <div className="px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-md text-[8px] font-black uppercase tracking-tighter">
                           {area.masteredCount} mastered
@@ -871,18 +781,20 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 w-16 justify-end shrink-0">
-                      <div className="text-right">
-                        <div className={cn("text-lg font-black leading-none", avgColor)}>
-                          {area.averageGrade > 0 ? area.averageGrade.toFixed(2) : '—'}
+                    <div className="flex items-center gap-4 w-24 justify-end shrink-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <div className={cn("text-lg font-black leading-none", avgColor)}>
+                            {area.averageGrade > 0 ? area.averageGrade.toFixed(2) : '—'}
+                          </div>
                         </div>
                         {area.trend && (
                           <div className={cn(
-                            "flex justify-end mt-0.5",
+                            "shrink-0",
                             area.trend === 'improving' ? "text-[#2d7a4f]" : 
                             area.trend === 'regressing' ? "text-[#c0392b]" : "text-[#94a3b8]"
                           )}>
-                            {area.trend === 'improving' ? <ArrowUp size={10} /> : area.trend === 'regressing' ? <ArrowDown size={10} /> : <Minus size={10} />}
+                            {area.trend === 'improving' ? <ArrowUp size={16} /> : area.trend === 'regressing' ? <ArrowDown size={16} /> : <Minus size={16} />}
                           </div>
                         )}
                       </div>
@@ -892,78 +804,6 @@ export default function StudentDashboard() {
               })}
             </div>
           </motion.div>
-
-          {/* Section 5 — Ground vs Flight Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#e4f5ec] rounded-xl flex items-center justify-center text-[#2d7a4f]">
-                  <BookOpen size={20} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#1a3a5c]">Ground Knowledge</h3>
-                  <p className="text-[10px] text-[#6b7280] font-bold uppercase tracking-widest">Area I Summary</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-[#f4f5f7] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest mb-1">Total Tasks</div>
-                  <div className="text-xl font-mono font-bold text-[#1a3a5c]">{groundSummary.total}</div>
-                </div>
-                <div className="p-3 bg-[#e4f5ec] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#2d7a4f] uppercase tracking-widest mb-1">Satisfactory</div>
-                  <div className="text-xl font-mono font-bold text-[#2d7a4f]">{groundSummary.s}</div>
-                </div>
-                <div className="p-3 bg-[#fdecea] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#c0392b] uppercase tracking-widest mb-1">Needs Impr.</div>
-                  <div className="text-xl font-mono font-bold text-[#c0392b]">{groundSummary.n}</div>
-                </div>
-                <div className="p-3 bg-[#f4f5f7] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest mb-1">Not Covered</div>
-                  <div className="text-xl font-mono font-bold text-[#6b7280]">{groundSummary.none}</div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl border border-[#dde3ec] p-6 shadow-sm"
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-[#d4e8f5] rounded-xl flex items-center justify-center text-[#1a3a5c]">
-                  <TrendingUp size={20} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#1a3a5c]">Flight Proficiency</h3>
-                  <p className="text-[10px] text-[#6b7280] font-bold uppercase tracking-widest">Areas II-XII Summary</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-[#f4f5f7] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest mb-1">Total Tasks</div>
-                  <div className="text-xl font-mono font-bold text-[#1a3a5c]">{flightSummary.total}</div>
-                </div>
-                <div className="p-3 bg-[#e4f5ec] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#2d7a4f] uppercase tracking-widest mb-1">Satisfactory</div>
-                  <div className="text-xl font-mono font-bold text-[#2d7a4f]">{flightSummary.s}</div>
-                </div>
-                <div className="p-3 bg-[#fdecea] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#c0392b] uppercase tracking-widest mb-1">Needs Impr.</div>
-                  <div className="text-xl font-mono font-bold text-[#c0392b]">{flightSummary.n}</div>
-                </div>
-                <div className="p-3 bg-[#f4f5f7] rounded-xl">
-                  <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest mb-1">Not Covered</div>
-                  <div className="text-xl font-mono font-bold text-[#6b7280]">{flightSummary.none}</div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
 
           {/* Section 2 — Struggle Areas */}
           <motion.div 
@@ -985,21 +825,6 @@ export default function StudentDashboard() {
             </div>
             
             <div className="p-6">
-              {(() => {
-                const last3 = [...studentLessons].sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime()).slice(0, 3);
-                const nInLast3 = last3.filter(l => l.meta?.overallGrade === 'N').length;
-                if (nInLast3 > 0) {
-                  return (
-                    <div className="mb-6 p-4 bg-[#fff7ed] border border-[#ffedd5] rounded-xl flex items-center gap-3 text-[#9a3412]">
-                      <AlertTriangle size={18} />
-                      <p className="text-xs font-bold">
-                        Note: {nInLast3} of your last {last3.length} lessons were rated N overall.
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
               {strugglingTasks.length > 0 ? (
                 <div className="space-y-6">
                   <AnimatePresence mode="popLayout">
@@ -1012,10 +837,13 @@ export default function StudentDashboard() {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.95 }}
                           layout
-                          className="p-5 bg-[#f8fafc] rounded-2xl border border-[#dde3ec] transition-all hover:shadow-md"
+                          className={cn(
+                            "p-5 bg-[#f8fafc] rounded-2xl border border-[#dde3ec] transition-all hover:shadow-md border-l-4",
+                            (task.mostRecentGrade === '1' || task.mostRecentGrade === 'N') ? "border-l-[#c0392b]" : "border-l-[#e8a020]"
+                          )}
                         >
-                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-                            <div>
+                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-[10px] font-bold text-[#1a3a5c] bg-[#d4e8f5] px-2 py-0.5 rounded uppercase tracking-wider">
                                   {task.code}
@@ -1023,58 +851,43 @@ export default function StudentDashboard() {
                                 <span className="text-[10px] text-[#6b7280] font-medium italic">
                                   {task.areaName}
                                 </span>
+                                {task.trend && (
+                                  <div className={cn(
+                                    "p-1 rounded-full ml-1",
+                                    task.trend === 'improving' ? "bg-[#e4f5ec] text-[#2d7a4f]" :
+                                    task.trend === 'regressing' ? "bg-[#fdecea] text-[#c0392b]" :
+                                    "bg-[#f4f5f7] text-[#6b7280]"
+                                  )}>
+                                    {task.trend === 'improving' ? <ArrowUp size={12} /> : task.trend === 'regressing' ? <ArrowDown size={12} /> : <Minus size={12} />}
+                                  </div>
+                                )}
                               </div>
                               <h4 className="text-base font-bold text-[#1a3a5c] leading-tight">{task.name}</h4>
                               <p className="text-[10px] text-[#6b7280] mt-1 italic font-medium">
                                 {gradeDescriptions[task.mostRecentGrade || ''] || ''}
                               </p>
+
+                              {/* Inline Standard Pills */}
+                              {failedStandards.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-3">
+                                  {failedStandards.map((std, idx) => (
+                                    <span key={idx} className="px-1.5 py-0.5 bg-white border border-[#dde3ec] text-[#6b7280] text-[9px] font-bold rounded shadow-sm" title={std.description}>
+                                      {std.code}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <div className="flex flex-col items-end gap-1.5">
-                                <div className="px-2 py-0.5 bg-[#e8a020]/10 text-[#e8a020] rounded-full text-[9px] font-black border border-[#e8a020]/20">
+                            
+                            <div className="flex items-center gap-4 shrink-0 text-right">
+                              <div>
+                                <div className="text-[10px] font-black text-[#6b7280] uppercase tracking-widest mb-1">Fail Count</div>
+                                <div className="text-4xl font-black text-[#c0392b] leading-none mb-1">{task.nCount}</div>
+                                <div className="text-[10px] font-bold text-[#6b7280] bg-white px-2 py-0.5 rounded-full border border-[#dde3ec] active:bg-gray-50">
                                   Avg: {task.averageGrade.toFixed(1)}
                                 </div>
-                                {task.trend && (
-                                  <div className={cn(
-                                    "flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border",
-                                    task.trend === 'improving' ? "bg-[#e4f5ec] text-[#2d7a4f] border-[#2d7a4f]/20" :
-                                    task.trend === 'regressing' ? "bg-[#fdecea] text-[#c0392b] border-[#c0392b]/20" :
-                                    "bg-[#f4f5f7] text-[#6b7280] border-[#dde3ec]"
-                                  )}>
-                                    {task.trend === 'improving' ? <ArrowUp size={8} /> : task.trend === 'regressing' ? <ArrowDown size={8} /> : <Minus size={8} />}
-                                    <span className="capitalize">{task.trend}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="px-3 py-1.5 bg-[#c0392b] text-white rounded-xl text-xs font-black shadow-sm">
-                                {task.mostRecentGrade} × {task.nCount}
                               </div>
                             </div>
-                          </div>
-
-                          <div className="bg-white rounded-xl border border-[#dde3ec] p-4">
-                            <div className="text-[10px] font-bold text-[#6b7280] uppercase tracking-[0.1em] mb-3 flex items-center gap-2">
-                              <Target size={12} className="text-[#c0392b]" />
-                              Failed Standards Breakdown
-                            </div>
-                            {failedStandards.length > 0 ? (
-                              <div className="space-y-2">
-                                {failedStandards.map((std, idx) => (
-                                  <div key={idx} className="flex items-start gap-3 group">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#c0392b] mt-1.5 shrink-0" />
-                                    <div className="text-xs leading-relaxed">
-                                      <span className="font-bold text-[#1a3a5c] mr-2">{std.code}</span>
-                                      <span className="text-[#4b5563]">{std.description}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 text-xs text-[#6b7280] italic">
-                                <Info size={14} />
-                                No specific standard recorded for this failure.
-                              </div>
-                            )}
                           </div>
                         </motion.div>
                       );
@@ -1219,7 +1032,7 @@ export default function StudentDashboard() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
             {/* Section 3 — Recently Improved */}
             {improvedTasks.length > 0 && (
               <motion.div 
@@ -1255,48 +1068,6 @@ export default function StudentDashboard() {
                 </div>
               </motion.div>
             )}
-
-            {/* Section 4 — Not Yet Covered */}
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className={cn(
-                "bg-white rounded-3xl border border-[#dde3ec] overflow-hidden shadow-sm",
-                improvedTasks.length === 0 && "lg:col-span-2"
-              )}
-            >
-              <div className="p-6 border-b border-[#dde3ec] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#f4f5f7] rounded-xl flex items-center justify-center text-[#6b7280]">
-                    <Clock size={20} />
-                  </div>
-                  <h3 className="text-lg font-bold text-[#1a3a5c]">Not Yet Covered</h3>
-                </div>
-                <div className="text-xs font-bold text-[#6b7280] bg-[#f4f5f7] px-3 py-1 rounded-full">
-                  {uncoveredTasks.length} Tasks Remaining
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-6">
-                  {uncoveredByArea.map((area, idx) => (
-                    <div key={idx}>
-                      <h4 className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-[0.2em] mb-3 pb-1 border-b border-[#f4f5f7]">
-                        {area.area}
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {area.tasks.map((task) => (
-                          <div key={task.id} className="flex items-center gap-2 text-xs text-[#6b7280]">
-                            <div className="w-1 h-1 rounded-full bg-[#dde3ec]" />
-                            {task.name}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
           </div>
         </div>
       )}
