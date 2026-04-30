@@ -522,78 +522,61 @@ export default function StudentDashboard() {
 
         {timelineData.length >= 2 ? (
           <div className="relative">
-            <div className="overflow-x-auto pb-8 -mx-4 px-4 custom-scrollbar">
-              <div className="relative min-w-max pb-4">
-                {/* Progress Line */}
-                <div className="absolute top-[7px] left-0 right-0 h-0.5 bg-[#e2e8f0]" />
+            <div className="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-4">
+                {timelineData.map((item, idx) => {
+                  const nextItem = timelineData[idx + 1];
+                  const dayGap = nextItem 
+                    ? Math.round((new Date(nextItem.fullDate).getTime() - new Date(item.fullDate).getTime()) / (1000 * 60 * 60 * 24))
+                    : 0;
 
-                <div className="flex justify-start items-start gap-12 pt-0">
-                  {timelineData.map((item, idx) => (
-                    <div key={idx} className="flex flex-col items-center group relative cursor-help w-[60px]">
-                      {/* Tooltip */}
-                      <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-48 bg-[#1c2333] p-3 rounded-xl border border-white/10 shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 scale-95 group-hover:scale-100 origin-bottom">
-                        <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">{item.date}</p>
-                        <p className="text-xs font-bold text-white mb-2">{item.lessonLabel}</p>
-                        <div className="flex flex-col gap-1.5">
-                          {item.overallGrade && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-white/70">Overall</span>
-                              <div className={cn(
-                                "px-2 py-0.5 rounded-full text-[9px] font-black",
-                                item.overallGrade === 'S' ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                              )}>
-                                {item.overallGrade === 'S' ? 'Satisfactory' : 'Needs Improvement'}
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-white/70">Avg Task Grade</span>
-                            <span className="text-[10px] font-black text-white">{item.avgGrade.toFixed(1)}</span>
-                          </div>
-                          {item.totalFlight && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-white/70">Flight Time</span>
-                              <span className="text-[10px] font-black text-white">{item.totalFlight}h</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Dot */}
-                      <div className="relative z-10">
+                  return (
+                    <React.Fragment key={idx}>
+                      {/* Lesson Card Row */}
+                      <div className="flex items-center gap-4 bg-[#f8fafc] p-4 rounded-2xl border border-[#dde3ec] hover:border-[#1a3a5c] transition-all group">
+                        {/* Left Dot Indicator */}
                         <div className={cn(
-                          "w-[14px] h-[14px] rounded-full border-2 transition-transform group-hover:scale-125",
-                          item.overallGrade === 'S' ? "bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]" :
-                          item.overallGrade === 'N' ? "bg-red-500 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]" :
-                          "bg-white border-[#94a3b8]"
+                          "w-3 h-3 rounded-full shrink-0 shadow-sm",
+                          item.overallGrade === 'S' ? "bg-green-500 shadow-green-500/20" :
+                          item.overallGrade === 'N' ? "bg-red-500 shadow-red-500/20" :
+                          "bg-[#94a3b8] shadow-slate-300/20"
                         )} />
-                        {/* Optional Vertical Line Segment (as requested) */}
-                        {idx < timelineData.length - 1 && (
-                          <div className="hidden absolute top-[7px] left-[14px] w-12 h-[2px] bg-[#f1f5f9] -z-10" />
-                        )}
+                        
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-4 mb-0.5">
+                            <p className="text-sm font-bold text-[#1a3a5c] truncate">{item.lessonLabel}</p>
+                            <div className={cn(
+                              "px-2 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-widest",
+                              item.avgGrade === 0 ? "bg-white text-[#94a3b8] border-[#dde3ec]" :
+                              item.avgGrade < 2 ? "bg-[#fdecea] text-[#c0392b] border-[#fdecea]" :
+                              item.avgGrade < 3 ? "bg-[#fffbeb] text-[#e8a020] border-[#fffbeb]" :
+                              item.avgGrade < 3.5 ? "bg-[#e4f5ec] text-[#5a9e6f] border-[#e4f5ec]" :
+                              "bg-[#dcfce7] text-[#2d7a4f] border-[#bbf7d0]"
+                            )}>
+                              Avg: {item.avgGrade > 0 ? item.avgGrade.toFixed(1) : '—'}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-[#94a3b8]">
+                            <p className="text-[10px] font-bold uppercase tracking-tight">{item.date}</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest">{item.tasksGraded} {item.tasksGraded === 1 ? 'task' : 'tasks'} graded</p>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="mt-4 flex flex-col items-center">
-                        <span className="text-[9px] font-bold text-[#94a3b8] uppercase tracking-tighter mb-2 whitespace-nowrap">{item.date}</span>
-                        
-                        <div className={cn(
-                          "px-2 py-0.5 rounded-full text-[10px] font-black border",
-                          item.avgGrade === 0 ? "bg-[#f1f5f9] text-[#94a3b8] border-[#dde3ec]" :
-                          item.avgGrade < 2 ? "bg-[#fdecea] text-[#c0392b] border-[#fdecea]" :
-                          item.avgGrade < 3 ? "bg-[#fffbeb] text-[#e8a020] border-[#fffbeb]" :
-                          item.avgGrade < 3.5 ? "bg-[#e4f5ec] text-[#5a9e6f] border-[#e4f5ec]" :
-                          "bg-[#dcfce7] text-[#2d7a4f] border-[#bbf7d0]"
-                        )}>
-                          {item.avgGrade > 0 ? item.avgGrade.toFixed(1) : '—'}
+                      {/* Gap Indicator */}
+                      {nextItem && dayGap > 0 && (
+                        <div className="flex items-center gap-4 py-1">
+                          <div className="flex-1 h-px bg-gray-100" />
+                          <div className="px-3 py-1 bg-white border border-gray-100 rounded-full shrink-0">
+                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{dayGap} {dayGap === 1 ? 'day' : 'days'}</span>
+                          </div>
+                          <div className="flex-1 h-px bg-gray-100" />
                         </div>
-                        
-                        <span className="text-[8px] text-[#94a3b8] font-bold uppercase mt-1 whitespace-nowrap">
-                          {item.tasksGraded} {item.tasksGraded === 1 ? 'task' : 'tasks'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
 
