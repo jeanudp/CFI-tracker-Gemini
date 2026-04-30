@@ -2564,6 +2564,117 @@ export default function FlightLesson() {
                                 Only log landings where you as the CFI physically performed the landing. Leave unchecked if the student did all landings.
                               </p>
                             </div>
+
+                            <div className="h-px bg-[#e2e8f0] my-3" />
+
+                            <div className="space-y-3">
+                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Approaches</h4>
+                              <label className="flex items-center gap-2 cursor-pointer group">
+                                <input 
+                                  type="checkbox" 
+                                  checked={meta.cfiFlewApproaches} 
+                                  onChange={(e) => handleMetaChange('cfiFlewApproaches', e.target.checked)}
+                                  className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
+                                />
+                                <span className="text-[11px] transition-colors" style={{ color: 'var(--text-primary)' }}>I did approaches this lesson</span>
+                              </label>
+
+                              {meta.cfiFlewApproaches && (
+                                <div className="space-y-4 pt-2 border-l-2 border-[#e2e8f0] pl-4 ml-1">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Number of CFI Approaches</label>
+                                      <div className="flex items-center gap-2">
+                                        <input 
+                                          type="number" 
+                                          value={meta.cfiApproachCount} 
+                                          onChange={(e) => handleMetaChange('cfiApproachCount', e.target.value)} 
+                                          className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                          placeholder="0" 
+                                        />
+                                        <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1 flex flex-col justify-end">
+                                      <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className="relative flex items-center">
+                                          <input
+                                            type="checkbox"
+                                            checked={meta.cfiHoldPerformed}
+                                            onChange={(e) => handleMetaChange('cfiHoldPerformed', e.target.checked)}
+                                            className="peer sr-only"
+                                          />
+                                          <div className="w-4 h-4 border-2 border-[#dde3ec] rounded bg-white peer-checked:bg-[#1a3a5c] peer-checked:border-[#1a3a5c] transition-all" />
+                                          <Check size={10} className="absolute left-0.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                        </div>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Holding performed</span>
+                                      </label>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Approach Types</label>
+                                    
+                                    <div className="flex flex-wrap gap-1.5 mb-2">
+                                      {JSON.parse(meta.cfiApproachTypes || '[]').map((type: string) => (
+                                        <span key={type} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#1a3a5c] text-white text-[10px] font-bold rounded-full">
+                                          {type}
+                                          <button
+                                            onClick={() => {
+                                              const current = JSON.parse(meta.cfiApproachTypes || '[]');
+                                              handleMetaChange('cfiApproachTypes', JSON.stringify(current.filter((t: string) => t !== type)));
+                                            }}
+                                            className="hover:text-red-300 transition-colors"
+                                          >
+                                            <X size={10} />
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
+
+                                    <div className="relative">
+                                      <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
+                                      <input
+                                        type="text"
+                                        value={cfiApproachSearch}
+                                        onChange={(e) => setCfiApproachSearch(e.target.value)}
+                                        placeholder="Search approach types..."
+                                        className="w-full text-xs border border-[#dde3ec] rounded-lg pl-8 pr-3 py-2 bg-white focus:outline-none focus:border-[#1a3a5c] transition-all"
+                                      />
+                                    </div>
+
+                                    <div className="max-h-40 overflow-y-auto border border-[#dde3ec] rounded-lg bg-white divide-y divide-[#f1f5f9] custom-scrollbar">
+                                      {APPROACH_TYPES.filter(t => 
+                                        t.label.toLowerCase().includes(cfiApproachSearch.toLowerCase()) || 
+                                        t.code.toLowerCase().includes(cfiApproachSearch.toLowerCase())
+                                      ).map(type => {
+                                        const isSelected = JSON.parse(meta.cfiApproachTypes || '[]').includes(type.code);
+                                        return (
+                                          <button
+                                            key={type.code}
+                                            onClick={() => {
+                                              const current = JSON.parse(meta.cfiApproachTypes || '[]');
+                                              if (isSelected) {
+                                                handleMetaChange('cfiApproachTypes', JSON.stringify(current.filter((t: string) => t !== type.code)));
+                                              } else {
+                                                handleMetaChange('cfiApproachTypes', JSON.stringify([...current, type.code]));
+                                              }
+                                            }}
+                                            className={cn(
+                                              "w-full px-3 py-2 text-left text-[11px] transition-colors flex items-center justify-between",
+                                              isSelected ? "bg-[#f0f9ff] text-[#1a3a5c]" : "hover:bg-[#f8fafc] text-[#64748b]"
+                                            )}
+                                          >
+                                            <span>{type.label}</span>
+                                            {isSelected && <Check size={12} className="text-[#1a3a5c]" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </motion.div>
                       )}
