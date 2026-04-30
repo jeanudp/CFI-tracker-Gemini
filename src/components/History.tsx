@@ -9,6 +9,7 @@ import EndorsementAdvisor from './EndorsementAdvisor';
 import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
+import { QRCodeSVG } from 'qrcode.react';
 
 const CHECKLIST_PPL = [
   {
@@ -79,7 +80,8 @@ export default function History() {
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [shareCopied, setShareCopied] = useState(false);
+  const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'endorsements'>('lesson');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -796,6 +798,7 @@ export default function History() {
 
   const handleShareFromHistory = async () => {
     if (!selectedLesson?.student_name) return;
+    const studentName = selectedLesson.student_name;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -803,7 +806,7 @@ export default function History() {
       const { data: existingToken } = await supabase
         .from('student_share_tokens')
         .select('token')
-        .eq('student_name', selectedLesson.student_name)
+        .eq('student_name', studentName)
         .eq('user_id', session.user.id)
         .eq('active', true)
         .maybeSingle();
@@ -813,7 +816,7 @@ export default function History() {
         const { data: newToken, error: insertError } = await supabase
           .from('student_share_tokens')
           .insert({ 
-            student_name: selectedLesson.student_name, 
+            student_name: studentName, 
             user_id: session.user.id, 
             active: true 
           })
@@ -824,9 +827,7 @@ export default function History() {
       }
       
       const shareUrl = `${window.location.origin}/view/${token}`;
-      await navigator.clipboard.writeText(shareUrl);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
+      setShareModalData({ url: shareUrl, studentName: studentName });
     } catch (err: any) {
       console.error('Share error:', err);
       window.alert('Failed to share: ' + err.message);
@@ -1158,22 +1159,13 @@ export default function History() {
                   </div>
 
                   <div className="flex gap-3">
-                    {activeTab === 'lesson' && (
+                    {activeTab === 'lesson' && selectedLesson && (
                       <button
                         onClick={handleShareFromHistory}
                         className="bg-white text-[#1a3a5c] border border-[#dde3ec] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center gap-2 shadow-sm"
                       >
-                        {shareCopied ? (
-                          <>
-                            <Check size={14} className="text-green-500" />
-                            <span className="text-green-500">Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Share2 size={14} />
-                            <span>Share</span>
-                          </>
-                        )}
+                        <Share2 size={14} />
+                        <span>Share</span>
                       </button>
                     )}
                     <button
@@ -3135,6 +3127,101 @@ export default function History() {
           </div>
         </div>
       )}
+
+      {/* Share Progress Modal */}
+      <AnimatePresence>
+        {shareModalData && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShareModalData(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-[32px] overflow-hidden shadow-2xl"
+            >
+              <div className="p-6 border-b border-[#f1f5f9] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                    <Share2 size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#1a3a5c]">Share Progress</h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{shareModalData.studentName}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShareModalData(null)}
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-8 text-center">
+                <div className="bg-[#f8fafc] p-6 rounded-3xl inline-block border-2 border-dashed border-gray-100 mb-6">
+                  <QRCodeSVG 
+                    value={shareModalData.url} 
+                    size={220}
+                    level="H"
+                    includeMargin={false}
+                  />
+                </div>
+                
+                <p className="text-sm font-bold text-[#1a3a5c] mb-1">Student Scan QR Code</p>
+                <p className="text-xs text-gray-500 mb-8 px-6">Your student can scan this to view their progress, cumulative hours, and lesson notes.</p>
+
+                <div className="relative flex items-center justify-center mb-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-100" />
+                  </div>
+                  <span className="relative px-4 bg-white text-[10px] font-black uppercase tracking-widest text-gray-400">or</span>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    const shareData = {
+                      title: '61 Tracker — Student View',
+                      text: `View your flight training progress for ${shareModalData.studentName}`,
+                      url: shareModalData.url,
+                    };
+                    
+                    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                      try {
+                        await navigator.share(shareData);
+                      } catch (err) {
+                        console.error('Share failed:', err);
+                      }
+                    } else {
+                      await navigator.clipboard.writeText(shareModalData.url);
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    }
+                  }}
+                  className="w-full py-4 bg-[#1a3a5c] text-white font-black rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 cursor-pointer group"
+                >
+                  {linkCopied ? (
+                    <>
+                      <Check size={18} className="text-green-400" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={18} className="text-white/50 group-hover:text-white transition-colors" />
+                      <span>Send Link</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
