@@ -359,35 +359,38 @@ export default function StudentView() {
           </div>
           <div className="flex items-center gap-3">
             <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Student View — Read Only</span>
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span className="text-[9px] sm:text-[10px] font-black text-amber-400 uppercase tracking-widest whitespace-nowrap">
+                <span className="sm:hidden">Student · View Only</span>
+                <span className="hidden sm:inline">Student View — Read Only</span>
+              </span>
             </div>
           </div>
         </div>
       </header>
 
       <main className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
           {/* Student Profile & Quick Stats */}
-          <div className="mb-8">
-            <div className="bg-white rounded-[2rem] border border-[#dde3ec] p-6 sm:p-8 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                 <div>
-                  <h2 className="text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Training Progress</h2>
-                  <p className="text-[#64748b] mt-1 font-medium italic">Shared via 61 Tracker · Read-only access</p>
+                  <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Training Progress</h2>
+                  <p className="text-[10px] sm:text-sm text-[#64748b] mt-1 font-medium italic">Shared via 61 Tracker · Read-only access</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   <div className="text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-1">Lessons</p>
-                    <p className="text-2xl font-black text-[#1a3a5c]">{studentLessons.length}</p>
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-0.5 sm:mb-1">Lessons</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#1a3a5c]">{studentLessons.length}</p>
                   </div>
                   <div className="text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-1">Total Hours</p>
-                    <p className="text-2xl font-black text-[#1a3a5c]">{stats.totFlight.toFixed(1)}</p>
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-0.5 sm:mb-1">Total Hours</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#1a3a5c]">{stats.totFlight.toFixed(1)}</p>
                   </div>
-                  <div className="text-center md:text-left hidden sm:block">
-                    <p className="text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-1">Passing Tasks</p>
-                    <p className="text-2xl font-black text-[#2d7a4f]">
+                  <div className="text-center md:text-left hidden lg:block">
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-0.5 sm:mb-1">Passing Tasks</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#2d7a4f]">
                       {studentLessons.reduce((sum, l) => sum + Object.values(l.grades || {}).filter(g => isPassingGrade(g)).length, 0)}
                     </p>
                   </div>
@@ -397,12 +400,12 @@ export default function StudentView() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex flex-wrap gap-2 mb-8 bg-white/50 p-1.5 rounded-2xl border border-white/50 w-fit backdrop-blur-sm shadow-sm ml-4">
+          <div className="flex sm:flex-wrap gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-white/50 p-1.5 rounded-2xl border border-white/50 w-full sm:w-fit backdrop-blur-sm shadow-sm overflow-x-auto scrollbar-hide shrink-0">
             {[
-              { id: 'this-lesson', label: 'This Lesson', icon: BookOpen },
-              { id: 'cumulative', label: 'Cumulative', icon: HistoryIcon },
-              { id: 'checkride', label: 'Checkride', icon: CheckSquare },
-              { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+              { id: 'this-lesson', label: 'Lesson', fullLabel: 'This Lesson', icon: BookOpen },
+              { id: 'cumulative', label: 'Stats', fullLabel: 'Cumulative', icon: HistoryIcon },
+              { id: 'checkride', label: 'Checkride', fullLabel: 'Checkride', icon: CheckSquare },
+              { id: 'analytics', label: 'Analytics', fullLabel: 'Analytics', icon: BarChart3 }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -414,22 +417,23 @@ export default function StudentView() {
                   }
                 }}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all",
+                  "px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap shrink-0",
                   activeTab === tab.id
                     ? "bg-[#1a3a5c] text-white shadow-md"
                     : "text-[#64748b] hover:bg-white hover:text-[#1a3a5c]"
                 )}
               >
-                <tab.icon size={14} />
-                {tab.label}
+                <tab.icon size={13} className="sm:w-[14px] sm:h-[14px]" />
+                <span className="sm:hidden">{tab.id === 'analytics' ? tab.fullLabel : tab.label}</span>
+                <span className="hidden sm:inline">{tab.fullLabel}</span>
               </button>
             ))}
           </div>
 
           {/* Lesson Selection Pills */}
-          <div className="mb-10 px-4">
-            <h3 className="text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-4">Lesson History — Tap to view details</h3>
-            <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+          <div className="mb-8 sm:mb-10 sm:px-4">
+            <h3 className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-3 sm:mb-4">Lesson History — Tap to view details</h3>
+<div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
               {studentLessons.map((lesson) => (
                 <button
                   key={lesson.id}
@@ -479,31 +483,31 @@ export default function StudentView() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                 >
-                  <div className="bg-white rounded-[2rem] border border-[#dde3ec] shadow-sm overflow-hidden">
-                    <div className="p-6 sm:p-8 bg-gradient-to-r from-[#1a3a5c] to-[#2a5a8c] text-white">
+                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] shadow-sm overflow-hidden">
+                    <div className="p-5 sm:p-8 bg-gradient-to-r from-[#1a3a5c] to-[#2a5a8c] text-white">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                          <div className="flex items-center gap-3 mb-2">
-                             <div className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-widest">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                             <div className="px-2.5 py-1 bg-white/10 border border-white/20 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest">
                                {selectedLesson.type} Lesson
                              </div>
                              {selectedLesson.meta?.rating_code && (
-                               <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-400">
+                               <div className="px-2.5 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-amber-400">
                                  {selectedLesson.meta.rating_code.toUpperCase()}
                                </div>
                              )}
                           </div>
-                          <h3 className="text-3xl font-black tracking-tight">{selectedLesson.label}</h3>
-                          <p className="text-white/60 mt-1 font-medium">{formatDate(selectedLesson.saved_at)}</p>
+                          <h3 className="text-xl sm:text-3xl font-black tracking-tight">{selectedLesson.label}</h3>
+                          <p className="text-[10px] sm:text-sm text-white/60 mt-1 font-medium">{formatDate(selectedLesson.saved_at)}</p>
                         </div>
                         {selectedLesson.meta?.overallGrade && (
-                          <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
+                          <div className="flex items-center gap-3 sm:gap-4 bg-white/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl backdrop-blur-sm">
                             <div className="text-right">
-                              <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">Overall Grade</p>
-                              <p className="text-sm font-bold">{selectedLesson.meta.overallGrade === 'S' ? 'Satisfactory' : 'Needs Improvement'}</p>
+                              <p className="text-[8px] sm:text-[10px] font-black text-white/50 uppercase tracking-widest mb-0.5 sm:mb-1">Overall Grade</p>
+                              <p className="text-[11px] sm:text-sm font-bold">{selectedLesson.meta.overallGrade === 'S' ? 'Satisfactory' : 'Needs Impr.'}</p>
                             </div>
                             <div className={cn(
-                              "w-12 h-12 rounded-full flex items-center justify-center text-xl font-black shadow-lg",
+                              "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl font-black shadow-lg",
                               selectedLesson.meta.overallGrade === 'S' ? "bg-green-500 shadow-green-500/20" : "bg-red-500 shadow-red-500/20"
                             )}>
                               {selectedLesson.meta.overallGrade}
@@ -513,56 +517,59 @@ export default function StudentView() {
                       </div>
                     </div>
 
-                    <div className="p-8">
+                    <div className="p-5 sm:p-8">
                       {/* Lesson Notes */}
                       {selectedLesson.notes?.[`lesson_notes`] && (
-                        <div className="mb-10 bg-[#f8fafc] p-6 rounded-2xl border border-[#dde3ec] relative">
-                          <div className="absolute -top-3 left-6 px-3 py-1 bg-white border border-[#dde3ec] rounded-full text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">
+                        <div className="mb-8 sm:mb-10 bg-[#f8fafc] p-4 sm:p-6 rounded-2xl border border-[#dde3ec] relative">
+                          <div className="absolute -top-3 left-4 sm:left-6 px-3 py-1 bg-white border border-[#dde3ec] rounded-full text-[8px] sm:text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">
                             Instructor Comments
                           </div>
-                          <p className="text-[#1a3a5c] leading-relaxed italic whitespace-pre-wrap">{selectedLesson.notes[`lesson_notes`]}</p>
+                          <p className="text-xs sm:text-sm text-[#1a3a5c] leading-relaxed italic whitespace-pre-wrap">{selectedLesson.notes[`lesson_notes`]}</p>
                         </div>
                       )}
 
                       {/* Flight Time Details */}
                       {selectedLesson.type === 'flight' && selectedLesson.meta && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-10">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-10">
                           {[
                             { label: 'Total Flight', val: selectedLesson.meta.totalFlight, unit: 'h' },
-                            { label: 'Dual Given', val: selectedLesson.meta.dual, unit: 'h' },
+                            { label: 'Dual Instruction', fullLabel: 'Dual Given', val: selectedLesson.meta.dual, unit: 'h' },
                             { label: 'Solo', val: selectedLesson.meta.solo, unit: 'h' },
                             { label: 'Landings', val: selectedLesson.meta.ldgTotal, unit: '' },
-                            { label: 'Day Landings', val: selectedLesson.meta.ldgDay, unit: '' },
-                            { label: 'Night Landings', val: selectedLesson.meta.ldgNight, unit: '' },
+                            { label: 'Day Ldgs', fullLabel: 'Day Landings', val: selectedLesson.meta.ldgDay, unit: '' },
+                            { label: 'Night Ldgs', fullLabel: 'Night Landings', val: selectedLesson.meta.ldgNight, unit: '' },
                             { label: 'Night', val: selectedLesson.meta.night, unit: 'h' },
-                            { label: 'Cross Country', val: (parseFloat(selectedLesson.meta.xcDual||'0')+parseFloat(selectedLesson.meta.xcSolo||'0')).toFixed(1), unit: 'h' },
+                            { label: 'X-Country', fullLabel: 'Cross Country', val: (parseFloat(selectedLesson.meta.xcDual||'0')+parseFloat(selectedLesson.meta.xcSolo||'0')).toFixed(1), unit: 'h' },
                           ].map((s, i) => (
-                            <div key={i} className="bg-white p-4 rounded-2xl border border-[#dde3ec] shadow-sm">
-                              <p className="text-[10px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">{s.label}</p>
-                              <p className="text-xl font-black text-[#1a3a5c]">{s.val || '0'}{s.unit}</p>
+                            <div key={i} className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#dde3ec] shadow-sm">
+                              <p className="text-[8px] sm:text-[10px] font-black text-[#94a3b8] uppercase tracking-widest mb-0.5 sm:mb-1">
+                                <span className="sm:hidden">{s.label}</span>
+                                <span className="hidden sm:inline">{s.fullLabel || s.label}</span>
+                              </p>
+                              <p className="text-lg sm:text-xl font-black text-[#1a3a5c]">{s.val || '0'}{s.unit}</p>
                             </div>
                           ))}
                         </div>
                       )}
 
                       {/* Task Performance Table */}
-                      <div className="space-y-6">
+                      <div className="space-y-4 sm:space-y-6">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-black text-[#1a3a5c] uppercase tracking-widest flex items-center gap-2">
-                             <FileText size={14} className="text-amber-500" />
+                          <h4 className="text-[10px] sm:text-xs font-black text-[#1a3a5c] uppercase tracking-widest flex items-center gap-2">
+                             <FileText size={13} className="text-amber-500 sm:w-[14px] sm:h-[14px]" />
                              Task Performance
                           </h4>
-                          <span className="text-[11px] text-[#64748b] font-medium">{Object.keys(selectedLesson.grades || {}).length} tasks graded</span>
+                          <span className="text-[9px] sm:text-[11px] text-[#64748b] font-medium">{Object.keys(selectedLesson.grades || {}).length} tasks graded</span>
                         </div>
                         
-                        <div className="border border-[#dde3ec] rounded-2xl overflow-hidden divide-y divide-[#dde3ec]">
+                        <div className="border border-[#dde3ec] rounded-xl sm:rounded-2xl overflow-hidden divide-y divide-[#dde3ec]">
                           {acsData.map((area, ai) => {
                             const areaTasks = area.tasks.filter((_, ti) => selectedLesson.grades?.[`${ai}_${ti}`]);
                             if (areaTasks.length === 0) return null;
                             return (
                               <div key={ai} className="bg-white">
-                                <div className="px-6 py-3 bg-[#f8fafc] flex items-center justify-between">
-                                  <span className="text-[11px] font-black uppercase text-[#64748b] tracking-wider">{area.area}</span>
+                                <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#f8fafc] flex items-center justify-between">
+                                  <span className="text-[9px] sm:text-[11px] font-black uppercase text-[#64748b] tracking-wider">{area.area}</span>
                                 </div>
                                 <div className="divide-y divide-[#f1f5f9]">
                                   {area.tasks.map((task, ti) => {
@@ -571,19 +578,19 @@ export default function StudentView() {
                                     const note = selectedLesson.notes?.[`${ai}_${ti}`];
                                     return (
                                       <div key={ti} className="p-4 sm:p-6 bg-white">
-                                        <div className="flex items-start justify-between gap-4 mb-2">
+                                        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-1 sm:mb-2">
                                           <div>
-                                            <p className="text-xs font-black text-[#1a3a5c] mb-1">{task.code}: {task.name}</p>
+                                            <p className="text-[11px] sm:text-xs font-black text-[#1a3a5c]">{task.code}: {task.name}</p>
                                           </div>
                                           <div className={cn(
-                                            "shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-black shadow-sm",
+                                            "shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-white text-[10px] sm:text-xs font-black shadow-sm",
                                             gradeDisplayColor(grade)
                                           )}>
                                             {grade}
                                           </div>
                                         </div>
                                         {note && (
-                                          <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100 text-[11px] text-[#475569] leading-relaxed italic">
+                                          <div className="mt-2 sm:mt-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg sm:rounded-xl border border-gray-100 text-[10px] sm:text-[11px] text-[#475569] leading-relaxed italic">
                                             {note}
                                           </div>
                                         )}
@@ -610,24 +617,28 @@ export default function StudentView() {
                   className="space-y-8"
                 >
                   {/* Hours Summary Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-3 bg-white p-6 rounded-[2rem] border border-[#dde3ec] shadow-sm">
-                       <h3 className="text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
-                         <Clock className="text-amber-500" />
-                         Total Cumulative Training Time
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    <div className="md:col-span-3 bg-white p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] shadow-sm">
+                       <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
+                         <Clock className="text-amber-500" size={20} />
+                         <span className="sm:inline hidden">Total Cumulative Training Time</span>
+                         <span className="sm:hidden">Total Training Time</span>
                        </h3>
-                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-6">
+                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-5 sm:gap-6">
                          {[
                            { label: 'Total Flight', val: stats.totFlight.toFixed(1) },
-                           { label: 'Dual Given', val: stats.totDual.toFixed(1) },
+                           { label: 'Dual Instruction', fullLabel: 'Dual Given', val: stats.totDual.toFixed(1) },
                            { label: 'Solo', val: stats.totSolo.toFixed(1) },
                            { label: 'Cross Country', val: stats.totXc.toFixed(1) },
                            { label: 'Night', val: stats.totNight.toFixed(1) },
                            { label: 'Simulated Inst.', val: stats.totSim.toFixed(1) },
                          ].map((s, i) => (
                            <div key={i}>
-                             <p className="text-[10px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">{s.label}</p>
-                             <p className="text-2xl font-black text-[#1a3a5c]">{s.val}</p>
+                             <p className="text-[8px] sm:text-[10px] font-black text-[#94a3b8] uppercase tracking-widest mb-0.5 sm:mb-1">
+                               <span className="sm:hidden">{s.label.split(' ')[0]}</span>
+                               <span className="hidden sm:inline">{s.fullLabel || s.label}</span>
+                             </p>
+                             <p className="text-lg sm:text-2xl font-black text-[#1a3a5c]">{s.val}</p>
                            </div>
                          ))}
                        </div>
@@ -635,36 +646,36 @@ export default function StudentView() {
                   </div>
 
                   {/* ACS Performance Tracking */}
-                  <div className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm">
-                    <h3 className="text-xl font-bold text-[#1a3a5c] mb-8 flex items-center gap-2">
-                       <Trophy className="text-amber-500" />
+                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 sm:mb-8 flex items-center gap-2">
+                       <Trophy className="text-amber-500" size={20} />
                        ACS Performance Tracking
                     </h3>
                     
-                    <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {acsData.map((area, ai) => (
-                        <div key={ai} className="bg-[#f8fafc] rounded-2xl border border-[#dde3ec] p-5">
-                          <h4 className="text-xs font-black uppercase text-[#1a3a5c] tracking-widest mb-4">{area.area}</h4>
-                          <div className="space-y-3">
+                        <div key={ai} className="bg-[#f8fafc] rounded-xl sm:rounded-2xl border border-[#dde3ec] p-4 sm:p-5">
+                          <h4 className="text-[10px] sm:text-xs font-black uppercase text-[#1a3a5c] tracking-widest mb-3 sm:mb-4">{area.area}</h4>
+                          <div className="space-y-2 sm:space-y-3">
                             {area.tasks.map((task, ti) => {
                               const taskId = `${ai}_${ti}`;
                               const gradeInfo = getMostRecentGradeInfo(studentLessons, taskId);
                               return (
-                                <div key={ti} className="flex items-center justify-between gap-4 p-3 bg-white rounded-xl border border-[#dde3ec] shadow-sm">
-                                  <span className="text-xs font-bold text-[#1a3a5c] truncate">{task.code}: {task.name}</span>
-                                  <div className="flex items-center gap-3">
+                                <div key={ti} className="flex items-center justify-between gap-3 p-2.5 sm:p-3 bg-white rounded-lg sm:rounded-xl border border-[#dde3ec] shadow-sm">
+                                  <span className="text-[11px] sm:text-xs font-bold text-[#1a3a5c] truncate">{task.code}: {task.name}</span>
+                                  <div className="flex items-center gap-2 sm:gap-3">
                                     {gradeInfo ? (
                                       <>
-                                        <span className="text-[10px] text-[#94a3b8] font-medium hidden sm:block">Last: {new Date(gradeInfo.date).toLocaleDateString()}</span>
+                                        <span className="text-[8px] sm:text-[10px] text-[#94a3b8] font-medium hidden sm:block">Last: {new Date(gradeInfo.date).toLocaleDateString()}</span>
                                         <div className={cn(
-                                          "w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-black shadow-sm",
+                                          "w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-white text-[9px] sm:text-[10px] font-black shadow-sm",
                                           gradeDisplayColor(gradeInfo.grade)
                                         )}>
                                           {gradeInfo.grade}
                                         </div>
                                       </>
                                     ) : (
-                                      <span className="text-[10px] font-black uppercase text-gray-300">Not Covered</span>
+                                      <span className="text-[9px] font-black uppercase text-gray-200">N/A</span>
                                     )}
                                   </div>
                                 </div>
@@ -686,18 +697,19 @@ export default function StudentView() {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-8"
                 >
-                  <div className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                       <h3 className="text-xl font-bold text-[#1a3a5c] flex items-center gap-2">
-                         <CheckSquare className="text-amber-500" />
-                         Regulatory Requirements Progress (61.109)
+                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+                       <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] flex items-center gap-2">
+                         <CheckSquare className="text-amber-500" size={20} />
+                         <span className="sm:inline hidden">Regulatory Requirements Progress (61.109)</span>
+                         <span className="sm:hidden">Checkride Progress</span>
                        </h3>
-                       <div className="px-4 py-1.5 bg-[#f8fafc] border border-[#dde3ec] rounded-full text-[10px] font-black text-[#64748b] uppercase tracking-widest">
+                       <div className="w-fit px-3 py-1 bg-[#f8fafc] border border-[#dde3ec] rounded-full text-[8px] sm:text-[10px] font-black text-[#64748b] uppercase tracking-widest">
                          Rating: {selectedLesson?.meta?.rating_code?.toUpperCase() || 'PPL'}
                        </div>
                     </div>
                     
-                    <div className="space-y-8">
+                    <div className="space-y-6 sm:space-y-8">
                       {(() => {
                         const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
                         const sls = studentLessons.filter(l => (l.meta?.rating_code || 'ppl') === lessonRating);
@@ -730,9 +742,36 @@ export default function StudentView() {
                         if (REQS.length === 0) return <p className="text-sm text-gray-500 italic">Detailed requirements for this rating are being updated.</p>;
 
                         return REQS.map((section, idx) => (
-                          <div key={idx} className="space-y-4">
-                            <h4 className="text-[10px] font-black uppercase text-[#94a3b8] tracking-widest">{section.section}</h4>
-                            <div className="overflow-hidden border border-[#dde3ec] rounded-2xl">
+                          <div key={idx} className="space-y-3 sm:space-y-4">
+                            <h4 className="text-[9px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest">{section.section}</h4>
+                            
+                            {/* Mobile Requirements Card View */}
+                            <div className="sm:hidden space-y-2">
+                              {section.rows.map((row: any, i: number) => (
+                                <div key={i} className="bg-[#f8fafc] border border-[#dde3ec] p-3 rounded-xl flex items-center justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-bold text-[#1a3a5c] truncate">{row.label}</p>
+                                    <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-widest">Goal: {row.need}{row.unit}</p>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className={cn(
+                                      "text-[10px] font-black px-2 py-1 rounded-full",
+                                      row.have >= row.need ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                                    )}>
+                                      {row.have.toFixed(1)}{row.unit}
+                                    </span>
+                                    {row.have >= row.need ? (
+                                      <CheckCircle2 className="text-green-500" size={16} />
+                                    ) : (
+                                      <AlertCircle className="text-amber-500" size={16} />
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Desktop Table View */}
+                            <div className="hidden sm:block overflow-hidden border border-[#dde3ec] rounded-2xl">
                               <table className="min-w-full divide-y divide-[#dde3ec]">
                                 <thead className="bg-[#f8fafc]">
                                   <tr>
@@ -776,32 +815,32 @@ export default function StudentView() {
                   </div>
 
                   {/* Endorsements Section */}
-                  <div className="bg-white rounded-[2rem] border border-[#dde3ec] p-8 shadow-sm">
-                    <h3 className="text-xl font-bold text-[#1a3a5c] mb-8 flex items-center gap-2">
-                       <Award className="text-amber-500" />
+                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 sm:mb-8 flex items-center gap-2">
+                       <Award className="text-amber-500" size={20} />
                        Endorsements Verified
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       {endorsements.filter(e => e.completed).map((e, i) => (
-                        <div key={i} className="p-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white">
+                        <div key={i} className="p-3 sm:p-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            <div className="shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white">
                               <Check size={16} />
                             </div>
-                            <div>
-                               <p className="text-xs font-black text-[#166534] uppercase tracking-widest">{e.endorsement_key}</p>
-                               <p className="text-[11px] text-[#166534] font-medium max-w-[200px] truncate">{e.endorsement_label}</p>
+                            <div className="truncate">
+                               <p className="text-[9px] sm:text-[10px] font-black text-[#166534] uppercase tracking-widest">{e.endorsement_key}</p>
+                               <p className="text-[10px] sm:text-[11px] text-[#166534] font-medium truncate">{e.endorsement_label}</p>
                             </div>
                           </div>
-                          <div className="text-[10px] font-bold text-[#166534]/60 whitespace-nowrap">
+                          <div className="shrink-0 text-[8px] sm:text-[10px] font-bold text-[#166534]/60 whitespace-nowrap">
                             {formatDate(e.completed_date || '')}
                           </div>
                         </div>
                       ))}
                       {endorsements.filter(e => e.completed).length === 0 && (
-                        <div className="col-span-full py-12 text-center bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
-                          <Award size={32} className="text-gray-300 mx-auto mb-3" />
-                          <p className="text-sm font-medium text-gray-400 italic">No instructor endorsements recorded for this student view.</p>
+                        <div className="col-span-full py-10 text-center bg-gray-50 rounded-2xl sm:rounded-[2rem] border border-dashed border-gray-200">
+                          <Award size={28} className="text-gray-300 mx-auto mb-3" />
+                          <p className="text-[11px] sm:text-sm font-medium text-gray-400 italic">No instructor endorsements recorded.</p>
                         </div>
                       )}
                     </div>
