@@ -257,8 +257,8 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
   };
 
   const counts = {
-    s: Object.values(grades).filter(v => ['S', '3', '4'].includes(v)).length,
-    n: Object.values(grades).filter(v => ['N', '1', '2'].includes(v)).length,
+    s: Object.values(grades).filter(v => ['S', '3', '4'].includes(v as string)).length,
+    n: Object.values(grades).filter(v => ['N', '1', '2'].includes(v as string)).length,
   };
 
   return (

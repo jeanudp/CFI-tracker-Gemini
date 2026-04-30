@@ -128,7 +128,7 @@ export default function App() {
         />
       )}
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+        <Routes location={location}>
         <Route 
           path="/auth" 
           element={!session ? <Auth /> : <Navigate to="/dashboard" />} 

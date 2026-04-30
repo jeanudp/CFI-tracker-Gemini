@@ -1093,8 +1093,8 @@ export default function FlightLesson() {
   };
 
   const counts = {
-    s: Object.values(grades).filter(v => isPassingGrade(v)).length,
-    n: Object.values(grades).filter(v => ['1', '2', 'N'].includes(v)).length,
+    s: Object.values(grades).filter(v => isPassingGrade(v as string)).length,
+    n: Object.values(grades).filter(v => ['1', '2', 'N'].includes(v as string)).length,
   };
 
   const acsData = rating ? ALL_ACS[rating.code] : [];

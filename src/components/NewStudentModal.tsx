@@ -317,13 +317,13 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
       // Save prior hours if any
       if (includePrior) {
         const priorEntries = Object.entries(priorHours)
-          .filter(([_, v]) => v && parseFloat(v) > 0)
+          .filter(([_, v]) => v && parseFloat(v as string) > 0)
           .map(([key, value]) => ({
             user_id: session.user.id,
             student_name: name.trim(),
             field_key: key,
-            entries: [{ val: parseFloat(value), date: 'Prior logbook' }],
-            total: parseFloat(value),
+            entries: [{ val: parseFloat(value as string), date: 'Prior logbook' }],
+            total: parseFloat(value as string),
           }));
 
         if (priorEntries.length > 0) {

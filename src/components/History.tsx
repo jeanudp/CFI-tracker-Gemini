@@ -1243,12 +1243,12 @@ export default function History() {
                   <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Satisfactory</div>
-                    <div className="text-xl font-mono font-bold text-[#2d7a4f]">{Object.values(selectedLesson.grades || {}).filter(v => ['S', '3', '4'].includes(v)).length || '—'}</div>
+                    <div className="text-xl font-mono font-bold text-[#2d7a4f]">{Object.values(selectedLesson.grades || {}).filter(v => ['S', '3', '4'].includes(v as string)).length || '—'}</div>
                     <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
                   </div>
                   <div className="bg-white rounded-xl border border-[#dde3ec] p-3 shadow-sm text-center">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Needs Impr.</div>
-                    <div className="text-xl font-mono font-bold text-[#c0392b]">{Object.values(selectedLesson.grades || {}).filter(v => ['N', '1', '2'].includes(v)).length || '—'}</div>
+                    <div className="text-xl font-mono font-bold text-[#c0392b]">{Object.values(selectedLesson.grades || {}).filter(v => ['N', '1', '2'].includes(v as string)).length || '—'}</div>
                     <div className="text-[9px] text-[#6b7280] mt-1">tasks</div>
                   </div>
                 </div>
