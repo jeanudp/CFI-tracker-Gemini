@@ -9,6 +9,7 @@ const ADMIN_EMAIL = 'jeanudp@gmail.com';
 export default function Admin() {
   const [codes, setCodes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [allLessons, setAllLessons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -37,17 +38,31 @@ export default function Admin() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [codesRes, subsRes] = await Promise.all([
+      const [codesRes, subsRes, lessonsRes] = await Promise.all([
         supabase.from('invite_codes').select('*').order('created_at', { ascending: false }),
         supabase.from('user_subscriptions').select('*').order('created_at', { ascending: false }),
+        supabase.from('lessons').select('*').order('saved_at', { ascending: false }),
       ]);
       setCodes(codesRes.data || []);
       setUsers(subsRes.data || []);
+      setAllLessons(lessonsRes.data || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return date.toLocaleDateString();
   };
 
   const generateCode = async () => {
@@ -117,6 +132,47 @@ export default function Admin() {
   const usedCodes = codes.filter(c => c.used);
   const paidUsers = users.filter(u => u.plan !== 'free');
   const freeUsers = users.filter(u => u.plan === 'free');
+
+  // Platform Stats
+  const totalLessons = allLessons.length;
+  const totalHours = allLessons.reduce((acc, l) => acc + parseFloat(l.meta?.totalFlight || '0'), 0);
+  const uniqueStudents = new Set(allLessons.map(l => l.student_name)).size;
+  
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  
+  const lessonsLast7Days = allLessons.filter(l => new Date(l.saved_at) >= sevenDaysAgo).length;
+  const lessonsLast30Days = allLessons.filter(l => new Date(l.saved_at) >= thirtyDaysAgo).length;
+
+  // CFI Activity
+  const cfiActivity = users.map(user => {
+    const userLessons = allLessons.filter(l => l.user_id === user.user_id);
+    const userStudents = new Set(userLessons.map(l => l.student_name)).size;
+    const userHours = userLessons.reduce((acc, l) => acc + parseFloat(l.meta?.totalFlight || '0'), 0);
+    const lastLesson = userLessons.length > 0 ? userLessons[0].saved_at : null;
+    
+    return {
+      email: user.email,
+      students: userStudents,
+      lessons: userLessons.length,
+      hours: userHours,
+      lastLesson
+    };
+  }).sort((a, b) => {
+    if (!a.lastLesson) return 1;
+    if (!b.lastLesson) return -1;
+    return new Date(b.lastLesson).getTime() - new Date(a.lastLesson).getTime();
+  });
+
+  // Recent Activity Feed
+  const recentLessons = allLessons.slice(0, 20).map(lesson => {
+    const cfi = users.find(u => u.user_id === lesson.user_id);
+    return {
+      ...lesson,
+      cfiEmail: cfi?.email || 'Unknown CFI'
+    };
+  });
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -193,6 +249,30 @@ export default function Admin() {
           ))}
         </div>
 
+        {/* Platform Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          {[
+            { label: 'Total Lessons', value: totalLessons, color: '#1a3a5c' },
+            { label: 'Flight Hours', value: totalHours.toFixed(1), color: '#2d7a4f' },
+            { label: 'Total Students', value: uniqueStudents, color: '#e8a020' },
+            { label: 'Last 7 Days', value: lessonsLast7Days, color: '#f59e0b' },
+            { label: 'Last 30 Days', value: lessonsLast30Days, color: '#10b981' },
+          ].map(stat => (
+            <div
+              key={stat.label}
+              className="rounded-2xl p-4 border"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 2px 8px rgba(26,58,92,0.06)',
+              }}
+            >
+              <span className="text-[9px] font-bold uppercase tracking-widest block mb-1" style={{ color: 'var(--text-muted)' }}>{stat.label}</span>
+              <div className="text-xl font-black" style={{ color: stat.color }}>{stat.value}</div>
+            </div>
+          ))}
+        </div>
+
         {/* Invite Codes */}
         <div
           className="rounded-2xl border overflow-hidden"
@@ -260,6 +340,96 @@ export default function Admin() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* CFI Activity */}
+        <div
+          className="rounded-2xl border overflow-hidden"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 16px rgba(26,58,92,0.08)' }}
+        >
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+            <h2 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>CFI Activity</h2>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Grouped by instructor</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+                  <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Instructor</th>
+                  <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)' }}>Students</th>
+                  <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)' }}>Lessons</th>
+                  <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)' }}>Hours</th>
+                  <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-right" style={{ color: 'var(--text-muted)' }}>Last Activity</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: 'var(--border-color)' }}>
+                {cfiActivity.map((cfi, idx) => (
+                  <tr key={idx} className="hover:bg-[var(--bg-tertiary)] transition-colors">
+                    <td className="px-6 py-3">
+                      <div className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{cfi.email}</div>
+                    </td>
+                    <td className="px-6 py-3 text-center">
+                      <div className="text-xs font-mono font-bold" style={{ color: 'var(--navy)' }}>{cfi.students}</div>
+                    </td>
+                    <td className="px-6 py-3 text-center">
+                      <div className="text-xs font-mono font-bold" style={{ color: 'var(--navy)' }}>{cfi.lessons}</div>
+                    </td>
+                    <td className="px-6 py-3 text-center">
+                      <div className="text-xs font-mono font-bold text-green-600">{cfi.hours.toFixed(1)}</div>
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      <div className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
+                        {cfi.lastLesson ? formatRelativeTime(cfi.lastLesson) : 'Never'}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div
+          className="rounded-2xl border overflow-hidden"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 16px rgba(26,58,92,0.08)' }}
+        >
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+            <h2 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>Recent Activity</h2>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Latest 20 lessons platform-wide</p>
+          </div>
+          <div className="divide-y" style={{ borderColor: 'var(--border-color)' }}>
+            {recentLessons.map((lesson, idx) => (
+              <div key={idx} className="px-6 py-4 hover:bg-[var(--bg-tertiary)] transition-colors flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{lesson.meta?.lesson_num || '—'}. {lesson.student_name}</span>
+                    <span className="shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" 
+                      style={{ 
+                        backgroundColor: lesson.type === 'flight' ? 'rgba(26,58,92,0.1)' : 'rgba(232,160,32,0.1)',
+                        color: lesson.type === 'flight' ? 'var(--navy)' : '#e8a020'
+                      }}
+                    >
+                      {lesson.type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    <span className="font-bold">{lesson.cfiEmail}</span>
+                    <span>•</span>
+                    <span>{parseFloat(lesson.meta?.totalFlight || '0').toFixed(1)}h</span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--navy)' }}>
+                    {formatRelativeTime(lesson.saved_at)}
+                  </div>
+                  <div className="text-[9px] font-bold" style={{ color: 'var(--text-muted)' }}>
+                    {new Date(lesson.saved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Users */}
