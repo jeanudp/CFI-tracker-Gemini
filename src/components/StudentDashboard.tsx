@@ -122,7 +122,7 @@ export default function StudentDashboard() {
   // Task Analysis Logic
   const taskAnalysis = acsData.flatMap((area, ai) => 
     area.tasks.map((task, ti) => {
-      const id = `${ai}_${ti}`;
+      const id = `${ai + 1}_${ti}`;
       const taskGrades = studentLessons
         .filter(l => l.grades?.[id])
         .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
@@ -989,10 +989,7 @@ export default function StudentDashboard() {
                         {proficientTasks.map((task) => (
                           <div key={task.id} className="p-4 bg-white rounded-2xl border border-[#e4f5ec] flex items-center justify-between group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-4">
-                              <div className="relative w-5 h-5 flex items-center justify-center">
-                                <div className="absolute inset-0 rounded-full border-2 border-[#5a9e6f]/20" />
-                                <div className="absolute inset-0 rounded-full border-2 border-[#5a9e6f] border-t-transparent border-r-transparent -rotate-45" />
-                              </div>
+                              <CheckCircle size={20} className="text-[#5a9e6f] shrink-0" />
                               <div>
                                 <h4 className="text-sm font-bold text-[#1a3a5c] leading-tight group-hover:text-[#166534] transition-colors">{task.name}</h4>
                                 <p className="text-[10px] text-[#6b7280] font-medium">{task.areaName}</p>
