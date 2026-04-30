@@ -2808,7 +2808,7 @@ export default function FlightLesson() {
                   </div>
                   {visibleTasks.map((task) => {
                     const ti = area.tasks.indexOf(task);
-                    const id = `${ai}_${ti}`;
+                    const id = `${ai + 1}_${ti}`;
                     return renderTaskRow(task, id);
                   })}
                 </React.Fragment>
