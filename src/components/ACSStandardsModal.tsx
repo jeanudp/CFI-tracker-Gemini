@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { ALL_ACS, ALL_GROUND_ACS } from '../constants';
-import { IR_GROUND_ACS } from '../constants/irACS';
+import { IR_GROUND_ACS, IR_FLIGHT_ACS } from '../constants/irACS';
 import { ACSTask, ACSStandard } from '../types';
 
 interface ACSStandardsModalProps {
@@ -39,6 +39,11 @@ const ACSStandardsModal: React.FC<ACSStandardsModalProps> = ({
         const task = area.tasks.find((t) => t.code === taskId);
         if (task && task.stds && task.stds.length > 0) return task;
       }
+    }
+    // Search IR_FLIGHT_ACS specifically for instrument flight tasks
+    for (const area of IR_FLIGHT_ACS) {
+      const task = area.tasks.find((t) => t.code === taskId);
+      if (task && task.stds && task.stds.length > 0) return task;
     }
     // Search ALL_GROUND_ACS (ground tasks for PPL, IR, CPL)
     for (const ratingKey of Object.keys(ALL_GROUND_ACS)) {

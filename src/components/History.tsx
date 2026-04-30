@@ -1518,7 +1518,7 @@ export default function History() {
                   </div>
                   <div className="divide-y divide-[#dde3ec]">
                     {acsData.map((area, ai) => {
-                      const tasksInArea = area.tasks.map((task, ti) => ({ name: task.name, id: `${ai}_${ti}` }))
+                      const tasksInArea = area.tasks.map((task, ti) => ({ name: task.name, id: `${ai + 1}_${ti}` }))
                         .filter(t => selectedLesson.grades?.[t.id]);
                       if (tasksInArea.length === 0) return null;
 
@@ -1667,7 +1667,7 @@ export default function History() {
                             }, 0);
                             const totalSat = acsData.reduce((sum, area, ai) => {
                               const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
-                              const sat = tasks.filter((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai}_${ti}`))).length;
+                              const sat = tasks.filter((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai + 1}_${ti}`))).length;
                               return sum + sat;
                             }, 0);
                             return totalTasks > 0 ? Math.round((totalSat / totalTasks) * 100) : 0;
@@ -1694,7 +1694,7 @@ export default function History() {
                             {acsData.map((area, ai) => {
                               const tasks = area.tasks.filter(t => !t.name.includes('N/A') && !t.name.includes('ASEL') && !t.name.includes('Seaplane') && !t.name.includes('Water'));
                               if (tasks.length === 0) return null;
-                              const sat = tasks.filter((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai}_${ti}`))).length;
+                              const sat = tasks.filter((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai + 1}_${ti}`))).length;
                               const pct = Math.round((sat / tasks.length) * 100);
 
                               return (
@@ -1763,7 +1763,7 @@ export default function History() {
                                         </div>
                                         <div className="space-y-1">
                                           {tasks.map((task, ti) => {
-                                            const info = getMostRecentGradeInfo(studentLessons, `${ai}_${ti}`);
+                                            const info = getMostRecentGradeInfo(studentLessons, `${ai + 1}_${ti}`);
                                             return (
                                               <div key={task.name} className="flex justify-between items-start py-2 border-b border-[#f1f5f9] last:border-0 gap-4">
                                                 <div className="flex-1 min-w-0">
@@ -2071,7 +2071,7 @@ export default function History() {
                             !task.name.includes('Water')
                           )
                           .forEach((task, ti) => {
-                            const taskId = `${ai}_${ti}`;
+                            const taskId = `${ai + 1}_${ti}`;
                             const mostRecentGrade = getMostRecentGrade(studentLessons, taskId);
                        
                             if (['N', '1', '2'].includes(mostRecentGrade || '')) {
@@ -2361,7 +2361,7 @@ export default function History() {
                       !t.name.includes('Seaplane') && 
                       !t.name.includes('Water')
                     );
-                    return tasks.every((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai}_${ti}`)));
+                    return tasks.every((_, ti) => isPassingGrade(getMostRecentGrade(studentLessons, `${ai + 1}_${ti}`)));
                   });
                   
                   let allMet = false;
