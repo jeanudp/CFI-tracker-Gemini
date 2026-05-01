@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { ArrowLeft, CreditCard, User, Mail, Shield, AlertCircle, Loader2, ExternalLink, Check } from 'lucide-react';
+import { ArrowLeft, CreditCard, User, Mail, Shield, AlertCircle, Loader2, ExternalLink, Check, MapPin, Award, Calendar } from 'lucide-react';
 
 export default function Account() {
   const [user, setUser] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);
+  const [cfiProfile, setCfiProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -31,12 +32,21 @@ export default function Account() {
       }
       setUser(session.user);
 
-      const { data: sub } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      setSubscription(sub);
+      const [subResponse, profileResponse] = await Promise.all([
+        supabase
+          .from('user_subscriptions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single(),
+        supabase
+          .from('cfi_profile')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+      ]);
+
+      setSubscription(subResponse.data);
+      if (profileResponse.data) setCfiProfile(profileResponse.data);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -214,7 +224,7 @@ export default function Account() {
               {user?.email?.[0]?.toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-black text-white">{user?.user_metadata?.full_name || 'CFI'}</p>
+              <p className="text-sm font-black text-white">{cfiProfile?.full_name || user?.user_metadata?.full_name || 'CFI'}</p>
               <p className="text-xs text-white/70">{user?.email}</p>
             </div>
           </div>
@@ -251,6 +261,57 @@ export default function Account() {
                   {passwordLoading ? 'Sending...' : 'Reset →'}
                 </button>
               )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* CFI Profile */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl border overflow-hidden"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 16px rgba(26,58,92,0.08)' }}
+        >
+          <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+            <h2 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>CFI Profile</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                <User size={15} style={{ color: 'var(--navy)' }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Full Name</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{cfiProfile?.full_name || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                <Award size={15} style={{ color: 'var(--navy)' }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>CFI Certificate Number</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{cfiProfile?.cert_number || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                <Calendar size={15} style={{ color: 'var(--navy)' }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>RE Exp Date</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{cfiProfile?.re_exp_date || '—'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                <MapPin size={15} style={{ color: 'var(--navy)' }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Home Airport</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{cfiProfile?.home_airport || '—'}</p>
+              </div>
             </div>
           </div>
         </motion.div>

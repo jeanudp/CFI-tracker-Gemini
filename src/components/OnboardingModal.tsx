@@ -16,6 +16,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
   const [profileDraft, setProfileDraft] = useState({ 
     full_name: '', 
     cert_number: '', 
+    home_airport: '',
     re_exp_date: `01/${new Date().getFullYear().toString().slice(-2)}` 
   });
   
@@ -49,6 +50,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
         user_id: user.id,
         full_name: profileDraft.full_name,
         cert_number: profileDraft.cert_number,
+        home_airport: profileDraft.home_airport,
         re_exp_date: profileDraft.re_exp_date,
         updated_at: new Date().toISOString(),
       };
@@ -115,13 +117,17 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
                 {[
                   { label: 'Full Name', key: 'full_name' as const, placeholder: 'e.g. John J. Smith' },
                   { label: 'CFI Certificate #', key: 'cert_number' as const, placeholder: 'e.g. 987654321CFI' },
+                  { label: 'Home Airport (ICAO)', key: 'home_airport' as const, placeholder: 'e.g. KPDX' },
                 ].map(field => (
                   <div key={field.key} className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
                     <input
                       type="text"
                       value={profileDraft[field.key]}
-                      onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      onChange={e => setProfileDraft(prev => ({ 
+                        ...prev, 
+                        [field.key]: field.key === 'home_airport' ? e.target.value.toUpperCase() : e.target.value 
+                      }))}
                       placeholder={field.placeholder}
                       className="w-full text-sm border border-[#dde3ec] rounded-xl px-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc] hover:bg-white focus:bg-white"
                     />
