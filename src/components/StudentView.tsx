@@ -20,9 +20,11 @@ import {
   FileText, 
   Info,
   Trophy,
-  Award
+  Award,
+  Map
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import RouteMap from './RouteMap';
 
 const CHECKLIST_PPL = [
   {
@@ -92,7 +94,7 @@ export default function StudentView() {
   const [manualHours, setManualHours] = useState<ManualHours[]>([]);
   const [endorsements, setEndorsements] = useState<Endorsement[]>([]);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('this-lesson');
+  const [activeTab, setActiveTab] = useState<'this-lesson' | 'cumulative' | 'checkride' | 'analytics' | 'routes'>('this-lesson');
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
   const studentName = studentInfo?.student_name;
@@ -405,6 +407,7 @@ export default function StudentView() {
               { id: 'this-lesson', label: 'Lesson', fullLabel: 'This Lesson', icon: BookOpen },
               { id: 'cumulative', label: 'Stats', fullLabel: 'Cumulative', icon: HistoryIcon },
               { id: 'checkride', label: 'Checkride', fullLabel: 'Checkride', icon: CheckSquare },
+              { id: 'routes', label: 'Routes', fullLabel: 'Routes', icon: Map },
               { id: 'analytics', label: 'Analytics', fullLabel: 'Analytics', icon: BarChart3 }
             ].map(tab => (
               <button
@@ -686,6 +689,17 @@ export default function StudentView() {
                       ))}
                     </div>
                   </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'routes' && (
+                <motion.div
+                  key="routes"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <RouteMap lessons={studentLessons} studentName={studentName || ''} />
                 </motion.div>
               )}
 
