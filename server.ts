@@ -70,6 +70,16 @@ async function startServer() {
     }
   });
 
+  app.get('/api/metar', async (req, res) => {
+    try {
+      const { default: handler } = await import('./api/metar.js');
+      await handler(req, res);
+    } catch (error) {
+      console.error('Error in metar handler:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
   // API Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

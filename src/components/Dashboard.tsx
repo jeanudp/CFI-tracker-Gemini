@@ -309,7 +309,7 @@ export default function Dashboard() {
     setWeatherLoading(true);
     setWeatherError(null);
     try {
-      const response = await fetch(`https://aviationweather.gov/api/data/metar?ids=${cfiHomeAirport}&format=json`);
+      const response = await fetch(`/api/metar?ids=${cfiHomeAirport}`);
       if (!response.ok) throw new Error('Fetch failed');
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
