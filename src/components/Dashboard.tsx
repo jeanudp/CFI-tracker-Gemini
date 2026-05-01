@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2 } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 import { QRCodeSVG } from 'qrcode.react';
@@ -179,6 +179,10 @@ export default function Dashboard() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<number>(0);
   const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
+  const [cfiHomeAirport, setCfiHomeAirport] = useState('');
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkGuide = () => {
@@ -264,10 +268,13 @@ export default function Dashboard() {
         // Fetch subscription and CFI profile in parallel
         const [subRes, profileRes] = await Promise.all([
           supabase.from('user_subscriptions').select('*').eq('user_id', session.user.id).single(),
-          supabase.from('cfi_profile').select('re_exp_date').eq('user_id', session.user.id).maybeSingle()
+          supabase.from('cfi_profile').select('re_exp_date, home_airport').eq('user_id', session.user.id).maybeSingle()
         ]);
 
         setUserSubscription(subRes.data);
+        if (profileRes.data?.home_airport) {
+          setCfiHomeAirport(profileRes.data.home_airport);
+        }
 
         if (profileRes.data?.re_exp_date) {
           setReExpDate(profileRes.data.re_exp_date);
@@ -295,6 +302,34 @@ export default function Dashboard() {
       return () => clearTimeout(timer);
     }
   }, [onboardingStep, sortedStudents.length]);
+
+  const fetchWeather = async () => {
+    if (!cfiHomeAirport) return;
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      const response = await fetch(`https://aviationweather.gov/api/data/metar?ids=${cfiHomeAirport}&format=json`);
+      if (!response.ok) throw new Error('Fetch failed');
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setWeatherData(data[0]);
+      } else {
+        setWeatherError('No weather data found');
+      }
+    } catch (err: any) {
+      setWeatherError(err.message);
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (cfiHomeAirport) {
+      fetchWeather();
+      const interval = setInterval(fetchWeather, 600000); // 10 minutes
+      return () => clearInterval(interval);
+    }
+  }, [cfiHomeAirport]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -1070,6 +1105,124 @@ export default function Dashboard() {
             })}
           </div>
         )}
+
+        {/* Weather Widget */}
+        <div className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* METAR Panel */}
+            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="flex items-center gap-2">
+                  <Cloud size={16} style={{ color: 'var(--navy)' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Live Weather</span>
+                  {cfiHomeAirport && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {weatherLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
+                  <button 
+                    onClick={fetchWeather}
+                    disabled={weatherLoading || !cfiHomeAirport}
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)] disabled:opacity-30"
+                  >
+                    <RefreshCw size={12} />
+                  </button>
+                </div>
+              </div>
+
+              {weatherError && (
+                <div className="py-4 text-center">
+                  <p className="text-xs font-bold text-red-500">{weatherError}</p>
+                </div>
+              )}
+
+              {!cfiHomeAirport && (
+                <div className="py-8 text-center px-4">
+                  <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                    Set your home airport in your CFI profile to see live weather
+                  </p>
+                </div>
+              )}
+
+              {weatherData && !weatherError && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
+                    <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.rawOb}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {(weatherData.wdir || 0).toString().padStart(3, '0')}° at {weatherData.wspd}kt
+                      {weatherData.wgst && ` G${weatherData.wgst}kt`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Visibility</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib} SM</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {weatherData.clouds?.[0] ? `${weatherData.clouds[0].cover} ${weatherData.clouds[0].base >= 0 ? `@ ${weatherData.clouds[0].base}'` : ''}` : 'Clear'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.temp}°C / {weatherData.dewp}°C</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim?.toFixed(2)} inHg</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-[9px] font-bold text-[var(--text-muted)] italic">Observed at {new Date(weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {weatherData.fltcat && (
+                      <span className={cn(
+                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
+                        weatherData.fltcat === 'VFR' ? "bg-green-500 text-white" :
+                        weatherData.fltcat === 'MVFR' ? "bg-blue-500 text-white" :
+                        weatherData.fltcat === 'IFR' ? "bg-red-500 text-white" :
+                        "bg-purple-500 text-white"
+                      )}>
+                        {weatherData.fltcat}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Prog Chart Panel */}
+            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="flex items-center gap-2">
+                  <Map size={16} style={{ color: 'var(--navy)' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Prog Chart</span>
+                </div>
+                <a 
+                  href="https://aviationweather.gov/gfa/#progchart" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-bold text-[var(--navy)] hover:underline flex items-center gap-1"
+                >
+                  Full Chart <ChevronRight size={10} />
+                </a>
+              </div>
+              <div className="relative aspect-video overflow-hidden rounded-xl border" style={{ borderColor: 'var(--border-color)' }}>
+                <img 
+                  src="https://aviationweather.gov/data/iffdp/gfa/conus_prog_12.png" 
+                  alt="AWC Prog Chart"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <p className="mt-3 text-[10px] font-medium text-center" style={{ color: 'var(--text-muted)' }}>
+                GFA Prog Chart — updates automatically
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Archived Students */}
         <div className="mt-6 border-t pt-4" style={{ borderColor: 'var(--border-color)' }}>
