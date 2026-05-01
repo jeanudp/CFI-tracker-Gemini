@@ -6,8 +6,8 @@ import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
-import RouteMap from './RouteMap';
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, Map } from 'lucide-react';
+
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
 import { QRCodeSVG } from 'qrcode.react';
@@ -83,7 +83,7 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState('');
   const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'endorsements' | 'routes'>('lesson');
+  const [activeTab, setActiveTab] = useState<'lesson' | 'cumulative' | 'checkride' | 'endorsements'>('lesson');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1172,18 +1172,6 @@ export default function History() {
                       Endorsements
                     </button>
                     <button
-                      onClick={() => setActiveTab('routes')}
-                      className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
-                        activeTab === 'routes' 
-                          ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
-                          : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
-                      )}
-                    >
-                      <Map size={14} />
-                      Routes
-                    </button>
-                    <button
                       onClick={() => navigate(`/student/${studentName}`)}
                       className="px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center"
                     >
@@ -2155,12 +2143,6 @@ export default function History() {
                   <EndorsementAdvisor studentName={studentName} ratingCode={lessonRating} />
                 </div>
               </div>
-            )}
-
-            {activeTab === 'routes' && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <RouteMap lessons={studentLessons} studentName={studentName || ''} />
-              </motion.div>
             )}
 
             {activeTab === 'checkride' && (
