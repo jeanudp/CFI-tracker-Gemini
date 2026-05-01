@@ -1175,7 +1175,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim?.toFixed(2)} inHg</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim_in_hg.toFixed(2)} inHg</span>
                   </div>
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-[9px] font-bold text-[var(--text-muted)] italic">Observed at {new Date(weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
