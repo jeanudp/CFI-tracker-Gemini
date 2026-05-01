@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { parseMetar } from "metar-taf-parser";
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
@@ -736,141 +737,6 @@ export default function Dashboard() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  function decodeMetarRemarks(rawText: string): { label: string, value: string }[] {
-    if (!rawText || !rawText.includes('RMK')) return [];
-    const remarksPart = rawText.split('RMK')[1].trim();
-    const tokens = remarksPart.split(/\s+/);
-    const decoded: { label: string, value: string }[] = [];
-
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
-
-      // AO1/AO2
-      if (token === 'AO1') {
-        decoded.push({ label: 'Station Type', value: 'Automated, no precipitation discriminator' });
-        continue;
-      }
-      if (token === 'AO2') {
-        decoded.push({ label: 'Station Type', value: 'Automated with precipitation discriminator' });
-        continue;
-      }
-
-      // SLP
-      const slpMatch = token.match(/^SLP(\d{3})$/);
-      if (slpMatch) {
-        const val = slpMatch[1];
-        const prefix = ['0', '1', '2', '3'].includes(val[0]) ? '10' : '9';
-        const pressure = prefix + val.slice(0, 2) + '.' + val[2];
-        decoded.push({ label: 'Sea Level Pressure', value: `${pressure} hPa` });
-        continue;
-      }
-
-      // T exactly 8 digits
-      const tMatch = token.match(/^T([01])(\d{3})([01])(\d{3})$/);
-      if (tMatch) {
-        const tSign = tMatch[1] === '0' ? '' : '-';
-        const tVal = (parseInt(tMatch[2], 10) / 10).toFixed(1);
-        const dSign = tMatch[3] === '0' ? '' : '-';
-        const dVal = (parseInt(tMatch[4], 10) / 10).toFixed(1);
-        decoded.push({ label: 'Precise Temp / Dewpoint', value: `${tSign}${tVal}°C / ${dSign}${dVal}°C` });
-        continue;
-      }
-
-      // Pressure Tendency
-      if (token === 'PRESRR') {
-        decoded.push({ label: 'Pressure Tendency', value: 'Rapidly Rising' });
-        continue;
-      }
-      if (token === 'PRESFR') {
-        decoded.push({ label: 'Pressure Tendency', value: 'Rapidly Falling' });
-        continue;
-      }
-
-      // Peak Wind
-      if (token === 'PK' && tokens[i+1] === 'WND') {
-        const pkVal = tokens[i+2];
-        const pkMatch = pkVal?.match(/^(\d{3})(\d{2,3})\/(\d{4})$/);
-        if (pkMatch) {
-          decoded.push({ label: 'Peak Wind', value: `${pkMatch[1]}° at ${pkMatch[2]}kt (${pkMatch[3].slice(0, 2)}:${pkMatch[3].slice(2)}Z)` });
-          i += 2;
-          continue;
-        }
-      }
-
-      // Wind Shift
-      if (token === 'WSHFT') {
-        const nextToken = tokens[i+1];
-        if (nextToken?.match(/^\d{4}$/)) {
-          decoded.push({ label: 'Wind Shift', value: `At ${nextToken.slice(0, 2)}:${nextToken.slice(2)}Z` });
-          i++;
-          continue;
-        }
-      }
-
-      // Lightning
-      if (token === 'LTGICCC' || token === 'LTGIC') {
-        decoded.push({ label: 'Lightning', value: 'In Cloud' });
-        continue;
-      }
-      if (token === 'LTGCG') {
-        decoded.push({ label: 'Lightning', value: 'Cloud to Ground' });
-        continue;
-      }
-      if (token === 'LTGCC') {
-        decoded.push({ label: 'Lightning', value: 'Cloud to Cloud' });
-        continue;
-      }
-      if (token === 'LTGCA') {
-        decoded.push({ label: 'Lightning', value: 'Cloud to Air' });
-        continue;
-      }
-      if (token === 'LTG') {
-        decoded.push({ label: 'Lightning', value: 'Lightning observed' });
-        continue;
-      }
-
-      // Virga
-      if (token === 'VIRGA') {
-        decoded.push({ label: 'Virga', value: 'Precipitation not reaching ground' });
-        continue;
-      }
-
-      // Maintenance
-      if (token === '$') {
-        decoded.push({ label: 'Maintenance', value: 'Station requires maintenance check' });
-        continue;
-      }
-
-      // TSNO, PWINO, FZRANO
-      if (token === 'TSNO') {
-        decoded.push({ label: 'Thunderstorm Sensor', value: 'Not available' });
-        continue;
-      }
-      if (token === 'PWINO') {
-        decoded.push({ label: 'Sensor', value: 'Precipitation identifier not available' });
-        continue;
-      }
-      if (token === 'FZRANO') {
-        decoded.push({ label: 'Sensor', value: 'Freezing rain sensor not available' });
-        continue;
-      }
-
-      // Precip Event [A-Z]{2,3}[BE]\d{2,4}
-      const precipMatch = token.match(/^([A-Z]{2,3})(B|E)(\d{2,4})$/);
-      if (precipMatch) {
-        const typeCode = precipMatch[1];
-        const action = precipMatch[2] === 'B' ? 'began' : 'ended';
-        const time = precipMatch[3];
-        const formattedTime = time.length === 4 ? `${time.slice(0, 2)}:${time.slice(2)}Z` : 
-                             time.length === 2 ? `${time}Z` : `${time}Z`;
-        const typeMap: any = { 'RA': 'Rain', 'SN': 'Snow', 'DZ': 'Drizzle', 'FG': 'Fog', 'TS': 'Thunderstorm' };
-        decoded.push({ label: 'Precip Event', value: `${typeMap[typeCode] || typeCode} ${action} at ${formattedTime}` });
-        continue;
-      }
-    }
-    return decoded;
-  }
-
   function getCardinalDirection(deg: number): string {
     const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     const index = Math.floor(((deg + 22.5) % 360) / 45);
@@ -1432,7 +1298,8 @@ export default function Dashboard() {
 
                   {/* Remarks Section */}
                   {(() => {
-                    const remarks = decodeMetarRemarks(weatherData.raw_text || weatherData.rawOb || '');
+                    const parsedMetar = weatherData?.raw_text ? (() => { try { return parseMetar(weatherData.raw_text); } catch(e) { return null; } })() : null;
+                    const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.description && rmk.description.trim() !== '');
                     if (remarks.length === 0) return null;
                     return (
                       <div className="mt-2">
@@ -1455,10 +1322,10 @@ export default function Dashboard() {
                               className="overflow-hidden"
                             >
                               <div className="space-y-1 mt-1">
-                                {remarks.map((rmk, idx) => (
+                                {remarks.map((rmk: any, idx: number) => (
                                   <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.label}</span>
-                                    <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.value}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.raw}</span>
+                                    <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description}</span>
                                   </div>
                                 ))}
                               </div>
