@@ -908,15 +908,15 @@ export default function Dashboard() {
 
       {/* Sticky Banner & Search Section */}
       <div className="sticky top-16 z-20 backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="px-4 pt-4">
-          <AnimatePresence>
-            {students.length === 0 && !loading && localStorage.getItem('61t_onboarded') === 'true' && !bannerDismissed && (
-              <motion.div
-                initial={{ height: 0, opacity: 0, marginBottom: 0 }}
-                animate={{ height: 'auto', opacity: 1, marginBottom: 16 }}
-                exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                className="bg-[#d4e8f5] border border-[#a8d0ed] rounded-2xl p-4 flex items-center justify-between shadow-sm overflow-hidden"
-              >
+        <AnimatePresence>
+          {students.length === 0 && !loading && localStorage.getItem('61t_onboarded') === 'true' && !bannerDismissed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-4 pt-4 overflow-hidden"
+            >
+              <div className="bg-[#d4e8f5] border border-[#a8d0ed] rounded-2xl p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/50 rounded-xl flex items-center justify-center shrink-0">
                     <span className="text-xl">👋</span>
@@ -936,10 +936,10 @@ export default function Dashboard() {
                     <X size={20} />
                   </button>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="px-4 py-3 flex items-center">
           <div className={cn("w-full transition-all", onboardingStep === 2 && "ring-4 ring-[#e8a020] ring-offset-2 rounded-xl animate-pulse")}>
