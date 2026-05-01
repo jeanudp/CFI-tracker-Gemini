@@ -990,7 +990,7 @@ export default function Dashboard() {
     </header>
 
       {/* Content */}
-      <div className="px-4 pt-2 pb-8 mt-[116px]">
+      <div className="px-4 pt-2 pb-8 mt-32">
 
         {!loading && sortedStudents.length > 0 && (
           <div className="flex items-center justify-between px-1 mb-4">
@@ -2637,7 +2637,7 @@ export default function Dashboard() {
         }}
       />
       {createPortal(
-        <div className="fixed top-16 left-0 right-0 z-[90]" style={{ backgroundColor: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)' }}>
+        <div className="fixed top-16 left-0 right-0 z-[90]" style={{ backgroundColor: 'white', borderBottom: '1px solid #e2e8f0' }}>
           <AnimatePresence>
             {students.length === 0 && !loading && localStorage.getItem('61t_onboarded') === 'true' && !bannerDismissed && (
               <motion.div
