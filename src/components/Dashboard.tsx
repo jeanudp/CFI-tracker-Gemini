@@ -907,7 +907,7 @@ export default function Dashboard() {
     </header>
 
       {/* Sticky Banner & Search Section */}
-      <div className="sticky top-16 z-20 backdrop-blur-sm border-b" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+      <div className="fixed top-16 left-0 right-0 z-20 backdrop-blur-sm border-b" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
         <AnimatePresence>
           {students.length === 0 && !loading && localStorage.getItem('61t_onboarded') === 'true' && !bannerDismissed && (
             <motion.div
@@ -956,7 +956,7 @@ export default function Dashboard() {
       </div>
 
       {/* Content */}
-      <div className="px-4 pt-2 pb-8">
+      <div className="px-4 pt-2 pb-8 mt-[calc(64px+52px)]">
 
         {!loading && sortedStudents.length > 0 && (
           <div className="flex items-center justify-between px-1 mb-4">
