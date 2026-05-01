@@ -330,6 +330,7 @@ export default function Dashboard() {
         const tafResult = await tafRes.json();
         if (Array.isArray(tafResult) && tafResult.length > 0) {
           setTafData(tafResult[0]);
+          console.log('TAF data:', JSON.stringify(tafResult[0]));
         } else {
           setTafData(null);
         }
