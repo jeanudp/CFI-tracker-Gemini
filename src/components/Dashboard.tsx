@@ -1286,7 +1286,7 @@ export default function Dashboard() {
                   {/* Remarks Section */}
                   {(() => {
                     const parsedMetar = weatherData?.raw_text ? (() => { try { return parseMetar(weatherData.raw_text); } catch(e) { return null; } })() : null;
-                    const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.description && rmk.description.trim() !== '');
+                    const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.raw && rmk.raw.trim() !== '');
                     if (remarks.length === 0) return null;
                     return (
                       <div className="mt-2">
@@ -1312,7 +1312,7 @@ export default function Dashboard() {
                                 {remarks.map((rmk: any, idx: number) => (
                                   <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.raw}</span>
-                                    <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description}</span>
+                                    <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description || rmk.raw}</span>
                                   </div>
                                 ))}
                               </div>
