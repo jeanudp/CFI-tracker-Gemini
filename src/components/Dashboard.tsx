@@ -1197,11 +1197,10 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.altim_in_hg ?? weatherData.altimeter ?? weatherData.baro_slp ?? (
-                        (weatherData.raw_text || weatherData.rawOb || '').match(/A(\d{4})/) ? 
-                        parseInt((weatherData.raw_text || weatherData.rawOb || '').match(/A(\d{4})/)[1]) / 100 : 
-                        null
-                      ))?.toFixed(2) ?? '—'} inHg
+                      {(weatherData.altim_in_hg ?? (() => {
+                        const match = (weatherData.raw_text || '').match(/\bA(\d{4})\b/);
+                        return match ? parseInt(match[1]) / 100 : null;
+                      })())?.toFixed(2) ?? '—'} inHg
                     </span>
                   </div>
 
