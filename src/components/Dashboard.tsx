@@ -1187,7 +1187,9 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {weatherData.clouds?.[0] ? `${weatherData.clouds[0].cover} ${weatherData.clouds[0].base >= 0 ? `@ ${weatherData.clouds[0].base}'` : ''}` : 'Clear'}
+                      {weatherData.clouds?.[0] ? 
+                        (weatherData.clouds[0].base != null ? `${weatherData.clouds[0].cover} @ ${weatherData.clouds[0].base}'` : weatherData.clouds[0].cover) 
+                        : 'Clear'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
@@ -1309,8 +1311,8 @@ export default function Dashboard() {
                           return (
                             <div key={idx} className="space-y-1">
                               {/* Period Header */}
-                              <div className="px-2 py-1 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+                              <div className="px-2 py-1 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]">
+                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                                   {formatTimeShort(fcst.timeFrom)} — {formatTimeShort(fcst.timeTo)}
                                   {fcst.fcstChange && <span className="ml-2 font-bold opacity-60">[{fcst.fcstChange}]</span>}
                                 </span>
@@ -1355,7 +1357,7 @@ export default function Dashboard() {
                                 <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
                                   <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Clouds</span>
                                   <span className="text-sm font-bold text-[var(--text-primary)]">
-                                    {fcst.clouds.map((c: any) => `${c.cover} @ ${c.base}ft`).join(' ')}
+                                    {fcst.clouds.map((c: any) => c.base != null ? `${c.cover} @ ${c.base}ft` : c.cover).join(' ')}
                                   </span>
                                 </div>
                               )}
