@@ -314,6 +314,7 @@ export default function Dashboard() {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         setWeatherData(data[0]);
+        console.log('Weather data:', JSON.stringify(data[0]));
       } else {
         setWeatherError('No weather data found');
       }
