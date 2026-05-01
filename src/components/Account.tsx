@@ -8,10 +8,6 @@ export default function Account() {
   const [user, setUser] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [cfiProfile, setCfiProfile] = useState<any>(null);
-  const [homeAirport, setHomeAirport] = useState('');
-  const [isEditingAirport, setIsEditingAirport] = useState(false);
-  const [airportDraft, setAirportDraft] = useState('');
-  const [saveLoading, setSaveLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -52,34 +48,11 @@ export default function Account() {
       setSubscription(subResponse.data);
       if (profileResponse.data) {
         setCfiProfile(profileResponse.data);
-        setHomeAirport(profileResponse.data.home_airport || '');
       }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSaveAirport = async () => {
-    if (!user) return;
-    setSaveLoading(true);
-    try {
-      const { error } = await supabase
-        .from('cfi_profile')
-        .upsert({ 
-          user_id: user.id, 
-          home_airport: airportDraft,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-      setHomeAirport(airportDraft);
-      setIsEditingAirport(false);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSaveLoading(false);
     }
   };
 
@@ -304,18 +277,13 @@ export default function Account() {
         >
           <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
             <h2 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>CFI Profile</h2>
-            {!isEditingAirport && (
-              <button
-                onClick={() => {
-                  setAirportDraft(homeAirport);
-                  setIsEditingAirport(true);
-                }}
-                className="text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-all flex items-center gap-1"
-                style={{ color: 'var(--navy)' }}
-              >
-                Edit Airport →
-              </button>
-            )}
+            <button
+              onClick={() => navigate('/cfi-hours')}
+              className="text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-all flex items-center gap-1"
+              style={{ color: 'var(--navy)' }}
+            >
+              Edit →
+            </button>
           </div>
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-3">
@@ -349,37 +317,9 @@ export default function Account() {
               <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                 <Plane size={15} style={{ color: 'var(--navy)' }} />
               </div>
-              <div className="flex-1">
+              <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Home Airport</p>
-                {isEditingAirport ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="text"
-                      maxLength={4}
-                      value={airportDraft}
-                      onChange={(e) => setAirportDraft(e.target.value.toUpperCase())}
-                      className="w-20 px-2 py-1 text-xs font-bold border rounded-lg focus:outline-none focus:border-[var(--navy)]"
-                      style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                      placeholder="KPDX"
-                    />
-                    <button
-                      onClick={handleSaveAirport}
-                      disabled={saveLoading}
-                      className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-[var(--navy)] text-white hover:opacity-90 disabled:opacity-50"
-                    >
-                      {saveLoading ? '...' : 'Save'}
-                    </button>
-                    <button
-                      onClick={() => setIsEditingAirport(false)}
-                      className="px-2 py-1 rounded text-[10px] font-bold uppercase hover:bg-[var(--bg-tertiary)]"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{homeAirport || '—'}</p>
-                )}
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{cfiProfile?.home_airport || '—'}</p>
               </div>
             </div>
           </div>

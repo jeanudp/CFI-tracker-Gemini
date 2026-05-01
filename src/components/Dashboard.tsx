@@ -1214,10 +1214,8 @@ export default function Dashboard() {
               <div className="relative aspect-video overflow-hidden rounded-xl border flex items-center justify-center bg-[var(--bg-tertiary)]" style={{ borderColor: 'var(--border-color)' }}>
                 {!progChartError ? (
                   <img 
-                    src="https://aviationweather.gov/data/iffdp/gfa/conus_prog_12.png" 
+                    src="/api/prog-chart" 
                     alt="AWC Prog Chart"
-                    crossOrigin="anonymous"
-                    referrerPolicy="no-referrer"
                     onError={() => setProgChartError(true)}
                     className="w-full h-full object-cover"
                   />
