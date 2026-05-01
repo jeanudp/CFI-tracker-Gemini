@@ -117,12 +117,13 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
                 {[
                   { label: 'Full Name', key: 'full_name' as const, placeholder: 'e.g. John J. Smith' },
                   { label: 'CFI Certificate #', key: 'cert_number' as const, placeholder: 'e.g. 987654321CFI' },
-                  { label: 'Home Airport (ICAO)', key: 'home_airport' as const, placeholder: 'e.g. KPDX' },
+                  { label: 'Home Airport (ICAO)', key: 'home_airport' as const, placeholder: 'e.g. KPDX', maxLength: 4 },
                 ].map(field => (
                   <div key={field.key} className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
                     <input
                       type="text"
+                      maxLength={field.maxLength}
                       value={profileDraft[field.key]}
                       onChange={e => setProfileDraft(prev => ({ 
                         ...prev, 
