@@ -100,9 +100,9 @@ export default function CFIHours() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ flights: number, error: string | null } | null>(null);
   const [mfbSummary, setMfbSummary] = useState<any>(null);
-  const [cfiProfile, setCfiProfile] = useState<{ full_name: string; cert_number: string; re_exp_date: string; dob?: string; medical_class?: string; medical_exam_date?: string } | null>(null);
+  const [cfiProfile, setCfiProfile] = useState<{ full_name: string; cert_number: string; re_exp_date: string; home_airport?: string; dob?: string; medical_class?: string; medical_exam_date?: string } | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '', dob: '', medical_class: '', medical_exam_date: '' });
+  const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '', home_airport: '', dob: '', medical_class: '', medical_exam_date: '' });
   const [reExpMonth, setReExpMonth] = useState('01');
   const [reExpYear, setReExpYear] = useState(() => new Date().getFullYear().toString().slice(-2));
 
@@ -295,6 +295,7 @@ export default function CFIHours() {
         full_name: data.full_name || '', 
         cert_number: data.cert_number || '', 
         re_exp_date: data.re_exp_date || '',
+        home_airport: data.home_airport || '',
         dob: data.dob || '',
         medical_class: data.medical_class || '',
         medical_exam_date: data.medical_exam_date || ''
@@ -311,6 +312,7 @@ export default function CFIHours() {
       full_name: profileDraft.full_name,
       cert_number: profileDraft.cert_number,
       re_exp_date: profileDraft.re_exp_date,
+      home_airport: profileDraft.home_airport || null,
       dob: profileDraft.dob || null,
       medical_class: profileDraft.medical_class || null,
       medical_exam_date: profileDraft.medical_exam_date || null,
@@ -748,13 +750,18 @@ export default function CFIHours() {
                     {[
                       { label: 'Full Name', key: 'full_name', placeholder: 'e.g. John J. Smith', type: 'text' },
                       { label: 'CFI Certificate #', key: 'cert_number', placeholder: 'e.g. 987654321CFI', type: 'text' },
+                      { label: 'Home Airport (ICAO)', key: 'home_airport', placeholder: 'e.g. KPDX', type: 'text', maxLength: 4 },
                     ].map(field => (
                       <div key={field.key} className="space-y-1.5">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">{field.label}</label>
                         <input
                           type={field.type}
+                          maxLength={(field as any).maxLength}
                           value={(profileDraft as any)[field.key] || ''}
-                          onChange={e => setProfileDraft(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          onChange={e => setProfileDraft(prev => ({ 
+                            ...prev, 
+                            [field.key]: field.key === 'home_airport' ? e.target.value.toUpperCase() : e.target.value 
+                          }))}
                           placeholder={field.placeholder}
                           className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a3a5c] transition-all"
                         />
@@ -835,6 +842,7 @@ export default function CFIHours() {
                             full_name: cfiProfile.full_name || '', 
                             cert_number: cfiProfile.cert_number || '', 
                             re_exp_date: cfiProfile.re_exp_date || '',
+                            home_airport: cfiProfile.home_airport || '',
                             dob: cfiProfile.dob || '',
                             medical_class: cfiProfile.medical_class || '',
                             medical_exam_date: cfiProfile.medical_exam_date || ''
@@ -853,6 +861,7 @@ export default function CFIHours() {
                     { label: 'Full Name', value: cfiProfile.full_name },
                     { label: 'CFI Certificate #', value: cfiProfile.cert_number },
                     { label: 'RE End Date / Exp. Date', value: cfiProfile.re_exp_date },
+                    { label: 'Home Airport (ICAO)', value: cfiProfile.home_airport },
                     { label: 'Date of Birth', value: cfiProfile.dob },
                     { label: 'Medical Class', value: cfiProfile.medical_class },
                     { label: 'Medical Exam Date', value: cfiProfile.medical_exam_date },
