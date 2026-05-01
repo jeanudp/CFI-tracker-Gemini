@@ -146,14 +146,16 @@ export default function EndorsementPrinter({ onClose, ratingCode = 'ppl' }: Endo
         : '_______________';
 
       return `
-        <div class="endorsement-card" style="position:relative;margin-bottom:24px;page-break-inside:avoid;max-width:3.5in;border:1px dashed #ccc;padding:8px;font-size:10px;">
-          <div style="position: absolute; top: 8px; right: 8px; display: inline-block; line-height: 1;">
-            <span style="font-size: 18px; font-weight: 900; color: #1a3a5c; font-family: system-ui, -apple-system, sans-serif; letter-spacing: -1px; line-height: 1;">61</span>
-            <div style="position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background-color: #e8a020; border-radius: 1px;"></div>
-          </div>
-          <div class="card-header" style="margin-bottom:4px;padding-right:40px;">
-            <span style="font-weight:bold;font-size:10px;">AC 61-65K ${endorsement.key}</span>
-            <span style="color:#555;font-size:10px;margin-left:4px;">${endorsement.ref}</span>
+        <div class="endorsement-card" style="position:relative;margin-bottom:24px;page-break-inside:avoid;max-width:3.5in;border:1px dashed #aaa;border-radius:4px;padding:10px;font-size:10px;">
+          <div class="card-header" style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <span style="font-weight:bold;font-size:10px;">AC 61-65K ${endorsement.key}</span>
+              <span style="color:#555;font-size:10px;margin-left:4px;">${endorsement.ref}</span>
+            </div>
+            <div style="position:relative;display:inline-block;line-height:1;margin-top:-2px;">
+              <span style="font-size:18px;font-weight:900;color:#1a3a5c;font-family:system-ui,-apple-system,sans-serif;letter-spacing:-1px;line-height:1;">61</span>
+              <div style="position:absolute;bottom:-2px;left:0;width:100%;height:2px;background-color:#e8a020;border-radius:1px;"></div>
+            </div>
           </div>
           <p class="card-body" style="margin:0 0 8px 0;text-align:justify;font-size:9px;line-height:1.4;">${filledText}</p>
           <div class="card-footer" style="margin-top:8px;border-top:1px solid #000;padding-top:8px;">
