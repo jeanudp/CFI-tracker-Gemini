@@ -183,6 +183,7 @@ export default function Dashboard() {
   const [weatherData, setWeatherData] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [progChartError, setProgChartError] = useState(false);
 
   useEffect(() => {
     const checkGuide = () => {
@@ -1210,12 +1211,30 @@ export default function Dashboard() {
                   Full Chart <ChevronRight size={10} />
                 </a>
               </div>
-              <div className="relative aspect-video overflow-hidden rounded-xl border" style={{ borderColor: 'var(--border-color)' }}>
-                <img 
-                  src="https://aviationweather.gov/data/iffdp/gfa/conus_prog_12.png" 
-                  alt="AWC Prog Chart"
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative aspect-video overflow-hidden rounded-xl border flex items-center justify-center bg-[var(--bg-tertiary)]" style={{ borderColor: 'var(--border-color)' }}>
+                {!progChartError ? (
+                  <img 
+                    src="https://aviationweather.gov/data/iffdp/gfa/conus_prog_12.png" 
+                    alt="AWC Prog Chart"
+                    crossOrigin="anonymous"
+                    referrerPolicy="no-referrer"
+                    onError={() => setProgChartError(true)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-4 text-center">
+                    <Map size={24} className="opacity-20" style={{ color: 'var(--navy)' }} />
+                    <p className="text-[10px] font-bold text-[var(--text-muted)]">Chart temporarily unavailable — click Full Chart to view on AWC</p>
+                    <a 
+                      href="https://aviationweather.gov/gfa/#progchart"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 px-3 py-1.5 rounded-lg bg-[var(--navy)] text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
+                    >
+                      View on AWC
+                    </a>
+                  </div>
+                )}
               </div>
               <p className="mt-3 text-[10px] font-medium text-center" style={{ color: 'var(--text-muted)' }}>
                 GFA Prog Chart — updates automatically
