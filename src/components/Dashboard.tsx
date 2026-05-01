@@ -327,10 +327,10 @@ export default function Dashboard() {
       }
 
       if (tafRes.ok) {
-        const tafResult = await tafRes.json();
-        if (Array.isArray(tafResult) && tafResult.length > 0) {
-          setTafData(tafResult[0]);
-          console.log('TAF data:', JSON.stringify(tafResult[0]));
+        const tafRawData = await tafRes.json();
+        console.log('TAF raw response:', JSON.stringify(tafRawData));
+        if (Array.isArray(tafRawData) && tafRawData.length > 0) {
+          setTafData(tafRawData[0]);
         } else {
           setTafData(null);
         }
@@ -1199,8 +1199,8 @@ export default function Dashboard() {
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                       {(weatherData.altim_in_hg ?? (() => {
-                        const match = (weatherData.raw_text || '').match(/\bA(\d{4})\b/);
-                        return match ? parseInt(match[1]) / 100 : null;
+                        const match = (weatherData.raw_text || weatherData.rawOb || '').match(/\bA(\d{4})\b/);
+                        return match ? parseInt(match[1], 10) / 100 : null;
                       })())?.toFixed(2) ?? '—'} inHg
                     </span>
                   </div>
