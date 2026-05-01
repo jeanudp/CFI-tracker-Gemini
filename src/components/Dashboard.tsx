@@ -327,6 +327,7 @@ export default function Dashboard() {
   };
 
   const startEditingAirport = () => {
+    console.log('edit clicked');
     setAirportInputValue(cfiHomeAirport);
     setEditingAirport(true);
   };
