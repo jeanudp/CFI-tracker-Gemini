@@ -185,6 +185,7 @@ export default function Dashboard() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [progChartError, setProgChartError] = useState(false);
+  const [remarksExpanded, setRemarksExpanded] = useState(false);
 
   useEffect(() => {
     const checkGuide = () => {
@@ -734,6 +735,221 @@ export default function Dashboard() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
+  function decodeMetarRemarks(rawText: string): { label: string, value: string }[] {
+    if (!rawText || !rawText.includes('RMK')) return [];
+    const remarksPart = rawText.split('RMK')[1].trim();
+    const tokens = remarksPart.split(/\s+/);
+    const decoded: { label: string, value: string }[] = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+
+      // AO1/AO2
+      if (token === 'AO1') {
+        decoded.push({ label: 'Station Type', value: 'Automated, no precipitation discriminator' });
+        continue;
+      }
+      if (token === 'AO2') {
+        decoded.push({ label: 'Station Type', value: 'Automated with precipitation discriminator' });
+        continue;
+      }
+
+      // SLP
+      const slpMatch = token.match(/^SLP(\d{3})$/);
+      if (slpMatch) {
+        const val = slpMatch[1];
+        const prefix = ['0', '1', '2', '3'].includes(val[0]) ? '10' : '9';
+        const pressure = prefix + val.slice(0, 2) + '.' + val[2];
+        decoded.push({ label: 'Sea Level Pressure', value: `${pressure} hPa` });
+        continue;
+      }
+
+      // T exactly 8 digits
+      const tMatch = token.match(/^T([01])(\d{3})([01])(\d{3})$/);
+      if (tMatch) {
+        const tSign = tMatch[1] === '0' ? '' : '-';
+        const tVal = (parseInt(tMatch[2], 10) / 10).toFixed(1);
+        const dSign = tMatch[3] === '0' ? '' : '-';
+        const dVal = (parseInt(tMatch[4], 10) / 10).toFixed(1);
+        decoded.push({ label: 'Precise Temp / Dewpoint', value: `${tSign}${tVal}°C / ${dSign}${dVal}°C` });
+        continue;
+      }
+
+      // Pressure Tendency
+      if (token === 'PRESRR') {
+        decoded.push({ label: 'Pressure Tendency', value: 'Rapidly Rising' });
+        continue;
+      }
+      if (token === 'PRESFR') {
+        decoded.push({ label: 'Pressure Tendency', value: 'Rapidly Falling' });
+        continue;
+      }
+
+      // Peak Wind
+      if (token === 'PK' && tokens[i+1] === 'WND') {
+        const pkVal = tokens[i+2];
+        const pkMatch = pkVal?.match(/^(\d{3})(\d{2,3})\/(\d{4})$/);
+        if (pkMatch) {
+          decoded.push({ label: 'Peak Wind', value: `${pkMatch[1]}° at ${pkMatch[2]}kt (${pkMatch[3].slice(0, 2)}:${pkMatch[3].slice(2)}Z)` });
+          i += 2;
+          continue;
+        }
+      }
+
+      // Wind Shift
+      if (token === 'WSHFT') {
+        const nextToken = tokens[i+1];
+        if (nextToken?.match(/^\d{4}$/)) {
+          decoded.push({ label: 'Wind Shift', value: `At ${nextToken.slice(0, 2)}:${nextToken.slice(2)}Z` });
+          i++;
+          continue;
+        }
+      }
+
+      // Lightning
+      if (token === 'LTGICCC' || token === 'LTGIC') {
+        decoded.push({ label: 'Lightning', value: 'In Cloud' });
+        continue;
+      }
+      if (token === 'LTGCG') {
+        decoded.push({ label: 'Lightning', value: 'Cloud to Ground' });
+        continue;
+      }
+      if (token === 'LTGCC') {
+        decoded.push({ label: 'Lightning', value: 'Cloud to Cloud' });
+        continue;
+      }
+      if (token === 'LTGCA') {
+        decoded.push({ label: 'Lightning', value: 'Cloud to Air' });
+        continue;
+      }
+      if (token === 'LTG') {
+        decoded.push({ label: 'Lightning', value: 'Lightning observed' });
+        continue;
+      }
+
+      // Virga
+      if (token === 'VIRGA') {
+        decoded.push({ label: 'Virga', value: 'Precipitation not reaching ground' });
+        continue;
+      }
+
+      // Maintenance
+      if (token === '$') {
+        decoded.push({ label: 'Maintenance', value: 'Station requires maintenance check' });
+        continue;
+      }
+
+      // TSNO, PWINO, FZRANO
+      if (token === 'TSNO') {
+        decoded.push({ label: 'Thunderstorm Sensor', value: 'Not available' });
+        continue;
+      }
+      if (token === 'PWINO') {
+        decoded.push({ label: 'Sensor', value: 'Precipitation identifier not available' });
+        continue;
+      }
+      if (token === 'FZRANO') {
+        decoded.push({ label: 'Sensor', value: 'Freezing rain sensor not available' });
+        continue;
+      }
+
+      // Precip Event [A-Z]{2,3}[BE]\d{2,4}
+      const precipMatch = token.match(/^([A-Z]{2,3})(B|E)(\d{2,4})$/);
+      if (precipMatch) {
+        const typeCode = precipMatch[1];
+        const action = precipMatch[2] === 'B' ? 'began' : 'ended';
+        const time = precipMatch[3];
+        const formattedTime = time.length === 4 ? `${time.slice(0, 2)}:${time.slice(2)}Z` : 
+                             time.length === 2 ? `${time}Z` : `${time}Z`;
+        const typeMap: any = { 'RA': 'Rain', 'SN': 'Snow', 'DZ': 'Drizzle', 'FG': 'Fog', 'TS': 'Thunderstorm' };
+        decoded.push({ label: 'Precip Event', value: `${typeMap[typeCode] || typeCode} ${action} at ${formattedTime}` });
+        continue;
+      }
+    }
+    return decoded;
+  }
+
+  function getCardinalDirection(deg: number): string {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const index = Math.floor(((deg + 22.5) % 360) / 45);
+    return directions[index];
+  }
+
+  function decodeWeatherPhenomena(rawText: string, wxString?: string): string | null {
+    if (wxString) {
+      // Basic check for common codes in wxString if it's just raw codes
+      if (!wxString.includes(' ') && wxString.length <= 8 && wxString.match(/^[+-]?[A-Z]+$/)) {
+        // Fall through to decoder
+      } else {
+        return wxString;
+      }
+    }
+    
+    if (!rawText) return null;
+    const parts = rawText.split(/\s+/);
+    let visIdx = -1;
+    for(let i=0; i<parts.length; i++) {
+        if (parts[i].match(/^\d+\/?\d*SM$/) || parts[i] === 'M1/4SM' || parts[i] === 'P6SM') {
+            visIdx = i; break;
+        }
+    }
+    if (visIdx === -1) return null;
+    
+    const wxCodes = [];
+    for(let i = visIdx + 1; i < parts.length; i++) {
+        const token = parts[i];
+        if (token.match(/^(SCT|FEW|BKN|OVC|VV|SKC|CLR|CAVOK)/) || token.match(/^-?\d{2}\/(-?\d{2})?$/)) break;
+        if (token.match(/^(\+|-|VC)?([A-Z]{2,8})$/)) wxCodes.push(token);
+    }
+    
+    if (wxCodes.length === 0) return null;
+    
+    const intensity: any = { '-': 'Light', '+': 'Heavy', 'VC': 'In Vicinity' };
+    const descriptors: any = { 'MI': 'Shallow', 'BC': 'Patches', 'PR': 'Partial', 'DR': 'Drifting', 'BL': 'Blowing', 'SH': 'Showers', 'TS': 'Thunderstorm', 'FZ': 'Freezing' };
+    const types: any = { 'RA': 'Rain', 'SN': 'Snow', 'DZ': 'Drizzle', 'GR': 'Hail', 'GS': 'Small Hail', 'PL': 'Ice Pellets', 'IC': 'Ice Crystals', 'FG': 'Fog', 'BR': 'Mist', 'HZ': 'Haze', 'FU': 'Smoke', 'DU': 'Dust', 'SA': 'Sand', 'SQ': 'Squall', 'FC': 'Funnel Cloud', 'SS': 'Sandstorm', 'DS': 'Duststorm', 'UP': 'Unknown precipitation' };
+
+    return wxCodes.map(code => {
+        let result = '';
+        let rest = code;
+        if (code.startsWith('+') || code.startsWith('-')) {
+            result += intensity[code[0]] + ' ';
+            rest = code.slice(1);
+        } else if (code.startsWith('VC')) {
+            result += intensity['VC'] + ' ';
+            rest = code.slice(2);
+        }
+        
+        for (const [dCode, dText] of Object.entries(descriptors)) {
+            if (rest.startsWith(dCode)) {
+                result += dText + ' ';
+                rest = rest.slice(2);
+                break;
+            }
+        }
+        
+        const typeParts = [];
+        while (rest.length >= 2) {
+            const tCode = rest.slice(0, 2);
+            if (types[tCode]) {
+                typeParts.push(types[tCode]);
+                rest = rest.slice(2);
+            } else break;
+        }
+        
+        if (typeParts.length > 0) {
+            if (result.includes('Thunderstorm')) {
+                result = result.trim() + ' with ' + typeParts.join(' and ');
+            } else if (result.includes('Showers')) {
+                result = typeParts.join(' and ') + ' ' + result.trim();
+            } else {
+                result += typeParts.join(' and ');
+            }
+        }
+        return result.trim();
+    }).filter(Boolean).join(', ');
+  }
+
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -1142,6 +1358,17 @@ export default function Dashboard() {
                   {cfiHomeAirport && (
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
                   )}
+                  {weatherData?.fltcat && (
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[9px] font-black text-white uppercase",
+                      weatherData.fltcat === 'VFR' ? "bg-[#16a34a]" :
+                      weatherData.fltcat === 'MVFR' ? "bg-[#2563eb]" :
+                      weatherData.fltcat === 'IFR' ? "bg-[#dc2626]" :
+                      weatherData.fltcat === 'LIFR' ? "bg-[#7c3aed]" : "bg-gray-500"
+                    )}>
+                      {weatherData.fltcat}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   {weatherLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
@@ -1178,21 +1405,62 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.wdir || 0).toString().padStart(3, '0')}° at {weatherData.wspd ?? '—'}kt
-                      {weatherData.wgst && ` G${weatherData.wgst}kt`}
+                      {(() => {
+                        const wspd = weatherData.wspd ?? 0;
+                        const wdir = weatherData.wdir ?? 0;
+                        const raw = weatherData.raw_text || weatherData.rawOb || '';
+                        const varMatch = raw.match(/(\d{3})V(\d{3})/);
+                        const varString = varMatch ? ` variable ${varMatch[1]}° to ${varMatch[2]}°` : '';
+                        
+                        if (wspd === 0 && (wdir === 0 || wdir === 'CALM' || wdir === '000')) return 'Calm';
+                        if (wdir === 'VRB') return `Variable at ${wspd}kt${weatherData.wgst ? ` gusting ${weatherData.wgst}kt` : ''}${varString}`;
+                        
+                        const dirNum = typeof wdir === 'string' ? parseInt(wdir, 10) : wdir;
+                        const cardinal = getCardinalDirection(dirNum);
+                        return `${dirNum.toString().padStart(3, '0')}° (${cardinal}) at ${wspd}kt${weatherData.wgst ? ` gusting ${weatherData.wgst}kt` : ''}${varString}`;
+                      })()}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Visibility</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib ?? '—'} SM</span>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {weatherData.clouds?.[0] ? 
-                        (weatherData.clouds[0].base != null ? `${weatherData.clouds[0].cover} @ ${weatherData.clouds[0].base}'` : weatherData.clouds[0].cover) 
-                        : 'Clear'}
-                    </span>
+                  {/* Weather Phenomena Row */}
+                  {(() => {
+                    const wx = decodeWeatherPhenomena(weatherData.raw_text || weatherData.rawOb || '', weatherData.wxString);
+                    if (!wx) return null;
+                    return (
+                      <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Weather</span>
+                        <span className="text-xs font-bold text-right pl-4" style={{ color: 'var(--text-primary)' }}>{wx}</span>
+                      </div>
+                    );
+                  })()}
+                  <div className="flex justify-between items-start py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      {weatherData.clouds && weatherData.clouds.length > 0 ? 
+                        (weatherData.clouds as any[]).map((cloud: any, idx: number) => {
+                          const cloudMap: any = {
+                            'SKC': 'Sky Clear',
+                            'CLR': 'Clear below 12,000ft',
+                            'FEW': 'Few',
+                            'SCT': 'Scattered',
+                            'BKN': 'Broken',
+                            'OVC': 'Overcast',
+                            'VV': 'Vertical Visibility'
+                          };
+                          const cover = cloudMap[cloud.cover] || cloud.cover;
+                          const base = (cloud.base != null && cloud.base >= 0) ? ` @ ${cloud.base.toLocaleString()}ft` : '';
+                          const extra = cloud.type === 'CB' ? ' (Cumulonimbus)' : cloud.type === 'TCU' ? ' (Towering Cumulus)' : '';
+                          return (
+                            <span key={idx} className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                              {cover}{base}{extra}
+                            </span>
+                          );
+                        }) 
+                        : <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Clear</span>}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
@@ -1210,21 +1478,49 @@ export default function Dashboard() {
                     </span>
                   </div>
 
+                  {/* Remarks Section */}
+                  {(() => {
+                    const remarks = decodeMetarRemarks(weatherData.raw_text || weatherData.rawOb || '');
+                    if (remarks.length === 0) return null;
+                    return (
+                      <div className="mt-2">
+                        <button 
+                          onClick={() => setRemarksExpanded(!remarksExpanded)}
+                          className="flex items-center justify-between w-full py-2 border-b border-[var(--border-color)] hover:opacity-80 transition-opacity"
+                        >
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Remarks</span>
+                          <ChevronRight 
+                            size={12} 
+                            className={cn("transition-transform text-[var(--text-muted)]", remarksExpanded ? "rotate-90" : "")} 
+                          />
+                        </button>
+                        <AnimatePresence>
+                          {remarksExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="space-y-1 mt-1">
+                                {remarks.map((rmk, idx) => (
+                                  <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.label}</span>
+                                    <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })()}
+
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
                       Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    {weatherData.fltcat && (
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
-                        weatherData.fltcat === 'VFR' ? "bg-green-500 text-white" :
-                        weatherData.fltcat === 'MVFR' ? "bg-blue-500 text-white" :
-                        weatherData.fltcat === 'IFR' ? "bg-red-500 text-white" :
-                        "bg-purple-500 text-white"
-                      )}>
-                        {weatherData.fltcat}
-                      </span>
-                    )}
                   </div>
                 </div>
               )}
