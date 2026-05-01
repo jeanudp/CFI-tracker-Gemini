@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Layers, Maximize, Map as MapIcon, Plane, Check, X, Search } from 'lucide-react';
 import { cn } from '../lib/utils';
+import Papa from 'papaparse';
 
 // Fix for default marker icon in Leaflet
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -143,6 +144,48 @@ const AIRPORT_COORDS: Record<string, [number, number]> = {
   'PHMK': [21.1528, -157.0961], 'PHUP': [20.2652, -155.8543], 'PHJH': [20.9631, -156.6806],
 };
 
+let airportsCsvData: any[] | null = null;
+let fetchPromise: Promise<any[]> | null = null;
+
+async function getAirportsData(): Promise<any[]> {
+  if (airportsCsvData) return airportsCsvData;
+  if (fetchPromise) return fetchPromise;
+
+  fetchPromise = new Promise((resolve) => {
+    Papa.parse('https://davidmegginson.github.io/ourairports-data/airports.csv', {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        airportsCsvData = results.data;
+        resolve(results.data);
+      },
+      error: (error) => {
+        console.error('Error fetching airports CSV:', error);
+        resolve([]);
+      }
+    });
+  });
+  return fetchPromise;
+}
+
+async function resolveAirportCoord(icao: string): Promise<[number, number] | null> {
+  if (AIRPORT_COORDS[icao]) return AIRPORT_COORDS[icao];
+
+  try {
+    const data = await getAirportsData();
+    const airport = data.find(a => a.ident === icao);
+    if (airport && airport.latitude_deg && airport.longitude_deg) {
+      const coord: [number, number] = [parseFloat(airport.latitude_deg), parseFloat(airport.longitude_deg)];
+      AIRPORT_COORDS[icao] = coord;
+      return coord;
+    }
+  } catch (error) {
+    console.error(`Failed to resolve airport ${icao}:`, error);
+  }
+  return null;
+}
+
 const COLORS = ['#1a3a5c', '#2d7a4f', '#e8a020', '#7c3aed', '#c0392b', '#0891b2'];
 
 interface Lesson {
@@ -183,44 +226,62 @@ const FitBoundsButton = ({ coords }: { coords: [number, number][] }) => {
 
 export default function RouteMap({ lessons, studentName: _studentName }: RouteMapProps) {
   const [visibleLessonIds, setVisibleLessonIds] = useState<Set<string>>(new Set(lessons.map(l => l.id)));
+  const [resolvedRoutes, setResolvedRoutes] = useState<{
+    lesson: Lesson;
+    airports: string[];
+    coords: [number, number][];
+    color: string;
+  }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const parsedRoutes = useMemo(() => {
-    return lessons.map((lesson, idx) => {
-      const routeStr = lesson.meta.route || '';
-      const tokens = routeStr.split(/[- ]+/).map(t => t.toUpperCase().trim());
-      const airports = tokens
-        .filter(t => t.length >= 3 && t.length <= 4 && (t.startsWith('K') || t.startsWith('P')))
-        .filter((t, i, arr) => t !== arr[i - 1]); // Remove consecutive duplicates
+  useEffect(() => {
+    let isMounted = true;
+    const resolveAll = async () => {
+      setIsLoading(true);
+      const results = await Promise.all(lessons.map(async (lesson, idx) => {
+        const routeStr = lesson.meta.route || '';
+        const tokens = routeStr.split(/[- ]+/).map(t => t.toUpperCase().trim());
+        const airports = tokens
+          .filter(t => t.length >= 3 && t.length <= 4 && (t.startsWith('K') || t.startsWith('P')))
+          .filter((t, i, arr) => t !== arr[i - 1]);
+        
+        const coords = (await Promise.all(airports.map(icao => resolveAirportCoord(icao))))
+          .filter((coord): coord is [number, number] => !!coord);
+
+        return {
+          lesson,
+          airports,
+          coords,
+          color: COLORS[idx % COLORS.length]
+        };
+      }));
       
-      const coords = airports
-        .map(icao => AIRPORT_COORDS[icao])
-        .filter((coord): coord is [number, number] => !!coord);
+      if (isMounted) {
+        setResolvedRoutes(results.filter(r => r.coords.length >= 2));
+        setIsLoading(false);
+      }
+    };
 
-      return {
-        lesson,
-        airports,
-        coords,
-        color: COLORS[idx % COLORS.length]
-      };
-    }).filter(r => r.coords.length >= 2);
+    resolveAll();
+    return () => { isMounted = false; };
   }, [lessons]);
 
   const allVisibleCoords = useMemo(() => {
-    return parsedRoutes
+    return resolvedRoutes
       .filter(r => visibleLessonIds.has(r.lesson.id))
       .flatMap(r => r.coords);
-  }, [parsedRoutes, visibleLessonIds]);
+  }, [resolvedRoutes, visibleLessonIds]);
 
   const uniqueAirports = useMemo(() => {
     const map = new Map<string, [number, number]>();
-    parsedRoutes.forEach(r => {
+    resolvedRoutes.forEach(r => {
       r.airports.forEach(icao => {
         const coord = AIRPORT_COORDS[icao];
         if (coord) map.set(icao, coord);
       });
     });
     return Array.from(map.entries());
-  }, [parsedRoutes]);
+  }, [resolvedRoutes]);
 
   const toggleLesson = (id: string) => {
     setVisibleLessonIds(prev => {
@@ -243,26 +304,33 @@ export default function RouteMap({ lessons, studentName: _studentName }: RouteMa
         </div>
         
         <div className="flex flex-wrap gap-2">
-          {parsedRoutes.map(item => (
-            <button
-              key={item.lesson.id}
-              onClick={() => toggleLesson(item.lesson.id)}
-              className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm flex items-center gap-2"
-              style={{
-                backgroundColor: visibleLessonIds.has(item.lesson.id) ? item.color : '#f1f5f9',
-                color: visibleLessonIds.has(item.lesson.id) ? 'white' : '#6b7280',
-                borderColor: visibleLessonIds.has(item.lesson.id) ? item.color : '#dde3ec'
-              }}
-            >
-              <Plane size={10} className={visibleLessonIds.has(item.lesson.id) ? "text-white" : "text-[#6b7280]"} />
-              {item.lesson.label}
-            </button>
-          ))}
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#6b7280]">
+              <Search size={10} className="animate-pulse" />
+              Resolving Airports...
+            </div>
+          ) : (
+            resolvedRoutes.map(item => (
+              <button
+                key={item.lesson.id}
+                onClick={() => toggleLesson(item.lesson.id)}
+                className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm flex items-center gap-2"
+                style={{
+                  backgroundColor: visibleLessonIds.has(item.lesson.id) ? item.color : '#f1f5f9',
+                  color: visibleLessonIds.has(item.lesson.id) ? 'white' : '#6b7280',
+                  borderColor: visibleLessonIds.has(item.lesson.id) ? item.color : '#dde3ec'
+                }}
+              >
+                <Plane size={10} className={visibleLessonIds.has(item.lesson.id) ? "text-white" : "text-[#6b7280]"} />
+                {item.lesson.label}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
       <div className="relative h-[500px] w-full bg-[#f4f5f7]">
-        {parsedRoutes.length > 0 ? (
+        {!isLoading && resolvedRoutes.length > 0 ? (
           <MapContainer
             center={[45.59, -122.60]}
             zoom={7}
@@ -276,7 +344,7 @@ export default function RouteMap({ lessons, studentName: _studentName }: RouteMa
             
             <FitBoundsButton coords={allVisibleCoords} />
 
-            {parsedRoutes.map((route, idx) => (
+            {resolvedRoutes.map((route, idx) => (
               visibleLessonIds.has(route.lesson.id) && (
                 <Polyline
                   key={`${route.lesson.id}-${idx}`}
@@ -316,7 +384,7 @@ export default function RouteMap({ lessons, studentName: _studentName }: RouteMa
             <div className="absolute bottom-4 left-4 z-[1000] bg-white border border-[#dde3ec] rounded-xl p-3 shadow-lg min-w-[140px] pointer-events-none sm:pointer-events-auto">
               <div className="text-[9px] font-black uppercase tracking-widest text-[#6b7280] mb-2 border-b border-[#f1f5f9] pb-1">Legend</div>
               <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-2">
-                {parsedRoutes.map(route => (
+                {resolvedRoutes.map(route => (
                   <div key={route.lesson.id} className="flex items-center gap-2 opacity-90">
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: route.color }} />
                     <div className="min-w-0">
@@ -330,11 +398,19 @@ export default function RouteMap({ lessons, studentName: _studentName }: RouteMa
           </MapContainer>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-[#6b7280] p-6 text-center">
-            <Layers size={48} className="opacity-10 mb-4" />
-            <h4 className="text-sm font-black text-[#1a3a5c] mb-1">No routes logged yet</h4>
-            <p className="text-xs font-medium max-w-[280px]">
-              Add a route when logging flight lessons, for example <span className="font-mono bg-[#f1f5f9] px-1 rounded">KPDX-KTTD-KPDX</span>.
-            </p>
+            {isLoading ? (
+              <Search size={48} className="opacity-10 mb-4 animate-spin" />
+            ) : (
+              <Layers size={48} className="opacity-10 mb-4" />
+            )}
+            <h4 className="text-sm font-black text-[#1a3a5c] mb-1">
+              {isLoading ? "Resolving flight routes..." : "No routes logged yet"}
+            </h4>
+            {!isLoading && (
+              <p className="text-xs font-medium max-w-[280px]">
+                Add a route when logging flight lessons, for example <span className="font-mono bg-[#f1f5f9] px-1 rounded">KPDX-KTTD-KPDX</span>.
+              </p>
+            )}
           </div>
         )}
       </div>
