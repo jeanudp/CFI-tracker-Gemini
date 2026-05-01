@@ -146,43 +146,94 @@ export default function EndorsementPrinter({ onClose, ratingCode = 'ppl' }: Endo
         : '_______________';
 
       return `
-        <div style="margin-bottom:36pt;page-break-inside:avoid;">
-          <div style="margin-bottom:6pt;">
-            <span style="font-weight:bold;font-size:10pt;">AC 61-65K ${endorsement.key}</span>
-            <span style="color:#555;font-size:10pt;margin-left:8pt;">${endorsement.ref}</span>
+        <div class="endorsement-card" style="position:relative;margin-bottom:24px;page-break-inside:avoid;max-width:3.5in;border:1px dashed #ccc;padding:8px;font-size:10px;">
+          <div style="position: absolute; top: 8px; right: 8px; display: inline-block; line-height: 1;">
+            <span style="font-size: 18px; font-weight: 900; color: #1a3a5c; font-family: system-ui, -apple-system, sans-serif; letter-spacing: -1px; line-height: 1;">61</span>
+            <div style="position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background-color: #e8a020; border-radius: 1px;"></div>
           </div>
-          <p style="margin:0 0 16pt 0;text-align:justify;font-size:11pt;line-height:1.6;">${filledText}</p>
-          <div style="margin-top:20pt;border-top:1px solid #000;padding-top:12pt;">
+          <div class="card-header" style="margin-bottom:4px;padding-right:40px;">
+            <span style="font-weight:bold;font-size:10px;">AC 61-65K ${endorsement.key}</span>
+            <span style="color:#555;font-size:10px;margin-left:4px;">${endorsement.ref}</span>
+          </div>
+          <p class="card-body" style="margin:0 0 8px 0;text-align:justify;font-size:9px;line-height:1.4;">${filledText}</p>
+          <div class="card-footer" style="margin-top:8px;border-top:1px solid #000;padding-top:8px;">
             <table style="width:100%;border-collapse:collapse;">
               <tr>
-                <td style="width:50%;padding-right:24pt;padding-bottom:16pt;">
-                  <div style="border-bottom:1px solid #000;height:24pt;margin-bottom:3pt;"></div>
-                  <span style="font-size:9pt;color:#555;">Signature</span>
+                <td class="sig-cell" style="width:50%;padding-right:8px;padding-bottom:16px;">
+                  <div style="border-bottom:1px solid #000;height:20px;margin-bottom:2px;max-width:160px;"></div>
+                  <span style="font-size:9px;color:#555;">Signature</span>
                 </td>
-                <td style="width:50%;padding-left:24pt;padding-bottom:16pt;">
-                  <div style="font-size:11pt;font-weight:bold;height:24pt;display:flex;align-items:flex-end;padding-bottom:3pt;">${dateDisplay}</div>
-                  <div style="border-bottom:1px solid #000;margin-bottom:3pt;"></div>
-                  <span style="font-size:9pt;color:#555;">Date</span>
+                <td class="sig-cell" style="width:50%;padding-left:8px;padding-bottom:16px;">
+                  <div style="font-size:9px;font-weight:bold;height:20px;display:flex;align-items:flex-end;padding-bottom:2px;">${dateDisplay}</div>
+                  <div style="border-bottom:1px solid #000;margin-bottom:2px;"></div>
+                  <span style="font-size:9px;color:#555;">Date</span>
                 </td>
               </tr>
               <tr>
-                <td style="width:50%;padding-right:24pt;">
-                  <div style="font-size:11pt;font-weight:bold;height:24pt;display:flex;align-items:flex-end;padding-bottom:3pt;">${cfiInfo.cert || '_______________'}</div>
-                  <div style="border-bottom:1px solid #000;margin-bottom:3pt;"></div>
-                  <span style="font-size:9pt;color:#555;">CFI #${cfiInfo.name ? ' — ' + cfiInfo.name : ''}</span>
+                <td style="width:50%;padding-right:8px;">
+                  <div style="font-size:9px;font-weight:bold;height:20px;display:flex;align-items:flex-end;padding-bottom:2px;">${cfiInfo.cert || '_______________'}</div>
+                  <div style="border-bottom:1px solid #000;margin-bottom:2px;"></div>
+                  <span style="font-size:9px;color:#555;">CFI #${cfiInfo.name ? ' — ' + cfiInfo.name : ''}</span>
                 </td>
-                <td style="width:50%;padding-left:24pt;">
-                  <div style="font-size:11pt;font-weight:bold;height:24pt;display:flex;align-items:flex-end;padding-bottom:3pt;">${cfiInfo.reDate || '_______________'}</div>
-                  <div style="border-bottom:1px solid #000;margin-bottom:3pt;"></div>
-                  <span style="font-size:9pt;color:#555;">RE End Date / Exp. Date</span>
+                <td style="width:50%;padding-left:8px;">
+                  <div style="font-size:9px;font-weight:bold;height:20px;display:flex;align-items:flex-end;padding-bottom:2px;">${cfiInfo.reDate || '_______________'}</div>
+                  <div style="border-bottom:1px solid #000;margin-bottom:2px;"></div>
+                  <span style="font-size:9px;color:#555;">RE End Date / Exp. Date</span>
                 </td>
               </tr>
             </table>
           </div>
+        </div>
+        <div class="cut-line" style="display:flex;align-items:center;gap:6px;margin:4px 0 12px 0;page-break-after:avoid;">
+          <span style="font-size:12px;">✂</span>
+          <div style="flex:1;border-top:1px dashed #aaa;"></div>
         </div>`;
     }).join('');
 
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Endorsements</title><style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;padding:1in;max-width:8.5in;margin:0 auto;color:#000;}@media print{body{padding:0.75in;}}</style></head><body>${endorsementHTML}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script></body></html>`);
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Endorsements</title><style>
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+        line-height: 1.4;
+        padding: 0.5in;
+        max-width: 8.5in;
+        margin: 0 auto;
+        color: #000;
+      }
+      .cut-line {
+        display: none !important;
+      }
+      @media print {
+        body {
+          font-size: 9px;
+        }
+        .cut-line {
+          display: flex !important;
+          max-width: 3.5in;
+        }
+        /* Reduce all margins and padding by 50% */
+        body {
+          padding: 0.25in;
+        }
+        .endorsement-card {
+          margin-bottom: 12px !important;
+          padding: 4px !important;
+        }
+        .card-header {
+          margin-bottom: 2px !important;
+        }
+        .card-body {
+          margin-bottom: 4px !important;
+        }
+        .card-footer {
+          margin-top: 4px !important;
+          padding-top: 4px !important;
+        }
+        .sig-cell {
+          padding-bottom: 8px !important;
+        }
+      }
+    </style></head><body>${endorsementHTML}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script></body></html>`);
     printWindow.document.close();
   };
 

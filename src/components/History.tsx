@@ -1099,7 +1099,29 @@ export default function History() {
           <div className="max-w-4xl mx-auto">
             <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
-              <div className="p-4 sm:p-8">
+              <div className="p-4 sm:p-8 relative">
+                {/* Print-only logo */}
+                <div className="hidden print:block absolute top-8 right-8">
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <span style={{
+                      fontSize: '24px',
+                      fontWeight: 900,
+                      color: '#1a3a5c',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      letterSpacing: '-1px',
+                      lineHeight: 1,
+                    }}>61</span>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-2px',
+                      left: 0,
+                      width: '100%',
+                      height: '3px',
+                      backgroundColor: '#e8a020',
+                      borderRadius: '1.5px',
+                    }} />
+                  </div>
+                </div>
                 <div className="flex flex-col gap-5 mb-8">
                   {/* Action Buttons Row */}
                   <div className="flex justify-end gap-3 order-1">
@@ -3225,6 +3247,32 @@ export default function History() {
           </div>
         )}
       </AnimatePresence>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          :root, html, body {
+            font-size: 9px !important;
+          }
+          body {
+            padding: 0.5in !important;
+          }
+          /* Targeting common Tailwind spacing classes used in History */
+          .p-8 { padding: 1rem !important; }
+          .p-6 { padding: 0.75rem !important; }
+          .p-4 { padding: 0.5rem !important; }
+          .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+          .py-8 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+          .m-8 { margin: 1rem !important; }
+          .m-6 { margin: 0.75rem !important; }
+          .m-4 { margin: 0.5rem !important; }
+          .gap-8 { gap: 1rem !important; }
+          .gap-6 { gap: 0.75rem !important; }
+          .gap-4 { gap: 0.5rem !important; }
+          
+          /* Hide non-essential print elements */
+          .print\:hidden { display: none !important; }
+        }
+      `}} />
     </div>
   );
 }
