@@ -1146,22 +1146,22 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {weatherData && !weatherError && (
+              {weatherData && (weatherData.raw_text || weatherData.obs_time || weatherData.rawOb || weatherData.reportTime) && !weatherError && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
-                    <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.rawOb}</span>
+                    <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.wdir || 0).toString().padStart(3, '0')}° at {weatherData.wspd}kt
+                      {(weatherData.wdir || 0).toString().padStart(3, '0')}° at {weatherData.wspd ?? '—'}kt
                       {weatherData.wgst && ` G${weatherData.wgst}kt`}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Visibility</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib} SM</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib ?? '—'} SM</span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
@@ -1171,14 +1171,18 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.temp}°C / {weatherData.dewp}°C</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim_in_hg.toFixed(2)} inHg</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim_in_hg?.toFixed(2) ?? '—'} inHg</span>
                   </div>
                   <div className="flex justify-between items-center pt-2">
-                    <span className="text-[9px] font-bold text-[var(--text-muted)] italic">Observed at {new Date(weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
+                      Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                     {weatherData.fltcat && (
                       <span className={cn(
                         "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
