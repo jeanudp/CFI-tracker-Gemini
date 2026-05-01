@@ -1344,9 +1344,10 @@ export default function Dashboard() {
 
                   {/* Remarks Section */}
                   {(() => {
-                    const parsedMetar = weatherData?.raw_text ? (() => { try { return parseMetar(weatherData.raw_text); } catch(e) { return null; } })() : null;
+                    const rawText = weatherData?.raw_text || weatherData?.rawOb || '';
+                    const parsedMetar = rawText ? (() => { try { return parseMetar(rawText); } catch(e) { return null; } })() : null;
                     const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.raw && rmk.raw.trim() !== '');
-                    if (remarks.length === 0) return null;
+                    if (!rawText || remarks.length === 0) return null;
                     return (
                       <div className="mt-2">
                         <button 
