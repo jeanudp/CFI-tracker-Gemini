@@ -330,7 +330,8 @@ export default function Dashboard() {
         const tafRawData = await tafRes.json();
         console.log('TAF raw response:', JSON.stringify(tafRawData));
         if (Array.isArray(tafRawData) && tafRawData.length > 0) {
-          setTafData(tafRawData[0]);
+          const matchingTaf = tafRawData.find((t: any) => t.icaoId === cfiHomeAirport);
+          setTafData(matchingTaf || null);
         } else {
           setTafData(null);
         }
@@ -1262,33 +1263,33 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {tafData && tafData.raw_text ? (
+              {tafData && tafData.rawTAF ? (
                 <div className="space-y-4">
-                  <div className="p-3 rounded-lg text-[10px] font-mono leading-relaxed break-words overflow-hidden" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-                    {tafData.raw_text}
+                  {tafData.name && (
+                    <p className="text-[9px] font-bold uppercase tracking-tight" style={{ color: 'var(--text-muted)' }}>{tafData.name}</p>
+                  )}
+                  <div className="p-3 rounded-lg text-xs font-mono leading-relaxed break-words overflow-hidden" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                    {tafData.rawTAF}
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Valid:</span>
                       <span className="text-[10px] font-bold text-[var(--text-primary)]">
                         {(() => {
-                          const formatDate = (dateStr: string) => {
-                            if (!dateStr) return '';
-                            const d = new Date(dateStr);
+                          const formatDate = (timestamp: number) => {
+                            if (!timestamp) return '';
+                            const d = new Date(timestamp * 1000);
                             const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
                             return `${months[d.getUTCMonth()]} ${d.getUTCDate().toString().padStart(2, '0')} ${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}Z`;
                           };
-                          return `${formatDate(tafData.valid_time_from)} to ${formatDate(tafData.valid_time_to)}`;
+                          return `${formatDate(tafData.validTimeFrom)} to ${formatDate(tafData.validTimeTo)}`;
                         })()}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Issued:</span>
                       <span className="text-[10px] font-bold text-[var(--text-primary)]">
-                        {(() => {
-                          const d = new Date(tafData.issue_time);
-                          return `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}Z`;
-                        })()}
+                        {new Date(tafData.issueTime).toUTCString()}
                       </span>
                     </div>
                   </div>
