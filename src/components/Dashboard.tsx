@@ -1293,6 +1293,89 @@ export default function Dashboard() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Decoded Forecasts */}
+                  {tafData.fcsts && tafData.fcsts.length > 0 && (
+                    <div className="mt-4 pt-4 border-t space-y-4" style={{ borderColor: 'var(--border-color)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Forecast Periods</span>
+                      <div className="space-y-4">
+                        {tafData.fcsts.map((fcst: any, idx: number) => {
+                          const formatTimeShort = (ts: number) => {
+                            const d = new Date(ts * 1000);
+                            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                            return `${d.getUTCDate().toString().padStart(2, '0')}${months[d.getUTCMonth()]}${d.getUTCHours().toString().padStart(2, '0')}Z`;
+                          };
+
+                          return (
+                            <div key={idx} className="space-y-1">
+                              {/* Period Header */}
+                              <div className="px-2 py-1 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+                                  {formatTimeShort(fcst.timeFrom)} — {formatTimeShort(fcst.timeTo)}
+                                  {fcst.fcstChange && <span className="ml-2 font-bold opacity-60">[{fcst.fcstChange}]</span>}
+                                </span>
+                              </div>
+
+                              {/* Change Type Badge */}
+                              {fcst.fcstChange && (
+                                <div className="flex pt-1 pb-1">
+                                  <span className={cn(
+                                    "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest text-white",
+                                    fcst.fcstChange === 'FM' ? "bg-[var(--navy)]" :
+                                    fcst.fcstChange === 'TEMPO' ? "bg-amber-500" :
+                                    fcst.fcstChange === 'BECMG' ? "bg-green-600" :
+                                    "bg-slate-500"
+                                  )}>
+                                    {fcst.fcstChange}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Wind Row */}
+                              {fcst.wspd !== null && fcst.wspd !== 0 && (
+                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
+                                  <span className="text-sm font-bold text-[var(--text-primary)]">
+                                    {fcst.wdir === 'VRB' ? 'VRB' : `${fcst.wdir}°`} at {fcst.wspd}kt
+                                    {fcst.wgst && ` G${fcst.wgst}kt`}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Visibility Row */}
+                              {fcst.visib !== null && (
+                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Visibility</span>
+                                  <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.visib} SM</span>
+                                </div>
+                              )}
+
+                              {/* Clouds Row */}
+                              {fcst.clouds && fcst.clouds.length > 0 && (
+                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Clouds</span>
+                                  <span className="text-sm font-bold text-[var(--text-primary)]">
+                                    {fcst.clouds.map((c: any) => `${c.cover} @ ${c.base}ft`).join(' ')}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Weather Row */}
+                              {fcst.wxString && (
+                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Weather</span>
+                                  <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.wxString}</span>
+                                </div>
+                              )}
+
+                              {/* Divider between periods if not the last one */}
+                              {idx < tafData.fcsts.length - 1 && <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : !weatherLoading && cfiHomeAirport && (
                 <div className="py-8 text-center">
