@@ -1,22 +1,36 @@
 import type { Request, Response } from 'express';
 import https from 'https';
 
-export default function handler(req: Request, res: Response) {
-  const url = 'https://aviationweather.gov/data/iffdp/gfa/conus_prog_12.png';
+const URLS = [
+  'https://aviationweather.gov/data/iffdp/gfa/US_prog_12.png',
+  'https://aviationweather.gov/data/iffdp/gfa/conus_prog_12.png',
+  'https://aviationweather.gov/data/iffdp/gfa/CONUS_prog_12.png'
+];
 
-  https.get(url, (awcRes) => {
-    if (awcRes.statusCode !== 200) {
-      console.error('Failed to fetch chart from AWC:', awcRes.statusCode);
-      res.status(502).send('Failed to fetch chart');
+export default function handler(req: Request, res: Response) {
+  function attemptFetch(index: number) {
+    if (index >= URLS.length) {
+      res.status(502).send('Chart unavailable');
       return;
     }
 
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=600');
-    
-    awcRes.pipe(res);
-  }).on('error', (err) => {
-    console.error('HTTPS Proxy error:', err);
-    res.status(502).send('Failed to fetch chart');
-  });
+    const url = URLS[index];
+    https.get(url, (awcRes) => {
+      if (awcRes.statusCode === 200) {
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=600');
+        awcRes.pipe(res);
+      } else {
+        console.warn(`AWC Chart URL failed (${awcRes.statusCode}): ${url}`);
+        // Consume response to free up memory/socket
+        awcRes.resume();
+        attemptFetch(index + 1);
+      }
+    }).on('error', (err) => {
+      console.error(`HTTPS Proxy error for ${url}:`, err);
+      attemptFetch(index + 1);
+    });
+  }
+
+  attemptFetch(0);
 }
