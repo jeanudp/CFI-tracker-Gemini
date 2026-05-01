@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { parseMetar } from "metar-taf-parser";
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -160,7 +159,6 @@ export default function Dashboard() {
   const [selectedNextRating, setSelectedNextRating] = useState<string | null>(null);
   const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
   const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [archivedExpanded, setArchivedExpanded] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const [isOnline, setIsOnline] = useState(true);
@@ -180,7 +178,6 @@ export default function Dashboard() {
   const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<number>(0);
-  const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
   const [cfiHomeAirport, setCfiHomeAirport] = useState('');
   const [weatherData, setWeatherData] = useState<any>(null);
   const [tafData, setTafData] = useState<any>(null);
@@ -206,10 +203,7 @@ export default function Dashboard() {
   }, []);
 
   const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
-  const filteredStudents = students.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const sortedStudents = [...filteredStudents].sort((a, b) => {
+  const sortedStudents = [...students].sort((a, b) => {
     const ratingDiff = ratingOrder.indexOf(a.current_rating) - ratingOrder.indexOf(b.current_rating);
     if (ratingDiff !== 0) return ratingDiff;
     return a.name.localeCompare(b.name);
@@ -300,12 +294,7 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (onboardingStep === 2 && sortedStudents.length === 0) {
-      const timer = setTimeout(() => {
-        dismissOnboarding(2);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    // Onboarding step logic
   }, [onboardingStep, sortedStudents.length]);
 
   const fetchWeather = async () => {
@@ -990,7 +979,7 @@ export default function Dashboard() {
     </header>
 
       {/* Content */}
-      <div className="px-4 pt-2 pb-8 mt-32">
+      <div className="px-4 pt-2 pb-8 mt-4">
 
         {!loading && sortedStudents.length > 0 && (
           <div className="flex items-center justify-between px-1 mb-4">
@@ -1017,19 +1006,17 @@ export default function Dashboard() {
           <div className="py-16 text-center">
             <div className="text-5xl mb-4">👨‍✈️</div>
             <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-              {searchQuery ? 'No students found' : 'No students yet'}
+              No students yet
             </h3>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-              {searchQuery ? 'Try a different search' : 'Tap the + button to add your first student'}
+              Tap the + button to add your first student
             </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setIsNewStudentOpen(true)}
-                className="px-6 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl text-sm shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
-              >
-                Add First Student
-              </button>
-            )}
+            <button
+              onClick={() => setIsNewStudentOpen(true)}
+              className="px-6 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl text-sm shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
+            >
+              Add First Student
+            </button>
           </div>
         ) : (
           <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 relative")}>
@@ -2413,7 +2400,7 @@ export default function Dashboard() {
             </div>
             <p className="text-xs font-medium leading-relaxed">
               {onboardingStep === 1 && "👆 Tap the glowing Add Student button in the top right to add your first student and get started."}
-              {onboardingStep === 2 && "👆 Use the search bar above to find students, or tap any student card to open their profile and start a lesson."}
+              {onboardingStep === 2 && "👆 Tap any student card to open their profile and start a lesson."}
               {onboardingStep === 3 && "👆 Tap your name in the top right to access your CFI hours, account settings, and dark mode."}
             </p>
             <button
@@ -2636,56 +2623,6 @@ export default function Dashboard() {
           handleSelectStudent(student);
         }}
       />
-      {createPortal(
-        <div className="fixed top-16 left-0 right-0 z-[90]" style={{ backgroundColor: 'white', borderBottom: '1px solid #e2e8f0' }}>
-          <AnimatePresence>
-            {students.length === 0 && !loading && localStorage.getItem('61t_onboarded') === 'true' && !bannerDismissed && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="px-4 pt-4 overflow-hidden"
-              >
-                <div className="bg-[#d4e8f5] border border-[#a8d0ed] rounded-2xl p-4 flex items-center justify-between shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/50 rounded-xl flex items-center justify-center shrink-0">
-                      <span className="text-xl">👋</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#1a3a5c]">Welcome! Tap the Add Student button above to get started.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <button
-                      onClick={() => {
-                        localStorage.setItem('61t_banner_dismissed', 'true');
-                        setBannerDismissed(true);
-                      }}
-                      className="w-10 h-10 rounded-xl hover:bg-black/5 flex items-center justify-center text-[#1a3a5c]/40 hover:text-[#1a3a5c] transition-colors cursor-pointer"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="px-4 py-3 flex items-center">
-            <div className={cn("w-full transition-all", onboardingStep === 2 && "ring-4 ring-[#e8a020] ring-offset-2 rounded-xl animate-pulse")}>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search students..."
-                className="w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#1a3a5c] transition-all"
-                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-              />
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
     </div>
   );
 }
