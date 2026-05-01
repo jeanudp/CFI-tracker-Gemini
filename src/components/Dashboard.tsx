@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Pencil } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 import { QRCodeSVG } from 'qrcode.react';
@@ -179,8 +179,6 @@ export default function Dashboard() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<number>(0);
   const [cfiHomeAirport, setCfiHomeAirport] = useState('');
-  const [editingAirport, setEditingAirport] = useState(false);
-  const [airportInputValue, setAirportInputValue] = useState('');
   const [weatherData, setWeatherData] = useState<any>(null);
   const [tafData, setTafData] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -298,39 +296,6 @@ export default function Dashboard() {
   useEffect(() => {
     // Onboarding step logic
   }, [onboardingStep, sortedStudents.length]);
-
-  const handleSaveAirport = async () => {
-    const val = airportInputValue.trim().toUpperCase();
-    setEditingAirport(false);
-    
-    if (val === cfiHomeAirport) return;
-    if (!val) {
-      setAirportInputValue(cfiHomeAirport);
-      return;
-    }
-
-    setCfiHomeAirport(val);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await supabase
-          .from('cfi_profile')
-          .upsert({ 
-            user_id: session.user.id, 
-            home_airport: val,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'user_id' });
-      }
-    } catch (err) {
-      console.error('Error saving home airport:', err);
-    }
-  };
-
-  const startEditingAirport = () => {
-    console.log('edit clicked');
-    setAirportInputValue(cfiHomeAirport);
-    setEditingAirport(true);
-  };
 
   const fetchWeather = async () => {
     if (!cfiHomeAirport) return;
@@ -1195,33 +1160,8 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <Cloud size={16} style={{ color: 'var(--navy)' }} />
                   <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Live METAR</span>
-                  {editingAirport ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      maxLength={4}
-                      value={airportInputValue}
-                      onChange={(e) => setAirportInputValue(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveAirport();
-                        if (e.key === 'Escape') {
-                          setEditingAirport(false);
-                          setAirportInputValue(cfiHomeAirport);
-                        }
-                      }}
-                      onBlur={handleSaveAirport}
-                      className="w-14 px-1.5 py-0.5 rounded-full text-[11px] font-black bg-white border-2 border-[var(--navy)] text-[var(--navy)] uppercase focus:outline-none text-center"
-                    />
-                  ) : (
-                    <div 
-                      onClick={startEditingAirport}
-                      className="flex items-center gap-1.5 group cursor-pointer"
-                    >
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase min-w-[32px] text-center">
-                        {cfiHomeAirport || 'SET'}
-                      </span>
-                      <Pencil size={10} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
+                  {cfiHomeAirport && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
                   )}
                   {weatherData?.fltcat && (
                     <span className={cn(
@@ -1399,33 +1339,8 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <FileText size={16} style={{ color: 'var(--navy)' }} />
                   <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>TAF</span>
-                  {editingAirport ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      maxLength={4}
-                      value={airportInputValue}
-                      onChange={(e) => setAirportInputValue(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveAirport();
-                        if (e.key === 'Escape') {
-                          setEditingAirport(false);
-                          setAirportInputValue(cfiHomeAirport);
-                        }
-                      }}
-                      onBlur={handleSaveAirport}
-                      className="w-14 px-1.5 py-0.5 rounded-full text-[11px] font-black bg-white border-2 border-[var(--navy)] text-[var(--navy)] uppercase focus:outline-none text-center"
-                    />
-                  ) : (
-                    <div 
-                      onClick={startEditingAirport}
-                      className="flex items-center gap-1.5 group cursor-pointer"
-                    >
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase min-w-[32px] text-center">
-                        {cfiHomeAirport || 'SET'}
-                      </span>
-                      <Pencil size={10} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
+                  {cfiHomeAirport && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
