@@ -181,6 +181,7 @@ export default function Dashboard() {
   const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem('61t_banner_dismissed') === 'true');
   const [cfiHomeAirport, setCfiHomeAirport] = useState('');
   const [weatherData, setWeatherData] = useState<any>(null);
+  const [tafData, setTafData] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [progChartError, setProgChartError] = useState(false);
@@ -309,14 +310,32 @@ export default function Dashboard() {
     setWeatherLoading(true);
     setWeatherError(null);
     try {
-      const response = await fetch(`/api/metar?ids=${cfiHomeAirport}`);
-      if (!response.ok) throw new Error('Fetch failed');
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setWeatherData(data[0]);
-        console.log('Weather data:', JSON.stringify(data[0]));
+      const [metarRes, tafRes] = await Promise.all([
+        fetch(`/api/metar?ids=${cfiHomeAirport}`),
+        fetch(`/api/taf?ids=${cfiHomeAirport}`)
+      ]);
+
+      if (metarRes.ok) {
+        const metarData = await metarRes.json();
+        if (Array.isArray(metarData) && metarData.length > 0) {
+          setWeatherData(metarData[0]);
+          console.log('Weather data:', JSON.stringify(metarData[0]));
+        } else {
+          setWeatherError('No weather data found');
+        }
       } else {
-        setWeatherError('No weather data found');
+        throw new Error('METAR fetch failed');
+      }
+
+      if (tafRes.ok) {
+        const tafResult = await tafRes.json();
+        if (Array.isArray(tafResult) && tafResult.length > 0) {
+          setTafData(tafResult[0]);
+        } else {
+          setTafData(null);
+        }
+      } else {
+        setTafData(null);
       }
     } catch (err: any) {
       setWeatherError(err.message);
@@ -1110,139 +1129,106 @@ export default function Dashboard() {
 
         {/* Weather Widget */}
         <div className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* METAR Panel */}
-            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
-              <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="flex items-center gap-2">
-                  <Cloud size={16} style={{ color: 'var(--navy)' }} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Live Weather</span>
-                  {cfiHomeAirport && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {weatherLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
-                  <button 
-                    onClick={fetchWeather}
-                    disabled={weatherLoading || !cfiHomeAirport}
-                    className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)] disabled:opacity-30"
-                  >
-                    <RefreshCw size={12} />
-                  </button>
-                </div>
-              </div>
-
-              {weatherError && (
-                <div className="py-4 text-center">
-                  <p className="text-xs font-bold text-red-500">{weatherError}</p>
-                </div>
-              )}
-
-              {!cfiHomeAirport && (
-                <div className="py-8 text-center px-4">
-                  <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    Set your home airport in your CFI profile to see live weather
-                  </p>
-                </div>
-              )}
-
-              {weatherData && (weatherData.raw_text || weatherData.obs_time || weatherData.rawOb || weatherData.reportTime) && !weatherError && (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
-                    <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.wdir || 0).toString().padStart(3, '0')}° at {weatherData.wspd ?? '—'}kt
-                      {weatherData.wgst && ` G${weatherData.wgst}kt`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Visibility</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib ?? '—'} SM</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {weatherData.clouds?.[0] ? `${weatherData.clouds[0].cover} ${weatherData.clouds[0].base >= 0 ? `@ ${weatherData.clouds[0].base}'` : ''}` : 'Clear'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim_in_hg?.toFixed(2) ?? '—'} inHg</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
-                      Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {weatherData.fltcat && (
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
-                        weatherData.fltcat === 'VFR' ? "bg-green-500 text-white" :
-                        weatherData.fltcat === 'MVFR' ? "bg-blue-500 text-white" :
-                        weatherData.fltcat === 'IFR' ? "bg-red-500 text-white" :
-                        "bg-purple-500 text-white"
-                      )}>
-                        {weatherData.fltcat}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Prog Chart Panel */}
-            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
-              <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="flex items-center gap-2">
-                  <Map size={16} style={{ color: 'var(--navy)' }} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Prog Chart</span>
-                </div>
-                <a 
-                  href="https://aviationweather.gov/gfa/#progchart" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[10px] font-bold text-[var(--navy)] hover:underline flex items-center gap-1"
-                >
-                  Full Chart <ChevronRight size={10} />
-                </a>
-              </div>
-              <div className="relative aspect-video overflow-hidden rounded-xl border flex items-center justify-center bg-[var(--bg-tertiary)]" style={{ borderColor: 'var(--border-color)' }}>
-                {!progChartError ? (
-                  <img 
-                    src="/api/prog-chart" 
-                    alt="AWC Prog Chart"
-                    onError={() => setProgChartError(true)}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 p-4 text-center">
-                    <Map size={24} className="opacity-20" style={{ color: 'var(--navy)' }} />
-                    <p className="text-[10px] font-bold text-[var(--text-muted)]">Chart temporarily unavailable — click Full Chart to view on AWC</p>
-                    <a 
-                      href="https://aviationweather.gov/gfa/#progchart"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 px-3 py-1.5 rounded-lg bg-[var(--navy)] text-white text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all"
-                    >
-                      View on AWC
-                    </a>
-                  </div>
+          {/* METAR & TAF Panel - Full Width */}
+          <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="flex items-center gap-2">
+                <Cloud size={16} style={{ color: 'var(--navy)' }} />
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Live Weather</span>
+                {cfiHomeAirport && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
                 )}
               </div>
-              <p className="mt-3 text-[10px] font-medium text-center" style={{ color: 'var(--text-muted)' }}>
-                GFA Prog Chart — updates automatically
-              </p>
+              <div className="flex items-center gap-2">
+                {weatherLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
+                <button 
+                  onClick={fetchWeather}
+                  disabled={weatherLoading || !cfiHomeAirport}
+                  className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-muted)] disabled:opacity-30"
+                >
+                  <RefreshCw size={12} />
+                </button>
+              </div>
             </div>
+
+            {weatherError && (
+              <div className="py-4 text-center">
+                <p className="text-xs font-bold text-red-500">{weatherError}</p>
+              </div>
+            )}
+
+            {!cfiHomeAirport && (
+              <div className="py-8 text-center px-4">
+                <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  Set your home airport in your CFI profile to see live weather
+                </p>
+              </div>
+            )}
+
+            {weatherData && (weatherData.raw_text || weatherData.obs_time || weatherData.rawOb || weatherData.reportTime) && !weatherError && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
+                  <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                    {(weatherData.wdir || 0).toString().padStart(3, '0')}° at {weatherData.wspd ?? '—'}kt
+                    {weatherData.wgst && ` G${weatherData.wgst}kt`}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Visibility</span>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib ?? '—'} SM</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                    {weatherData.clouds?.[0] ? `${weatherData.clouds[0].cover} ${weatherData.clouds[0].base >= 0 ? `@ ${weatherData.clouds[0].base}'` : ''}` : 'Clear'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                    {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.altim_in_hg?.toFixed(2) ?? '—'} inHg</span>
+                </div>
+
+                {/* TAF Section */}
+                {tafData && tafData.raw_text && (
+                  <div className="pt-2 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>TAF</span>
+                      <div className="p-3 rounded-lg text-[10px] font-mono leading-relaxed break-words overflow-hidden" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                        {tafData.raw_text}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
+                    Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {weatherData.fltcat && (
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider",
+                      weatherData.fltcat === 'VFR' ? "bg-green-500 text-white" :
+                      weatherData.fltcat === 'MVFR' ? "bg-blue-500 text-white" :
+                      weatherData.fltcat === 'IFR' ? "bg-red-500 text-white" :
+                      "bg-purple-500 text-white"
+                    )}>
+                      {weatherData.fltcat}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
