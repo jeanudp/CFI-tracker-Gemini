@@ -316,16 +316,6 @@ export default function Schedule() {
             >
               TRACKER
             </span>
-            <span
-              className="font-bold uppercase"
-              style={{
-                fontSize: '7px',
-                color: 'var(--text-muted)',
-                letterSpacing: '2px',
-              }}
-            >
-              Schedule
-            </span>
           </div>
         </div>
       </header>
