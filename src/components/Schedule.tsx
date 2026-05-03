@@ -566,16 +566,10 @@ export default function Schedule() {
 
   const handleDragOver = (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
-    const container = e.currentTarget.closest('.schedule-grid-scroll');
-    if (!container) return;
-    const scrollLeft = container.scrollLeft;
-    const timelineContainer = e.currentTarget.parentElement;
-    if (!timelineContainer) return;
-    const timelineRect = timelineContainer.getBoundingClientRect();
-
-    const dropX = (e.clientX - dragOffsetX) - timelineRect.left + scrollLeft;
-    const decimalHour = dropX / 96;
-    const totalMinutes = Math.round((decimalHour * 60) / 10) * 10;
+    const cellRect = e.currentTarget.getBoundingClientRect();
+    const offsetX = (e.clientX - dragOffsetX) - cellRect.left;
+    const minutesInHour = Math.round((offsetX / 96 * 60) / 10) * 10;
+    const totalMinutes = hour * 60 + minutesInHour;
     
     const clampedMinutes = Math.max(0, Math.min(1430, totalMinutes));
     const h = Math.floor(clampedMinutes / 60);
@@ -586,16 +580,10 @@ export default function Schedule() {
 
   const handleDrop = async (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
-    const container = e.currentTarget.closest('.schedule-grid-scroll');
-    if (!container) return;
-    const scrollLeft = container.scrollLeft;
-    const timelineContainer = e.currentTarget.parentElement;
-    if (!timelineContainer) return;
-    const timelineRect = timelineContainer.getBoundingClientRect();
-
-    const dropX = (e.clientX - dragOffsetX) - timelineRect.left + scrollLeft;
-    const decimalHour = dropX / 96;
-    const totalMinutes = Math.round((decimalHour * 60) / 10) * 10;
+    const cellRect = e.currentTarget.getBoundingClientRect();
+    const offsetX = (e.clientX - dragOffsetX) - cellRect.left;
+    const minutesInHour = Math.round((offsetX / 96 * 60) / 10) * 10;
+    const totalMinutes = hour * 60 + minutesInHour;
     
     const clampedMinutes = Math.max(0, Math.min(1430, totalMinutes));
     const h = Math.floor(clampedMinutes / 60);
