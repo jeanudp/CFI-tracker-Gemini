@@ -133,7 +133,7 @@ export default function Schedule() {
   const [modalData, setModalData] = useState({
     startTime: '08:00',
     studentName: '',
-    duration: 1.9,
+    duration: 2,
     notes: '',
     tailNumber: '',
     lessonType: 'Flight' as 'Ground' | 'Flight' | 'Sim'
@@ -376,7 +376,7 @@ export default function Schedule() {
     setModalData({
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       studentName: '',
-      duration: 1.9,
+      duration: 2,
       notes: '',
       tailNumber: tailNumber === 'GROUND' ? '' : tailNumber,
       lessonType: tailNumber === 'GROUND' ? 'Ground' : 'Flight'
