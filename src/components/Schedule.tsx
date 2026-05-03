@@ -44,7 +44,10 @@ export default function Schedule() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [draggingLesson, setDraggingLesson] = useState<any>(null);
-  const [dragOverHour, setDragOverHour] = useState<{ hour: number, tailNumber: string } | null>(null);
+  const [dragOverHour, setDragOverHour] = useState<{ hour: number, tailNumber: string, segment: number } | null>(null);
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [pickerMonth, setPickerMonth] = useState(new Date());
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -249,8 +252,9 @@ export default function Schedule() {
   };
 
   const decimalToTime = (decimal: number) => {
-    const hours = Math.round(decimal);
-    return `${hours.toString().padStart(2, '0')}:00`;
+    const hours = Math.floor(decimal);
+    const minutes = Math.round((decimal - hours) * 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
   const handlePrevDay = () => {
@@ -294,21 +298,62 @@ export default function Schedule() {
     });
   };
 
+  const getCalendarDays = () => {
+    const year = pickerMonth.getFullYear();
+    const month = pickerMonth.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    
+    const days = [];
+    // Padding
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null);
+    }
+    // Days
+    for (let i = 1; i <= totalDays; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const handlePrevMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 1));
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setIsDatePickerOpen(false);
+  };
+
   const handleDragOver = (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
-    setDragOverHour({ hour, tailNumber });
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const percentage = Math.max(0, Math.min(0.999, (e.clientX - rect.left) / rect.width));
+    const segment = Math.floor(percentage * 6);
+    setDragOverHour({ hour, tailNumber, segment });
   };
 
   const handleDrop = async (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const percentage = Math.max(0, Math.min(0.999, (e.clientX - rect.left) / rect.width));
+    const segment = Math.floor(percentage * 6);
+    const decimal = hour + (segment / 6);
+    
     const lesson = draggingLesson;
     setDraggingLesson(null);
     setDragOverHour(null);
 
     if (!lesson) return;
     
-    // If tail number changed or hour changed
-    const newStartTime = decimalToTime(hour);
+    // If tail number changed or time changed
+    const newStartTime = decimalToTime(decimal);
     if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
 
     if (checkConflict(newStartTime, lesson.duration_hours, tailNumber, lesson.id)) {
@@ -391,16 +436,6 @@ export default function Schedule() {
               }}
             >
               TRACKER
-            </span>
-            <span
-              className="font-bold uppercase"
-              style={{
-                fontSize: '7px',
-                color: 'var(--text-muted)',
-                letterSpacing: '2px',
-              }}
-            >
-              Schedule
             </span>
           </div>
         </div>
@@ -507,18 +542,6 @@ export default function Schedule() {
 
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 py-6">
-        <div className="mb-6">
-          <p className="text-xs font-black uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--text-muted)' }}>
-            Flight Operations Control
-          </p>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Daily Schedule</h1>
-            <div className="h-6 w-px bg-[var(--border-color)] opacity-50" />
-            <p className="text-sm font-bold truncate" style={{ color: 'var(--text-muted)' }}>
-              {formatDateLong(selectedDate)}
-            </p>
-          </div>
-        </div>
 
         {/* Date Navigation Bar */}
         <div 
@@ -536,11 +559,89 @@ export default function Schedule() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)]/50">
-              <Calendar size={14} style={{ color: 'var(--navy)' }} />
-              <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                {formatDateNav(selectedDate)}
-              </span>
+            <div className="relative">
+              <button 
+                onClick={() => {
+                  setIsDatePickerOpen(!isDatePickerOpen);
+                  setPickerMonth(new Date(selectedDate));
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)]/50 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+              >
+                <Calendar size={14} style={{ color: 'var(--navy)' }} />
+                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {formatDateNav(selectedDate)}
+                </span>
+                <ChevronDown size={12} className={cn("transition-transform duration-200", isDatePickerOpen && "rotate-180")} style={{ color: 'var(--text-muted)' }} />
+              </button>
+
+              <AnimatePresence>
+                {isDatePickerOpen && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[80]"
+                      onClick={() => setIsDatePickerOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[81]"
+                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                          <ChevronLeft size={16} style={{ color: 'var(--text-primary)' }} />
+                        </button>
+                        <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>
+                          {pickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                          <ChevronRight size={16} style={{ color: 'var(--text-primary)' }} />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                          <div key={day} className="text-center text-[9px] font-black" style={{ color: 'var(--text-muted)' }}>
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1">
+                        {getCalendarDays().map((date, i) => {
+                          if (!date) return <div key={`empty-${i}`} className="h-7" />;
+                          
+                          const isActive = date.getTime() === new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).getTime();
+                          const isCurrToday = isToday(date);
+
+                          return (
+                            <button
+                              key={date.toISOString()}
+                              onClick={() => handleDateSelect(date)}
+                              className={cn(
+                                "h-7 rounded-lg text-xs font-bold transition-all relative flex items-center justify-center cursor-pointer",
+                                isActive 
+                                  ? "bg-[var(--navy)] text-white shadow-md" 
+                                  : "hover:bg-[var(--bg-tertiary)]"
+                              )}
+                              style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
+                            >
+                              {date.getDate()}
+                              {isCurrToday && !isActive && (
+                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -640,9 +741,19 @@ export default function Schedule() {
                           <div className={cn(
                             "absolute inset-0 transition-colors pointer-events-none",
                             dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number
-                              ? "bg-[var(--navy)]/10"
+                              ? ""
                               : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
-                          )} />
+                          )}>
+                            {dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number && (
+                              <div 
+                                className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
+                                style={{ 
+                                  left: `${dragOverHour.segment * (100 / 6)}%`, 
+                                  width: `${100 / 6}%` 
+                                }} 
+                              />
+                            )}
+                          </div>
                         </div>
                       ))}
 
