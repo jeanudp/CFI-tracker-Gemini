@@ -142,7 +142,7 @@ export default function Schedule() {
   const [isSaving, setIsSaving] = useState(false);
   const [draggingLesson, setDraggingLesson] = useState<any>(null);
   const [dragOffsetX, setDragOffsetX] = useState(0);
-  const [dragOverHour, setDragOverHour] = useState<{ hour: number, tailNumber: string, segment: number } | null>(null);
+  const [dragOverHour, setDragOverHour] = useState<{ hour: number, minute: number, tailNumber: string } | null>(null);
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState(new Date());
@@ -499,20 +499,41 @@ export default function Schedule() {
 
   const handleDragOver = (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const dropX = e.clientX - dragOffsetX;
-    const percentage = Math.max(0, Math.min(0.999, (dropX - rect.left) / rect.width));
-    const segment = Math.floor(percentage * 6);
-    setDragOverHour({ hour, tailNumber, segment });
+    const container = e.currentTarget.closest('.schedule-grid-scroll');
+    if (!container) return;
+    const scrollLeft = container.scrollLeft;
+    const timelineContainer = e.currentTarget.parentElement;
+    if (!timelineContainer) return;
+    const timelineRect = timelineContainer.getBoundingClientRect();
+
+    const dropX = (e.clientX - dragOffsetX) - timelineRect.left + scrollLeft;
+    const decimalHour = dropX / 96;
+    const totalMinutes = Math.round((decimalHour * 60) / 10) * 10;
+    
+    const clampedMinutes = Math.max(0, Math.min(1430, totalMinutes));
+    const h = Math.floor(clampedMinutes / 60);
+    const m = clampedMinutes % 60;
+    
+    setDragOverHour({ hour: h, minute: m, tailNumber });
   };
 
   const handleDrop = async (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const dropX = e.clientX - dragOffsetX;
-    const percentage = Math.max(0, Math.min(0.999, (dropX - rect.left) / rect.width));
-    const segment = Math.floor(percentage * 6);
-    const decimal = hour + (segment / 6);
+    const container = e.currentTarget.closest('.schedule-grid-scroll');
+    if (!container) return;
+    const scrollLeft = container.scrollLeft;
+    const timelineContainer = e.currentTarget.parentElement;
+    if (!timelineContainer) return;
+    const timelineRect = timelineContainer.getBoundingClientRect();
+
+    const dropX = (e.clientX - dragOffsetX) - timelineRect.left + scrollLeft;
+    const decimalHour = dropX / 96;
+    const totalMinutes = Math.round((decimalHour * 60) / 10) * 10;
+    
+    const clampedMinutes = Math.max(0, Math.min(1430, totalMinutes));
+    const h = Math.floor(clampedMinutes / 60);
+    const m = clampedMinutes % 60;
+    const finalDecimal = h + (m / 60);
     
     const lesson = draggingLesson;
     setDraggingLesson(null);
@@ -521,8 +542,7 @@ export default function Schedule() {
 
     if (!lesson) return;
     
-    // If tail number changed or time changed
-    const newStartTime = decimalToTime(decimal);
+    const newStartTime = decimalToTime(finalDecimal);
     if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
 
     const conflict = checkConflict(newStartTime, lesson.duration_hours, lesson.id);
@@ -857,39 +877,39 @@ export default function Schedule() {
                       onDragOver={(e) => handleDragOver(e, hour, 'GROUND')}
                       onDrop={(e) => handleDrop(e, hour, 'GROUND')}
                     >
-                      <div className={cn(
-                        "absolute inset-0 transition-colors pointer-events-none",
-                        dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND'
-                          ? ""
-                          : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
-                      )}>
-                        {dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND' && (
-                          <>
-                            <div 
-                              className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
-                              style={{ 
-                                left: `${dragOverHour.segment * (100 / 6)}%`, 
-                                width: `${100 / 6}%` 
-                              }} 
-                            />
-                            {/* Drag Tooltip */}
-                            {draggingLesson && (
+                        <div className={cn(
+                          "absolute inset-0 transition-colors pointer-events-none",
+                          dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND'
+                            ? ""
+                            : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
+                        )}>
+                          {dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND' && (
+                            <>
                               <div 
-                                className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none"
+                                className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10 transition-[left] duration-100"
                                 style={{ 
-                                  left: `${(dragOverHour.segment * (100 / 6)) + (100 / 12)}%` 
-                                }}
-                              >
-                                {(() => {
-                                  const start = hour + (dragOverHour.segment / 6);
-                                  const end = start + draggingLesson.duration_hours;
-                                  return `${decimalToTime(start)} – ${decimalToTime(end)}`;
-                                })()}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
+                                  left: `${(dragOverHour.minute / 60) * 100}%`, 
+                                  width: `${(10 / 60) * 100}%` 
+                                }} 
+                              />
+                              {/* Drag Tooltip */}
+                              {draggingLesson && (
+                                <div 
+                                  className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none transition-[left] duration-100"
+                                  style={{ 
+                                    left: `${((dragOverHour.minute / 60) * 100) + ((10 / 60) * 100) / 2}%` 
+                                  }}
+                                >
+                                  {(() => {
+                                    const start = dragOverHour.hour + (dragOverHour.minute / 60);
+                                    const end = start + draggingLesson.duration_hours;
+                                    return `${decimalToTime(start)} – ${decimalToTime(end)}`;
+                                  })()}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
                     </div>
                   ))}
 
@@ -1001,22 +1021,22 @@ export default function Schedule() {
                             {dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number && (
                               <>
                                 <div 
-                                  className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
+                                  className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10 transition-[left] duration-100"
                                   style={{ 
-                                    left: `${dragOverHour.segment * (100 / 6)}%`, 
-                                    width: `${100 / 6}%` 
+                                    left: `${(dragOverHour.minute / 60) * 100}%`, 
+                                    width: `${(10 / 60) * 100}%` 
                                   }} 
                                 />
                                 {/* Drag Tooltip */}
                                 {draggingLesson && (
                                   <div 
-                                    className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none"
+                                    className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none transition-[left] duration-100"
                                     style={{ 
-                                      left: `${(dragOverHour.segment * (100 / 6)) + (100 / 12)}%` 
+                                      left: `${((dragOverHour.minute / 60) * 100) + ((10 / 60) * 100) / 2}%` 
                                     }}
                                   >
                                     {(() => {
-                                      const start = hour + (dragOverHour.segment / 6);
+                                      const start = dragOverHour.hour + (dragOverHour.minute / 60);
                                       const end = start + draggingLesson.duration_hours;
                                       return `${decimalToTime(start)} – ${decimalToTime(end)}`;
                                     })()}
