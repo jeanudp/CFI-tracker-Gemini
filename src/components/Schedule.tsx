@@ -145,6 +145,7 @@ export default function Schedule() {
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState(new Date());
+  const [suggestedTime, setSuggestedTime] = useState<string | null>(null);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -217,7 +218,7 @@ export default function Schedule() {
     }
   };
 
-  const checkConflict = (startTime: string, duration: number, tailNumber: string, studentName: string, ignoreId?: string) => {
+  const checkConflict = (startTime: string, duration: number, ignoreId?: string) => {
     const start = timeToDecimal(startTime);
     const end = start + duration;
 
@@ -228,14 +229,29 @@ export default function Schedule() {
       const lEnd = lStart + (lesson.duration_hours || 0);
 
       // Overlap condition
-      const overlaps = (start < lEnd && end > lStart);
-      
-      if (overlaps) {
-        if (lesson.tail_number === tailNumber) return 'aircraft';
-        if (lesson.student_name === studentName) return 'student';
+      if (start < lEnd && end > lStart) {
+        return 'overlap';
       }
     }
     
+    return null;
+  };
+
+  const findNextAvailableSlot = (requestedStartTime: string, duration: number, ignoreId?: string) => {
+    let [hours, mins] = requestedStartTime.split(':').map(Number);
+    let currentMinutes = hours * 60 + mins;
+
+    while (currentMinutes <= 1430) { // 23:50 = 1430 mins
+      const h = Math.floor(currentMinutes / 60);
+      const m = currentMinutes % 60;
+      const checkStart = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      
+      const conflict = checkConflict(checkStart, duration, ignoreId);
+      if (!conflict) {
+        return checkStart;
+      }
+      currentMinutes += 10;
+    }
     return null;
   };
 
@@ -251,20 +267,22 @@ export default function Schedule() {
     }
 
     const effectiveTail = modalData.lessonType === 'Ground' ? 'GROUND' : modalData.tailNumber;
-    const conflict = checkConflict(modalData.startTime, modalData.duration, effectiveTail, modalData.studentName, editingLesson?.id);
+    const conflict = checkConflict(modalData.startTime, modalData.duration, editingLesson?.id);
     
-    if (conflict === 'aircraft') {
-      setFormError('This aircraft is already booked during this time.');
-      return;
-    }
-
-    if (conflict === 'student') {
-      setFormError('This student is already booked during this time.');
+    if (conflict === 'overlap') {
+      const nextSlot = findNextAvailableSlot(modalData.startTime, modalData.duration, editingLesson?.id);
+      if (nextSlot) {
+        setSuggestedTime(nextSlot);
+        setFormError(`Conflict detected. Next available slot is ${nextSlot.substring(0, 5)} — use it?`);
+      } else {
+        setFormError('This time slot conflicts with an existing lesson.');
+      }
       return;
     }
 
     setIsSaving(true);
     setFormError(null);
+    setSuggestedTime(null);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -327,6 +345,7 @@ export default function Schedule() {
   const openNewBooking = (hour: number, tailNumber: string) => {
     setEditingLesson(null);
     setFormError(null);
+    setSuggestedTime(null);
     setModalData({
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       studentName: '',
@@ -341,6 +360,7 @@ export default function Schedule() {
   const openEditBooking = (lesson: any) => {
     setEditingLesson(lesson);
     setFormError(null);
+    setSuggestedTime(null);
     setModalData({
       startTime: lesson.start_time,
       studentName: lesson.student_name,
@@ -475,9 +495,9 @@ export default function Schedule() {
     const newStartTime = decimalToTime(decimal);
     if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
 
-    const conflict = checkConflict(newStartTime, lesson.duration_hours, tailNumber, lesson.student_name, lesson.id);
-    if (conflict) {
-      alert(conflict === 'aircraft' ? 'This aircraft is already booked during this time.' : 'This student is already booked during this time.');
+    const conflict = checkConflict(newStartTime, lesson.duration_hours, lesson.id);
+    if (conflict === 'overlap') {
+      alert('This time slot conflicts with an existing lesson.');
       return;
     }
 
@@ -1068,8 +1088,22 @@ export default function Schedule() {
 
             <div className="space-y-4">
               {formError && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-wider text-center">
-                  {formError}
+                <div className="flex flex-col gap-2">
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-wider text-center">
+                    {formError}
+                  </div>
+                  {suggestedTime && (
+                    <button
+                      onClick={() => {
+                        setModalData({ ...modalData, startTime: suggestedTime });
+                        setSuggestedTime(null);
+                        setFormError(null);
+                      }}
+                      className="p-2 rounded-xl bg-[var(--navy)] text-white text-[10px] font-black uppercase tracking-widest hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      Use {suggestedTime.substring(0, 5)}
+                    </button>
+                  )}
                 </div>
               )}
 
