@@ -63,7 +63,7 @@ export default function Schedule() {
         supabase
           .from('scheduled_lessons')
           .select('*')
-          .eq('cfi_id', session.user.id)
+          .eq('user_id', session.user.id)
           .eq('date', dateStr)
       ]);
 
@@ -113,7 +113,7 @@ export default function Schedule() {
 
       const dateStr = selectedDate.toISOString().split('T')[0];
       const payload = {
-        cfi_id: session.user.id,
+        user_id: session.user.id,
         student_name: modalData.studentName,
         tail_number: modalData.tailNumber,
         date: dateStr,
