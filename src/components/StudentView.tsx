@@ -158,7 +158,6 @@ export default function StudentView() {
       const { data: upcomingData, error: upcomingError } = await supabase
         .from('scheduled_lessons')
         .select('*')
-        .eq('user_id', shareToken.user_id)
         .eq('student_name', shareToken.student_name)
         .gte('date', todayStr)
         .order('date', { ascending: true })
