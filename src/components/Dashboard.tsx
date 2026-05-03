@@ -1159,11 +1159,11 @@ export default function Dashboard() {
               borderTop: '1px solid var(--border-color)',
               borderRight: '1px solid var(--border-color)',
               borderBottom: '1px solid var(--border-color)',
-              borderLeft: !weatherData?.fltcat ? '1px solid var(--border-color)' :
-                          weatherData.fltcat === 'VFR' ? '4px solid #16a34a' :
-                          weatherData.fltcat === 'MVFR' ? '4px solid #2563eb' :
-                          weatherData.fltcat === 'IFR' ? '4px solid #dc2626' :
-                          weatherData.fltcat === 'LIFR' ? '4px solid #7c3aed' :
+              borderLeft: !weatherData?.fltCat ? '1px solid var(--border-color)' :
+                          weatherData.fltCat === 'VFR' ? '4px solid #16a34a' :
+                          weatherData.fltCat === 'MVFR' ? '4px solid #2563eb' :
+                          weatherData.fltCat === 'IFR' ? '4px solid #dc2626' :
+                          weatherData.fltCat === 'LIFR' ? '4px solid #7c3aed' :
                           '1px solid var(--border-color)'
             }}>
               <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
@@ -1173,20 +1173,20 @@ export default function Dashboard() {
                   {cfiHomeAirport && (
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-[var(--navy)] text-white uppercase">{cfiHomeAirport}</span>
                   )}
-                  {weatherData?.fltcat && (
+                  {weatherData?.fltCat && (
                     <span className={cn(
                       "px-2 py-0.5 rounded-full text-[9px] font-black text-white uppercase",
-                      weatherData.fltcat === 'VFR' ? "bg-[#16a34a]" :
-                      weatherData.fltcat === 'MVFR' ? "bg-[#2563eb]" :
-                      weatherData.fltcat === 'IFR' ? "bg-[#dc2626]" :
-                      weatherData.fltcat === 'LIFR' ? "bg-[#7c3aed]" : "bg-gray-500"
+                      weatherData.fltCat === 'VFR' ? "bg-[#16a34a]" :
+                      weatherData.fltCat === 'MVFR' ? "bg-[#2563eb]" :
+                      weatherData.fltCat === 'IFR' ? "bg-[#dc2626]" :
+                      weatherData.fltCat === 'LIFR' ? "bg-[#7c3aed]" : "bg-gray-500"
                     )}>
-                      {weatherData.fltcat}
+                      {weatherData.fltCat}
                       <span className="ml-1 opacity-85 font-medium" style={{ fontSize: '8px' }}>
-                        {weatherData.fltcat === 'VFR' && "· Visual · Ceiling >3,000ft · Vis >5SM"}
-                        {weatherData.fltcat === 'MVFR' && "· Marginal · Ceiling 1,000-3,000ft · Vis 3-5SM"}
-                        {weatherData.fltcat === 'IFR' && "· Instrument · Ceiling 500-999ft · Vis 1-3SM"}
-                        {weatherData.fltcat === 'LIFR' && "· Low IFR · Ceiling <500ft · Vis <1SM"}
+                        {weatherData.fltCat === 'VFR' && "· Visual · Ceiling >3,000ft · Vis >5SM"}
+                        {weatherData.fltCat === 'MVFR' && "· Marginal · Ceiling 1,000-3,000ft · Vis 3-5SM"}
+                        {weatherData.fltCat === 'IFR' && "· Instrument · Ceiling 500-999ft · Vis 1-3SM"}
+                        {weatherData.fltCat === 'LIFR' && "· Low IFR · Ceiling <500ft · Vis <1SM"}
                       </span>
                     </span>
                   )}
