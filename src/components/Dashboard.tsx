@@ -1155,7 +1155,15 @@ export default function Dashboard() {
         <div className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* METAR Panel */}
-            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ 
+              borderColor: 'var(--border-color)',
+              borderLeft: !weatherData?.fltcat ? '1px solid var(--border-color)' :
+                          weatherData.fltcat === 'VFR' ? '4px solid #16a34a' :
+                          weatherData.fltcat === 'MVFR' ? '4px solid #2563eb' :
+                          weatherData.fltcat === 'IFR' ? '4px solid #dc2626' :
+                          weatherData.fltcat === 'LIFR' ? '4px solid #7c3aed' :
+                          '1px solid var(--border-color)'
+            }}>
               <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center gap-2">
                   <Cloud size={16} style={{ color: 'var(--navy)' }} />
@@ -1172,6 +1180,12 @@ export default function Dashboard() {
                       weatherData.fltcat === 'LIFR' ? "bg-[#7c3aed]" : "bg-gray-500"
                     )}>
                       {weatherData.fltcat}
+                      <span className="ml-1 opacity-85 font-medium" style={{ fontSize: '8px' }}>
+                        {weatherData.fltcat === 'VFR' && "· Visual · Ceiling >3,000ft · Vis >5SM"}
+                        {weatherData.fltcat === 'MVFR' && "· Marginal · Ceiling 1,000-3,000ft · Vis 3-5SM"}
+                        {weatherData.fltcat === 'IFR' && "· Instrument · Ceiling 500-999ft · Vis 1-3SM"}
+                        {weatherData.fltcat === 'LIFR' && "· Low IFR · Ceiling <500ft · Vis <1SM"}
+                      </span>
                     </span>
                   )}
                 </div>
