@@ -512,12 +512,6 @@ export default function Dashboard() {
 
   const handleAcceptRequest = async (request: any) => {
     try {
-      const { error } = await supabase
-        .from('lesson_requests')
-        .delete()
-        .eq('id', request.id);
-      if (error) throw error;
-      
       navigate(`/schedule?date=${request.requested_date}`);
     } catch (err: any) {
       console.error('Error accepting request:', err);

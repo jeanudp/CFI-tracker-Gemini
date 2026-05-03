@@ -193,7 +193,8 @@ export default function Schedule() {
     const dateParam = params.get('date');
 
     if (dateParam) {
-      const date = new Date(dateParam);
+      const [year, month, day] = dateParam.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
       if (!isNaN(date.getTime())) {
         setSelectedDate(date);
       }
