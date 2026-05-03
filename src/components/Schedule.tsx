@@ -124,20 +124,26 @@ export default function Schedule() {
     }
   };
 
-  const checkConflict = (startTime: string, duration: number, tailNumber: string, ignoreId?: string) => {
+  const checkConflict = (startTime: string, duration: number, tailNumber: string, studentName: string, ignoreId?: string) => {
     const start = timeToDecimal(startTime);
     const end = start + duration;
 
-    return scheduledLessons.some(lesson => {
-      if (ignoreId && lesson.id === ignoreId) return false;
-      if (lesson.tail_number !== tailNumber) return false;
+    for (const lesson of scheduledLessons) {
+      if (ignoreId && lesson.id === ignoreId) continue;
 
       const lStart = timeToDecimal(lesson.start_time);
       const lEnd = lStart + (lesson.duration_hours || 0);
 
       // Overlap condition
-      return (start < lEnd && end > lStart);
-    });
+      const overlaps = (start < lEnd && end > lStart);
+      
+      if (overlaps) {
+        if (lesson.tail_number === tailNumber) return 'aircraft';
+        if (lesson.student_name === studentName) return 'student';
+      }
+    }
+    
+    return null;
   };
 
   const handleSaveLesson = async () => {
@@ -146,8 +152,16 @@ export default function Schedule() {
       return;
     }
 
-    if (checkConflict(modalData.startTime, modalData.duration, modalData.tailNumber, editingLesson?.id)) {
+    const effectiveTail = modalData.lessonType === 'Ground' ? 'GROUND' : modalData.tailNumber;
+    const conflict = checkConflict(modalData.startTime, modalData.duration, effectiveTail, modalData.studentName, editingLesson?.id);
+    
+    if (conflict === 'aircraft') {
       setFormError('This aircraft is already booked during this time.');
+      return;
+    }
+
+    if (conflict === 'student') {
+      setFormError('This student is already booked during this time.');
       return;
     }
 
@@ -363,9 +377,17 @@ export default function Schedule() {
     const newStartTime = decimalToTime(decimal);
     if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
 
-    if (checkConflict(newStartTime, lesson.duration_hours, tailNumber, lesson.id)) {
-      alert('This aircraft is already booked during this time.');
+    const conflict = checkConflict(newStartTime, lesson.duration_hours, tailNumber, lesson.student_name, lesson.id);
+    if (conflict) {
+      alert(conflict === 'aircraft' ? 'This aircraft is already booked during this time.' : 'This student is already booked during this time.');
       return;
+    }
+
+    let newLessonType = lesson.lesson_type;
+    if (tailNumber === 'GROUND') {
+      newLessonType = 'Ground';
+    } else if (lesson.lesson_type === 'Ground') {
+      newLessonType = 'Flight';
     }
 
     try {
@@ -373,7 +395,8 @@ export default function Schedule() {
         .from('scheduled_lessons')
         .update({ 
           start_time: newStartTime,
-          tail_number: tailNumber
+          tail_number: tailNumber,
+          lesson_type: newLessonType
         })
         .eq('id', lesson.id);
       

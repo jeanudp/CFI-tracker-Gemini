@@ -1170,8 +1170,10 @@ export default function Dashboard() {
         {/* Weather Widget */}
         <div className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-            {/* METAR Panel */}
-            <div className="md:col-span-1 bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ 
+            {/* Left Column: Weather */}
+            <div className="md:col-span-1 flex flex-col gap-4">
+              {/* METAR Panel */}
+              <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ 
               borderTop: '1px solid var(--border-color)',
               borderRight: '1px solid var(--border-color)',
               borderBottom: '1px solid var(--border-color)',
@@ -1386,8 +1388,8 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* TAF Panel */}
-            <div className="md:col-span-1 bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+              {/* TAF Panel */}
+              <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
               <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center gap-2">
                   <FileText size={16} style={{ color: 'var(--navy)' }} />
@@ -1639,10 +1641,11 @@ export default function Dashboard() {
                   </p>
                 </div>
               )}
+              </div>
             </div>
 
             {/* Upcoming Lessons Widget */}
-            <div className="md:col-span-1 flex flex-col gap-4">
+            <div className="md:col-span-2 flex flex-col gap-4">
               <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm border border-[var(--border-color)]">
                 <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
                   <div className="flex items-center gap-2">
