@@ -141,6 +141,7 @@ export default function Schedule() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [draggingLesson, setDraggingLesson] = useState<any>(null);
+  const [dragOffsetX, setDragOffsetX] = useState(0);
   const [dragOverHour, setDragOverHour] = useState<{ hour: number, tailNumber: string, segment: number } | null>(null);
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -474,7 +475,8 @@ export default function Schedule() {
   const handleDragOver = (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const percentage = Math.max(0, Math.min(0.999, (e.clientX - rect.left) / rect.width));
+    const dropX = e.clientX - dragOffsetX;
+    const percentage = Math.max(0, Math.min(0.999, (dropX - rect.left) / rect.width));
     const segment = Math.floor(percentage * 6);
     setDragOverHour({ hour, tailNumber, segment });
   };
@@ -482,12 +484,14 @@ export default function Schedule() {
   const handleDrop = async (e: React.DragEvent, hour: number, tailNumber: string) => {
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const percentage = Math.max(0, Math.min(0.999, (e.clientX - rect.left) / rect.width));
+    const dropX = e.clientX - dragOffsetX;
+    const percentage = Math.max(0, Math.min(0.999, (dropX - rect.left) / rect.width));
     const segment = Math.floor(percentage * 6);
     const decimal = hour + (segment / 6);
     
     const lesson = draggingLesson;
     setDraggingLesson(null);
+    setDragOffsetX(0);
     setDragOverHour(null);
 
     if (!lesson) return;
@@ -872,9 +876,14 @@ export default function Schedule() {
                         <div 
                           key={lesson.id}
                           draggable
-                          onDragStart={() => setDraggingLesson(lesson)}
+                          onDragStart={(e) => {
+                            setDraggingLesson(lesson);
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setDragOffsetX(e.clientX - rect.left);
+                          }}
                           onDragEnd={() => {
                             setDraggingLesson(null);
+                            setDragOffsetX(0);
                             setDragOverHour(null);
                           }}
                           onClick={(e) => {
@@ -1002,9 +1011,14 @@ export default function Schedule() {
                             <div 
                               key={lesson.id}
                               draggable
-                              onDragStart={() => setDraggingLesson(lesson)}
+                              onDragStart={(e) => {
+                                setDraggingLesson(lesson);
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setDragOffsetX(e.clientX - rect.left);
+                              }}
                               onDragEnd={() => {
                                 setDraggingLesson(null);
+                                setDragOffsetX(0);
                                 setDragOverHour(null);
                               }}
                               onClick={(e) => {
