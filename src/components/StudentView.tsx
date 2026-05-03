@@ -154,7 +154,8 @@ export default function StudentView() {
 
       // Fetch upcoming scheduled lessons
       const todayStr = new Date().toISOString().split('T')[0];
-      const { data: upcomingData } = await supabase
+      console.log('Fetching scheduled lessons for:', { student_name: shareToken.student_name, user_id: shareToken.user_id, today: todayStr });
+      const { data: upcomingData, error: upcomingError } = await supabase
         .from('scheduled_lessons')
         .select('*')
         .eq('user_id', shareToken.user_id)
@@ -163,6 +164,8 @@ export default function StudentView() {
         .order('date', { ascending: true })
         .order('start_time', { ascending: true })
         .limit(5);
+
+      console.log('Upcoming lessons data:', upcomingData, 'Error:', upcomingError);
 
       setScheduledLessons(upcomingData || []);
 
