@@ -209,7 +209,30 @@ export default function Schedule() {
           .eq('date', dateStr)
       ]);
 
-      setAircraft(aircraftRes.data || []);
+      const sortedAircraft = (aircraftRes.data || []).sort((a: any, b: any) => {
+        if (a.aircraft_model < b.aircraft_model) return -1;
+        if (a.aircraft_model > b.aircraft_model) return 1;
+
+        const tailA = a.tail_number.startsWith('N') ? a.tail_number.substring(1) : a.tail_number;
+        const tailB = b.tail_number.startsWith('N') ? b.tail_number.substring(1) : b.tail_number;
+
+        const startsDigitA = /^\d/.test(tailA);
+        const startsDigitB = /^\d/.test(tailB);
+
+        if (startsDigitA && !startsDigitB) return -1;
+        if (!startsDigitA && startsDigitB) return 1;
+
+        const allNumericA = /^\d+$/.test(tailA);
+        const allNumericB = /^\d+$/.test(tailB);
+
+        if (allNumericA && allNumericB) {
+          return parseInt(tailA, 10) - parseInt(tailB, 10);
+        }
+
+        return tailA.localeCompare(tailB);
+      });
+
+      setAircraft(sortedAircraft);
       setStudents(studentsRes.data || []);
       setScheduledLessons(lessonsRes.data || []);
     } catch (error) {
