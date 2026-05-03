@@ -188,6 +188,8 @@ export default function Dashboard() {
   const [periodsExpanded, setPeriodsExpanded] = useState(false);
   const [upcomingLessons, setUpcomingLessons] = useState<any[]>([]);
   const [upcomingLoading, setUpcomingLoading] = useState(false);
+  const [lessonRequests, setLessonRequests] = useState<any[]>([]);
+  const [lessonRequestsLoading, setLessonRequestsLoading] = useState(false);
 
   useEffect(() => {
     const checkGuide = () => {
@@ -431,6 +433,57 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeclineRequest = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('lesson_requests')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      setLessonRequests(prev => prev.filter(r => r.id !== id));
+    } catch (err: any) {
+      console.error('Error declining request:', err);
+    }
+  };
+
+  const handleAcceptRequest = async (request: any) => {
+    try {
+      const { error } = await supabase
+        .from('lesson_requests')
+        .delete()
+        .eq('id', request.id);
+      if (error) throw error;
+      
+      const params = new URLSearchParams();
+      params.append('date', request.requested_date);
+      params.append('studentName', request.student_name);
+      if (request.preferred_time) params.append('preferredTime', request.preferred_time);
+      
+      navigate(`/schedule?${params.toString()}`);
+    } catch (err: any) {
+      console.error('Error accepting request:', err);
+    }
+  };
+
+  const fetchLessonRequests = async () => {
+    setLessonRequestsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data, error } = await supabase
+        .from('lesson_requests')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setLessonRequests(data || []);
+    } catch (err: any) {
+      console.error('Error fetching lesson requests:', err);
+    } finally {
+      setLessonRequestsLoading(false);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -451,7 +504,10 @@ export default function Dashboard() {
       setManualHours(manualRes.data || []);
       setEndorsements(endorsementsRes.data || []);
       
-      await fetchUpcomingLessons();
+      await Promise.all([
+        fetchUpcomingLessons(),
+        fetchLessonRequests()
+      ]);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -1649,6 +1705,70 @@ export default function Dashboard() {
               </AnimatePresence>
               </div>
             </div>
+
+            {/* Lesson Requests Widget */}
+            {lessonRequests.length > 0 && (
+              <div className="md:col-span-2 flex flex-col gap-4">
+                <div 
+                  className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm border border-[var(--border-color)] border-l-4" 
+                  style={{ borderLeftColor: '#f59e0b' }}
+                >
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={16} className="text-amber-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Lesson Requests</span>
+                    </div>
+                    <span className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-full">
+                      {lessonRequests.length} Pending
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {lessonRequests.map((request) => (
+                      <div key={request.id} className="p-3 rounded-xl bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)] relative group">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-black truncate" style={{ color: 'var(--text-primary)' }}>{request.student_name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+                                {new Date(request.requested_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                              {request.preferred_time && (
+                                <span className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+                                  • {request.preferred_time.substring(0, 5)}
+                                </span>
+                              )}
+                            </div>
+                            {request.notes && (
+                              <p className="text-[10px] italic mt-1 line-clamp-2" style={{ color: 'var(--text-muted)' }}>
+                                "{request.notes}"
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleDeclineRequest(request.id)}
+                              className="p-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
+                              title="Decline"
+                            >
+                              <X size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleAcceptRequest(request)}
+                              className="p-2 rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition-colors cursor-pointer"
+                              title="Accept"
+                            >
+                              <Check size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Upcoming Lessons Widget */}
             <div className="md:col-span-2 flex flex-col gap-4">

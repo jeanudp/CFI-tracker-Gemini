@@ -188,6 +188,37 @@ export default function Schedule() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const dateParam = params.get('date');
+    const studentNameParam = params.get('studentName');
+    const preferredTimeParam = params.get('preferredTime');
+
+    if (dateParam) {
+      const date = new Date(dateParam);
+      if (!isNaN(date.getTime())) {
+        setSelectedDate(date);
+      }
+    }
+
+    if (dateParam && studentNameParam && preferredTimeParam) {
+      const timer = setTimeout(() => {
+        const hour = parseInt(preferredTimeParam.split(':')[0] || '8');
+        openNewBooking(hour, '');
+        setModalData(prev => ({
+          ...prev,
+          studentName: studentNameParam,
+          startTime: preferredTimeParam
+        }));
+      }, 300);
+
+      window.history.replaceState({}, '', window.location.pathname);
+      return () => clearTimeout(timer);
+    } else if (dateParam || studentNameParam || preferredTimeParam) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
