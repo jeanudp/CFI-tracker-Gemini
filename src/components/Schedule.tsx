@@ -614,83 +614,83 @@ export default function Schedule() {
                 </span>
                 <ChevronDown size={12} className={cn("transition-transform duration-200", isDatePickerOpen && "rotate-180")} style={{ color: 'var(--text-muted)' }} />
               </button>
-
-              <AnimatePresence>
-                {isDatePickerOpen && createPortal(
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[199]"
-                      onClick={() => setIsDatePickerOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="fixed mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
-                      style={{ 
-                        backgroundColor: 'var(--bg-secondary)', 
-                        borderColor: 'var(--border-color)',
-                        top: `${datePickerPos.top}px`,
-                        left: `${datePickerPos.left}px`,
-                        transform: 'translateX(-50%)'
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
-                          <ChevronLeft size={16} style={{ color: 'var(--text-primary)' }} />
-                        </button>
-                        <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>
-                          {pickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                        </span>
-                        <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
-                          <ChevronRight size={16} style={{ color: 'var(--text-primary)' }} />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-7 gap-1 mb-2">
-                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                          <div key={day} className="text-center text-[9px] font-black" style={{ color: 'var(--text-muted)' }}>
-                            {day}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="grid grid-cols-7 gap-1">
-                        {getCalendarDays().map((date, i) => {
-                          if (!date) return <div key={`empty-${i}`} className="h-7" />;
-                          
-                          const isActive = date.getTime() === new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).getTime();
-                          const isCurrToday = isToday(date);
-
-                          return (
-                            <button
-                              key={date.toISOString()}
-                              onClick={() => handleDateSelect(date)}
-                              className={cn(
-                                "h-7 rounded-lg text-xs font-bold transition-all relative flex items-center justify-center cursor-pointer",
-                                isActive 
-                                  ? "bg-[var(--navy)] text-white shadow-md" 
-                                  : "hover:bg-[var(--bg-tertiary)]"
-                              )}
-                              style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
-                            >
-                              {date.getDate()}
-                              {isCurrToday && !isActive && (
-                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  </>,
-                  document.body
-                )}
-              </AnimatePresence>
             </div>
+
+            <AnimatePresence>
+              {isDatePickerOpen && createPortal(
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[199]"
+                    onClick={() => setIsDatePickerOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="fixed mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
+                    style={{ 
+                      backgroundColor: 'var(--bg-secondary)', 
+                      borderColor: 'var(--border-color)',
+                      top: `${datePickerPos.top}px`,
+                      left: `${datePickerPos.left}px`,
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                        <ChevronLeft size={16} style={{ color: 'var(--text-primary)' }} />
+                      </button>
+                      <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>
+                        {pickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </span>
+                      <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                        <ChevronRight size={16} style={{ color: 'var(--text-primary)' }} />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                        <div key={day} className="text-center text-[9px] font-black" style={{ color: 'var(--text-muted)' }}>
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                      {getCalendarDays().map((date, i) => {
+                        if (!date) return <div key={`empty-${i}`} className="h-7" />;
+                        
+                        const isActive = date.getTime() === new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).getTime();
+                        const isCurrToday = isToday(date);
+
+                        return (
+                          <button
+                            key={date.toISOString()}
+                            onClick={() => handleDateSelect(date)}
+                            className={cn(
+                              "h-7 rounded-lg text-xs font-bold transition-all relative flex items-center justify-center cursor-pointer",
+                              isActive 
+                                ? "bg-[var(--navy)] text-white shadow-md" 
+                                : "hover:bg-[var(--bg-tertiary)]"
+                            )}
+                            style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
+                          >
+                            {date.getDate()}
+                            {isCurrToday && !isActive && (
+                              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                </>,
+                document.body
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="flex items-center gap-1">
