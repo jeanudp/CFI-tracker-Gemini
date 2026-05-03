@@ -1014,7 +1014,7 @@ export default function Schedule() {
                     }
                     const matchedAircraft = aircraft.find(ac => ac.tail_number === modalData.tailNumber);
                     if (matchedAircraft) {
-                      return `${modalData.tailNumber} (${matchedAircraft.model}) • ${formatDateNav(selectedDate)}`;
+                      return `${modalData.tailNumber} (${matchedAircraft.aircraft_model}) • ${formatDateNav(selectedDate)}`;
                     }
                     return formatDateNav(selectedDate);
                   })()}
