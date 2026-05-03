@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -50,8 +49,6 @@ export default function Schedule() {
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState(new Date());
-  const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 });
-  const dateButtonRef = useRef<HTMLButtonElement>(null);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -85,16 +82,6 @@ export default function Schedule() {
   useEffect(() => {
     fetchScheduleData();
   }, [selectedDate]);
-
-  useEffect(() => {
-    if (isDatePickerOpen && dateButtonRef.current) {
-      const rect = dateButtonRef.current.getBoundingClientRect();
-      setDatePickerPos({
-        top: rect.bottom + 8,
-        left: rect.left + rect.width / 2
-      });
-    }
-  }, [isDatePickerOpen]);
 
   const fetchScheduleData = async () => {
     setLoading(true);
@@ -159,6 +146,11 @@ export default function Schedule() {
   const handleSaveLesson = async () => {
     if (!modalData.studentName) {
       setFormError('Please select a student');
+      return;
+    }
+
+    if ((modalData.lessonType === 'Flight' || modalData.lessonType === 'Sim') && !modalData.tailNumber) {
+      setFormError('Please select an aircraft');
       return;
     }
 
@@ -420,6 +412,21 @@ export default function Schedule() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-primary)]">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .schedule-grid-scroll::-webkit-scrollbar {
+          height: 4px;
+        }
+        .schedule-grid-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .schedule-grid-scroll::-webkit-scrollbar-thumb {
+          background: rgba(26, 58, 92, 0.3);
+          border-radius: 4px;
+        }
+        .schedule-grid-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(26, 58, 92, 0.5);
+        }
+      ` }} />
       {/* Header */}
       <header
         className="sticky top-0 z-20 px-4 sm:px-6 h-16 border-b flex items-center justify-between shrink-0 backdrop-blur-md transition-colors duration-300"
@@ -601,7 +608,6 @@ export default function Schedule() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <button 
-                ref={dateButtonRef}
                 onClick={() => {
                   setIsDatePickerOpen(!isDatePickerOpen);
                   setPickerMonth(new Date(selectedDate));
@@ -614,29 +620,18 @@ export default function Schedule() {
                 </span>
                 <ChevronDown size={12} className={cn("transition-transform duration-200", isDatePickerOpen && "rotate-180")} style={{ color: 'var(--text-muted)' }} />
               </button>
-            </div>
 
-            <AnimatePresence>
-              {isDatePickerOpen && createPortal(
+              {isDatePickerOpen && (
                 <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                  <div
                     className="fixed inset-0 z-[199]"
                     onClick={() => setIsDatePickerOpen(false)}
                   />
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="fixed mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
+                  <div
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
                     style={{ 
                       backgroundColor: 'var(--bg-secondary)', 
-                      borderColor: 'var(--border-color)',
-                      top: `${datePickerPos.top}px`,
-                      left: `${datePickerPos.left}px`,
-                      transform: 'translateX(-50%)'
+                      borderColor: 'var(--border-color)'
                     }}
                   >
                     <div className="flex items-center justify-between mb-4">
@@ -686,11 +681,10 @@ export default function Schedule() {
                         );
                       })}
                     </div>
-                  </motion.div>
-                </>,
-                document.body
+                  </div>
+                </>
               )}
-            </AnimatePresence>
+            </div>
           </div>
 
           <div className="flex items-center gap-1">
@@ -719,7 +713,7 @@ export default function Schedule() {
         {/* Schedule Grid */}
         <div className="relative border rounded-2xl overflow-hidden" 
              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 20px rgba(26,58,92,0.1)' }}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto schedule-grid-scroll scrollbar-thin">
             <div className="min-w-max">
               {/* Grid Header */}
               <div className="flex border-b" style={{ borderColor: 'var(--border-color)' }}>
@@ -1045,7 +1039,7 @@ export default function Schedule() {
                   {['Ground', 'Flight', 'Sim'].map((type) => (
                     <button
                       key={type}
-                      onClick={() => setModalData({ ...modalData, lessonType: type as any })}
+                      onClick={() => setModalData({ ...modalData, lessonType: type as any, tailNumber: '' })}
                       className={cn(
                         "py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer",
                         modalData.lessonType === type 
