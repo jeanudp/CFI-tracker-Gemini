@@ -744,7 +744,7 @@ export default function Schedule() {
 
         {/* Date Navigation Bar */}
         <div 
-          className="flex items-center justify-between p-2 rounded-2xl border mb-6"
+          className="relative z-[50] flex items-center justify-between p-2 rounded-2xl border mb-6"
           style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
         >
           <div className="flex items-center gap-1">
@@ -758,7 +758,7 @@ export default function Schedule() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative z-[50]">
               <button 
                 onClick={() => {
                   setIsDatePickerOpen(!isDatePickerOpen);
