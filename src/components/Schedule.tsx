@@ -585,14 +585,14 @@ export default function Schedule() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[80]"
+                      className="fixed inset-0 z-[199]"
                       onClick={() => setIsDatePickerOpen(false)}
                     />
                     <motion.div
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[81]"
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
                       style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
                     >
                       <div className="flex items-center justify-between mb-4">
@@ -727,13 +727,30 @@ export default function Schedule() {
                           : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
                       )}>
                         {dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND' && (
-                          <div 
-                            className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
-                            style={{ 
-                              left: `${dragOverHour.segment * (100 / 6)}%`, 
-                              width: `${100 / 6}%` 
-                            }} 
-                          />
+                          <>
+                            <div 
+                              className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
+                              style={{ 
+                                left: `${dragOverHour.segment * (100 / 6)}%`, 
+                                width: `${100 / 6}%` 
+                              }} 
+                            />
+                            {/* Drag Tooltip */}
+                            {draggingLesson && (
+                              <div 
+                                className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none"
+                                style={{ 
+                                  left: `${(dragOverHour.segment * (100 / 6)) + (100 / 12)}%` 
+                                }}
+                              >
+                                {(() => {
+                                  const start = hour + (dragOverHour.segment / 6);
+                                  const end = start + draggingLesson.duration_hours;
+                                  return `${decimalToTime(start)} – ${decimalToTime(end)}`;
+                                })()}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -840,13 +857,30 @@ export default function Schedule() {
                               : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
                           )}>
                             {dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number && (
-                              <div 
-                                className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
-                                style={{ 
-                                  left: `${dragOverHour.segment * (100 / 6)}%`, 
-                                  width: `${100 / 6}%` 
-                                }} 
-                              />
+                              <>
+                                <div 
+                                  className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
+                                  style={{ 
+                                    left: `${dragOverHour.segment * (100 / 6)}%`, 
+                                    width: `${100 / 6}%` 
+                                  }} 
+                                />
+                                {/* Drag Tooltip */}
+                                {draggingLesson && (
+                                  <div 
+                                    className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none"
+                                    style={{ 
+                                      left: `${(dragOverHour.segment * (100 / 6)) + (100 / 12)}%` 
+                                    }}
+                                  >
+                                    {(() => {
+                                      const start = hour + (dragOverHour.segment / 6);
+                                      const end = start + draggingLesson.duration_hours;
+                                      return `${decimalToTime(start)} – ${decimalToTime(end)}`;
+                                    })()}
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -930,7 +964,16 @@ export default function Schedule() {
                   {editingLesson ? 'Edit Lesson' : 'Schedule Lesson'}
                 </h2>
                 <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                  {modalData.tailNumber} • {formatDateNav(selectedDate)}
+                  {(() => {
+                    if (modalData.lessonType === 'Ground' || !modalData.tailNumber) {
+                      return formatDateNav(selectedDate);
+                    }
+                    const matchedAircraft = aircraft.find(ac => ac.tail_number === modalData.tailNumber);
+                    if (matchedAircraft) {
+                      return `${modalData.tailNumber} (${matchedAircraft.model}) • ${formatDateNav(selectedDate)}`;
+                    }
+                    return formatDateNav(selectedDate);
+                  })()}
                 </p>
               </div>
               <button 
@@ -1039,6 +1082,28 @@ export default function Schedule() {
                     value={modalData.duration}
                     onChange={(e) => setModalData({ ...modalData, duration: parseFloat(e.target.value) || 0 })}
                   />
+                </div>
+              </div>
+
+              {/* End Time Display */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                  End Time
+                </label>
+                <div 
+                  className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 text-sm font-bold flex items-center"
+                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', minHeight: '46px' }}
+                >
+                  {(() => {
+                    if (!modalData.startTime || !modalData.duration || modalData.duration <= 0) return "-";
+                    try {
+                      const start = timeToDecimal(modalData.startTime);
+                      const endVal = start + modalData.duration;
+                      return decimalToTime(endVal);
+                    } catch {
+                      return "-";
+                    }
+                  })()}
                 </div>
               </div>
 
