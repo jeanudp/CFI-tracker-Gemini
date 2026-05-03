@@ -92,7 +92,7 @@ export default function StudentView() {
   const [manualHours, setManualHours] = useState<ManualHours[]>([]);
   const [endorsements, setEndorsements] = useState<Endorsement[]>([]);
   const [scheduledLessons, setScheduledLessons] = useState<any[]>([]);
-  const [lessonRequest, setLessonRequest] = useState({ date: '', preferredTime: '', notes: '' });
+  const [lessonRequest, setLessonRequest] = useState({ date: '', preferredTime: '', notes: '', lessonType: '' });
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
@@ -196,6 +196,7 @@ export default function StudentView() {
           student_name: studentInfo?.student_name,
           requested_date: lessonRequest.date,
           preferred_time: lessonRequest.preferredTime || null,
+          lesson_type: lessonRequest.lessonType || null,
           notes: lessonRequest.notes,
           created_at: new Date().toISOString()
         });
@@ -629,6 +630,25 @@ export default function StudentView() {
                         </div>
                       ) : (
                         <div className="space-y-4 max-w-2xl">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Lesson Type</label>
+                            <div className="flex gap-2">
+                              {['Flight', 'Ground'].map((type) => (
+                                <button
+                                  key={type}
+                                  onClick={() => setLessonRequest({ ...lessonRequest, lessonType: type })}
+                                  className={cn(
+                                    "flex-1 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer",
+                                    lessonRequest.lessonType === type
+                                      ? "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20"
+                                      : "bg-white text-[#64748b] border-[#dde3ec] hover:border-[#1a3a5c]/30"
+                                  )}
+                                >
+                                  {type}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                               <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Date</label>

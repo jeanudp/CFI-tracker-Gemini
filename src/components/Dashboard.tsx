@@ -476,7 +476,7 @@ export default function Dashboard() {
           date: reviewingRequest.requested_date,
           start_time: startTime,
           duration_hours: 2,
-          lesson_type: "Flight",
+          lesson_type: reviewingRequest.lesson_type || "Flight",
           tail_number: "",
           notes: reviewingRequest.notes || ""
         });
@@ -2509,6 +2509,12 @@ export default function Dashboard() {
                         <div className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>
                           <Clock size={12} className="text-amber-500" />
                           {reviewingRequest.preferred_time.substring(0, 5)}
+                        </div>
+                      )}
+                      {reviewingRequest.lesson_type && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+                          <div className="w-1 h-1 rounded-full bg-amber-500" />
+                          {reviewingRequest.lesson_type}
                         </div>
                       )}
                     </div>
