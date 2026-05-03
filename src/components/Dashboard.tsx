@@ -187,6 +187,7 @@ export default function Dashboard() {
   const [remarksExpanded, setRemarksExpanded] = useState(false);
   const [metarExpanded, setMetarExpanded] = useState(false);
   const [tafExpanded, setTafExpanded] = useState(false);
+  const [periodsExpanded, setPeriodsExpanded] = useState(false);
   const [upcomingLessons, setUpcomingLessons] = useState<any[]>([]);
   const [upcomingLoading, setUpcomingLoading] = useState(false);
 
@@ -1399,6 +1400,14 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setTafExpanded(!tafExpanded)}
+                    className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer mr-2"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <span>{tafExpanded ? 'Less' : 'Details'}</span>
+                    <ChevronRight size={12} className={cn("transition-transform", tafExpanded ? "rotate-90" : "")} />
+                  </button>
                   {weatherLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
                   <button 
                     onClick={fetchWeather}
@@ -1410,141 +1419,66 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {!cfiHomeAirport && (
-                <div className="py-8 text-center px-4">
-                  <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    Set airport in profile to see TAF
-                  </p>
-                </div>
-              )}
+              <AnimatePresence>
+                {tafExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    {!cfiHomeAirport && (
+                      <div className="py-8 text-center px-4">
+                        <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                          Set airport in profile to see TAF
+                        </p>
+                      </div>
+                    )}
 
-              {weatherLoading && !tafData && (
-                <div className="py-8 flex flex-col items-center justify-center gap-2">
-                  <Loader2 size={24} className="animate-spin text-[var(--text-muted)] opacity-20" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Loading TAF...</p>
-                </div>
-              )}
+                    {weatherLoading && !tafData && (
+                      <div className="py-8 flex flex-col items-center justify-center gap-2">
+                        <Loader2 size={24} className="animate-spin text-[var(--text-muted)] opacity-20" />
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Loading TAF...</p>
+                      </div>
+                    )}
 
-              {tafData && tafData.rawTAF ? (
-                <div className="space-y-4">
-                  {tafData.name && (
-                    <p className="text-[9px] font-bold uppercase tracking-tight" style={{ color: 'var(--text-muted)' }}>{tafData.name}</p>
-                  )}
-                  <div className="p-3 rounded-lg text-xs font-mono leading-relaxed break-words overflow-hidden" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-                    {tafData.rawTAF}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Valid:</span>
-                      <span className="text-[10px] font-bold text-[var(--text-primary)]">
-                        {(() => {
-                          const formatDate = (timestamp: number) => {
-                            if (!timestamp) return '';
-                            const d = new Date(timestamp * 1000);
-                            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                            return `${months[d.getUTCMonth()]} ${d.getUTCDate().toString().padStart(2, '0')} ${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}Z`;
-                          };
-                          return `${formatDate(tafData.validTimeFrom)} to ${formatDate(tafData.validTimeTo)}`;
-                        })()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Issued:</span>
-                      <span className="text-[10px] font-bold text-[var(--text-primary)]">
-                        {new Date(tafData.issueTime).toUTCString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Decoded Forecasts */}
-                  {tafData.fcsts && tafData.fcsts.length > 0 && (
-                    <div className="mt-4 pt-4 border-t space-y-4" style={{ borderColor: 'var(--border-color)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Forecast Periods</span>
+                    {tafData && tafData.rawTAF ? (
                       <div className="space-y-4">
-                        {tafData.fcsts.slice(0, 2).map((fcst: any, idx: number) => {
-                          const formatTimeShort = (ts: number) => {
-                            const d = new Date(ts * 1000);
-                            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                            return `${d.getUTCDate().toString().padStart(2, '0')}${months[d.getUTCMonth()]}${d.getUTCHours().toString().padStart(2, '0')}Z`;
-                          };
+                        {tafData.name && (
+                          <p className="text-[9px] font-bold uppercase tracking-tight" style={{ color: 'var(--text-muted)' }}>{tafData.name}</p>
+                        )}
+                        <div className="p-3 rounded-lg text-xs font-mono leading-relaxed break-words overflow-hidden" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                          {tafData.rawTAF}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Valid:</span>
+                            <span className="text-[10px] font-bold text-[var(--text-primary)]">
+                              {(() => {
+                                const formatDate = (timestamp: number) => {
+                                  if (!timestamp) return '';
+                                  const d = new Date(timestamp * 1000);
+                                  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                                  return `${months[d.getUTCMonth()]} ${d.getUTCDate().toString().padStart(2, '0')} ${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}Z`;
+                                };
+                                return `${formatDate(tafData.validTimeFrom)} to ${formatDate(tafData.validTimeTo)}`;
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Issued:</span>
+                            <span className="text-[10px] font-bold text-[var(--text-primary)]">
+                              {new Date(tafData.issueTime).toUTCString()}
+                            </span>
+                          </div>
+                        </div>
 
-                          return (
-                            <div key={idx} className="space-y-1">
-                              {/* Period Header */}
-                              <div className="px-2 py-1 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]">
-                                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                                  {formatTimeShort(fcst.timeFrom)} — {formatTimeShort(fcst.timeTo)}
-                                  {fcst.fcstChange && <span className="ml-2 font-bold opacity-60">[{fcst.fcstChange}]</span>}
-                                </span>
-                              </div>
-
-                              {/* Change Type Badge */}
-                              {fcst.fcstChange && (
-                                <div className="flex pt-1 pb-1">
-                                  <span className={cn(
-                                    "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest text-white",
-                                    fcst.fcstChange === 'FM' ? "bg-[var(--navy)]" :
-                                    fcst.fcstChange === 'TEMPO' ? "bg-amber-500" :
-                                    fcst.fcstChange === 'BECMG' ? "bg-green-600" :
-                                    "bg-slate-500"
-                                  )}>
-                                    {fcst.fcstChange}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Wind Row */}
-                              {fcst.wspd !== null && fcst.wspd !== 0 && (
-                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
-                                  <span className="text-sm font-bold text-[var(--text-primary)]">
-                                    {fcst.wdir === 'VRB' ? 'VRB' : `${fcst.wdir}°`} at {fcst.wspd}kt
-                                    {fcst.wgst && ` G${fcst.wgst}kt`}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Visibility Row */}
-                              {fcst.visib !== null && (
-                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Visibility</span>
-                                  <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.visib} SM</span>
-                                </div>
-                              )}
-
-                              {/* Clouds Row */}
-                              {fcst.clouds && fcst.clouds.length > 0 && (
-                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Clouds</span>
-                                  <span className="text-sm font-bold text-[var(--text-primary)]">
-                                    {fcst.clouds.map((c: any) => c.base != null ? `${c.cover} @ ${c.base}ft` : c.cover).join(' ')}
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Weather Row */}
-                              {fcst.wxString && (
-                                <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
-                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Weather</span>
-                                  <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.wxString}</span>
-                                </div>
-                              )}
-
-                              {/* Divider between periods */}
-                              {(idx < 1 && idx < tafData.fcsts.length - 1) && <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />}
-                            </div>
-                          );
-                        })}
-
-                        <AnimatePresence>
-                          {tafExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden space-y-4"
-                            >
-                              {tafData.fcsts.slice(2).map((fcst: any, idx: number) => {
+                        {/* Decoded Forecasts */}
+                        {tafData.fcsts && tafData.fcsts.length > 0 && (
+                          <div className="mt-4 pt-4 border-t space-y-4" style={{ borderColor: 'var(--border-color)' }}>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Forecast Periods</span>
+                            <div className="space-y-4">
+                              {tafData.fcsts.slice(0, 2).map((fcst: any, idx: number) => {
                                 const formatTimeShort = (ts: number) => {
                                   const d = new Date(ts * 1000);
                                   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -1552,10 +1486,9 @@ export default function Dashboard() {
                                 };
 
                                 return (
-                                  <div key={idx + 2} className="space-y-1">
-                                    <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />
+                                  <div key={idx} className="space-y-1">
                                     {/* Period Header */}
-                                    <div className="px-2 py-1 mt-4 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]">
+                                    <div className="px-2 py-1 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]">
                                       <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                                         {formatTimeShort(fcst.timeFrom)} — {formatTimeShort(fcst.timeTo)}
                                         {fcst.fcstChange && <span className="ml-2 font-bold opacity-60">[{fcst.fcstChange}]</span>}
@@ -1613,34 +1546,121 @@ export default function Dashboard() {
                                         <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.wxString}</span>
                                       </div>
                                     )}
+
+                                    {/* Divider between periods */}
+                                    {(idx < 1 && idx < tafData.fcsts.length - 1) && <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />}
                                   </div>
                                 );
                               })}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
 
-                        {tafData.fcsts.length > 2 && (
-                          <button 
-                            onClick={() => setTafExpanded(!tafExpanded)}
-                            className="flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer"
-                            style={{ color: 'var(--text-muted)' }}
-                          >
-                            <span>{tafExpanded ? 'Show less' : 'Show all periods'}</span>
-                            <ChevronRight size={12} className={cn("transition-transform", tafExpanded ? "rotate-90" : "")} />
-                          </button>
+                              <AnimatePresence>
+                                {periodsExpanded && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden space-y-4"
+                                  >
+                                    {tafData.fcsts.slice(2).map((fcst: any, idx: number) => {
+                                      const formatTimeShort = (ts: number) => {
+                                        const d = new Date(ts * 1000);
+                                        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                                        return `${d.getUTCDate().toString().padStart(2, '0')}${months[d.getUTCMonth()]}${d.getUTCHours().toString().padStart(2, '0')}Z`;
+                                      };
+
+                                      return (
+                                        <div key={idx + 2} className="space-y-1">
+                                          <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />
+                                          {/* Period Header */}
+                                          <div className="px-2 py-1 mt-4 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]">
+                                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                                              {formatTimeShort(fcst.timeFrom)} — {formatTimeShort(fcst.timeTo)}
+                                              {fcst.fcstChange && <span className="ml-2 font-bold opacity-60">[{fcst.fcstChange}]</span>}
+                                            </span>
+                                          </div>
+
+                                          {/* Change Type Badge */}
+                                          {fcst.fcstChange && (
+                                            <div className="flex pt-1 pb-1">
+                                              <span className={cn(
+                                                "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest text-white",
+                                                fcst.fcstChange === 'FM' ? "bg-[var(--navy)]" :
+                                                fcst.fcstChange === 'TEMPO' ? "bg-amber-500" :
+                                                fcst.fcstChange === 'BECMG' ? "bg-green-600" :
+                                                "bg-slate-500"
+                                              )}>
+                                                {fcst.fcstChange}
+                                              </span>
+                                            </div>
+                                          )}
+
+                                          {/* Wind Row */}
+                                          {fcst.wspd !== null && fcst.wspd !== 0 && (
+                                            <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
+                                              <span className="text-sm font-bold text-[var(--text-primary)]">
+                                                {fcst.wdir === 'VRB' ? 'VRB' : `${fcst.wdir}°`} at {fcst.wspd}kt
+                                                {fcst.wgst && ` G${fcst.wgst}kt`}
+                                              </span>
+                                            </div>
+                                          )}
+
+                                          {/* Visibility Row */}
+                                          {fcst.visib !== null && (
+                                            <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Visibility</span>
+                                              <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.visib} SM</span>
+                                            </div>
+                                          )}
+
+                                          {/* Clouds Row */}
+                                          {fcst.clouds && fcst.clouds.length > 0 && (
+                                            <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Clouds</span>
+                                              <span className="text-sm font-bold text-[var(--text-primary)]">
+                                                {fcst.clouds.map((c: any) => c.base != null ? `${c.cover} @ ${c.base}ft` : c.cover).join(' ')}
+                                              </span>
+                                            </div>
+                                          )}
+
+                                          {/* Weather Row */}
+                                          {fcst.wxString && (
+                                            <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Weather</span>
+                                              <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.wxString}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+
+                              {tafData.fcsts.length > 2 && (
+                                <button 
+                                  onClick={() => setPeriodsExpanded(!periodsExpanded)}
+                                  className="flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer"
+                                  style={{ color: 'var(--text-muted)' }}
+                                >
+                                  <span>{periodsExpanded ? 'Show less' : 'Show all periods'}</span>
+                                  <ChevronRight size={12} className={cn("transition-transform", periodsExpanded ? "rotate-90" : "")} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : !weatherLoading && cfiHomeAirport && (
-                <div className="py-8 text-center">
-                  <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    No TAF available for this airport
-                  </p>
-                </div>
-              )}
+                    ) : !weatherLoading && cfiHomeAirport && (
+                      <div className="py-8 text-center">
+                        <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                          No TAF available for this airport
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               </div>
             </div>
 
