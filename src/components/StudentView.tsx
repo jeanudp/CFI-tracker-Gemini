@@ -97,7 +97,7 @@ export default function StudentView() {
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('this-lesson');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('schedule');
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
   const studentName = studentInfo?.student_name;
@@ -449,149 +449,10 @@ export default function StudentView() {
             </div>
           </div>
 
-          {/* Upcoming Lessons Section */}
-          {scheduledLessons.length > 0 && (
-            <div className="mb-6 sm:mb-8">
-              <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
-                <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
-                  <Calendar className="text-amber-500" size={20} />
-                  Upcoming Lessons
-                </h3>
-                <div className="space-y-3">
-                  {scheduledLessons.map((lesson, idx) => {
-                    const ratingColors: Record<string, string> = {
-                      'ppl': '#ef4444',
-                      'ir': '#3b82f6',
-                      'cpl': '#10b981',
-                      'multi': '#8b5cf6',
-                      'cfi': '#f59e0b',
-                      'cfii': '#ec4899',
-                      'mei': '#06b6d4',
-                    };
-                    const dotColor = ratingColors[lesson.lesson_rating?.toLowerCase() || 'ppl'] || '#94a3b8';
-                    
-                    return (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-[#f8fafc] rounded-xl border border-[#dde3ec] relative overflow-hidden group hover:border-[#1a3a5c]/30 transition-colors">
-                        <div 
-                          className="absolute left-0 top-0 bottom-0 w-1" 
-                          style={{ backgroundColor: dotColor }}
-                        />
-                        <div className="flex items-center gap-4 pl-3">
-                          <div className="text-center min-w-[50px]">
-                            <p className="text-[10px] font-black text-[#1a3a5c] uppercase">
-                              {new Date(lesson.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </p>
-                            <p className="text-xs font-bold text-[#64748b]">
-                              {lesson.start_time.substring(0, 5)}
-                            </p>
-                          </div>
-                          <div className="flex flex-col">
-                            <p className="text-[11px] font-bold text-[#1a3a5c]">{lesson.student_name}</p>
-                            <div className="flex items-center gap-2">
-                              <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-widest">
-                                {lesson.tail_number === 'GROUND' ? 'Ground' : lesson.tail_number}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="px-3 py-1 bg-white border border-[#dde3ec] rounded-full text-[9px] font-black text-[#64748b] uppercase tracking-tighter">
-                          {lesson.lesson_type}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Request a Lesson Section */}
-          <div className="mb-6 sm:mb-8">
-            <div className="bg-amber-50/30 rounded-[1.5rem] sm:rounded-[2rem] border border-dashed border-amber-200 p-5 sm:p-8 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
-                  <Calendar size={16} />
-                  Request a Lesson
-                </h3>
-              </div>
-
-              {requestSubmitted ? (
-                <div className="py-8 text-center flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                    <CheckCircle2 size={24} />
-                  </div>
-                  <p className="text-sm font-bold text-green-700">Request sent — your CFI will confirm the time.</p>
-                  <button 
-                    onClick={() => {
-                      setRequestSubmitted(false);
-                      setLessonRequest({ date: '', preferredTime: '', notes: '' });
-                    }}
-                    className="text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline mt-2"
-                  >
-                    Send another request
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Date</label>
-                      <input 
-                        type="date"
-                        value={lessonRequest.date}
-                        onChange={(e) => setLessonRequest({ ...lessonRequest, date: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Time <span className="text-[#94a3b8] font-medium">(Optional)</span></label>
-                      <input 
-                        type="time"
-                        value={lessonRequest.preferredTime}
-                        onChange={(e) => setLessonRequest({ ...lessonRequest, preferredTime: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Notes</label>
-                    <textarea 
-                      placeholder="What would you like to work on?"
-                      value={lessonRequest.notes}
-                      onChange={(e) => setLessonRequest({ ...lessonRequest, notes: e.target.value })}
-                      rows={3}
-                      className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all resize-none"
-                    />
-                  </div>
-
-                  {requestError && (
-                    <p className="text-[10px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
-                      {requestError}
-                    </p>
-                  )}
-
-                  <button 
-                    onClick={handleLessonRequest}
-                    disabled={requestLoading}
-                    className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {requestLoading ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Request'
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Navigation Tabs */}
           <div className="flex sm:flex-wrap gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-white/50 p-1.5 rounded-2xl border border-white/50 w-full sm:w-fit backdrop-blur-sm shadow-sm overflow-x-auto scrollbar-hide shrink-0">
             {[
+              { id: 'schedule', label: 'Schedule', fullLabel: 'Schedule', icon: Calendar },
               { id: 'this-lesson', label: 'Lesson', fullLabel: 'This Lesson', icon: BookOpen },
               { id: 'cumulative', label: 'Stats', fullLabel: 'Cumulative', icon: HistoryIcon },
               { id: 'checkride', label: 'Checkride', fullLabel: 'Checkride', icon: CheckSquare },
@@ -666,6 +527,164 @@ export default function StudentView() {
 
           <div className="grid grid-cols-1 gap-8">
             <AnimatePresence mode="wait">
+              {activeTab === 'schedule' && (
+                <motion.div
+                  key="schedule"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-8"
+                >
+                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
+                      <Calendar className="text-amber-500" size={20} />
+                      Upcoming Lessons
+                    </h3>
+                    
+                    {scheduledLessons.length > 0 ? (
+                      <div className="space-y-3 mb-10">
+                        {scheduledLessons.map((lesson, idx) => {
+                          const ratingColors: Record<string, string> = {
+                            'ppl': '#ef4444',
+                            'ir': '#3b82f6',
+                            'cpl': '#10b981',
+                            'multi': '#8b5cf6',
+                            'cfi': '#f59e0b',
+                            'cfii': '#ec4899',
+                            'mei': '#06b6d4',
+                          };
+                          const accentColor = ratingColors[lesson.lesson_rating?.toLowerCase() || 'ppl'] || '#94a3b8';
+                          
+                          // Calculate end time
+                          const [hours, minutes] = (lesson.start_time || '08:00').split(':').map(Number);
+                          const duration = parseFloat(lesson.lesson_duration || '2');
+                          const totalMinutes = hours * 60 + minutes + Math.round(duration * 60);
+                          const endH = Math.floor(totalMinutes / 60) % 24;
+                          const endM = totalMinutes % 60;
+                          const endTimeStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+
+                          return (
+                            <div key={idx} className="flex items-center justify-between p-4 bg-[#f8fafc] rounded-xl border border-[#dde3ec] relative overflow-hidden group hover:border-[#1a3a5c]/30 transition-colors">
+                              <div 
+                                className="absolute left-0 top-0 bottom-0 w-1.5" 
+                                style={{ backgroundColor: accentColor }}
+                              />
+                              <div className="flex items-center gap-4 pl-3">
+                                <div className="min-w-[60px]">
+                                  <p className="text-[10px] font-black text-[#1a3a5c] uppercase leading-none mb-1">
+                                    {new Date(lesson.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                  </p>
+                                  <p className="text-xs font-black text-[#64748b]">
+                                    {lesson.start_time.substring(0, 5)} – {endTimeStr}
+                                  </p>
+                                </div>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="px-2 py-0.5 bg-white border border-[#dde3ec] rounded-full text-[9px] font-black text-[#64748b] uppercase tracking-tighter">
+                                      {lesson.lesson_type}
+                                    </span>
+                                    <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-widest">
+                                      {lesson.tail_number === 'GROUND' ? 'Ground' : lesson.tail_number}
+                                    </p>
+                                  </div>
+                                  <p className="text-[11px] font-bold text-[#1a3a5c]">{lesson.student_name}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="py-12 bg-[#f8fafc] rounded-2xl border border-dashed border-[#dde3ec] text-center mb-10">
+                        <Calendar size={32} className="mx-auto text-[#94a3b8] mb-3 opacity-20" />
+                        <p className="text-xs font-bold text-[#64748b]">No upcoming lessons scheduled — use the form below to request one.</p>
+                      </div>
+                    )}
+
+                    <div className="pt-8 border-t border-[#dde3ec]">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-sm font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
+                          <Calendar size={16} />
+                          Request a Lesson
+                        </h3>
+                      </div>
+
+                      {requestSubmitted ? (
+                        <div className="py-8 text-center flex flex-col items-center gap-3">
+                          <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                            <CheckCircle2 size={24} />
+                          </div>
+                          <p className="text-sm font-bold text-green-700">Request sent — your CFI will confirm the time.</p>
+                          <button 
+                            onClick={() => {
+                              setRequestSubmitted(false);
+                              setLessonRequest({ date: '', preferredTime: '', notes: '' });
+                            }}
+                            className="text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline mt-2"
+                          >
+                            Send another request
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-w-2xl">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Date</label>
+                              <input 
+                                type="date"
+                                value={lessonRequest.date}
+                                onChange={(e) => setLessonRequest({ ...lessonRequest, date: e.target.value })}
+                                className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Time <span className="text-[#94a3b8] font-medium">(Optional)</span></label>
+                              <input 
+                                type="time"
+                                value={lessonRequest.preferredTime}
+                                onChange={(e) => setLessonRequest({ ...lessonRequest, preferredTime: e.target.value })}
+                                className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Notes</label>
+                            <textarea 
+                              placeholder="What would you like to work on?"
+                              value={lessonRequest.notes}
+                              onChange={(e) => setLessonRequest({ ...lessonRequest, notes: e.target.value })}
+                              rows={3}
+                              className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all resize-none"
+                            />
+                          </div>
+
+                          {requestError && (
+                            <p className="text-[10px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
+                              {requestError}
+                            </p>
+                          )}
+
+                          <button 
+                            onClick={handleLessonRequest}
+                            disabled={requestLoading}
+                            className="w-full py-4 sm:w-fit sm:px-12 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            {requestLoading ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin" />
+                                Sending...
+                              </>
+                            ) : (
+                              'Send Request'
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {activeTab === 'this-lesson' && selectedLesson && (
                 <motion.div
                   key="lesson"
