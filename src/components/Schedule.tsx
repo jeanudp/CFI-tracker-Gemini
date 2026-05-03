@@ -333,6 +333,7 @@ export default function Schedule() {
         .delete()
         .eq('id', editingLesson.id);
       if (error) throw error;
+      console.log("Lesson deleted successfully");
 
       await fetchScheduleData();
       setIsModalOpen(false);

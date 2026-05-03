@@ -242,6 +242,10 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    fetchUpcomingLessons();
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('dark_mode', darkMode.toString());
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -405,40 +409,53 @@ export default function Dashboard() {
     }
   };
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchUpcomingLessons = async () => {
     setUpcomingLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const today = new Date().toISOString().split('T')[0];
 
-      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, upcomingRes] = await Promise.all([
+      const { data } = await supabase.from('scheduled_lessons')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(5);
+      setUpcomingLessons(data || []);
+    } catch (err: any) {
+      console.error('Error fetching upcoming lessons:', err);
+    } finally {
+      setUpcomingLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', session.user.id).is('deleted_at', null).order('name'),
         supabase.from('students').select('*').eq('user_id', session.user.id).not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
         supabase.from('lessons').select('*'),
         supabase.from('manual_hours').select('*'),
         supabase.from('endorsements').select('*'),
-        supabase.from('scheduled_lessons')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .gte('date', today)
-          .order('date', { ascending: true })
-          .order('start_time', { ascending: true })
-          .limit(5)
       ]);
       setStudents(studentsRes.data || []);
       setArchivedStudents(archivedRes.data || []);
       setLessons(lessonsRes.data || []);
       setManualHours(manualRes.data || []);
       setEndorsements(endorsementsRes.data || []);
-      setUpcomingLessons(upcomingRes.data || []);
+      
+      await fetchUpcomingLessons();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
-      setUpcomingLoading(false);
     }
   };
 
