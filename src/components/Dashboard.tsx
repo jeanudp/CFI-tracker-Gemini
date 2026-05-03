@@ -185,7 +185,7 @@ export default function Dashboard() {
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [progChartError, setProgChartError] = useState(false);
   const [remarksExpanded, setRemarksExpanded] = useState(false);
-  const [metarExpanded, setMetarExpanded] = useState(false);
+  const [metarExpanded, setMetarExpanded] = useState(true);
   const [tafExpanded, setTafExpanded] = useState(false);
   const [periodsExpanded, setPeriodsExpanded] = useState(false);
   const [upcomingLessons, setUpcomingLessons] = useState<any[]>([]);
