@@ -19,6 +19,7 @@ import {
   Moon,
   ChevronDown,
   LayoutDashboard,
+  Plus,
   Shield
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -153,8 +154,23 @@ export default function Schedule() {
   const [conflictSuggestion, setConflictSuggestion] = useState<{ suggestedTime: string, suggestedTail: string, lesson: any } | null>(null);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [isAddAircraftOpen, setIsAddAircraftOpen] = useState(false);
+  const [newAircraft, setNewAircraft] = useState({ tailNumber: '', aircraftModel: '' });
+  const [isAddingAircraft, setIsAddingAircraft] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [darkMode, setDarkMode] = useState(false);
+  const timePickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (timePickerRef.current && !timePickerRef.current.contains(event.target as Node)) {
+        setIsTimePickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -607,6 +623,41 @@ export default function Schedule() {
     const m = Math.round((hours - h) * 60);
     if (m === 0) return `${h}h`;
     return `${h}h ${m}m`;
+  };
+
+  const handleAddAircraft = async () => {
+    if (!newAircraft.tailNumber || !newAircraft.aircraftModel) {
+      alert('Please fill in both fields');
+      return;
+    }
+
+    setIsAddingAircraft(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase
+        .from('saved_aircraft')
+        .insert([{
+          user_id: session.user.id,
+          tail_number: newAircraft.tailNumber.toUpperCase(),
+          aircraft_model: newAircraft.aircraftModel,
+          last_used: new Date().toISOString(),
+          use_count: 0,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      await fetchScheduleData();
+      setIsAddAircraftOpen(false);
+      setNewAircraft({ tailNumber: '', aircraftModel: '' });
+    } catch (error) {
+      console.error('Error adding aircraft:', error);
+      alert('Failed to add aircraft');
+    } finally {
+      setIsAddingAircraft(false);
+    }
   };
 
   return (
@@ -1156,6 +1207,26 @@ export default function Schedule() {
                 ))
               )}
 
+              {/* Add Aircraft Row */}
+              {!loading && (
+                <div className="flex group/row" style={{ borderColor: 'var(--border-color)' }}>
+                  <div 
+                    className="w-48 sticky left-0 z-10 shrink-0 p-4 border-r flex items-center justify-center transition-colors hover:bg-[var(--bg-tertiary)]"
+                    style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                  >
+                    <button
+                      onClick={() => setIsAddAircraftOpen(true)}
+                      className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] cursor-pointer hover:text-[var(--navy)] transition-colors"
+                    >
+                      <Plus size={12} />
+                      Add Aircraft
+                    </button>
+                  </div>
+                  {/* Empty space for the timeline part of the row */}
+                  <div className="flex h-12" />
+                </div>
+              )}
+
               {/* Current Time Indicator */}
               {isToday(selectedDate) && (
                 <div 
@@ -1299,17 +1370,103 @@ export default function Schedule() {
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Start Time */}
-                <div>
+                <div className="relative" ref={timePickerRef}>
                   <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
                     Start Time
                   </label>
-                  <input 
-                    type="time"
-                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                  <button
+                    type="button"
+                    onClick={() => setIsTimePickerOpen(!isTimePickerOpen)}
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold flex items-center justify-between cursor-pointer"
                     style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                    value={modalData.startTime}
-                    onChange={(e) => setModalData({ ...modalData, startTime: e.target.value })}
-                  />
+                  >
+                    <span>{modalData.startTime}</span>
+                    <Clock size={16} style={{ color: 'var(--text-muted)' }} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isTimePickerOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-secondary)] border rounded-2xl shadow-xl z-50 overflow-hidden"
+                        style={{ borderColor: 'var(--border-color)' }}
+                      >
+                        <div className="flex p-2 gap-1 h-[200px]">
+                          {/* Hours Column */}
+                          <div className="flex-1 overflow-y-auto scrollbar-hide py-1">
+                            {Array.from({ length: 24 }).map((_, h) => {
+                              const hourStr = h.toString().padStart(2, '0');
+                              const isSelected = modalData.startTime.split(':')[0] === hourStr;
+                              return (
+                                <button
+                                  key={h}
+                                  onClick={() => {
+                                    const mins = modalData.startTime.split(':')[1] || '00';
+                                    setModalData({ ...modalData, startTime: `${hourStr}:${mins}` });
+                                  }}
+                                  className={cn(
+                                    "w-full h-10 flex items-center justify-center text-xs font-bold transition-all cursor-pointer",
+                                    isSelected ? "bg-[var(--navy)] text-white rounded-lg" : "hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                                  )}
+                                >
+                                  {hourStr}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {/* Minutes Column */}
+                          <div className="flex-1 overflow-y-auto scrollbar-hide py-1">
+                            {['00', '10', '20', '30', '40', '50'].map((m) => {
+                              const isSelected = modalData.startTime.split(':')[1] === m;
+                              return (
+                                <button
+                                  key={m}
+                                  onClick={() => {
+                                    const hour = modalData.startTime.split(':')[0] || '08';
+                                    setModalData({ ...modalData, startTime: `${hour}:${m}` });
+                                  }}
+                                  className={cn(
+                                    "w-full h-10 flex items-center justify-center text-xs font-bold transition-all cursor-pointer",
+                                    isSelected ? "bg-[var(--navy)] text-white rounded-lg" : "hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                                  )}
+                                >
+                                  {m}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {/* AM/PM Column */}
+                          <div className="flex-1 overflow-y-auto scrollbar-hide py-1">
+                            {['AM', 'PM'].map((ampm) => {
+                                const currentHour = parseInt(modalData.startTime.split(':')[0] || '0');
+                                const isPM = currentHour >= 12;
+                                const isSelected = (ampm === 'AM' && !isPM) || (ampm === 'PM' && isPM);
+                                return (
+                                  <button
+                                    key={ampm}
+                                    onClick={() => {
+                                      const [h, m] = modalData.startTime.split(':').map(Number);
+                                      let newH = h;
+                                      if (ampm === 'AM' && isPM) newH = (h % 12);
+                                      if (ampm === 'PM' && !isPM) newH = h + 12;
+                                      setModalData({ ...modalData, startTime: `${newH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}` });
+                                    }}
+                                    className={cn(
+                                      "w-full h-10 flex items-center justify-center text-xs font-bold transition-all cursor-pointer",
+                                      isSelected ? "bg-[var(--navy)] text-white rounded-lg" : "hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                                    )}
+                                  >
+                                    {ampm}
+                                  </button>
+                                );
+                            })}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Duration */}
@@ -1485,6 +1642,80 @@ export default function Schedule() {
                     Cancel
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Aircraft Modal */}
+      <AnimatePresence>
+        {isAddAircraftOpen && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setIsAddAircraftOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-[var(--bg-secondary)] border rounded-3xl p-8 shadow-2xl flex flex-col gap-6"
+              style={{ borderColor: 'var(--border-color)' }}
+            >
+              <div>
+                <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>Add Aircraft</h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{ color: 'var(--text-muted)' }}>Configure fleet availability</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                    Tail Number
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="N12345"
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold uppercase"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={newAircraft.tailNumber}
+                    onChange={(e) => setNewAircraft({ ...newAircraft, tailNumber: e.target.value.toUpperCase() })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                    Aircraft Model
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="C172, PA-28, etc"
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={newAircraft.aircraftModel}
+                    onChange={(e) => setNewAircraft({ ...newAircraft, aircraftModel: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button 
+                  onClick={() => setIsAddAircraftOpen(false)}
+                  className="flex-1 p-4 rounded-2xl font-bold text-xs bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 transition-colors cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleAddAircraft}
+                  disabled={isAddingAircraft}
+                  className="flex-[2] p-4 rounded-2xl font-black text-xs bg-[var(--navy)] text-white hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest"
+                >
+                  {isAddingAircraft ? <Loader2 size={16} className="animate-spin" /> : 'Save Aircraft'}
+                </button>
               </div>
             </motion.div>
           </div>
