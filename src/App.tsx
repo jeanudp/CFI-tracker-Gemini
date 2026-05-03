@@ -16,6 +16,7 @@ import StudentView from './components/StudentView';
 import IACRASummary from './components/IACRASummary';
 import PreSoloTest from './components/PreSoloTest';
 import CFIHours from './components/CFIHours';
+import Schedule from './components/Schedule';
 import Landing from './components/Landing';
 import Admin from './components/Admin';
 import Account from './components/Account';
@@ -263,6 +264,18 @@ export default function App() {
                   <CFIHours />
                 </PageTransition>
               </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route
+          path="/schedule"
+          element={
+            session ? (
+              <PageTransition>
+                <Schedule />
+              </PageTransition>
             ) : (
               <Navigate to="/auth" />
             )

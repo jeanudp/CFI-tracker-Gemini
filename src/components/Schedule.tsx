@@ -1,0 +1,641 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Calendar, 
+  ArrowLeft,
+  Plane,
+  Loader2,
+  Clock,
+  X,
+  AlertTriangle
+} from 'lucide-react';
+import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
+
+export default function Schedule() {
+  const navigate = useNavigate();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [aircraft, setAircraft] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [scheduledLessons, setScheduledLessons] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<any>(null);
+  const [modalData, setModalData] = useState({
+    startTime: '08:00',
+    studentName: '',
+    duration: 1.9,
+    notes: '',
+    tailNumber: ''
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    fetchScheduleData();
+  }, [selectedDate]);
+
+  const fetchScheduleData = async () => {
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const dateStr = selectedDate.toISOString().split('T')[0];
+
+      // Fetch aircraft, students, and scheduled lessons in parallel
+      const [aircraftRes, studentsRes, lessonsRes] = await Promise.all([
+        supabase
+          .from('saved_aircraft')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('last_used', { ascending: false }),
+        supabase
+          .from('students')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .is('deleted_at', null)
+          .order('name'),
+        supabase
+          .from('scheduled_lessons')
+          .select('*')
+          .eq('cfi_id', session.user.id)
+          .eq('date', dateStr)
+      ]);
+
+      setAircraft(aircraftRes.data || []);
+      setStudents(studentsRes.data || []);
+      setScheduledLessons(lessonsRes.data || []);
+    } catch (error) {
+      console.error('Error fetching schedule data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkConflict = (startTime: string, duration: number, tailNumber: string, ignoreId?: string) => {
+    const start = timeToDecimal(startTime);
+    const end = start + duration;
+
+    return scheduledLessons.some(lesson => {
+      if (ignoreId && lesson.id === ignoreId) return false;
+      if (lesson.tail_number !== tailNumber) return false;
+
+      const lStart = timeToDecimal(lesson.start_time);
+      const lEnd = lStart + (lesson.duration_hours || 0);
+
+      // Overlap condition
+      return (start < lEnd && end > lStart);
+    });
+  };
+
+  const handleSaveLesson = async () => {
+    if (!modalData.studentName) {
+      setFormError('Please select a student');
+      return;
+    }
+
+    if (checkConflict(modalData.startTime, modalData.duration, modalData.tailNumber, editingLesson?.id)) {
+      setFormError('This aircraft is already booked during this time.');
+      return;
+    }
+
+    setIsSaving(true);
+    setFormError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      const payload = {
+        cfi_id: session.user.id,
+        student_name: modalData.studentName,
+        tail_number: modalData.tailNumber,
+        date: dateStr,
+        start_time: modalData.startTime,
+        duration_hours: modalData.duration,
+        notes: modalData.notes
+      };
+
+      if (editingLesson) {
+        const { error } = await supabase
+          .from('scheduled_lessons')
+          .update(payload)
+          .eq('id', editingLesson.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('scheduled_lessons')
+          .insert([payload]);
+        if (error) throw error;
+      }
+
+      await fetchScheduleData();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving lesson:', error);
+      setFormError('Failed to save lesson. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteLesson = async () => {
+    if (!editingLesson) return;
+    if (!window.confirm('Are you sure you want to cancel this lesson?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('scheduled_lessons')
+        .delete()
+        .eq('id', editingLesson.id);
+      if (error) throw error;
+
+      await fetchScheduleData();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error deleting lesson:', error);
+      setFormError('Failed to delete lesson.');
+    }
+  };
+
+  const openNewBooking = (hour: number, tailNumber: string) => {
+    setEditingLesson(null);
+    setFormError(null);
+    setModalData({
+      startTime: `${hour.toString().padStart(2, '0')}:00`,
+      studentName: '',
+      duration: 1.9,
+      notes: '',
+      tailNumber: tailNumber
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditBooking = (lesson: any) => {
+    setEditingLesson(lesson);
+    setFormError(null);
+    setModalData({
+      startTime: lesson.start_time,
+      studentName: lesson.student_name,
+      duration: lesson.duration_hours,
+      notes: lesson.notes || '',
+      tailNumber: lesson.tail_number
+    });
+    setIsModalOpen(true);
+  };
+
+  const getRatingColor = (rating: string) => {
+    const colors: Record<string, string> = {
+      ppl: '#2563eb',
+      ir: '#7c3aed',
+      cpl: '#059669',
+      cfi: '#d97706',
+      cfii: '#0d9488',
+      mei: '#dc2626'
+    };
+    return colors[rating?.toLowerCase()] || '#9ca3af';
+  };
+
+  const timeToDecimal = (timeStr: string) => {
+    if (!timeStr) return 0;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours + (minutes / 60);
+  };
+
+  const handlePrevDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const handleToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  // Helper to check if a date is today
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
+
+  const formatDateLong = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatDateNav = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-[var(--bg-primary)]">
+      {/* Header */}
+      <header
+        className="sticky top-0 z-20 px-4 sm:px-6 h-16 border-b flex items-center justify-between shrink-0 backdrop-blur-md transition-colors duration-300"
+        style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
+      >
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate('/')}
+            className="p-2 -ml-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            <ArrowLeft size={20} />
+          </button>
+
+          {/* 61 numeral mark */}
+          <div className="relative">
+            <span
+              className="block font-black leading-none select-none"
+              style={{
+                fontSize: '34px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
+              }}
+            >
+              61
+            </span>
+            <div
+              className="absolute rounded-full"
+              style={{
+                bottom: '-3px',
+                left: 0,
+                width: '100%',
+                height: '3px',
+                backgroundColor: '#e8a020',
+              }}
+            />
+          </div>
+
+          {/* Amber divider */}
+          <div
+            style={{
+              width: '2px',
+              height: '30px',
+              backgroundColor: '#e8a020',
+              opacity: 0.3,
+              borderRadius: '1px',
+              flexShrink: 0,
+            }}
+          />
+
+          {/* TRACKER + subtitle */}
+          <div className="flex flex-col justify-center gap-0.5">
+            <span
+              className="font-black uppercase leading-none"
+              style={{
+                fontSize: '13px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '1.5px',
+              }}
+            >
+              TRACKER
+            </span>
+            <span
+              className="font-bold uppercase"
+              style={{
+                fontSize: '7px',
+                color: 'var(--text-muted)',
+                letterSpacing: '2px',
+              }}
+            >
+              Schedule
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 px-4 sm:px-6 py-6">
+        <div className="mb-8 items-start justify-between flex">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Schedule</h1>
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+              {formatDateLong(selectedDate)}
+            </p>
+          </div>
+        </div>
+
+        {/* Date Navigation Bar */}
+        <div 
+          className="flex items-center justify-between p-2 rounded-2xl border mb-6"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+        >
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={handlePrevDay}
+              className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)]/50">
+              <Calendar size={14} style={{ color: 'var(--navy)' }} />
+              <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                {formatDateNav(selectedDate)}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={handleToday}
+              disabled={isToday(selectedDate)}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                isToday(selectedDate) 
+                  ? "opacity-50 grayscale cursor-not-allowed" 
+                  : "bg-[var(--navy)] text-white hover:shadow-md cursor-pointer"
+              )}
+            >
+              Today
+            </button>
+            <button 
+              onClick={handleNextDay}
+              className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Schedule Grid */}
+        <div className="relative border rounded-2xl overflow-hidden" 
+             style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 20px rgba(26,58,92,0.1)' }}>
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              {/* Grid Header */}
+              <div className="flex border-b" style={{ borderColor: 'var(--border-color)' }}>
+                {/* Corner Cell */}
+                <div className="w-48 sticky left-0 z-10 shrink-0 p-4 font-black text-[10px] uppercase tracking-[0.2em] border-r flex items-center gap-2"
+                     style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}>
+                  <Plane size={14} style={{ color: 'var(--navy)' }} />
+                  Aircraft
+                </div>
+                {/* Hour Headers */}
+                {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                  <div key={hour} className="w-24 shrink-0 p-4 text-center border-r last:border-r-0 flex flex-col items-center justify-center gap-0.5"
+                       style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-black" style={{ color: 'var(--text-primary)' }}>
+                      {hour.toString().padStart(2, '0')}:00
+                    </span>
+                    <span className="text-[8px] font-bold uppercase tracking-tighter" style={{ color: 'var(--text-muted)' }}>
+                      {hour < 12 ? 'AM' : 'PM'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Grid Rows */}
+              {loading ? (
+                <div className="p-20 flex flex-col items-center justify-center gap-4">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Loader2 size={32} style={{ color: 'var(--navy)' }} />
+                  </motion.div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>Synchronizing Schedule...</p>
+                </div>
+              ) : aircraft.length === 0 ? (
+                <div className="p-20 text-center flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-3xl bg-[var(--bg-tertiary)] flex items-center justify-center mb-4">
+                    <Plane size={32} className="opacity-20" />
+                  </div>
+                  <h3 className="text-lg font-black mb-1" style={{ color: 'var(--text-primary)' }}>No Aircraft Configured</h3>
+                  <p className="text-xs font-bold max-w-[240px] mx-auto" style={{ color: 'var(--text-muted)' }}>
+                    Add aircraft to your profile to begin scheduling lessons and tracking availability.
+                  </p>
+                </div>
+              ) : (
+                aircraft.map(ac => (
+                  <div key={ac.id} className="flex border-b last:border-b-0 group/row" style={{ borderColor: 'var(--border-color)' }}>
+                    {/* Aircraft Cell */}
+                    <div className="w-48 sticky left-0 z-10 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+                      <span className="text-xs font-black" style={{ color: 'var(--text-primary)' }}>{ac.tail_number}</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.model}</span>
+                    </div>
+                    
+                    {/* Timeline */}
+                    <div className="flex relative items-stretch h-24">
+                      {/* Hour Grid Lines */}
+                      {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                        <div 
+                          key={hour} 
+                          className="w-24 border-r last:border-r-0 relative cursor-pointer"
+                          style={{ borderColor: 'var(--border-color)' }}
+                          onClick={() => openNewBooking(hour, ac.tail_number)}
+                        >
+                          <div className="absolute inset-0 opacity-0 group-hover/row:bg-[var(--navy)]/[0.02] pointer-events-none transition-colors" />
+                        </div>
+                      ))}
+
+                      {/* Lesson Blocks */}
+                      {scheduledLessons
+                        .filter(lesson => lesson.tail_number === ac.tail_number)
+                        .map(lesson => {
+                          const startDecimal = timeToDecimal(lesson.start_time);
+                          const student = students.find(s => s.name === lesson.student_name);
+                          const rating = student?.current_rating || 'default';
+                          const color = getRatingColor(rating);
+                          
+                          return (
+                            <div 
+                              key={lesson.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditBooking(lesson);
+                              }}
+                              className="absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-0 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all"
+                              style={{ 
+                                left: `${startDecimal * 96}px`, 
+                                width: `${(lesson.duration_hours || 0) * 96}px`,
+                                backgroundColor: color
+                              }}
+                            >
+                              <span className="text-[10px] font-black leading-tight text-white truncate drop-shadow-sm">
+                                {lesson.student_name}
+                              </span>
+                              <div className="flex items-center gap-1 mt-0.5 opacity-90">
+                                <Clock size={8} className="text-white" />
+                                <span className="text-[8px] font-bold text-white tracking-wider">
+                                  {lesson.start_time}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Booking Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-sm"
+            onClick={() => setIsModalOpen(false)}
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative w-full max-w-md bg-[var(--bg-secondary)] border rounded-3xl p-6 shadow-2xl overflow-hidden"
+            style={{ borderColor: 'var(--border-color)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col">
+                <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>
+                  {editingLesson ? 'Edit Lesson' : 'Schedule Lesson'}
+                </h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                  {modalData.tailNumber} • {formatDateNav(selectedDate)}
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {formError && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-wider text-center">
+                  {formError}
+                </div>
+              )}
+
+              {/* Student Dropdown */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widst mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                  Select Student
+                </label>
+                <select 
+                  className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  value={modalData.studentName}
+                  onChange={(e) => setModalData({ ...modalData, studentName: e.target.value })}
+                >
+                  <option value="">Select a student...</option>
+                  {students.map(s => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Start Time */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                    Start Time
+                  </label>
+                  <input 
+                    type="time"
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={modalData.startTime}
+                    onChange={(e) => setModalData({ ...modalData, startTime: e.target.value })}
+                  />
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                    Duration (Hours)
+                  </label>
+                  <select 
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={modalData.duration}
+                    onChange={(e) => setModalData({ ...modalData, duration: parseFloat(e.target.value) })}
+                  >
+                    {[1.3, 1.6, 1.9, 2.2, 2.5, 2.8, 3.1, 3.4].map(val => (
+                      <option key={val} value={val}>{val}h</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                  Lesson Notes
+                </label>
+                <textarea 
+                  className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold resize-none h-24"
+                  placeholder="Learning objectives, items to cover..."
+                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  value={modalData.notes}
+                  onChange={(e) => setModalData({ ...modalData, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                {editingLesson && (
+                  <button 
+                    onClick={handleDeleteLesson}
+                    className="p-3 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                  >
+                    <AlertTriangle size={18} />
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 p-3 rounded-xl font-bold text-sm bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 transition-colors cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveLesson}
+                  disabled={isSaving}
+                  className="flex-[2] p-3 rounded-xl font-black text-sm bg-[var(--navy)] text-white hover:shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : editingLesson ? 'Save Changes' : 'Schedule Lesson'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}    </div>
+  );
+}

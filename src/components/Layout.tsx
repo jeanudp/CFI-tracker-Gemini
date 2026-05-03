@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck, Calendar } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 
 interface LayoutProps {
@@ -104,6 +104,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
   const NAV_ITEMS = [
     { label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> },
+    { label: 'Schedule', path: '/schedule', icon: <Calendar size={14} /> },
     { label: 'Student Progress', path: '/history', icon: <HistoryIcon size={14} /> },
     { label: 'Ground Lesson', path: '/ground', icon: <BookOpen size={14} /> },
     { label: 'Flight Lesson', path: '/flight', icon: <Plane size={14} /> },

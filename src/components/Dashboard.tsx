@@ -2332,6 +2332,15 @@ export default function Dashboard() {
               </div>
               <div className="py-1">
                 <Link
+                  to="/schedule"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <Calendar size={14} style={{ color: 'var(--navy)' }} />
+                  Schedule
+                </Link>
+                <Link
                   to="/cfi-hours"
                   onClick={() => setIsUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
