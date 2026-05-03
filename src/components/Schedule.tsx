@@ -147,6 +147,8 @@ export default function Schedule() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState(new Date());
   const [suggestedTime, setSuggestedTime] = useState<string | null>(null);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [conflictSuggestion, setConflictSuggestion] = useState<{ suggestedTime: string, suggestedTail: string, lesson: any } | null>(null);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -525,7 +527,13 @@ export default function Schedule() {
 
     const conflict = checkConflict(newStartTime, lesson.duration_hours, lesson.id);
     if (conflict === 'overlap') {
-      alert('This time slot conflicts with an existing lesson.');
+      const nextSlot = findNextAvailableSlot(newStartTime, lesson.duration_hours, lesson.id);
+      setConflictSuggestion({
+        suggestedTime: nextSlot || 'none',
+        suggestedTail: tailNumber,
+        lesson: lesson
+      });
+      setConflictModalOpen(true);
       return;
     }
 
@@ -1302,6 +1310,103 @@ export default function Schedule() {
             </div>
           </motion.div>
         </div>
-      )}    </div>
+      )}
+
+      {/* Conflict Modal */}
+      <AnimatePresence>
+        {conflictModalOpen && conflictSuggestion && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => {
+                setConflictModalOpen(false);
+                setConflictSuggestion(null);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm rounded-[2rem] border overflow-hidden p-8 shadow-2xl"
+              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+            >
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-16 h-16 rounded-3xl bg-amber-500/10 flex items-center justify-center">
+                  <AlertTriangle size={32} className="text-amber-500" />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                    Schedule Conflict
+                  </h3>
+                  <p className="text-xs font-bold leading-relaxed px-4" style={{ color: 'var(--text-muted)' }}>
+                    The requested time overlaps an existing lesson.
+                  </p>
+                </div>
+
+                {conflictSuggestion.suggestedTime !== 'none' ? (
+                  <div className="w-full p-4 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-color)]">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] block mb-1">Next available slot</span>
+                    <span className="text-2xl font-black tracking-tight" style={{ color: 'var(--navy)' }}>
+                      {conflictSuggestion.suggestedTime.substring(0, 5)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="w-full p-4 rounded-2xl bg-red-500/5 border border-red-500/10">
+                    <p className="text-xs font-bold text-red-500">No other available slots today.</p>
+                  </div>
+                )}
+
+                <div className="flex flex-col w-full gap-3">
+                  {conflictSuggestion.suggestedTime !== 'none' && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const newLessonType = conflictSuggestion.lesson.lesson_type === 'Ground' && conflictSuggestion.suggestedTail !== 'GROUND' ? 'Flight' : 
+                                               (conflictSuggestion.suggestedTail === 'GROUND' ? 'Ground' : conflictSuggestion.lesson.lesson_type);
+                          
+                          const { error } = await supabase
+                            .from('scheduled_lessons')
+                            .update({ 
+                              start_time: conflictSuggestion.suggestedTime,
+                              tail_number: conflictSuggestion.suggestedTail,
+                              lesson_type: newLessonType
+                            })
+                            .eq('id', conflictSuggestion.lesson.id);
+                          
+                          if (error) throw error;
+                          await fetchScheduleData();
+                          setConflictModalOpen(false);
+                          setConflictSuggestion(null);
+                        } catch (error) {
+                          console.error('Error moving lesson:', error);
+                          alert('Failed to move lesson.');
+                        }
+                      }}
+                      className="w-full py-4 rounded-2xl bg-[var(--navy)] text-white text-[11px] font-black uppercase tracking-widest hover:shadow-xl transition-all cursor-pointer"
+                    >
+                      Move to {conflictSuggestion.suggestedTime.substring(0, 5)}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setConflictModalOpen(false);
+                      setConflictSuggestion(null);
+                    }}
+                    className="w-full py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
