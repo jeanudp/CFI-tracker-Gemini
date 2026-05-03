@@ -20,7 +20,9 @@ import {
   FileText, 
   Info,
   Trophy,
-  Award
+  Award,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -98,6 +100,24 @@ export default function StudentView() {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'schedule' | 'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('schedule');
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('dark_mode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('dark_mode', 'false');
+    }
+  };
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
   const studentName = studentInfo?.student_name;
@@ -411,6 +431,13 @@ export default function StudentView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleDarkMode}
+              className="p-1.5 sm:p-2 rounded-full border border-white/20 hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-amber-400" />}
+            </button>
             <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full flex items-center gap-2">
               <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 animate-pulse"></span>
               <span className="text-[9px] sm:text-[10px] font-black text-amber-400 uppercase tracking-widest whitespace-nowrap">
@@ -485,48 +512,50 @@ export default function StudentView() {
           </div>
 
           {/* Lesson Selection Pills */}
-          <div className="mb-8 sm:mb-10 sm:px-4">
-            <h3 className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-3 sm:mb-4">Lesson History — Tap to view details</h3>
-<div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
-              {studentLessons.map((lesson) => (
-                <button
-                  key={lesson.id}
-                  onClick={() => setSelectedLessonId(lesson.id)}
-                  className={cn(
-                    "shrink-0 px-6 py-4 rounded-2xl border text-left transition-all min-w-[180px]",
-                    selectedLessonId === lesson.id
-                      ? "bg-[#1a3a5c] text-white border-[#1a3a5c] shadow-lg scale-[1.02]"
-                      : "bg-white border-[#dde3ec] text-[#1a3a5c] hover:border-[#1a3a5c]/30 shadow-sm"
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={cn(
-                      "text-[9px] font-black uppercase px-2 py-0.5 rounded-full",
-                      selectedLessonId === lesson.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#64748b]"
-                    )}>
-                      {lesson.type}
-                    </span>
-                    {lesson.meta?.overallGrade && (
+          {activeTab !== 'schedule' && (
+            <div className="mb-8 sm:mb-10 sm:px-4 text-left">
+              <h3 className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-3 sm:mb-4">Lesson History — Tap to view details</h3>
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                {studentLessons.map((lesson) => (
+                  <button
+                    key={lesson.id}
+                    onClick={() => setSelectedLessonId(lesson.id)}
+                    className={cn(
+                      "shrink-0 px-6 py-4 rounded-2xl border text-left transition-all min-w-[180px]",
+                      selectedLessonId === lesson.id
+                        ? "bg-[#1a3a5c] text-white border-[#1a3a5c] shadow-lg scale-[1.02]"
+                        : "bg-white border-[#dde3ec] text-[#1a3a5c] hover:border-[#1a3a5c]/30 shadow-sm"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
                       <span className={cn(
                         "text-[9px] font-black uppercase px-2 py-0.5 rounded-full",
-                        lesson.meta.overallGrade === 'S' ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                        selectedLessonId === lesson.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#64748b]"
                       )}>
-                        {lesson.meta.overallGrade}
+                        {lesson.type}
                       </span>
-                    )}
-                  </div>
-                  <div className="font-bold text-sm leading-tight mb-2">{lesson.label}</div>
-                  <div className={cn(
-                    "text-[10px] font-medium flex items-center gap-1.5",
-                    selectedLessonId === lesson.id ? "text-white/60" : "text-[#94a3b8]"
-                  )}>
-                    <Calendar size={10} />
-                    {new Date(lesson.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </div>
-                </button>
-              ))}
+                      {lesson.meta?.overallGrade && (
+                        <span className={cn(
+                          "text-[9px] font-black uppercase px-2 py-0.5 rounded-full",
+                          lesson.meta.overallGrade === 'S' ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                        )}>
+                          {lesson.meta.overallGrade}
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-bold text-sm leading-tight mb-2">{lesson.label}</div>
+                    <div className={cn(
+                      "text-[10px] font-medium flex items-center gap-1.5",
+                      selectedLessonId === lesson.id ? "text-white/60" : "text-[#94a3b8]"
+                    )}>
+                      <Calendar size={10} />
+                      {new Date(lesson.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-1 gap-8">
             <AnimatePresence mode="wait">
