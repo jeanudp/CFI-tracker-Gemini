@@ -86,6 +86,16 @@ export default function Schedule() {
     fetchScheduleData();
   }, [selectedDate]);
 
+  useEffect(() => {
+    if (isDatePickerOpen && dateButtonRef.current) {
+      const rect = dateButtonRef.current.getBoundingClientRect();
+      setDatePickerPos({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2
+      });
+    }
+  }, [isDatePickerOpen]);
+
   const fetchScheduleData = async () => {
     setLoading(true);
     try {
@@ -593,13 +603,6 @@ export default function Schedule() {
               <button 
                 ref={dateButtonRef}
                 onClick={() => {
-                  if (dateButtonRef.current) {
-                    const rect = dateButtonRef.current.getBoundingClientRect();
-                    setDatePickerPos({
-                      top: rect.bottom + 8,
-                      left: rect.left + rect.width / 2
-                    });
-                  }
                   setIsDatePickerOpen(!isDatePickerOpen);
                   setPickerMonth(new Date(selectedDate));
                 }}
