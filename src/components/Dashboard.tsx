@@ -1153,7 +1153,7 @@ export default function Dashboard() {
 
         {/* Weather Widget */}
         <div className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {/* METAR Panel */}
             <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ 
               borderTop: '1px solid var(--border-color)',
