@@ -1855,7 +1855,6 @@ export default function Dashboard() {
                                     onClick={() => {
                                       setReviewingRequest(request);
                                       setRequestsDrawerOpen(false);
-                                      handleAcceptRequest(request);
                                     }}
                                     className="flex-[2] py-3 rounded-xl bg-amber-500 text-white hover:bg-amber-600 font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
                                   >
