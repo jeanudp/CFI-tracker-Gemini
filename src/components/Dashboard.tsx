@@ -184,8 +184,6 @@ export default function Dashboard() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [progChartError, setProgChartError] = useState(false);
-  const [remarksExpanded, setRemarksExpanded] = useState(false);
-  const [metarExpanded, setMetarExpanded] = useState(true);
   const [tafExpanded, setTafExpanded] = useState(false);
   const [periodsExpanded, setPeriodsExpanded] = useState(false);
   const [upcomingLessons, setUpcomingLessons] = useState<any[]>([]);
@@ -1239,6 +1237,10 @@ export default function Dashboard() {
               {weatherData && (weatherData.raw_text || weatherData.obs_time || weatherData.rawOb || weatherData.reportTime) && !weatherError && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
+                    <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                       {(() => {
@@ -1288,103 +1290,61 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <AnimatePresence>
-                    {metarExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden space-y-3"
-                      >
-                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
-                          <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
+                  {/* Weather Phenomena Row */}
+                  {(() => {
+                    const wx = decodeWeatherPhenomena(weatherData.raw_text || weatherData.rawOb || '', weatherData.wxString);
+                    if (!wx) return null;
+                    return (
+                      <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Weather</span>
+                        <span className="text-xs font-bold text-right pl-4" style={{ color: 'var(--text-primary)' }}>{wx}</span>
+                      </div>
+                    );
+                  })()}
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
+                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {(weatherData.altim_in_hg ?? (() => {
+                        const match = (weatherData.raw_text || weatherData.rawOb || '').match(/\bA(\d{4})\b/);
+                        return match ? parseInt(match[1], 10) / 100 : null;
+                      })())?.toFixed(2) ?? '—'} inHg
+                    </span>
+                  </div>
+
+                  {/* Remarks Section */}
+                  {(() => {
+                    const rawText = weatherData?.raw_text || weatherData?.rawOb || '';
+                    const parsedMetar = rawText ? (() => { try { return parseMetar(rawText); } catch(e) { return null; } })() : null;
+                    const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.raw && rmk.raw.trim() !== '');
+                    if (!rawText || remarks.length === 0) return null;
+                    return (
+                      <div className="mt-2">
+                        <div className="py-2 border-b border-[var(--border-color)]">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Remarks</span>
                         </div>
-                        {/* Weather Phenomena Row */}
-                        {(() => {
-                          const wx = decodeWeatherPhenomena(weatherData.raw_text || weatherData.rawOb || '', weatherData.wxString);
-                          if (!wx) return null;
-                          return (
-                            <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Weather</span>
-                              <span className="text-xs font-bold text-right pl-4" style={{ color: 'var(--text-primary)' }}>{wx}</span>
+                        <div className="space-y-1 mt-1">
+                          {remarks.map((rmk: any, idx: number) => (
+                            <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.raw}</span>
+                              <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description || rmk.raw}</span>
                             </div>
-                          );
-                        })()}
-                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
-                          <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                            {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
-                          </span>
+                          ))}
                         </div>
-                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
-                          <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                            {(weatherData.altim_in_hg ?? (() => {
-                              const match = (weatherData.raw_text || weatherData.rawOb || '').match(/\bA(\d{4})\b/);
-                              return match ? parseInt(match[1], 10) / 100 : null;
-                            })())?.toFixed(2) ?? '—'} inHg
-                          </span>
-                        </div>
+                      </div>
+                    );
+                  })()}
 
-                        {/* Remarks Section */}
-                        {(() => {
-                          const rawText = weatherData?.raw_text || weatherData?.rawOb || '';
-                          const parsedMetar = rawText ? (() => { try { return parseMetar(rawText); } catch(e) { return null; } })() : null;
-                          const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.raw && rmk.raw.trim() !== '');
-                          if (!rawText || remarks.length === 0) return null;
-                          return (
-                            <div className="mt-2">
-                              <button 
-                                onClick={() => setRemarksExpanded(!remarksExpanded)}
-                                className="flex items-center justify-between w-full py-2 border-b border-[var(--border-color)] hover:opacity-80 transition-opacity"
-                              >
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Remarks</span>
-                                <ChevronRight 
-                                  size={12} 
-                                  className={cn("transition-transform text-[var(--text-muted)]", remarksExpanded ? "rotate-90" : "")} 
-                                />
-                              </button>
-                              <AnimatePresence>
-                                {remarksExpanded && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
-                                  >
-                                    <div className="space-y-1 mt-1">
-                                      {remarks.map((rmk: any, idx: number) => (
-                                        <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
-                                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.raw}</span>
-                                          <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description || rmk.raw}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })()}
-
-                        <div className="flex justify-between items-center pt-2">
-                          <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
-                            Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <button 
-                    onClick={() => setMetarExpanded(!metarExpanded)}
-                    className="flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    <span>{metarExpanded ? 'Less' : 'Details'}</span>
-                    <ChevronRight size={12} className={cn("transition-transform", metarExpanded ? "rotate-90" : "")} />
-                  </button>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
+                      Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
