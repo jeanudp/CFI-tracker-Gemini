@@ -39,7 +39,8 @@ export default function Schedule() {
     studentName: '',
     duration: 1.9,
     notes: '',
-    tailNumber: ''
+    tailNumber: '',
+    lessonType: 'Flight' as 'Ground' | 'Flight' | 'Sim'
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -158,11 +159,12 @@ export default function Schedule() {
       const payload = {
         user_id: session.user.id,
         student_name: modalData.studentName,
-        tail_number: modalData.tailNumber,
+        tail_number: modalData.lessonType === 'Ground' ? 'GROUND' : modalData.tailNumber,
         date: dateStr,
         start_time: modalData.startTime,
         duration_hours: modalData.duration,
-        notes: modalData.notes
+        notes: modalData.notes,
+        lesson_type: modalData.lessonType
       };
 
       if (editingLesson) {
@@ -215,7 +217,8 @@ export default function Schedule() {
       studentName: '',
       duration: 1.9,
       notes: '',
-      tailNumber: tailNumber
+      tailNumber: tailNumber === 'GROUND' ? '' : tailNumber,
+      lessonType: tailNumber === 'GROUND' ? 'Ground' : 'Flight'
     });
     setIsModalOpen(true);
   };
@@ -228,7 +231,8 @@ export default function Schedule() {
       studentName: lesson.student_name,
       duration: lesson.duration_hours,
       notes: lesson.notes || '',
-      tailNumber: lesson.tail_number
+      tailNumber: lesson.tail_number === 'GROUND' ? '' : lesson.tail_number,
+      lessonType: lesson.lesson_type || (lesson.tail_number === 'GROUND' ? 'Ground' : 'Flight')
     });
     setIsModalOpen(true);
   };
@@ -695,6 +699,97 @@ export default function Schedule() {
                 ))}
               </div>
 
+              {/* Ground Row */}
+              <div className="flex border-b group/row" style={{ borderColor: 'var(--border-color)' }}>
+                {/* Aircraft Cell */}
+                <div className="w-48 sticky left-0 z-10 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                     style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+                  <span className="text-xs font-black" style={{ color: 'var(--navy)' }}>GROUND</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Instruction / Briefing</span>
+                </div>
+                
+                {/* Timeline */}
+                <div className="flex relative items-stretch h-24">
+                  {/* Hour Grid Lines */}
+                  {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                    <div 
+                      key={hour} 
+                      className="w-24 border-r last:border-r-0 relative cursor-pointer"
+                      style={{ borderColor: 'var(--border-color)' }}
+                      onClick={() => openNewBooking(hour, 'GROUND')}
+                      onDragOver={(e) => handleDragOver(e, hour, 'GROUND')}
+                      onDrop={(e) => handleDrop(e, hour, 'GROUND')}
+                    >
+                      <div className={cn(
+                        "absolute inset-0 transition-colors pointer-events-none",
+                        dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND'
+                          ? ""
+                          : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
+                      )}>
+                        {dragOverHour?.hour === hour && dragOverHour?.tailNumber === 'GROUND' && (
+                          <div 
+                            className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10"
+                            style={{ 
+                              left: `${dragOverHour.segment * (100 / 6)}%`, 
+                              width: `${100 / 6}%` 
+                            }} 
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Lesson Blocks for Ground */}
+                  {scheduledLessons
+                    .filter(lesson => lesson.tail_number === 'GROUND')
+                    .map(lesson => {
+                      const startDecimal = timeToDecimal(lesson.start_time);
+                      const student = students.find(s => s.name === lesson.student_name);
+                      const rating = student?.current_rating || 'default';
+                      const color = getRatingColor(rating);
+                      const isDragging = draggingLesson?.id === lesson.id;
+                      
+                      return (
+                        <div 
+                          key={lesson.id}
+                          draggable
+                          onDragStart={() => setDraggingLesson(lesson)}
+                          onDragEnd={() => {
+                            setDraggingLesson(null);
+                            setDragOverHour(null);
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditBooking(lesson);
+                          }}
+                          className={cn(
+                            "absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-10 cursor-grab active:cursor-grabbing transition-all",
+                            isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
+                          )}
+                          style={{ 
+                            left: `${startDecimal * 96}px`, 
+                            width: `${(lesson.duration_hours || 0) * 96}px`,
+                            backgroundColor: color
+                          }}
+                        >
+                          <span className="text-[10px] font-black leading-tight text-white truncate drop-shadow-sm">
+                            {lesson.student_name}
+                          </span>
+                          <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
+                            GND
+                          </span>
+                          <div className="flex items-center gap-1 mt-0.5 opacity-90">
+                            <Clock size={8} className="text-white" />
+                            <span className="text-[8px] font-bold text-white tracking-wider">
+                              {lesson.start_time?.substring(0, 5)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
               {/* Grid Rows */}
               {loading ? (
                 <div className="p-20 flex flex-col items-center justify-center gap-4">
@@ -799,6 +894,9 @@ export default function Schedule() {
                                   {lesson.start_time?.substring(0, 5)}
                                 </span>
                               </div>
+                              <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
+                                {lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT'}
+                              </span>
                             </div>
                           );
                         })}
@@ -851,6 +949,29 @@ export default function Schedule() {
                 </div>
               )}
 
+              {/* Lesson Type Selector */}
+              <div className="mb-4">
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                  Lesson Type
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['Ground', 'Flight', 'Sim'].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setModalData({ ...modalData, lessonType: type as any })}
+                      className={cn(
+                        "py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer",
+                        modalData.lessonType === type 
+                          ? "bg-[var(--navy)] text-white border-[var(--navy)] shadow-md" 
+                          : "bg-[var(--bg-tertiary)]/50 text-[var(--text-muted)] border-[var(--border-color)] hover:bg-[var(--bg-tertiary)]"
+                      )}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Student Dropdown */}
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
@@ -868,6 +989,26 @@ export default function Schedule() {
                   ))}
                 </select>
               </div>
+
+              {/* Aircraft Dropdown - Conditionally hidden */}
+              {modalData.lessonType !== 'Ground' && (
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                    Select Aircraft
+                  </label>
+                  <select 
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={modalData.tailNumber}
+                    onChange={(e) => setModalData({ ...modalData, tailNumber: e.target.value })}
+                  >
+                    <option value="">Choose an aircraft</option>
+                    {aircraft.map(ac => (
+                      <option key={ac.id} value={ac.tail_number}>{ac.tail_number} - {ac.model}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Start Time */}
