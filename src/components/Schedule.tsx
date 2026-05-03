@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -23,6 +23,102 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+
+interface DatePickerDropdownProps {
+  isOpen: boolean;
+  pickerMonth: Date;
+  selectedDate: Date;
+  onPrevMonth: (e: React.MouseEvent) => void;
+  onNextMonth: (e: React.MouseEvent) => void;
+  onDateSelect: (date: Date) => void;
+  onClose: () => void;
+  getCalendarDays: () => (Date | null)[];
+}
+
+const DatePickerDropdown = memo(({
+  isOpen,
+  pickerMonth,
+  selectedDate,
+  onPrevMonth,
+  onNextMonth,
+  onDateSelect,
+  onClose,
+  getCalendarDays
+}: DatePickerDropdownProps) => {
+  if (!isOpen) return null;
+
+  // Helper to check if a date is today (moved here or passed as prop, user didn't specify so I'll keep it simple or redefine)
+  const isDateToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-[199]"
+        onClick={onClose}
+      />
+      <div
+        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
+        style={{ 
+          backgroundColor: 'var(--bg-secondary)', 
+          borderColor: 'var(--border-color)'
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={onPrevMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+            <ChevronLeft size={16} style={{ color: 'var(--text-primary)' }} />
+          </button>
+          <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>
+            {pickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={onNextMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+            <ChevronRight size={16} style={{ color: 'var(--text-primary)' }} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+            <div key={day} className="text-center text-[9px] font-black" style={{ color: 'var(--text-muted)' }}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1">
+          {getCalendarDays().map((date, i) => {
+            if (!date) return <div key={`empty-${i}`} className="h-7" />;
+            
+            const isActive = date.getTime() === new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).getTime();
+            const isCurrToday = isDateToday(date);
+
+            return (
+              <button
+                key={date.toISOString()}
+                onClick={() => onDateSelect(date)}
+                className={cn(
+                  "h-7 rounded-lg text-xs font-bold transition-all relative flex items-center justify-center cursor-pointer",
+                  isActive 
+                    ? "bg-[var(--navy)] text-white shadow-md" 
+                    : "hover:bg-[var(--bg-tertiary)]"
+                )}
+                style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
+              >
+                {date.getDate()}
+                {isCurrToday && !isActive && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+});
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -621,69 +717,16 @@ export default function Schedule() {
                 <ChevronDown size={12} className={cn("transition-transform duration-200", isDatePickerOpen && "rotate-180")} style={{ color: 'var(--text-muted)' }} />
               </button>
 
-              {isDatePickerOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[199]"
-                    onClick={() => setIsDatePickerOpen(false)}
-                  />
-                  <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
-                    style={{ 
-                      backgroundColor: 'var(--bg-secondary)', 
-                      borderColor: 'var(--border-color)'
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
-                        <ChevronLeft size={16} style={{ color: 'var(--text-primary)' }} />
-                      </button>
-                      <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>
-                        {pickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                      </span>
-                      <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
-                        <ChevronRight size={16} style={{ color: 'var(--text-primary)' }} />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1 mb-2">
-                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                        <div key={day} className="text-center text-[9px] font-black" style={{ color: 'var(--text-muted)' }}>
-                          {day}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1">
-                      {getCalendarDays().map((date, i) => {
-                        if (!date) return <div key={`empty-${i}`} className="h-7" />;
-                        
-                        const isActive = date.getTime() === new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).getTime();
-                        const isCurrToday = isToday(date);
-
-                        return (
-                          <button
-                            key={date.toISOString()}
-                            onClick={() => handleDateSelect(date)}
-                            className={cn(
-                              "h-7 rounded-lg text-xs font-bold transition-all relative flex items-center justify-center cursor-pointer",
-                              isActive 
-                                ? "bg-[var(--navy)] text-white shadow-md" 
-                                : "hover:bg-[var(--bg-tertiary)]"
-                            )}
-                            style={{ color: isActive ? 'white' : 'var(--text-primary)' }}
-                          >
-                            {date.getDate()}
-                            {isCurrToday && !isActive && (
-                              <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-amber-500" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
+              <DatePickerDropdown 
+                isOpen={isDatePickerOpen}
+                pickerMonth={pickerMonth}
+                selectedDate={selectedDate}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                onDateSelect={handleDateSelect}
+                onClose={() => setIsDatePickerOpen(false)}
+                getCalendarDays={getCalendarDays}
+              />
             </div>
           </div>
 
