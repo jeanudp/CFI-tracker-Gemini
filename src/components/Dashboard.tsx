@@ -959,14 +959,11 @@ export default function Dashboard() {
           )}
           <div className="relative">
             <button
-              onClick={() => setIsNewStudentOpen(true)}
-              className={cn(
-                "px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer",
-                onboardingStep === 1 && "shadow-[0_0_50px_16px_rgba(232,160,32,0.8)] ring-4 ring-[#e8a020] ring-offset-4 animate-pulse scale-110"
-              )}
+              onClick={() => navigate('/schedule')}
+              className="px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
             >
-              <Plus size={14} />
-              Add Student
+              <Calendar size={14} />
+              Schedule
             </button>
 
           </div>
@@ -1015,9 +1012,21 @@ export default function Dashboard() {
 
         {!loading && sortedStudents.length > 0 && (
           <div className="flex items-center justify-between px-1 mb-4">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-              {sortedStudents.length} {sortedStudents.length === 1 ? 'Student' : 'Students'}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                {sortedStudents.length} {sortedStudents.length === 1 ? 'Student' : 'Students'}
+              </span>
+              <button
+                onClick={() => setIsNewStudentOpen(true)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 bg-[var(--navy)] text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm hover:shadow-md transition-all cursor-pointer",
+                  onboardingStep === 1 && "shadow-[0_0_20px_4px_rgba(232,160,32,0.6)] ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
+                )}
+              >
+                <Plus size={10} />
+                Add Student
+              </button>
+            </div>
             <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
               Sorted by rating
               <ChevronDown size={10} />
