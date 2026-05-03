@@ -185,6 +185,10 @@ export default function Dashboard() {
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [progChartError, setProgChartError] = useState(false);
   const [remarksExpanded, setRemarksExpanded] = useState(false);
+  const [metarExpanded, setMetarExpanded] = useState(false);
+  const [tafExpanded, setTafExpanded] = useState(false);
+  const [upcomingLessons, setUpcomingLessons] = useState<any[]>([]);
+  const [upcomingLoading, setUpcomingLoading] = useState(false);
 
   useEffect(() => {
     const checkGuide = () => {
@@ -405,25 +409,37 @@ export default function Dashboard() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+    setUpcomingLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0];
+
+      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, upcomingRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', session.user.id).is('deleted_at', null).order('name'),
         supabase.from('students').select('*').eq('user_id', session.user.id).not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
         supabase.from('lessons').select('*'),
         supabase.from('manual_hours').select('*'),
         supabase.from('endorsements').select('*'),
+        supabase.from('scheduled_lessons')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .order('start_time', { ascending: true })
+          .limit(5)
       ]);
       setStudents(studentsRes.data || []);
       setArchivedStudents(archivedRes.data || []);
       setLessons(lessonsRes.data || []);
       setManualHours(manualRes.data || []);
       setEndorsements(endorsementsRes.data || []);
+      setUpcomingLessons(upcomingRes.data || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setUpcomingLoading(false);
     }
   };
 
@@ -1153,9 +1169,9 @@ export default function Dashboard() {
 
         {/* Weather Widget */}
         <div className="mt-6">
-          <div className="grid grid-cols-1 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
             {/* METAR Panel */}
-            <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ 
+            <div className="md:col-span-1 bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ 
               borderTop: '1px solid var(--border-color)',
               borderRight: '1px solid var(--border-color)',
               borderBottom: '1px solid var(--border-color)',
@@ -1220,10 +1236,6 @@ export default function Dashboard() {
               {weatherData && (weatherData.raw_text || weatherData.obs_time || weatherData.rawOb || weatherData.reportTime) && !weatherError && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
-                    <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Wind</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
                       {(() => {
@@ -1246,17 +1258,6 @@ export default function Dashboard() {
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Visibility</span>
                     <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{weatherData.visib ?? '—'} SM</span>
                   </div>
-                  {/* Weather Phenomena Row */}
-                  {(() => {
-                    const wx = decodeWeatherPhenomena(weatherData.raw_text || weatherData.rawOb || '', weatherData.wxString);
-                    if (!wx) return null;
-                    return (
-                      <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Weather</span>
-                        <span className="text-xs font-bold text-right pl-4" style={{ color: 'var(--text-primary)' }}>{wx}</span>
-                      </div>
-                    );
-                  })()}
                   <div className="flex justify-between items-start py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>Sky Condition</span>
                     <div className="flex flex-col items-end gap-0.5">
@@ -1283,74 +1284,110 @@ export default function Dashboard() {
                         : <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Clear</span>}
                     </div>
                   </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      {(weatherData.altim_in_hg ?? (() => {
-                        const match = (weatherData.raw_text || weatherData.rawOb || '').match(/\bA(\d{4})\b/);
-                        return match ? parseInt(match[1], 10) / 100 : null;
-                      })())?.toFixed(2) ?? '—'} inHg
-                    </span>
-                  </div>
 
-                  {/* Remarks Section */}
-                  {(() => {
-                    const rawText = weatherData?.raw_text || weatherData?.rawOb || '';
-                    const parsedMetar = rawText ? (() => { try { return parseMetar(rawText); } catch(e) { return null; } })() : null;
-                    const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.raw && rmk.raw.trim() !== '');
-                    if (!rawText || remarks.length === 0) return null;
-                    return (
-                      <div className="mt-2">
-                        <button 
-                          onClick={() => setRemarksExpanded(!remarksExpanded)}
-                          className="flex items-center justify-between w-full py-2 border-b border-[var(--border-color)] hover:opacity-80 transition-opacity"
-                        >
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Remarks</span>
-                          <ChevronRight 
-                            size={12} 
-                            className={cn("transition-transform text-[var(--text-muted)]", remarksExpanded ? "rotate-90" : "")} 
-                          />
-                        </button>
-                        <AnimatePresence>
-                          {remarksExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="space-y-1 mt-1">
-                                {remarks.map((rmk: any, idx: number) => (
-                                  <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.raw}</span>
-                                    <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description || rmk.raw}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })()}
+                  <AnimatePresence>
+                    {metarExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden space-y-3"
+                      >
+                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Raw METAR</span>
+                          <span className="text-[10px] font-mono font-medium max-w-[200px] text-right" style={{ color: 'var(--text-primary)' }}>{weatherData.raw_text || weatherData.rawOb || '—'}</span>
+                        </div>
+                        {/* Weather Phenomena Row */}
+                        {(() => {
+                          const wx = decodeWeatherPhenomena(weatherData.raw_text || weatherData.rawOb || '', weatherData.wxString);
+                          if (!wx) return null;
+                          return (
+                            <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Weather</span>
+                              <span className="text-xs font-bold text-right pl-4" style={{ color: 'var(--text-primary)' }}>{wx}</span>
+                            </div>
+                          );
+                        })()}
+                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Temperature</span>
+                          <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                            {(weatherData.temp_c ?? weatherData.temp)?.toFixed(1) ?? '—'}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(1) ?? '—'}°C
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Altimeter</span>
+                          <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                            {(weatherData.altim_in_hg ?? (() => {
+                              const match = (weatherData.raw_text || weatherData.rawOb || '').match(/\bA(\d{4})\b/);
+                              return match ? parseInt(match[1], 10) / 100 : null;
+                            })())?.toFixed(2) ?? '—'} inHg
+                          </span>
+                        </div>
 
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
-                      Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
+                        {/* Remarks Section */}
+                        {(() => {
+                          const rawText = weatherData?.raw_text || weatherData?.rawOb || '';
+                          const parsedMetar = rawText ? (() => { try { return parseMetar(rawText); } catch(e) { return null; } })() : null;
+                          const remarks = (parsedMetar?.remarks || []).filter((rmk: any) => rmk.raw && rmk.raw.trim() !== '');
+                          if (!rawText || remarks.length === 0) return null;
+                          return (
+                            <div className="mt-2">
+                              <button 
+                                onClick={() => setRemarksExpanded(!remarksExpanded)}
+                                className="flex items-center justify-between w-full py-2 border-b border-[var(--border-color)] hover:opacity-80 transition-opacity"
+                              >
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Remarks</span>
+                                <ChevronRight 
+                                  size={12} 
+                                  className={cn("transition-transform text-[var(--text-muted)]", remarksExpanded ? "rotate-90" : "")} 
+                                />
+                              </button>
+                              <AnimatePresence>
+                                {remarksExpanded && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="space-y-1 mt-1">
+                                      {remarks.map((rmk: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between items-center py-1 border-b border-[var(--border-color)] last:border-0">
+                                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{rmk.raw}</span>
+                                          <span className="text-xs font-bold text-[var(--text-primary)] text-right pl-4">{rmk.description || rmk.raw}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
+                            Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button 
+                    onClick={() => setMetarExpanded(!metarExpanded)}
+                    className="flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <span>{metarExpanded ? 'Less' : 'Details'}</span>
+                    <ChevronRight size={12} className={cn("transition-transform", metarExpanded ? "rotate-90" : "")} />
+                  </button>
                 </div>
               )}
             </div>
 
             {/* TAF Panel */}
-            <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="md:col-span-1 bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
               <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center gap-2">
                   <FileText size={16} style={{ color: 'var(--navy)' }} />
@@ -1422,7 +1459,7 @@ export default function Dashboard() {
                     <div className="mt-4 pt-4 border-t space-y-4" style={{ borderColor: 'var(--border-color)' }}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Forecast Periods</span>
                       <div className="space-y-4">
-                        {tafData.fcsts.map((fcst: any, idx: number) => {
+                        {tafData.fcsts.slice(0, 2).map((fcst: any, idx: number) => {
                           const formatTimeShort = (ts: number) => {
                             const d = new Date(ts * 1000);
                             const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -1491,11 +1528,106 @@ export default function Dashboard() {
                                 </div>
                               )}
 
-                              {/* Divider between periods if not the last one */}
-                              {idx < tafData.fcsts.length - 1 && <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />}
+                              {/* Divider between periods */}
+                              {(idx < 1 && idx < tafData.fcsts.length - 1) && <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />}
                             </div>
                           );
                         })}
+
+                        <AnimatePresence>
+                          {tafExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden space-y-4"
+                            >
+                              {tafData.fcsts.slice(2).map((fcst: any, idx: number) => {
+                                const formatTimeShort = (ts: number) => {
+                                  const d = new Date(ts * 1000);
+                                  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                                  return `${d.getUTCDate().toString().padStart(2, '0')}${months[d.getUTCMonth()]}${d.getUTCHours().toString().padStart(2, '0')}Z`;
+                                };
+
+                                return (
+                                  <div key={idx + 2} className="space-y-1">
+                                    <div className="mt-4 border-b border-[var(--border-color)] opacity-20" />
+                                    {/* Period Header */}
+                                    <div className="px-2 py-1 mt-4 flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)]">
+                                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                                        {formatTimeShort(fcst.timeFrom)} — {formatTimeShort(fcst.timeTo)}
+                                        {fcst.fcstChange && <span className="ml-2 font-bold opacity-60">[{fcst.fcstChange}]</span>}
+                                      </span>
+                                    </div>
+
+                                    {/* Change Type Badge */}
+                                    {fcst.fcstChange && (
+                                      <div className="flex pt-1 pb-1">
+                                        <span className={cn(
+                                          "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest text-white",
+                                          fcst.fcstChange === 'FM' ? "bg-[var(--navy)]" :
+                                          fcst.fcstChange === 'TEMPO' ? "bg-amber-500" :
+                                          fcst.fcstChange === 'BECMG' ? "bg-green-600" :
+                                          "bg-slate-500"
+                                        )}>
+                                          {fcst.fcstChange}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Wind Row */}
+                                    {fcst.wspd !== null && fcst.wspd !== 0 && (
+                                      <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
+                                        <span className="text-sm font-bold text-[var(--text-primary)]">
+                                          {fcst.wdir === 'VRB' ? 'VRB' : `${fcst.wdir}°`} at {fcst.wspd}kt
+                                          {fcst.wgst && ` G${fcst.wgst}kt`}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Visibility Row */}
+                                    {fcst.visib !== null && (
+                                      <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Visibility</span>
+                                        <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.visib} SM</span>
+                                      </div>
+                                    )}
+
+                                    {/* Clouds Row */}
+                                    {fcst.clouds && fcst.clouds.length > 0 && (
+                                      <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Clouds</span>
+                                        <span className="text-sm font-bold text-[var(--text-primary)]">
+                                          {fcst.clouds.map((c: any) => c.base != null ? `${c.cover} @ ${c.base}ft` : c.cover).join(' ')}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Weather Row */}
+                                    {fcst.wxString && (
+                                      <div className="flex justify-between items-center py-1 border-b border-[var(--border-color)]">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Weather</span>
+                                        <span className="text-sm font-bold text-[var(--text-primary)]">{fcst.wxString}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {tafData.fcsts.length > 2 && (
+                          <button 
+                            onClick={() => setTafExpanded(!tafExpanded)}
+                            className="flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            <span>{tafExpanded ? 'Show less' : 'Show all periods'}</span>
+                            <ChevronRight size={12} className={cn("transition-transform", tafExpanded ? "rotate-90" : "")} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1507,6 +1639,68 @@ export default function Dashboard() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Upcoming Lessons Widget */}
+            <div className="md:col-span-1 flex flex-col gap-4">
+              <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm border border-[var(--border-color)]">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} style={{ color: 'var(--navy)' }} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Upcoming Lessons</span>
+                  </div>
+                  {upcomingLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
+                </div>
+
+                <div className="space-y-3">
+                  {upcomingLessons.length > 0 ? (
+                    <>
+                      {upcomingLessons.map((lesson: any) => {
+                        const student = students.find(s => s.name === lesson.student_name);
+                        const ratingAccents: Record<string, string> = {
+                          ppl: '#1a3a5c',
+                          ir: '#7c3aed',
+                          cpl: '#2d7a4f',
+                          cfi: '#e67e22',
+                          cfii: '#16a34a',
+                          mei: '#c0392b',
+                        };
+                        const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
+                        
+                        const lessonDate = new Date(lesson.date);
+                        const dateStr = lessonDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                        return (
+                          <div key={lesson.id} className="flex items-center gap-3 p-2 rounded-xl transition-colors border border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-tertiary)]">
+                            <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: accent }} />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <p className="text-xs font-bold truncate leading-tight" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</p>
+                                <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{dateStr}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>{lesson.start_time}</span>
+                                <span className="text-[10px] font-black uppercase tracking-tighter text-white px-1.5 rounded-sm" style={{ backgroundColor: lesson.tail_number === 'GROUND' ? 'var(--text-muted)' : 'var(--navy)', opacity: 0.8 }}>
+                                  {lesson.tail_number === 'GROUND' ? 'Ground' : lesson.tail_number}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="pt-2">
+                        <Link to="/schedule" className="block text-center py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--navy-light)] hover:opacity-70 transition-opacity">
+                          View Full Schedule →
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-8 text-center px-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No upcoming lessons</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
