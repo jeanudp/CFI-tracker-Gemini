@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -10,7 +10,16 @@ import {
   Loader2,
   Clock,
   X,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  User,
+  Settings,
+  LogOut,
+  Sun,
+  Moon,
+  ChevronDown,
+  LayoutDashboard,
+  Shield
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -34,6 +43,37 @@ export default function Schedule() {
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [draggingLesson, setDraggingLesson] = useState<any>(null);
+  const [dragOverHour, setDragOverHour] = useState<{ hour: number, tailNumber: string } | null>(null);
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+    
+    // Theme check
+    const isDark = document.documentElement.classList.contains('dark');
+    setDarkMode(isDark);
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   useEffect(() => {
     fetchScheduleData();
@@ -208,6 +248,11 @@ export default function Schedule() {
     return hours + (minutes / 60);
   };
 
+  const decimalToTime = (decimal: number) => {
+    const hours = Math.round(decimal);
+    return `${hours.toString().padStart(2, '0')}:00`;
+  };
+
   const handlePrevDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() - 1);
@@ -249,6 +294,45 @@ export default function Schedule() {
     });
   };
 
+  const handleDragOver = (e: React.DragEvent, hour: number, tailNumber: string) => {
+    e.preventDefault();
+    setDragOverHour({ hour, tailNumber });
+  };
+
+  const handleDrop = async (e: React.DragEvent, hour: number, tailNumber: string) => {
+    e.preventDefault();
+    const lesson = draggingLesson;
+    setDraggingLesson(null);
+    setDragOverHour(null);
+
+    if (!lesson) return;
+    
+    // If tail number changed or hour changed
+    const newStartTime = decimalToTime(hour);
+    if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
+
+    if (checkConflict(newStartTime, lesson.duration_hours, tailNumber, lesson.id)) {
+      alert('This aircraft is already booked during this time.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('scheduled_lessons')
+        .update({ 
+          start_time: newStartTime,
+          tail_number: tailNumber
+        })
+        .eq('id', lesson.id);
+      
+      if (error) throw error;
+      fetchScheduleData();
+    } catch (error) {
+      console.error('Error moving lesson:', error);
+      alert('Failed to move lesson.');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-primary)]">
       {/* Header */}
@@ -257,14 +341,6 @@ export default function Schedule() {
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/')}
-            className="p-2 -ml-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            <ArrowLeft size={20} />
-          </button>
-
           {/* 61 numeral mark */}
           <div className="relative">
             <span
@@ -316,16 +392,129 @@ export default function Schedule() {
             >
               TRACKER
             </span>
+            <span
+              className="font-bold uppercase"
+              style={{
+                fontSize: '7px',
+                color: 'var(--text-muted)',
+                letterSpacing: '2px',
+              }}
+            >
+              Schedule
+            </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {user && (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(prev => !prev)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                >
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style={{ backgroundColor: 'var(--navy)' }}>
+                    {(user?.user_metadata?.full_name || user?.email || '?')[0].toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline text-[11px] font-bold max-w-[120px] truncate" style={{ color: 'var(--text-primary)' }}>
+                    {user?.user_metadata?.full_name || user?.email}
+                  </span>
+                  <ChevronDown size={12} className={cn("transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
+      <AnimatePresence>
+        {isUserMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[99]"
+              onClick={() => setIsUserMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="fixed top-16 right-4 w-52 rounded-2xl border overflow-hidden z-[100]"
+              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
+            >
+              <div className="px-4 py-3 border-b" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', position: 'relative', zIndex: 1 }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Signed in as</p>
+                <p className="text-xs font-bold truncate mt-0.5" style={{ color: 'var(--text-primary)' }}>{user?.user_metadata?.full_name || user?.email}</p>
+              </div>
+              <div className="py-1">
+                <Link
+                  to="/dashboard"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <LayoutDashboard size={14} style={{ color: 'var(--navy)' }} />
+                  Dashboard
+                </Link>
+                <Link
+                  to="/cfi-hours"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <User size={14} style={{ color: 'var(--navy)' }} />
+                  CFI Profile
+                </Link>
+                <Link
+                  to="/account"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <Settings size={14} style={{ color: 'var(--navy)' }} />
+                  Account
+                </Link>
+              </div>
+              <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
+                <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Dark Mode</span>
+                <button
+                  onClick={toggleDarkMode}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg border transition-all"
+                  style={{ backgroundColor: darkMode ? 'var(--navy)' : 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: darkMode ? 'white' : 'var(--text-secondary)' }}
+                >
+                  {darkMode ? <Moon size={12} /> : <Sun size={12} />}
+                  <span className="text-[10px] font-bold">{darkMode ? 'On' : 'Off'}</span>
+                </button>
+              </div>
+              <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-red-50 cursor-pointer"
+                  style={{ color: '#c0392b' }}
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 py-6">
-        <div className="mb-8 items-start justify-between flex">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Schedule</h1>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+        <div className="mb-6">
+          <p className="text-xs font-black uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--text-muted)' }}>
+            Flight Operations Control
+          </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Daily Schedule</h1>
+            <div className="h-6 w-px bg-[var(--border-color)] opacity-50" />
+            <p className="text-sm font-bold truncate" style={{ color: 'var(--text-muted)' }}>
               {formatDateLong(selectedDate)}
             </p>
           </div>
@@ -445,8 +634,15 @@ export default function Schedule() {
                           className="w-24 border-r last:border-r-0 relative cursor-pointer"
                           style={{ borderColor: 'var(--border-color)' }}
                           onClick={() => openNewBooking(hour, ac.tail_number)}
+                          onDragOver={(e) => handleDragOver(e, hour, ac.tail_number)}
+                          onDrop={(e) => handleDrop(e, hour, ac.tail_number)}
                         >
-                          <div className="absolute inset-0 opacity-0 group-hover/row:bg-[var(--navy)]/[0.02] pointer-events-none transition-colors" />
+                          <div className={cn(
+                            "absolute inset-0 transition-colors pointer-events-none",
+                            dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number
+                              ? "bg-[var(--navy)]/10"
+                              : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
+                          )} />
                         </div>
                       ))}
 
@@ -458,15 +654,25 @@ export default function Schedule() {
                           const student = students.find(s => s.name === lesson.student_name);
                           const rating = student?.current_rating || 'default';
                           const color = getRatingColor(rating);
+                          const isDragging = draggingLesson?.id === lesson.id;
                           
                           return (
                             <div 
                               key={lesson.id}
+                              draggable
+                              onDragStart={() => setDraggingLesson(lesson)}
+                              onDragEnd={() => {
+                                setDraggingLesson(null);
+                                setDragOverHour(null);
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 openEditBooking(lesson);
                               }}
-                              className="absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-0 cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all"
+                              className={cn(
+                                "absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-10 cursor-grab active:cursor-grabbing transition-all",
+                                isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
+                              )}
                               style={{ 
                                 left: `${startDecimal * 96}px`, 
                                 width: `${(lesson.duration_hours || 0) * 96}px`,
@@ -479,7 +685,7 @@ export default function Schedule() {
                               <div className="flex items-center gap-1 mt-0.5 opacity-90">
                                 <Clock size={8} className="text-white" />
                                 <span className="text-[8px] font-bold text-white tracking-wider">
-                                  {lesson.start_time}
+                                  {lesson.start_time?.substring(0, 5)}
                                 </span>
                               </div>
                             </div>
@@ -536,7 +742,7 @@ export default function Schedule() {
 
               {/* Student Dropdown */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widst mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
                   Select Student
                 </label>
                 <select 
@@ -572,16 +778,15 @@ export default function Schedule() {
                   <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
                     Duration (Hours)
                   </label>
-                  <select 
+                  <input 
+                    type="number"
+                    min="0.1"
+                    step="0.1"
                     className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
                     style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                     value={modalData.duration}
-                    onChange={(e) => setModalData({ ...modalData, duration: parseFloat(e.target.value) })}
-                  >
-                    {[1.3, 1.6, 1.9, 2.2, 2.5, 2.8, 3.1, 3.4].map(val => (
-                      <option key={val} value={val}>{val}h</option>
-                    ))}
-                  </select>
+                    onChange={(e) => setModalData({ ...modalData, duration: parseFloat(e.target.value) || 0 })}
+                  />
                 </div>
               </div>
 
@@ -603,9 +808,10 @@ export default function Schedule() {
                 {editingLesson && (
                   <button 
                     onClick={handleDeleteLesson}
-                    className="p-3 rounded-xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                    className="flex-1 p-3 rounded-xl border border-red-500/40 text-red-500 hover:bg-red-500/5 transition-colors cursor-pointer flex items-center justify-center gap-2 font-bold text-sm"
                   >
-                    <AlertTriangle size={18} />
+                    <Trash2 size={16} />
+                    Cancel Lesson
                   </button>
                 )}
                 <button 
