@@ -559,7 +559,7 @@ export default function StudentView() {
                           
                           // Calculate end time
                           const [hours, minutes] = (lesson.start_time || '08:00').split(':').map(Number);
-                          const duration = parseFloat(lesson.lesson_duration || '2');
+                          const duration = parseFloat(lesson.duration_hours || '2');
                           const totalMinutes = hours * 60 + minutes + Math.round(duration * 60);
                           const endH = Math.floor(totalMinutes / 60) % 24;
                           const endM = totalMinutes % 60;
@@ -583,7 +583,7 @@ export default function StudentView() {
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className="px-2 py-0.5 bg-white border border-[#dde3ec] rounded-full text-[9px] font-black text-[#64748b] uppercase tracking-tighter">
-                                      {lesson.lesson_type}
+                                      {lesson.lesson_type || (lesson.tail_number === 'GROUND' ? 'Ground' : '')}
                                     </span>
                                     <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-widest">
                                       {lesson.tail_number === 'GROUND' ? 'Ground' : lesson.tail_number}
