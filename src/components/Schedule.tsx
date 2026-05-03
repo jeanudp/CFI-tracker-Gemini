@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -143,6 +143,8 @@ export default function Schedule() {
   const [draggingLesson, setDraggingLesson] = useState<any>(null);
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [dragOverHour, setDragOverHour] = useState<{ hour: number, minute: number, tailNumber: string } | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState(new Date());
@@ -162,6 +164,12 @@ export default function Schedule() {
     // Theme check
     const isDark = document.documentElement.classList.contains('dark');
     setDarkMode(isDark);
+
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const toggleDarkMode = () => {
@@ -178,6 +186,18 @@ export default function Schedule() {
     await supabase.auth.signOut();
     navigate('/login');
   };
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      if (isToday(selectedDate)) {
+        const currentHour = new Date().getHours();
+        const scrollPos = Math.max(0, (currentHour - 1) * 96);
+        scrollContainerRef.current.scrollLeft = scrollPos;
+      } else {
+        scrollContainerRef.current.scrollLeft = 6 * 96;
+      }
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchScheduleData();
@@ -582,6 +602,13 @@ export default function Schedule() {
     }
   };
 
+  const formatDuration = (hours: number) => {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}m`;
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-primary)]">
       <style dangerouslySetInnerHTML={{ __html: `
@@ -832,8 +859,11 @@ export default function Schedule() {
         {/* Schedule Grid */}
         <div className="relative border rounded-2xl overflow-hidden" 
              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 20px rgba(26,58,92,0.1)' }}>
-          <div className="overflow-x-auto schedule-grid-scroll scrollbar-thin">
-            <div className="min-w-max">
+          <div 
+            ref={scrollContainerRef}
+            className="overflow-x-auto schedule-grid-scroll scrollbar-thin"
+          >
+            <div className="min-w-max relative">
               {/* Grid Header */}
               <div className="flex border-b" style={{ borderColor: 'var(--border-color)' }}>
                 {/* Corner Cell */}
@@ -957,6 +987,11 @@ export default function Schedule() {
                           <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                             GND
                           </span>
+                          {(lesson.duration_hours || 0) * 96 > 80 && (
+                            <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
+                              {formatDuration(lesson.duration_hours || 0)}
+                            </span>
+                          )}
                           <div className="flex items-center gap-1 mt-0.5 opacity-90">
                             <Clock size={8} className="text-white" />
                             <span className="text-[8px] font-bold text-white tracking-wider">
@@ -1098,12 +1133,30 @@ export default function Schedule() {
                               <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                                 {lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT'}
                               </span>
+                              {(lesson.duration_hours || 0) * 96 > 80 && (
+                                <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
+                                  {formatDuration(lesson.duration_hours || 0)}
+                                </span>
+                              )}
                             </div>
                           );
                         })}
                     </div>
                   </div>
                 ))
+              )}
+
+              {/* Current Time Indicator */}
+              {isToday(selectedDate) && (
+                <div 
+                  className="absolute top-0 bottom-0 w-[2px] bg-[#ef4444] z-20 pointer-events-none"
+                  style={{ 
+                    left: `${(currentTime.getHours() + currentTime.getMinutes() / 60) * 96}px`,
+                    marginLeft: '192px' 
+                  }}
+                >
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#ef4444]" />
+                </div>
               )}
             </div>
           </div>
