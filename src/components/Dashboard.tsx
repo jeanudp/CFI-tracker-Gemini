@@ -518,12 +518,7 @@ export default function Dashboard() {
         .eq('id', request.id);
       if (error) throw error;
       
-      const params = new URLSearchParams();
-      params.append('date', request.requested_date);
-      params.append('studentName', request.student_name);
-      if (request.preferred_time) params.append('preferredTime', request.preferred_time);
-      
-      navigate(`/schedule?${params.toString()}`);
+      navigate(`/schedule?date=${request.requested_date}`);
     } catch (err: any) {
       console.error('Error accepting request:', err);
     }
