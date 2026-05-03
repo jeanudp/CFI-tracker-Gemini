@@ -105,9 +105,6 @@ export default function Layout({ children, user }: LayoutProps) {
   const NAV_ITEMS = [
     { label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> },
     { label: 'Schedule', path: '/schedule', icon: <Calendar size={14} /> },
-    { label: 'Student Progress', path: '/history', icon: <HistoryIcon size={14} /> },
-    { label: 'Ground Lesson', path: '/ground', icon: <BookOpen size={14} /> },
-    { label: 'Flight Lesson', path: '/flight', icon: <Plane size={14} /> },
   ];
 
   const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';

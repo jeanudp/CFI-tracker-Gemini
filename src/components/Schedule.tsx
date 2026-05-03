@@ -632,6 +632,16 @@ export default function Schedule() {
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
         <div className="flex items-center gap-3">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer mr-2"
+            style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+          >
+            <ChevronLeft size={14} />
+            <LayoutDashboard size={14} />
+            <span className="hidden sm:inline text-[11px] font-bold">Dashboard</span>
+          </Link>
+
           {/* 61 numeral mark */}
           <div className="relative">
             <span
