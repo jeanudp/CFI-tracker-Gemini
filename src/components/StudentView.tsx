@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lesson, ManualHours, Endorsement } from '../types';
@@ -100,6 +100,10 @@ export default function StudentView() {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'schedule' | 'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('schedule');
+  const [isRequestDatePickerOpen, setIsRequestDatePickerOpen] = useState(false);
+  const [requestPickerMonth, setRequestPickerMonth] = useState(new Date());
+  const [isRequestTimePickerOpen, setIsRequestTimePickerOpen] = useState(false);
+  const requestTimePickerRef = useRef<HTMLDivElement>(null);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -128,6 +132,16 @@ export default function StudentView() {
       validateAndFetch();
     }
   }, [token]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (requestTimePickerRef.current && !requestTimePickerRef.current.contains(event.target as Node)) {
+        setIsRequestTimePickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const validateAndFetch = async () => {
     setLoading(true);
@@ -679,23 +693,203 @@ export default function StudentView() {
                             </div>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 relative">
                               <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Date</label>
-                              <input 
-                                type="date"
-                                value={lessonRequest.date}
-                                onChange={(e) => setLessonRequest({ ...lessonRequest, date: e.target.value })}
-                                className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
-                              />
+                              <button 
+                                onClick={() => setIsRequestDatePickerOpen(!isRequestDatePickerOpen)}
+                                className="w-full px-4 py-3 bg-white border border-dashed border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer group"
+                              >
+                                <span>
+                                  {lessonRequest.date ? new Date(lessonRequest.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select a date'}
+                                </span>
+                                <Calendar size={14} className="text-[#94a3b8] group-hover:text-amber-500 transition-colors" />
+                              </button>
+
+                              {isRequestDatePickerOpen && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-40" 
+                                    onClick={() => setIsRequestDatePickerOpen(false)}
+                                  />
+                                  <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl border border-[#dde3ec] shadow-xl z-50 p-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <button 
+                                        onClick={() => {
+                                          const prev = new Date(requestPickerMonth);
+                                          prev.setMonth(prev.getMonth() - 1);
+                                          setRequestPickerMonth(prev);
+                                        }}
+                                        className="p-1.5 rounded-lg hover:bg-gray-100 text-amber-500 transition-all cursor-pointer"
+                                      >
+                                        <ChevronLeft size={16} />
+                                      </button>
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-[#1a3a5c]">
+                                        {requestPickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                      </div>
+                                      <button 
+                                        onClick={() => {
+                                          const next = new Date(requestPickerMonth);
+                                          next.setMonth(next.getMonth() + 1);
+                                          setRequestPickerMonth(next);
+                                        }}
+                                        className="p-1.5 rounded-lg hover:bg-gray-100 text-amber-500 transition-all cursor-pointer"
+                                      >
+                                        <ChevronRight size={16} />
+                                      </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-7 gap-1 mb-2">
+                                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                                        <div key={i} className="text-[8px] font-black text-[#94a3b8] text-center uppercase py-1">
+                                          {day}
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    <div className="grid grid-cols-7 gap-1">
+                                      {(() => {
+                                        const year = requestPickerMonth.getFullYear();
+                                        const month = requestPickerMonth.getMonth();
+                                        const firstDay = new Date(year, month, 1).getDay();
+                                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+
+                                        const days = [];
+                                        // Fill empty slots for previous month
+                                        for (let i = 0; i < firstDay; i++) {
+                                          days.push(<div key={`empty-${i}`} />);
+                                        }
+
+                                        for (let d = 1; d <= daysInMonth; d++) {
+                                          const dateObj = new Date(year, month, d);
+                                          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                          const isSelected = lessonRequest.date === dateStr;
+                                          const isPast = dateObj < today;
+                                          const isToday = dateObj.getTime() === today.getTime();
+
+                                          days.push(
+                                            <button
+                                              key={d}
+                                              disabled={isPast}
+                                              onClick={() => {
+                                                setLessonRequest({ ...lessonRequest, date: dateStr });
+                                                setIsRequestDatePickerOpen(false);
+                                              }}
+                                              className={cn(
+                                                "aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] font-bold transition-all relative cursor-pointer",
+                                                isSelected 
+                                                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20" 
+                                                  : isPast 
+                                                    ? "text-gray-300 cursor-not-allowed" 
+                                                    : "text-[#1a3a5c] hover:bg-amber-50"
+                                              )}
+                                            >
+                                              {d}
+                                              {isToday && !isSelected && (
+                                                <div className="absolute bottom-1 w-1 h-1 rounded-full bg-amber-500" />
+                                              )}
+                                            </button>
+                                          );
+                                        }
+                                        return days;
+                                      })()}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5 relative" ref={requestTimePickerRef}>
                               <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Time <span className="text-[#94a3b8] font-medium">(Optional)</span></label>
-                              <input 
-                                type="time"
-                                value={lessonRequest.preferredTime}
-                                onChange={(e) => setLessonRequest({ ...lessonRequest, preferredTime: e.target.value })}
-                                className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
-                              />
+                              <button 
+                                onClick={() => setIsRequestTimePickerOpen(!isRequestTimePickerOpen)}
+                                className="w-full px-4 py-3 bg-white border border-dashed border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer group"
+                              >
+                                <span>
+                                  {lessonRequest.preferredTime ? (() => {
+                                    const [h, m] = lessonRequest.preferredTime.split(':').map(Number);
+                                    const ampm = h >= 12 ? 'PM' : 'AM';
+                                    const displayH = h % 12 || 12;
+                                    return `${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+                                  })() : 'Select a time'}
+                                </span>
+                                <Clock size={14} className="text-[#94a3b8] group-hover:text-amber-500 transition-colors" />
+                              </button>
+
+                              {isRequestTimePickerOpen && (
+                                <div className="absolute top-full left-0 mt-2 w-full sm:w-64 bg-white rounded-2xl border border-[#dde3ec] shadow-xl z-50 p-2 flex gap-1">
+                                  {/* Hours 00-23 */}
+                                  <div className="flex-1 h-[200px] overflow-y-auto scrollbar-hide py-1">
+                                    {Array.from({ length: 24 }).map((_, h) => {
+                                      const currentH = lessonRequest.preferredTime ? parseInt(lessonRequest.preferredTime.split(':')[0]) : 8;
+                                      const isSelected = currentH === h;
+                                      return (
+                                        <button
+                                          key={h}
+                                          onClick={() => {
+                                            const [_, m] = (lessonRequest.preferredTime || '08:00').split(':');
+                                            setLessonRequest({ ...lessonRequest, preferredTime: `${String(h).padStart(2, '0')}:${m}` });
+                                          }}
+                                          className={cn(
+                                            "w-full h-10 flex items-center justify-center text-xs font-bold rounded-lg transition-colors cursor-pointer",
+                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] hover:bg-amber-50"
+                                          )}
+                                        >
+                                          {String(h).padStart(2, '0')}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  {/* Minutes */}
+                                  <div className="flex-1 h-[200px] overflow-y-auto scrollbar-hide py-1 border-l border-r border-[#dde3ec]">
+                                    {[0, 10, 20, 30, 40, 50].map((m) => {
+                                      const currentM = lessonRequest.preferredTime ? parseInt(lessonRequest.preferredTime.split(':')[1]) : 0;
+                                      const isSelected = currentM === m;
+                                      return (
+                                        <button
+                                          key={m}
+                                          onClick={() => {
+                                            const [h, _] = (lessonRequest.preferredTime || '08:00').split(':');
+                                            setLessonRequest({ ...lessonRequest, preferredTime: `${h}:${String(m).padStart(2, '0')}` });
+                                          }}
+                                          className={cn(
+                                            "w-full h-10 flex items-center justify-center text-xs font-bold rounded-lg transition-colors cursor-pointer",
+                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] hover:bg-amber-50"
+                                          )}
+                                        >
+                                          {String(m).padStart(2, '0')}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  {/* AM/PM */}
+                                  <div className="flex-1 h-[200px] overflow-y-auto scrollbar-hide py-1">
+                                    {['AM', 'PM'].map((p) => {
+                                      const h = lessonRequest.preferredTime ? parseInt(lessonRequest.preferredTime.split(':')[0]) : 8;
+                                      const currentP = h >= 12 ? 'PM' : 'AM';
+                                      const isSelected = currentP === p;
+                                      return (
+                                        <button
+                                          key={p}
+                                          onClick={() => {
+                                            const [h, m] = (lessonRequest.preferredTime || '08:00').split(':').map(Number);
+                                            let newH = h;
+                                            if (p === 'PM' && h < 12) newH += 12;
+                                            if (p === 'AM' && h >= 12) newH -= 12;
+                                            setLessonRequest({ ...lessonRequest, preferredTime: `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}` });
+                                          }}
+                                          className={cn(
+                                            "w-full h-10 flex items-center justify-center text-xs font-bold rounded-lg transition-colors cursor-pointer",
+                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] hover:bg-amber-50"
+                                          )}
+                                        >
+                                          {p}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="space-y-1.5">
