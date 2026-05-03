@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -49,6 +50,8 @@ export default function Schedule() {
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState(new Date());
+  const [datePickerPos, setDatePickerPos] = useState({ top: 0, left: 0 });
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -565,7 +568,15 @@ export default function Schedule() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <button 
+                ref={dateButtonRef}
                 onClick={() => {
+                  if (dateButtonRef.current) {
+                    const rect = dateButtonRef.current.getBoundingClientRect();
+                    setDatePickerPos({
+                      top: rect.bottom + 8,
+                      left: rect.left + rect.width / 2
+                    });
+                  }
                   setIsDatePickerOpen(!isDatePickerOpen);
                   setPickerMonth(new Date(selectedDate));
                 }}
@@ -579,7 +590,7 @@ export default function Schedule() {
               </button>
 
               <AnimatePresence>
-                {isDatePickerOpen && (
+                {isDatePickerOpen && createPortal(
                   <>
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -592,8 +603,14 @@ export default function Schedule() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
-                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                      className="fixed mt-2 w-64 p-4 rounded-2xl border shadow-xl z-[200]"
+                      style={{ 
+                        backgroundColor: 'var(--bg-secondary)', 
+                        borderColor: 'var(--border-color)',
+                        top: `${datePickerPos.top}px`,
+                        left: `${datePickerPos.left}px`,
+                        transform: 'translateX(-50%)'
+                      }}
                     >
                       <div className="flex items-center justify-between mb-4">
                         <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
@@ -643,7 +660,8 @@ export default function Schedule() {
                         })}
                       </div>
                     </motion.div>
-                  </>
+                  </>,
+                  document.body
                 )}
               </AnimatePresence>
             </div>
