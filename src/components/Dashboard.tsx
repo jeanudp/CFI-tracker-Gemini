@@ -1682,10 +1682,14 @@ export default function Dashboard() {
                                 <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{dateStr}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>{lesson.start_time}</span>
-                                <span className="text-[10px] font-black uppercase tracking-tighter text-white px-1.5 rounded-sm" style={{ backgroundColor: lesson.tail_number === 'GROUND' ? 'var(--text-muted)' : 'var(--navy)', opacity: 0.8 }}>
-                                  {lesson.tail_number === 'GROUND' ? 'Ground' : lesson.tail_number}
-                                </span>
+                                <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>{lesson.start_time?.substring(0, 5)}</span>
+                                {lesson.tail_number === 'GROUND' ? (
+                                  <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>Ground</span>
+                                ) : lesson.tail_number ? (
+                                  <span className="text-[10px] font-black uppercase tracking-tighter text-white px-1.5 rounded-sm" style={{ backgroundColor: 'var(--navy)', opacity: 0.8 }}>
+                                    {lesson.tail_number}
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           </div>
