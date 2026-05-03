@@ -1350,7 +1350,7 @@ export default function Dashboard() {
             </div>
 
             {/* TAF Panel */}
-            <div className="bg-[var(--bg-secondary)] border rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
               <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
                 <div className="flex items-center gap-2">
                   <FileText size={16} style={{ color: 'var(--navy)' }} />
