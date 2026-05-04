@@ -190,7 +190,6 @@ export default function Dashboard() {
   const [upcomingLoading, setUpcomingLoading] = useState(false);
   const [lessonRequests, setLessonRequests] = useState<any[]>([]);
   const [lessonRequestsLoading, setLessonRequestsLoading] = useState(false);
-  const [requestsDrawerOpen, setRequestsDrawerOpen] = useState(false);
   const [reviewingRequest, setReviewingRequest] = useState<any>(null);
   const [requestDayLessons, setRequestDayLessons] = useState<any[]>([]);
 
@@ -1800,7 +1799,7 @@ export default function Dashboard() {
             <div className="md:col-span-2 flex flex-col gap-4">
               <div className="bg-[var(--bg-secondary)] rounded-2xl p-4 shadow-sm border border-[var(--border-color)]">
                 <button 
-                  onClick={() => setRequestsDrawerOpen(!requestsDrawerOpen)}
+                  onClick={() => navigate('/schedule?showRequests=true')}
                   className="w-full flex items-center justify-between mb-4 pb-2 border-b cursor-pointer hover:bg-[var(--bg-tertiary)]/50 rounded-t-lg transition-colors" 
                   style={{ borderColor: 'var(--border-color)' }}
                 >
@@ -1818,99 +1817,6 @@ export default function Dashboard() {
                     <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
                   </div>
                 </button>
-
-                <AnimatePresence>
-                  {requestsDrawerOpen && (
-                    <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                        onClick={() => setRequestsDrawerOpen(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-lg bg-[var(--bg-secondary)] border rounded-3xl shadow-2xl flex flex-col"
-                        style={{ borderColor: 'var(--border-color)', maxHeight: '80vh' }}
-                      >
-                        <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
-                          <div>
-                            <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>Lesson Requests</h2>
-                            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{ color: 'var(--text-muted)' }}>Pending student inquiries</p>
-                          </div>
-                          <button 
-                            onClick={() => setRequestsDrawerOpen(false)}
-                            className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
-                          >
-                            <X size={20} style={{ color: 'var(--text-muted)' }} />
-                          </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                          {lessonRequests.length > 0 ? (
-                            lessonRequests.map((request) => (
-                              <div key={request.id} className="p-4 rounded-2xl bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)] space-y-3">
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <p className="text-base font-black" style={{ color: 'var(--text-primary)' }}>{request.student_name}</p>
-                                    <div className="flex flex-wrap items-center gap-3 mt-1.5">
-                                      <div className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-                                        <Calendar size={12} className="text-amber-500" />
-                                        {new Date(request.requested_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                                      </div>
-                                      {request.preferred_time && (
-                                        <div className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-                                          <Clock size={12} className="text-amber-500" />
-                                          {request.preferred_time.substring(0, 5)}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {request.notes && (
-                                  <div className="p-3 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] italic leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                                      "{request.notes}"
-                                    </p>
-                                  </div>
-                                )}
-
-                                <div className="flex items-center gap-2 pt-2">
-                                  <button
-                                    onClick={() => handleDeclineRequest(request.id)}
-                                    className="flex-1 py-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 font-bold text-[11px] uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
-                                  >
-                                    <X size={14} />
-                                    Decline
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setReviewingRequest(request);
-                                      setRequestsDrawerOpen(false);
-                                    }}
-                                    className="flex-[2] py-3 rounded-xl bg-amber-500 text-white hover:bg-amber-600 font-black text-[11px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
-                                  >
-                                    <Check size={14} />
-                                    Review & Book
-                                  </button>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="py-20 text-center">
-                              <Calendar size={48} className="mx-auto text-[var(--text-muted)] opacity-20 mb-4" />
-                              <p className="text-sm font-bold" style={{ color: 'var(--text-muted)' }}>No pending requests.</p>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
-                </AnimatePresence>
 
                 <div className="space-y-3">
                   {upcomingLessons.length > 0 ? (

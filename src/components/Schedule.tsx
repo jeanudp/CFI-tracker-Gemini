@@ -194,6 +194,7 @@ export default function Schedule() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const dateParam = params.get('date');
+    const showRequests = params.get('showRequests');
 
     if (dateParam) {
       const [year, month, day] = dateParam.split('-').map(Number);
@@ -201,6 +202,13 @@ export default function Schedule() {
       if (!isNaN(date.getTime())) {
         setSelectedDate(date);
       }
+    }
+
+    if (showRequests === 'true') {
+      setIsPendingPanelOpen(true);
+    }
+
+    if (dateParam || showRequests) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -595,6 +603,23 @@ export default function Schedule() {
     const newStartTime = decimalToTime(finalDecimal);
 
     if (request) {
+      // Check if student already has an overlapping lesson
+      const requestedStart = finalDecimal;
+      const requestedEnd = finalDecimal + 2;
+      
+      const hasStudentConflict = scheduledLessons.some(l => {
+        if (l.student_name !== request.student_name) return false;
+        const [sh, sm] = l.start_time.split(':').map(Number);
+        const lStart = sh + (sm / 60);
+        const lEnd = lStart + (l.duration_hours || 2);
+        return requestedStart < lEnd && requestedEnd > lStart;
+      });
+
+      if (hasStudentConflict) {
+        alert("This student is already booked at this time");
+        return;
+      }
+
       // Handle request drop
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -613,7 +638,9 @@ export default function Schedule() {
             duration_hours: 2,
             lesson_type: request.lesson_type || 'Flight',
             tail_number: tailNumber,
-            notes: request.notes || ""
+            notes: request.preferred_time 
+              ? `Student requested: ${request.preferred_time}${request.notes ? `\n\n${request.notes}` : ''}`
+              : (request.notes || "")
           }]);
 
         if (insertError) throw insertError;
@@ -1832,6 +1859,9 @@ export default function Schedule() {
                     draggable
                     onDragStart={(e) => {
                       setDraggingRequest(request);
+                      // Auto-navigate to request date
+                      const [year, month, day] = request.requested_date.split('-').map(Number);
+                      setSelectedDate(new Date(year, month - 1, day));
                       const rect = e.currentTarget.getBoundingClientRect();
                       setDragOffsetX(e.clientX - rect.left);
                     }}
