@@ -476,8 +476,12 @@ export default function Dashboard() {
           date: reviewingRequest.requested_date,
           start_time: startTime,
           duration_hours: 2,
-          lesson_type: reviewingRequest.lesson_type || "Flight",
-          tail_number: "",
+          lesson_type: (reviewingRequest.lesson_type === 'Flight' || reviewingRequest.lesson_type === 'Sim') 
+            ? "Flight" 
+            : (reviewingRequest.lesson_type || "Ground"),
+          tail_number: (!reviewingRequest.lesson_type || reviewingRequest.lesson_type === 'Ground') 
+            ? "GROUND" 
+            : "",
           notes: reviewingRequest.notes || ""
         });
       if (insertError) throw insertError;
