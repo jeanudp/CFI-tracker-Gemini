@@ -468,6 +468,42 @@ export default function Dashboard() {
 
       const startTime = reviewingRequest.preferred_time || "09:00";
       
+      let finalTailNumber = "GROUND";
+      let finalLessonType = "Ground";
+
+      if (reviewingRequest.lesson_type === "Flight" || reviewingRequest.lesson_type === "Sim") {
+        const { data: aircraftData } = await supabase
+          .from("saved_aircraft")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("id");
+
+        const timeToDecimal = (t: string) => {
+          const [h, m] = t.split(":").map(Number);
+          return h + (m / 60);
+        };
+        const requestedStart = timeToDecimal(startTime);
+        const requestedEnd = requestedStart + 2;
+
+        const availableAircraft = aircraftData?.find(ac => {
+          const overlaps = requestDayLessons.some(lesson => {
+            if (lesson.tail_number !== ac.tail_number) return false;
+            const lessonStart = timeToDecimal(lesson.start_time);
+            const lessonEnd = lessonStart + (lesson.duration_hours || 2);
+            return requestedStart < lessonEnd && requestedEnd > lessonStart;
+          });
+          return !overlaps;
+        });
+
+        if (availableAircraft) {
+          finalTailNumber = availableAircraft.tail_number;
+          finalLessonType = "Flight";
+        } else {
+          finalTailNumber = "GROUND";
+          finalLessonType = "Ground";
+        }
+      }
+      
       const { error: insertError } = await supabase
         .from('scheduled_lessons')
         .insert({
@@ -476,12 +512,8 @@ export default function Dashboard() {
           date: reviewingRequest.requested_date,
           start_time: startTime,
           duration_hours: 2,
-          lesson_type: (reviewingRequest.lesson_type === 'Flight' || reviewingRequest.lesson_type === 'Sim') 
-            ? "Flight" 
-            : (reviewingRequest.lesson_type || "Ground"),
-          tail_number: (!reviewingRequest.lesson_type || reviewingRequest.lesson_type === 'Ground') 
-            ? "GROUND" 
-            : "",
+          lesson_type: finalLessonType,
+          tail_number: finalTailNumber,
           notes: reviewingRequest.notes || ""
         });
       if (insertError) throw insertError;
