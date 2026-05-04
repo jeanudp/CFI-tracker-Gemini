@@ -144,6 +144,9 @@ export default function Schedule() {
   const [draggingLesson, setDraggingLesson] = useState<any>(null);
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [dragOverHour, setDragOverHour] = useState<{ hour: number, minute: number, tailNumber: string } | null>(null);
+  const [draggingRequest, setDraggingRequest] = useState<any>(null);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [isPendingPanelOpen, setIsPendingPanelOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -287,6 +290,14 @@ export default function Schedule() {
       setAircraft(sortedAircraft);
       setStudents(studentsRes.data || []);
       setScheduledLessons(lessonsRes.data || []);
+
+      // Fetch pending requests
+      const { data: requestsData } = await supabase
+        .from('lesson_requests')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: true });
+      setPendingRequests(requestsData || []);
     } catch (error) {
       console.error('Error fetching schedule data:', error);
     } finally {
@@ -574,13 +585,59 @@ export default function Schedule() {
     const finalDecimal = h + (m / 60);
     
     const lesson = draggingLesson;
+    const request = draggingRequest;
+    
     setDraggingLesson(null);
+    setDraggingRequest(null);
     setDragOffsetX(0);
     setDragOverHour(null);
 
+    const newStartTime = decimalToTime(finalDecimal);
+
+    if (request) {
+      // Handle request drop
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const dateStr = selectedDate.toISOString().split('T')[0];
+        
+        // Insert new scheduled lesson
+        const { error: insertError } = await supabase
+          .from('scheduled_lessons')
+          .insert([{
+            user_id: session.user.id,
+            student_name: request.student_name,
+            date: dateStr,
+            start_time: newStartTime,
+            duration_hours: 2,
+            lesson_type: request.lesson_type || 'Flight',
+            tail_number: tailNumber,
+            notes: request.notes || ""
+          }]);
+
+        if (insertError) throw insertError;
+
+        // Delete the request
+        const { error: deleteError } = await supabase
+          .from('lesson_requests')
+          .delete()
+          .eq('id', request.id);
+
+        if (deleteError) throw deleteError;
+
+        // Update local state and fetch data
+        setPendingRequests(prev => prev.filter(r => r.id !== request.id));
+        fetchScheduleData();
+      } catch (error) {
+        console.error('Error booking lesson from request:', error);
+        alert('Failed to book lesson from request.');
+      }
+      return;
+    }
+
     if (!lesson) return;
     
-    const newStartTime = decimalToTime(finalDecimal);
     if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
 
     const conflict = checkConflict(newStartTime, lesson.duration_hours, lesson.id);
@@ -1720,6 +1777,95 @@ export default function Schedule() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Requests Button */}
+      {pendingRequests.length > 0 && (
+        <button
+          onClick={() => setIsPendingPanelOpen(!isPendingPanelOpen)}
+          className="fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl bg-[var(--navy)] text-white shadow-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <Calendar size={18} />
+          <span className="text-xs font-black uppercase tracking-widest">Requests</span>
+          <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full border-2 border-[var(--bg-primary)] flex items-center justify-center text-[10px] font-black shadow-lg">
+            {pendingRequests.length}
+          </div>
+        </button>
+      )}
+
+      {/* Pending Requests Panel */}
+      <AnimatePresence>
+        {isPendingPanelOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 300 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-20 bottom-24 right-6 w-72 z-40 flex flex-col rounded-3xl border shadow-2xl overflow-hidden"
+            style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+          >
+            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
+              <div className="flex flex-col">
+                <h3 className="text-xs font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-primary)' }}>Pending Requests</h3>
+                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Drag to schedule</span>
+              </div>
+              <button 
+                onClick={() => setIsPendingPanelOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {pendingRequests.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center opacity-40 text-center px-4">
+                  <Calendar size={24} className="mb-2" />
+                  <p className="text-[10px] font-black uppercase tracking-widest">No pending requests</p>
+                </div>
+              ) : (
+                pendingRequests.map(request => (
+                  <div
+                    key={request.id}
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggingRequest(request);
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setDragOffsetX(e.clientX - rect.left);
+                    }}
+                    onDragEnd={() => {
+                      setDraggingRequest(null);
+                      setDragOffsetX(0);
+                      setDragOverHour(null);
+                    }}
+                    className="p-4 rounded-2xl bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)] hover:border-[var(--navy)]/30 hover:shadow-lg transition-all cursor-grab active:cursor-grabbing group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                       <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[var(--navy)] text-white">
+                        {request.lesson_type || 'Flight'}
+                      </span>
+                      <div className="flex items-center gap-1 text-[9px] font-bold" style={{ color: 'var(--text-muted)' }}>
+                        <Calendar size={10} />
+                        {new Date(request.requested_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-black mb-1 truncate" style={{ color: 'var(--text-primary)' }}>{request.student_name}</h4>
+                    {request.preferred_time && (
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold mb-2" style={{ color: 'var(--text-muted)' }}>
+                        <Clock size={12} />
+                        {request.preferred_time}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t opacity-0 group-hover:opacity-100 transition-opacity" style={{ borderColor: 'var(--border-color)' }}>
+                      <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: 'var(--navy)' }}>Ready to drag</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
