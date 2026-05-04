@@ -1138,6 +1138,11 @@ export default function Schedule() {
                           <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                             GND
                           </span>
+                          {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                            <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
+                              {lesson.notes.split("Student requested:")[1].trim().split('\n')[0]}
+                            </span>
+                          )}
                           {(lesson.duration_hours || 0) * 96 > 80 && (
                             <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
                               {formatDuration(lesson.duration_hours || 0)}
@@ -1284,6 +1289,11 @@ export default function Schedule() {
                               <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                                 {lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT'}
                               </span>
+                              {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                                <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
+                                  {lesson.notes.split("Student requested:")[1].trim().split('\n')[0]}
+                                </span>
+                              )}
                               {(lesson.duration_hours || 0) * 96 > 80 && (
                                 <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
                                   {formatDuration(lesson.duration_hours || 0)}
