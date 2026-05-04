@@ -509,11 +509,13 @@ export default function Dashboard() {
           user_id: session.user.id,
           student_name: reviewingRequest.student_name,
           date: reviewingRequest.requested_date,
-          start_time: startTime,
+          start_time: startTime.substring(0, 5),
           duration_hours: 2,
           lesson_type: finalLessonType,
           tail_number: finalTailNumber,
-          notes: reviewingRequest.notes || ""
+          notes: reviewingRequest.preferred_time 
+            ? `Student requested: ${reviewingRequest.preferred_time.substring(0, 5)}${reviewingRequest.notes ? `\n\n${reviewingRequest.notes}` : ''}`
+            : (reviewingRequest.notes || "")
         });
       if (insertError) throw insertError;
 

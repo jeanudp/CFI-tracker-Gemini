@@ -601,6 +601,7 @@ export default function Schedule() {
     setDragOverHour(null);
 
     const newStartTime = decimalToTime(finalDecimal);
+    const dateStr = selectedDate.toISOString().split('T')[0];
 
     if (request) {
       // Check if student already has an overlapping lesson
@@ -624,8 +625,6 @@ export default function Schedule() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
-
-        const dateStr = selectedDate.toISOString().split('T')[0];
         
         // Insert new scheduled lesson
         const { error: insertError } = await supabase
@@ -639,7 +638,7 @@ export default function Schedule() {
             lesson_type: request.lesson_type || 'Flight',
             tail_number: tailNumber,
             notes: request.preferred_time 
-              ? `Student requested: ${request.preferred_time}${request.notes ? `\n\n${request.notes}` : ''}`
+              ? `Student requested: ${request.preferred_time.substring(0, 5)}${request.notes ? `\n\n${request.notes}` : ''}`
               : (request.notes || "")
           }]);
 
@@ -665,7 +664,13 @@ export default function Schedule() {
 
     if (!lesson) return;
     
-    if (lesson.start_time === newStartTime && lesson.tail_number === tailNumber) return;
+    const isSamePosition = scheduledLessons.some(l => 
+      l.id !== lesson.id && 
+      l.date === dateStr && 
+      l.start_time?.substring(0, 5) === newStartTime && 
+      l.tail_number === tailNumber
+    );
+    if (isSamePosition) return;
 
     const conflict = checkConflict(newStartTime, lesson.duration_hours, lesson.id);
     if (conflict === 'overlap') {
@@ -1829,7 +1834,7 @@ export default function Schedule() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 300 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-20 bottom-24 right-6 w-72 z-40 flex flex-col rounded-3xl border shadow-2xl overflow-hidden"
+            className="fixed bottom-[80px] right-4 w-[280px] max-h-[60vh] z-40 flex flex-col rounded-3xl border shadow-xl overflow-hidden"
             style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
           >
             <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
@@ -1885,7 +1890,7 @@ export default function Schedule() {
                     {request.preferred_time && (
                       <div className="flex items-center gap-1.5 text-[10px] font-bold mb-2" style={{ color: 'var(--text-muted)' }}>
                         <Clock size={12} />
-                        {request.preferred_time}
+                        {request.preferred_time.substring(0, 5)}
                       </div>
                     )}
                     <div className="flex items-center justify-between mt-2 pt-2 border-t opacity-0 group-hover:opacity-100 transition-opacity" style={{ borderColor: 'var(--border-color)' }}>
