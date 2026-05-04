@@ -929,7 +929,7 @@ export default function Schedule() {
               {/* Grid Header */}
               <div className="flex border-b" style={{ borderColor: 'var(--border-color)' }}>
                 {/* Corner Cell */}
-                <div className="w-48 sticky left-0 z-10 shrink-0 p-4 font-black text-[10px] uppercase tracking-[0.2em] border-r flex items-center gap-2"
+                <div className="w-48 sticky left-0 z-20 shrink-0 p-4 font-black text-[10px] uppercase tracking-[0.2em] border-r flex items-center gap-2"
                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}>
                   <Plane size={14} style={{ color: 'var(--navy)' }} />
                   Aircraft
@@ -951,7 +951,7 @@ export default function Schedule() {
               {/* Ground Row */}
               <div className="flex border-b group/row" style={{ borderColor: 'var(--border-color)' }}>
                 {/* Aircraft Cell */}
-                <div className="w-48 sticky left-0 z-10 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                <div className="w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                   <span className="text-xs font-black" style={{ color: 'var(--navy)' }}>GROUND</span>
                   <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Instruction / Briefing</span>
@@ -1091,7 +1091,7 @@ export default function Schedule() {
                 aircraft.map(ac => (
                   <div key={ac.id} className="flex border-b last:border-b-0 group/row" style={{ borderColor: 'var(--border-color)' }}>
                     {/* Aircraft Cell */}
-                    <div className="w-48 sticky left-0 z-10 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                    <div className="w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                       <span className="text-xs font-black" style={{ color: 'var(--text-primary)' }}>{ac.tail_number}</span>
                       <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
@@ -1212,7 +1212,7 @@ export default function Schedule() {
               {!loading && (
                 <div className="flex group/row" style={{ borderColor: 'var(--border-color)' }}>
                   <div 
-                    className="w-48 sticky left-0 z-10 shrink-0 p-4 border-r flex items-center justify-center transition-colors hover:bg-[var(--bg-tertiary)]"
+                    className="w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex items-center justify-center transition-colors hover:bg-[var(--bg-tertiary)]"
                     style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
                   >
                     <button
