@@ -1136,7 +1136,7 @@ export default function Schedule() {
                             {lesson.student_name}
                           </span>
                           <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
-                            GND
+                            {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : "GND"}
                           </span>
                           {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
                             <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
@@ -1287,7 +1287,7 @@ export default function Schedule() {
                                 </span>
                               </div>
                               <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
-                                {lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT'}
+                                {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : (lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT')}
                               </span>
                               {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
                                 <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
