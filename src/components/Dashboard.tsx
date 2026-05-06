@@ -181,6 +181,7 @@ export default function Dashboard() {
   const [onboardingStep, setOnboardingStep] = useState<number>(0);
   const [cfiHomeAirport, setCfiHomeAirport] = useState('');
   const [weatherData, setWeatherData] = useState<any>(null);
+  const [parsedMetar, setParsedMetar] = useState<any>(null);
   const [tafData, setTafData] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
@@ -323,6 +324,15 @@ export default function Dashboard() {
         const metarData = await metarRes.json();
         if (Array.isArray(metarData) && metarData.length > 0) {
           setWeatherData(metarData[0]);
+          try {
+            const raw = metarData[0].raw_text || metarData[0].rawOb;
+            if (raw) {
+              setParsedMetar(parseMetar(raw));
+            }
+          } catch (e) {
+            console.error('Error parsing METAR:', e);
+            setParsedMetar(null);
+          }
         } else {
           setWeatherError('No weather data found');
         }
@@ -1312,6 +1322,27 @@ export default function Dashboard() {
 
                     {(() => {
                       const raw = weatherData.raw_text || weatherData.rawOb || '';
+                      
+                      // Remarks logic: prefer parsedMetar.remarks if available and not empty
+                      if (parsedMetar?.remarks && parsedMetar.remarks.length > 0) {
+                        return (
+                          <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                            <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Remarks</span>
+                            <div className="flex flex-col gap-1">
+                              {parsedMetar.remarks.map((rmk: any, idx: number) => (
+                                <span key={idx} className={cn(
+                                  "text-[10px] leading-tight", 
+                                  rmk.description ? "text-[var(--text-primary)]" : "text-[var(--text-primary)] font-mono"
+                                )}>
+                                  {rmk.description || rmk.raw}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Fallback: original RMK token logic
                       const rmkIndex = raw.indexOf(' RMK ');
                       const remarks = rmkIndex !== -1 ? raw.substring(rmkIndex + 5) : weatherData.remarks;
                       if (!remarks) return null;
