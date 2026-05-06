@@ -83,7 +83,7 @@ export default async function handler(req: Request, res: Response) {
     // 2. Look up CFI name for sign-off
     const { data: cfi, error: cfiError } = await supabase
       .from('cfi_profile')
-      .select('name')
+      .select('full_name')
       .eq('user_id', userId)
       .single();
 
@@ -91,7 +91,7 @@ export default async function handler(req: Request, res: Response) {
       console.error('Error looking up CFI profile:', cfiError);
     }
 
-    const cfiName = cfi?.name;
+    const cfiName = cfi?.full_name;
     const signOff = cfiName ? `Your Flight Instructor, ${cfiName}` : 'Your Flight Instructor';
 
     // 3. Prepare email content
