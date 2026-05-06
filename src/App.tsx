@@ -84,52 +84,48 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <div className="flex flex-col items-center gap-12 w-full max-w-md">
-          {/* Logo Section */}
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <span className="text-7xl font-black leading-none tracking-tighter" style={{ color: 'var(--navy)', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <style>
+          {`
+            @keyframes pulse-scale {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.08); }
+            }
+            .animate-pulse-logo {
+              animation: pulse-scale 3s ease-in-out infinite;
+            }
+          `}
+        </style>
+        <div className="flex items-center gap-5 scale-150">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="relative animate-pulse-logo">
+              <span
+                className="block font-black leading-none select-none"
+                style={{
+                  fontSize: '42px',
+                  color: 'var(--navy)',
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  letterSpacing: '-1.5px',
+                  lineHeight: 1,
+                }}
+              >
                 61
               </span>
-              <div className="absolute -bottom-1 left-0 w-full h-1.5 rounded-full" style={{ backgroundColor: '#e8a020', boxShadow: '0 2px 8px rgba(232,160,32,0.4)' }} />
+              <div
+                className="absolute rounded-full"
+                style={{ bottom: '-4px', left: 0, width: '100%', height: '4px', backgroundColor: '#e8a020' }}
+              />
             </div>
             
-            <div className="h-10 w-0.5 rounded-full" style={{ backgroundColor: 'var(--border-color)', opacity: 0.5 }} />
+            <div style={{ width: '2px', height: '36px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
             
-            <div className="flex flex-col">
-              <span className="text-xl font-black uppercase tracking-widest leading-none" style={{ color: 'var(--navy)' }}>
-                Tracker
+            <div className="flex flex-col justify-center gap-0.5">
+              <span
+                className="font-black uppercase leading-none"
+                style={{ fontSize: '16px', color: 'var(--navy)', letterSpacing: '2px' }}
+              >
+                TRACKER
               </span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>
-                Part 61 CFI Tools
-              </span>
-            </div>
-          </div>
-
-          {/* Animation Section */}
-          <div className="relative w-full h-10 flex items-center">
-            <div className="animate-plane-cruise text-3xl filter drop-shadow-sm">
-              ✈️
-            </div>
-          </div>
-
-          {/* Status Section */}
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] animate-pulse" style={{ color: 'var(--text-secondary)' }}>
-              Preflight in progress…
-            </p>
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <div 
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full animate-bounce" 
-                  style={{ 
-                    backgroundColor: 'var(--navy)', 
-                    opacity: 0.2,
-                    animationDelay: `${i * 0.1}s` 
-                  }} 
-                />
-              ))}
             </div>
           </div>
         </div>
