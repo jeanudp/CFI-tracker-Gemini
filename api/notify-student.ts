@@ -81,11 +81,14 @@ export default async function handler(req: Request, res: Response) {
     const studentEmail = student.email_address;
 
     // 2. Look up CFI name for sign-off
-    const { data: cfi } = await supabase
+    console.log('DEBUG: Looking up CFI name for userId:', userId);
+    const { data: cfi, error: cfiError } = await supabase
       .from('cfi_profile')
       .select('name')
       .eq('user_id', userId)
       .single();
+
+    console.log('DEBUG: CFI profile response:', { data: cfi, error: cfiError });
 
     const cfiName = cfi?.name;
     const signOff = cfiName ? `Your Flight Instructor, ${cfiName}` : 'Your Flight Instructor';
@@ -120,6 +123,9 @@ export default async function handler(req: Request, res: Response) {
     <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
       <p style="font-size: 12px; color: #64748B; margin: 0; font-style: italic;">Sent via 61 Tracker — The modern toolkit for Part 61 CFIs</p>
     </div>
+  </div>
+  <div style="display: none; font-size: 1px; color: #ffffff; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+    ${Date.now()}
   </div>
 </body>
 </html>`;
