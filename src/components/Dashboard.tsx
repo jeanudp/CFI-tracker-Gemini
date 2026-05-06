@@ -1323,33 +1323,34 @@ export default function Dashboard() {
                     {(() => {
                       const raw = weatherData.raw_text || weatherData.rawOb || '';
                       
-                      // Remarks logic: prefer parsedMetar.remarks if available and not empty
                       if (parsedMetar?.remarks && parsedMetar.remarks.length > 0) {
                         return (
-                          <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                            <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Remarks</span>
-                            <div className="flex flex-col gap-1">
-                              {parsedMetar.remarks.map((rmk: any, idx: number) => (
-                                <span key={idx} className={cn(
-                                  "text-[10px] leading-tight", 
-                                  rmk.description ? "text-[var(--text-primary)]" : "text-[var(--text-primary)] font-mono"
-                                )}>
-                                  {rmk.description || rmk.raw}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                          <>
+                            {(parsedMetar.remarks as any[]).map((rmk: any, idx: number) => {
+                              const label = rmk.raw?.trim() || 'RMK';
+                              const value = rmk.description || rmk.raw;
+                              if (!value) return null;
+                              
+                              return (
+                                <div key={idx} className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{label}</span>
+                                  <span className="text-xs font-bold text-[var(--text-primary)] font-mono text-right pl-4">
+                                    {value}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </>
                         );
                       }
 
-                      // Fallback: original RMK token logic
                       const rmkIndex = raw.indexOf(' RMK ');
-                      const remarks = rmkIndex !== -1 ? raw.substring(rmkIndex + 5) : weatherData.remarks;
-                      if (!remarks) return null;
+                      const remarksFallback = rmkIndex !== -1 ? raw.substring(rmkIndex + 5) : weatherData.remarks;
+                      if (!remarksFallback) return null;
                       return (
-                        <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                          <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Remarks</span>
-                          <span className="text-[10px] font-mono text-[var(--text-primary)] leading-tight">{remarks}</span>
+                        <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Remarks</span>
+                          <span className="text-xs font-bold text-[var(--text-primary)] font-mono text-right pl-4">{remarksFallback}</span>
                         </div>
                       );
                     })()}
