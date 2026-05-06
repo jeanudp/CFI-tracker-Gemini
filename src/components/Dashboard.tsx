@@ -1256,7 +1256,7 @@ export default function Dashboard() {
                           const raw = weatherData.raw_text || weatherData.rawOb || '';
                           const varMatch = raw.match(/(\d{3})V(\d{3})/);
                           const varString = varMatch ? ` variable ${varMatch[1]}° to ${varMatch[2]}°` : '';
-                          if (wspd === 0 && (wdir === 0 || wdir === 'CALM' || wdir === '000')) return 'Calm';
+                          if (wspd === 0) return 'Calm';
                           const dirStr = typeof wdir === 'string' && wdir.includes('VRB') ? 'Variable' : `${wdir}°`;
                           const cardinal = typeof wdir === 'number' ? ` (${getCardinalDirection(wdir)})` : '';
                           return `${dirStr}${cardinal} at ${wspd}kt${weatherData.wgst ? ` G${weatherData.wgst}kt` : ''}${varString}`;
@@ -1406,9 +1406,10 @@ export default function Dashboard() {
                               <span className="text-[10px] font-mono font-bold text-[var(--text-muted)]">
                                 {(() => {
                                   try {
-                                    const from = new Date(fcst.timeFrom);
-                                    const to = new Date(fcst.timeTo);
-                                    return `${from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — ${to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                                    const from = new Date(fcst.timeFrom * 1000);
+                                    const to = new Date(fcst.timeTo * 1000);
+                                    const formatOptions: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
+                                    return `${from.toLocaleTimeString([], formatOptions)} — ${to.toLocaleTimeString([], formatOptions)}`;
                                   } catch (e) {
                                     return 'Unknown Time';
                                   }
@@ -1420,7 +1421,12 @@ export default function Dashboard() {
                               <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
                                 <span className="text-xs font-bold text-[var(--text-primary)] font-mono text-right">
-                                  {fcst.wdir === 'VRB' ? `Variable at ${fcst.wspd}kt` : `${fcst.wdir}° at ${fcst.wspd}kt`}{fcst.wgst ? ` G${fcst.wgst}kt` : ''}
+                                  {(() => {
+                                    const wspd = Number(fcst.wspd) || 0;
+                                    const wdir = fcst.wdir;
+                                    if (wspd === 0 || (wdir === 0 && wspd === 0)) return 'Calm';
+                                    return (wdir === 'VRB' ? `Variable at ${wspd}kt` : `${wdir}° at ${wspd}kt`) + (fcst.wgst ? ` G${fcst.wgst}kt` : '');
+                                  })()}
                                 </span>
                               </div>
 
