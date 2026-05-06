@@ -1322,14 +1322,6 @@ export default function Dashboard() {
                       >
                         <Share2 size={11} />
                       </button>
-                      <button
-                        onClick={e => { e.stopPropagation(); handleDeleteStudent(student.id, student.name); }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
-                        style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
-                        title="Archive Student"
-                      >
-                        <Archive size={11} />
-                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -2119,6 +2111,22 @@ export default function Dashboard() {
                         <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Tap the pencil icon to add details</p>
                       </div>
                     )}
+
+                    <button
+                      onClick={() => {
+                        handleDeleteStudent(selectedStudent.id, selectedStudent.name);
+                        setIsInfoOpen(false);
+                      }}
+                      className="w-full mt-6 py-3 flex items-center justify-center gap-2 rounded-xl text-sm font-bold border transition-all hover:bg-red-50 group"
+                      style={{ 
+                        borderColor: 'rgba(239, 68, 68, 0.2)', 
+                        color: 'var(--red)',
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      <Archive size={16} className="transition-transform group-hover:scale-110" />
+                      Archive Student
+                    </button>
                   </>
                 )}
               </div>

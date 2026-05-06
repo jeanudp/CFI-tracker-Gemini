@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+import { AIRCRAFT_MODELS, isAMEL } from '../constants/aircraft';
 
 interface DatePickerDropdownProps {
   isOpen: boolean;
@@ -164,11 +165,17 @@ export default function Schedule() {
   const [user, setUser] = useState<any>(null);
   const [darkMode, setDarkMode] = useState(false);
   const timePickerRef = useRef<HTMLDivElement>(null);
+  const aircraftSearchRef = useRef<HTMLDivElement>(null);
+  const [scheduleAircraftSearch, setScheduleAircraftSearch] = useState('');
+  const [showScheduleAircraftDropdown, setShowScheduleAircraftDropdown] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (timePickerRef.current && !timePickerRef.current.contains(event.target as Node)) {
         setIsTimePickerOpen(false);
+      }
+      if (aircraftSearchRef.current && !aircraftSearchRef.current.contains(event.target as Node)) {
+        setShowScheduleAircraftDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1786,7 +1793,7 @@ export default function Schedule() {
                   />
                 </div>
 
-                <div>
+                <div className="relative" ref={aircraftSearchRef}>
                   <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
                     Aircraft Model
                   </label>
@@ -1796,8 +1803,56 @@ export default function Schedule() {
                     className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
                     style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                     value={newAircraft.aircraftModel}
-                    onChange={(e) => setNewAircraft({ ...newAircraft, aircraftModel: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewAircraft({ ...newAircraft, aircraftModel: val });
+                      setScheduleAircraftSearch(val);
+                      setShowScheduleAircraftDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (newAircraft.aircraftModel) setShowScheduleAircraftDropdown(true);
+                    }}
                   />
+
+                  {showScheduleAircraftDropdown && scheduleAircraftSearch && (
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#1a1a1a] border rounded-xl shadow-xl z-[70] max-h-[240px] overflow-y-auto scrollbar-thin">
+                      {(() => {
+                        const filtered = AIRCRAFT_MODELS.filter(m => 
+                          m.toLowerCase().includes(scheduleAircraftSearch.toLowerCase())
+                        ).slice(0, 50);
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="p-4 text-xs italic text-gray-500 text-center">
+                              No matching models found
+                            </div>
+                          );
+                        }
+
+                        return filtered.map((modelStr, idx) => {
+                          const [icao, ...rest] = modelStr.split(',');
+                          const modelPart = rest.join(',').trim();
+                          
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => {
+                                setNewAircraft({ ...newAircraft, aircraftModel: modelStr });
+                                setScheduleAircraftSearch('');
+                                setShowScheduleAircraftDropdown(false);
+                              }}
+                              className="p-3 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer border-b last:border-0 border-gray-100 dark:border-white/5 transition-colors"
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-gray-900 dark:text-white">{icao}</span>
+                                <span className="text-[10px] text-gray-500 uppercase font-black">{modelPart}</span>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
 
