@@ -1409,35 +1409,42 @@ export default function Dashboard() {
                                 })()}
                               </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-y-3 gap-x-6">
-                              <div className="flex flex-col">
-                                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Wind</span>
-                                <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
+                            <div className="flex flex-col">
+                              {/* Wind Row */}
+                              <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
+                                <span className="text-xs font-bold text-[var(--text-primary)] font-mono text-right">
                                   {fcst.wdir === 'VRB' ? `Variable at ${fcst.wspd}kt` : `${fcst.wdir}° at ${fcst.wspd}kt`}{fcst.wgst ? ` G${fcst.wgst}kt` : ''}
                                 </span>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Visibility</span>
-                                <span className="text-xs font-bold text-[var(--text-primary)] font-mono">{fcst.visib}SM</span>
+
+                              {/* Visibility Row */}
+                              <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Visibility</span>
+                                <span className="text-xs font-bold text-[var(--text-primary)] font-mono text-right">{fcst.visib}SM</span>
                               </div>
-                              <div className="flex flex-col col-span-2">
-                                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Sky Condition</span>
-                                <div className="flex flex-wrap gap-x-2 gap-y-1">
+
+                              {/* Sky Condition Row */}
+                              <div className="flex justify-between items-start py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Sky Condition</span>
+                                <div className="flex flex-wrap gap-1 justify-end max-w-[70%]">
                                   {fcst.clouds && fcst.clouds.length > 0 ? (
                                     fcst.clouds.map((c: any, ci: number) => (
-                                      <span key={ci} className="text-xs font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded border border-[var(--border-color)]">
+                                      <span key={ci} className="text-[10px] font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded border border-[var(--border-color)] whitespace-nowrap">
                                         {c.cover} @ {c.base}ft
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-xs font-bold text-[var(--text-primary)]">Clear</span>
+                                    <span className="text-xs font-bold text-[var(--text-primary)] font-mono text-right">Clear</span>
                                   )}
                                 </div>
                               </div>
+
+                              {/* Weather Row */}
                               {fcst.wxString && (
-                                <div className="flex flex-col col-span-2">
-                                  <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Weather</span>
-                                  <span className="text-xs font-bold text-[#c0392b]">{fcst.wxString}</span>
+                                <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Weather</span>
+                                  <span className="text-xs font-bold text-[#c0392b] font-mono text-right">{fcst.wxString}</span>
                                 </div>
                               )}
                             </div>
