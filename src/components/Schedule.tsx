@@ -1140,7 +1140,7 @@ export default function Schedule() {
                           </span>
                           {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
                             <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
-                              {lesson.notes.split("Student requested:")[1].trim().split('\n')[0]}
+                              {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
                             </span>
                           )}
                           {(lesson.duration_hours || 0) * 96 > 80 && (
@@ -1291,7 +1291,7 @@ export default function Schedule() {
                               </span>
                               {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
                                 <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
-                                  {lesson.notes.split("Student requested:")[1].trim().split('\n')[0]}
+                                  {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
                                 </span>
                               )}
                               {(lesson.duration_hours || 0) * 96 > 80 && (
