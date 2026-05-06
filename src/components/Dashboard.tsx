@@ -1334,6 +1334,11 @@ export default function Dashboard() {
                               if (!rmk.description && rmk.raw?.trim() === '$') {
                                 value = "Station requires maintenance check";
                               }
+
+                              // Manual fallback for 'AO1' token
+                              if (!rmk.description && rmk.raw?.trim() === 'AO1') {
+                                value = "Automated station without precipitation discriminator";
+                              }
                               
                               if (!value) return null;
                               
