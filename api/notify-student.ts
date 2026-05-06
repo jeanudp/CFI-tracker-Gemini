@@ -81,14 +81,15 @@ export default async function handler(req: Request, res: Response) {
     const studentEmail = student.email_address;
 
     // 2. Look up CFI name for sign-off
-    console.log('DEBUG: Looking up CFI name for userId:', userId);
     const { data: cfi, error: cfiError } = await supabase
       .from('cfi_profile')
       .select('name')
       .eq('user_id', userId)
       .single();
 
-    console.log('DEBUG: CFI profile response:', { data: cfi, error: cfiError });
+    if (cfiError) {
+      console.error('Error looking up CFI profile:', cfiError);
+    }
 
     const cfiName = cfi?.name;
     const signOff = cfiName ? `Your Flight Instructor, ${cfiName}` : 'Your Flight Instructor';

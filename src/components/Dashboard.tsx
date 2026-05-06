@@ -1237,10 +1237,9 @@ export default function Dashboard() {
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Raw METAR</span>
                       <span className="text-[10px] font-mono text-[var(--text-primary)] text-right max-w-[70%]">{weatherData.raw_text || weatherData.rawOb}</span>
                     </div>
-                    {/* ... other METAR details ... */}
                     <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Wind</span>
-                      <span className="text-xs font-bold text-[var(--text-primary)]">
+                      <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
                         {(() => {
                           const wspd = weatherData.wspd ?? 0;
                           const wdir = weatherData.wdir ?? 0;
@@ -1248,49 +1247,72 @@ export default function Dashboard() {
                           const varMatch = raw.match(/(\d{3})V(\d{3})/);
                           const varString = varMatch ? ` variable ${varMatch[1]}° to ${varMatch[2]}°` : '';
                           if (wspd === 0 && (wdir === 0 || wdir === 'CALM' || wdir === '000')) return 'Calm';
-                          if (wdir === 'VRB') return `Variable at ${wspd}kt${weatherData.wgst ? ` gusting ${weatherData.wgst}kt` : ''}${varString}`;
-                          const dirNum = typeof wdir === 'string' ? parseInt(wdir, 10) : (wdir || 0);
-                          const cardinal = getCardinalDirection(dirNum);
-                          return `${dirNum.toString().padStart(3, '0')}° (${cardinal}) at ${wspd}kt${weatherData.wgst ? ` gusting ${weatherData.wgst}kt` : ''}${varString}`;
+                          const dirStr = typeof wdir === 'string' && wdir.includes('VRB') ? 'Variable' : `${wdir}°`;
+                          const cardinal = typeof wdir === 'number' ? ` (${getCardinalDirection(wdir)})` : '';
+                          return `${dirStr}${cardinal} at ${wspd}kt${weatherData.wgst ? ` G${weatherData.wgst}kt` : ''}${varString}`;
                         })()}
                       </span>
                     </div>
+
                     <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Visibility</span>
-                      <span className="text-xs font-bold text-[var(--text-primary)]">{weatherData.visib ?? '—'} SM</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)] font-mono">{weatherData.visib ?? '—'} SM</span>
                     </div>
-                    <div className="flex justify-between items-start py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-widest mt-0.5 text-[var(--text-muted)]">Sky Condition</span>
-                      <div className="flex flex-col items-end gap-0.5">
-                        {weatherData.clouds && weatherData.clouds.length > 0 ? 
+
+                    <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Sky Condition</span>
+                      <div className="flex flex-wrap gap-2">
+                        {weatherData.clouds && weatherData.clouds.length > 0 ? (
                           (weatherData.clouds as any[]).map((cloud: any, idx: number) => {
                             const cloudMap: any = { 'SKC': 'Sky Clear', 'CLR': 'Clear below 12k', 'FEW': 'Few', 'SCT': 'Scattered', 'BKN': 'Broken', 'OVC': 'Overcast', 'VV': 'Vertical Vis' };
                             return (
-                              <span key={idx} className="text-xs font-bold text-[var(--text-primary)]">
+                              <span key={idx} className="text-xs font-bold text-[var(--text-primary)] px-2 py-0.5 bg-[var(--bg-tertiary)] rounded-md border border-[var(--border-color)]">
                                 {cloudMap[cloud.cover] || cloud.cover}{(cloud.base != null && cloud.base >= 0) ? ` @ ${cloud.base.toLocaleString()}ft` : ''}
                               </span>
                             );
-                          }) 
-                          : <span className="text-xs font-bold text-[var(--text-primary)]">Clear</span>}
+                          })
+                        ) : (
+                          <span className="text-xs font-bold text-[var(--text-primary)]">Clear</span>
+                        )}
                       </div>
                     </div>
+
                     {(() => {
                       const wx = decodeWeatherPhenomena(weatherData.raw_text || weatherData.rawOb || '', weatherData.wxString);
                       if (!wx) return null;
                       return (
                         <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Weather</span>
-                          <span className="text-xs font-bold text-right pl-4 text-[var(--text-primary)]">{wx}</span>
+                          <span className="text-xs font-bold text-right pl-4 text-[#c0392b] font-mono">{wx}</span>
                         </div>
                       );
                     })()}
+
                     <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Temp/Dew</span>
-                      <span className="text-xs font-bold text-[var(--text-primary)]">{(weatherData.temp_c ?? weatherData.temp)?.toFixed(0)}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(0)}°C</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Temp / Dewpoint</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
+                        {(weatherData.temp_c ?? weatherData.temp)?.toFixed(0)}°C / {(weatherData.dewpoint_c ?? weatherData.dewp)?.toFixed(0)}°C
+                      </span>
                     </div>
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="text-[9px] font-bold text-[var(--text-muted)] italic">
-                        Observed at {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                    <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Altimeter</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
+                        {weatherData.altim ? weatherData.altim.toFixed(2) : '—'}" Hg
+                      </span>
+                    </div>
+
+                    {weatherData.remarks && (
+                      <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                        <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Remarks</span>
+                        <span className="text-[10px] font-mono text-[var(--text-primary)] leading-tight">{weatherData.remarks}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center py-1" style={{ borderColor: 'var(--border-color)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Observed</span>
+                      <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
+                        {new Date(weatherData.obs_time || weatherData.reportTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   </div>
@@ -1325,12 +1347,62 @@ export default function Dashboard() {
                       {tafData.rawTAF}
                     </div>
                     {tafExpanded && tafData.fcsts && (
-                      <div className="space-y-3 pt-2">
-                        {tafData.fcsts.slice(0, 3).map((fcst: any, i: number) => (
-                          <div key={i} className="text-[10px] p-2 bg-[var(--bg-tertiary)] rounded-lg">
-                            <p className="font-bold border-b border-[var(--border-color)] pb-1 mb-1">{fcst.fcstChange || 'BASE'} FORECAST</p>
-                            <p className="text-[var(--text-secondary)]">Wind: {fcst.wdir}° at {fcst.wspd}kt {fcst.wgst ? `G${fcst.wgst}` : ''}</p>
-                            <p className="text-[var(--text-secondary)]">Vis: {fcst.visib}SM · {fcst.clouds?.map((c: any) => `${c.cover}@${c.base}ft`).join(', ')}</p>
+                      <div className="space-y-3 pt-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-px flex-1 bg-[var(--border-color)]" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Forecast Periods</span>
+                          <div className="h-px flex-1 bg-[var(--border-color)]" />
+                        </div>
+                        {tafData.fcsts.map((fcst: any, i: number) => (
+                          <div key={i} className="p-4 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-color)] shadow-sm">
+                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-dashed" style={{ borderColor: 'var(--border-color)' }}>
+                              <span className="px-2 py-0.5 bg-[var(--navy)] text-white text-[9px] font-black rounded uppercase tracking-widest">
+                                {fcst.fcstChange || 'BASE'}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-[var(--text-muted)]">
+                                {(() => {
+                                  try {
+                                    const from = new Date(fcst.timeFrom);
+                                    const to = new Date(fcst.timeTo);
+                                    return `${from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — ${to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                                  } catch (e) {
+                                    return 'Unknown Time';
+                                  }
+                                })()}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-6">
+                              <div className="flex flex-col">
+                                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Wind</span>
+                                <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
+                                  {fcst.wdir === 'VRB' ? `Variable at ${fcst.wspd}kt` : `${fcst.wdir}° at ${fcst.wspd}kt`}{fcst.wgst ? ` G${fcst.wgst}kt` : ''}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Visibility</span>
+                                <span className="text-xs font-bold text-[var(--text-primary)] font-mono">{fcst.visib}SM</span>
+                              </div>
+                              <div className="flex flex-col col-span-2">
+                                <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Sky Condition</span>
+                                <div className="flex flex-wrap gap-x-2 gap-y-1">
+                                  {fcst.clouds && fcst.clouds.length > 0 ? (
+                                    fcst.clouds.map((c: any, ci: number) => (
+                                      <span key={ci} className="text-xs font-bold text-[var(--text-primary)] bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded border border-[var(--border-color)]">
+                                        {c.cover} @ {c.base}ft
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-xs font-bold text-[var(--text-primary)]">Clear</span>
+                                  )}
+                                </div>
+                              </div>
+                              {fcst.wxString && (
+                                <div className="flex flex-col col-span-2">
+                                  <span className="text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-0.5">Weather</span>
+                                  <span className="text-xs font-bold text-[#c0392b]">{fcst.wxString}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
