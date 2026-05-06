@@ -85,6 +85,8 @@ export default function FlightLesson() {
     mePic: '',
     meDual: '',
     meNight: '',
+    studentActedAsSafetyPilot: false,
+    safetyPilotPic: '',
   });
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -417,6 +419,8 @@ export default function FlightLesson() {
       mePic: '',
       meDual: '',
       meNight: '',
+      studentActedAsSafetyPilot: false,
+      safetyPilotPic: '',
     });
     setIsFlightLogOpen(true);
     
@@ -881,6 +885,8 @@ export default function FlightLesson() {
       mePic: meta.mePic,
       meDual: meta.meDual,
       meNight: meta.meNight,
+      studentActedAsSafetyPilot: meta.studentActedAsSafetyPilot,
+      safetyPilotPic: meta.safetyPilotPic,
       overallGrade,
     };
 
@@ -1012,6 +1018,8 @@ export default function FlightLesson() {
       ffsInst: '',
       simDeviceType: 'ATD',
       studentFlewSolo: false,
+      studentActedAsSafetyPilot: false,
+      safetyPilotPic: '',
       cfiFlewApproaches: false,
       cfiApproachCount: '',
       cfiApproachTypes: '[]',
@@ -1780,6 +1788,61 @@ export default function FlightLesson() {
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                             <p className="text-[8px] text-[#6b7280] italic">Instrument procedures in ATD FTD or FFS</p>
+                          </div>
+                        </div>
+
+                        <div className="px-4 pb-4">
+                          <div className="border-t border-[#dde3ec] pt-4">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                              <div className="relative flex items-center">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only" 
+                                  checked={meta.studentActedAsSafetyPilot}
+                                  onChange={(e) => handleMetaChange('studentActedAsSafetyPilot', e.target.checked)}
+                                />
+                                <div className={cn(
+                                  "w-4 h-4 rounded border transition-all flex items-center justify-center",
+                                  meta.studentActedAsSafetyPilot ? "bg-[#1a3a5c] border-[#1a3a5c]" : "border-[#dde3ec] bg-white group-hover:border-[#1a3a5c]"
+                                )}>
+                                  {meta.studentActedAsSafetyPilot && <Check size={10} className="text-white" />}
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Student acted as Safety Pilot this lesson</span>
+                            </label>
+
+                            <AnimatePresence>
+                              {meta.studentActedAsSafetyPilot && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <div className="space-y-1 sm:w-1/3">
+                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Safety Pilot PIC Time</label>
+                                      <div className="flex items-center gap-2">
+                                        <input 
+                                          type="number" 
+                                          step="0.1" 
+                                          value={meta.safetyPilotPic} 
+                                          onChange={(e) => handleMetaChange('safetyPilotPic', e.target.value)} 
+                                          className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                          placeholder="0.0" 
+                                        />
+                                        <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-[8px] text-[#6b7280] italic">
+                                        Student logs PIC time as required crew member per §61.51(e)(1)(ii). CFI logs simulated instrument only — no dual given.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         </div>
                       </motion.div>

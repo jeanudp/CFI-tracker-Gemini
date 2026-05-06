@@ -58,6 +58,8 @@ export interface LessonMeta {
   meNight?: string;
   overallGrade?: string;
   lessonType?: string;
+  studentActedAsSafetyPilot?: boolean;
+  safetyPilotPic?: string;
 }
 
 export interface Lesson {
