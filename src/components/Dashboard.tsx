@@ -1269,14 +1269,14 @@ export default function Dashboard() {
                       <span className="text-xs font-bold text-[var(--text-primary)] font-mono">{weatherData.visib ?? '—'} SM</span>
                     </div>
 
-                    <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                      <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Sky Condition</span>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="flex justify-between items-start py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Sky Condition</span>
+                      <div className="flex flex-wrap gap-1 justify-end max-w-[70%]">
                         {weatherData.clouds && weatherData.clouds.length > 0 ? (
                           (weatherData.clouds as any[]).map((cloud: any, idx: number) => {
                             const cloudMap: any = { 'SKC': 'Sky Clear', 'CLR': 'Clear below 12k', 'FEW': 'Few', 'SCT': 'Scattered', 'BKN': 'Broken', 'OVC': 'Overcast', 'VV': 'Vertical Vis' };
                             return (
-                              <span key={idx} className="text-xs font-bold text-[var(--text-primary)] px-2 py-0.5 bg-[var(--bg-tertiary)] rounded-md border border-[var(--border-color)]">
+                              <span key={idx} className="text-[10px] font-bold text-[var(--text-primary)] px-1.5 py-0.5 bg-[var(--bg-tertiary)] rounded border border-[var(--border-color)] whitespace-nowrap">
                                 {cloudMap[cloud.cover] || cloud.cover}{(cloud.base != null && cloud.base >= 0) ? ` @ ${cloud.base.toLocaleString()}ft` : ''}
                               </span>
                             );
