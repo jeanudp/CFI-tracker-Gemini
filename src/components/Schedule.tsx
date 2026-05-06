@@ -408,6 +408,16 @@ export default function Schedule() {
           .update(payload)
           .eq('id', editingLesson.id);
         if (error) throw error;
+        
+        // Notify student about reschedule
+        notifyStudent({
+          studentName: payload.student_name,
+          changeType: 'rescheduled',
+          originalDate: editingLesson.date,
+          originalTime: editingLesson.start_time?.substring(0, 5),
+          newDate: payload.date,
+          newTime: payload.start_time
+        });
       } else {
         const { error } = await supabase
           .from('scheduled_lessons')
@@ -435,6 +445,15 @@ export default function Schedule() {
         .delete()
         .eq('id', editingLesson.id);
       if (error) throw error;
+      
+      // Notify student about cancellation
+      notifyStudent({
+        studentName: editingLesson.student_name,
+        changeType: 'cancelled',
+        originalDate: editingLesson.date,
+        originalTime: editingLesson.start_time?.substring(0, 5)
+      });
+      
       console.log("Lesson deleted successfully");
 
       await fetchScheduleData();
@@ -473,6 +492,21 @@ export default function Schedule() {
       lessonType: lesson.lesson_type || (lesson.tail_number === 'GROUND' ? 'Ground' : 'Flight')
     });
     setIsModalOpen(true);
+  };
+
+  const notifyStudent = (data: {
+    studentName: string;
+    changeType: 'rescheduled' | 'cancelled';
+    originalDate: string;
+    originalTime: string;
+    newDate?: string;
+    newTime?: string;
+  }) => {
+    fetch('/api/notify-student', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).catch(err => console.error('Failed to notify student:', err));
   };
 
   const getRatingColor = (rating: string) => {
@@ -709,6 +743,17 @@ export default function Schedule() {
         .eq('id', lesson.id);
       
       if (error) throw error;
+
+      // Notify student about reschedule from drag-drop
+      notifyStudent({
+        studentName: lesson.student_name,
+        changeType: 'rescheduled',
+        originalDate: lesson.date,
+        originalTime: lesson.start_time?.substring(0, 5),
+        newDate: dateStr,
+        newTime: newStartTime
+      });
+
       fetchScheduleData();
     } catch (error) {
       console.error('Error moving lesson:', error);
@@ -1725,6 +1770,17 @@ export default function Schedule() {
                             .eq('id', conflictSuggestion.lesson.id);
                           
                           if (error) throw error;
+
+                          // Notify student about reschedule from conflict suggestion
+                          notifyStudent({
+                            studentName: conflictSuggestion.lesson.student_name,
+                            changeType: 'rescheduled',
+                            originalDate: conflictSuggestion.lesson.date,
+                            originalTime: conflictSuggestion.lesson.start_time?.substring(0, 5),
+                            newDate: conflictSuggestion.lesson.date,
+                            newTime: conflictSuggestion.suggestedTime.substring(0, 5)
+                          });
+
                           await fetchScheduleData();
                           setConflictModalOpen(false);
                           setConflictSuggestion(null);
