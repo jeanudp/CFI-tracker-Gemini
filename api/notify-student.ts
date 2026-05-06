@@ -92,7 +92,7 @@ export default async function handler(req: Request, res: Response) {
     }
 
     const cfiName = cfi?.full_name;
-    const signOff = cfiName ? `Your Flight Instructor, ${cfiName}` : 'Your Flight Instructor';
+    const signOff = cfiName || 'Flight Instructor';
 
     // 3. Prepare email content
     const subject = "Your lesson has been updated — 61 Tracker";
@@ -119,8 +119,7 @@ export default async function handler(req: Request, res: Response) {
     <div style="background-color: #F8FAFC; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
       ${detailsHtml}
     </div>
-    <p style="font-size: 16px; margin-top: 32px; margin-bottom: 0;">See you soon,</p>
-    <p style="font-size: 16px; margin-top: 4px; font-weight: bold;">${signOff}</p>
+    <p style="font-size: 16px; margin-top: 32px; font-weight: bold;">${signOff}</p>
     <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
       <p style="font-size: 12px; color: #64748B; margin: 0; font-style: italic;">Sent via 61 Tracker — The modern toolkit for Part 61 CFIs</p>
     </div>

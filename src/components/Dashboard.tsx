@@ -1298,16 +1298,30 @@ export default function Dashboard() {
                     <div className="flex justify-between items-center py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Altimeter</span>
                       <span className="text-xs font-bold text-[var(--text-primary)] font-mono">
-                        {weatherData.altim ? weatherData.altim.toFixed(2) : '—'}" Hg
+                        {(() => {
+                          const raw = weatherData.raw_text || weatherData.rawOb || '';
+                          const altimMatch = raw.match(/A(\d{4})/);
+                          if (altimMatch) {
+                            const val = altimMatch[1];
+                            return `${val.substring(0, 2)}.${val.substring(2, 4)} inHg`;
+                          }
+                          return weatherData.altim ? `${weatherData.altim.toFixed(2)} inHg` : '—';
+                        })()}
                       </span>
                     </div>
 
-                    {weatherData.remarks && (
-                      <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                        <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Remarks</span>
-                        <span className="text-[10px] font-mono text-[var(--text-primary)] leading-tight">{weatherData.remarks}</span>
-                      </div>
-                    )}
+                    {(() => {
+                      const raw = weatherData.raw_text || weatherData.rawOb || '';
+                      const rmkIndex = raw.indexOf(' RMK ');
+                      const remarks = rmkIndex !== -1 ? raw.substring(rmkIndex + 5) : weatherData.remarks;
+                      if (!remarks) return null;
+                      return (
+                        <div className="flex flex-col py-1 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <span className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[var(--text-muted)]">Remarks</span>
+                          <span className="text-[10px] font-mono text-[var(--text-primary)] leading-tight">{remarks}</span>
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex justify-between items-center py-1" style={{ borderColor: 'var(--border-color)' }}>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Observed</span>
@@ -1329,15 +1343,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-2">
                     <FileText size={16} style={{ color: 'var(--navy)' }} />
                     <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>TAF Forecast</span>
-                    {tafData && (
-                      <button 
-                        onClick={() => setTafExpanded(!tafExpanded)}
-                        className="flex items-center gap-1 text-[10px] font-black text-[var(--navy-light)] uppercase hover:opacity-70 transition-opacity ml-2"
-                      >
-                        <span>{tafExpanded ? 'Less' : 'Details'}</span>
-                        <ChevronRight size={10} className={cn("transition-transform", tafExpanded ? "rotate-90" : "")} />
-                      </button>
-                    )}
+                    {/* TAF Details toggle removed */}
                   </div>
                 </div>
 
@@ -1346,7 +1352,7 @@ export default function Dashboard() {
                     <div className="p-3 rounded-xl bg-[var(--bg-tertiary)] text-[11px] font-mono leading-relaxed border border-[var(--border-color)]">
                       {tafData.rawTAF}
                     </div>
-                    {tafExpanded && tafData.fcsts && (
+                    {tafData.fcsts && (
                       <div className="space-y-3 pt-4">
                         <div className="flex items-center gap-3">
                           <div className="h-px flex-1 bg-[var(--border-color)]" />
