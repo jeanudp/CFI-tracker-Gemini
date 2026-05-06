@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Airplane cruise animation */
+@keyframes plane-cruise {
+  from { transform: translateX(-100px); left: 0; }
+  to { transform: translateX(0); left: 100%; }
+}
+
+.animate-plane-cruise {
+  position: absolute;
+  animation: plane-cruise 12s linear infinite;
+  white-space: nowrap;
+}
+
 :root {
   --bg-primary: #eef2f7;
   --bg-secondary: #ffffff;

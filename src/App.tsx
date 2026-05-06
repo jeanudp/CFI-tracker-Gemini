@@ -83,10 +83,55 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#eef2f8] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#1a3a5c]/20 border-t-[#1a3a5c] rounded-full animate-spin" />
-          <div className="text-sm font-medium text-[#1a3a5c] animate-pulse">Initializing...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <div className="flex flex-col items-center gap-12 w-full max-w-md">
+          {/* Logo Section */}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <span className="text-7xl font-black leading-none tracking-tighter" style={{ color: 'var(--navy)', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                61
+              </span>
+              <div className="absolute -bottom-1 left-0 w-full h-1.5 rounded-full" style={{ backgroundColor: '#e8a020', boxShadow: '0 2px 8px rgba(232,160,32,0.4)' }} />
+            </div>
+            
+            <div className="h-10 w-0.5 rounded-full" style={{ backgroundColor: 'var(--border-color)', opacity: 0.5 }} />
+            
+            <div className="flex flex-col">
+              <span className="text-xl font-black uppercase tracking-widest leading-none" style={{ color: 'var(--navy)' }}>
+                Tracker
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>
+                Part 61 CFI Tools
+              </span>
+            </div>
+          </div>
+
+          {/* Animation Section */}
+          <div className="relative w-full h-10 flex items-center">
+            <div className="animate-plane-cruise text-3xl filter drop-shadow-sm">
+              ✈️
+            </div>
+          </div>
+
+          {/* Status Section */}
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] animate-pulse" style={{ color: 'var(--text-secondary)' }}>
+              Preflight in progress…
+            </p>
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <div 
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full animate-bounce" 
+                  style={{ 
+                    backgroundColor: 'var(--navy)', 
+                    opacity: 0.2,
+                    animationDelay: `${i * 0.1}s` 
+                  }} 
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
