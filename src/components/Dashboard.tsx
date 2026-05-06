@@ -1328,7 +1328,13 @@ export default function Dashboard() {
                           <>
                             {(parsedMetar.remarks as any[]).map((rmk: any, idx: number) => {
                               const label = rmk.raw?.trim() || 'RMK';
-                              const value = rmk.description || rmk.raw;
+                              let value = rmk.description || rmk.raw;
+                              
+                              // Manual fallback for '$' token
+                              if (!rmk.description && rmk.raw?.trim() === '$') {
+                                value = "Station requires maintenance check";
+                              }
+                              
                               if (!value) return null;
                               
                               return (
