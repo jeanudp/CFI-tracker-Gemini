@@ -14,13 +14,41 @@ export default async function handler(req: Request, res: Response) {
     originalDate, 
     originalTime, 
     newDate, 
-    newTime 
+    newTime,
+    userId
   } = req.body;
 
   // Basic validation
-  if (!studentName || !changeType || !originalDate || !originalTime) {
+  if (!studentName || !changeType || !originalDate || !originalTime || !userId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  // Formatting helpers
+  const formatDate = (dateStr: string) => {
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const formatTime = (timeStr: string) => {
+    try {
+      let [hours, minutes] = timeStr.split(':').map(Number);
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    } catch (e) {
+      return timeStr;
+    }
+  };
 
   // Environment variables
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -52,52 +80,51 @@ export default async function handler(req: Request, res: Response) {
 
     const studentEmail = student.email_address;
 
-    // 2. Prepare email content
+    // 2. Look up CFI name for sign-off
+    const { data: cfi } = await supabase
+      .from('cfi_profile')
+      .select('name')
+      .eq('user_id', userId)
+      .single();
+
+    const cfiName = cfi?.name;
+    const signOff = cfiName ? `Your Flight Instructor, ${cfiName}` : 'Your Flight Instructor';
+
+    // 3. Prepare email content
     const subject = "Your lesson has been updated — 61 Tracker";
     const changeVerb = changeType === 'rescheduled' ? 'rescheduled' : 'cancelled';
     
-    let detailsHtml = `
-      <p>Your lesson originally scheduled for <strong>${originalDate} at ${originalTime}</strong> has been ${changeVerb}.</p>
-    `;
+    let detailsHtml = `<p style="margin: 0;">Your lesson originally scheduled for <strong>${formatDate(originalDate)} at ${formatTime(originalTime)}</strong> has been ${changeVerb}.</p>`;
 
     if (changeType === 'rescheduled' && newDate && newTime) {
-      detailsHtml += `
-        <p>The new time is <strong>${newDate} at ${newTime}</strong>.</p>
-      `;
+      detailsHtml += `<p style="margin: 12px 0 0 0;">The new time is <strong>${formatDate(newDate)} at ${formatTime(newTime)}</strong>.</p>`;
     }
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${subject}</title>
-      </head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1a3a5c; margin: 0; padding: 20px; background-color: #ffffff;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #f0f4f8; border-radius: 12px; box-shadow: 0 4px 12px rgba(26,58,92,0.05);">
-          <div style="margin-bottom: 24px; border-bottom: 2px solid #e8a020; display: inline-block; padding-bottom: 4px;">
-            <h1 style="color: #1a3a5c; font-size: 24px; font-weight: 900; margin: 0; letter-spacing: -0.025em; text-transform: uppercase;">61 Tracker</h1>
-          </div>
-          
-          <p style="font-size: 16px; margin-bottom: 16px;">Hi ${studentName},</p>
-          
-          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
-            ${detailsHtml}
-          </div>
-          
-          <p style="font-size: 16px; margin-top: 32px;">See you soon,<br><strong>Your Flight Instructor</strong></p>
-          
-          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f4f8; text-align: center;">
-            <p style="font-size: 12px; color: #6b7280; margin: 0;">
-              Sent via 61 Tracker — The modern toolkit for Part 61 CFIs
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #101F33; margin: 0; padding: 20px; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px;">
+    <div style="margin-bottom: 24px; border-bottom: 2px solid #e8a020; display: inline-block; padding-bottom: 4px;">
+      <h1 style="color: #101F33; font-size: 20px; font-weight: 800; margin: 0; letter-spacing: -0.01em; text-transform: uppercase;">61 Tracker</h1>
+    </div>
+    <p style="font-size: 16px; margin-bottom: 16px;">Hi ${studentName},</p>
+    <div style="background-color: #F8FAFC; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+      ${detailsHtml}
+    </div>
+    <p style="font-size: 16px; margin-top: 32px; margin-bottom: 0;">See you soon,</p>
+    <p style="font-size: 16px; margin-top: 4px; font-weight: bold;">${signOff}</p>
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
+      <p style="font-size: 12px; color: #64748B; margin: 0; font-style: italic;">Sent via 61 Tracker — The modern toolkit for Part 61 CFIs</p>
+    </div>
+  </div>
+</body>
+</html>`;
 
-    // 3. Send email via Resend
+    // 4. Send email via Resend
     const { data: resendData, error: resendError } = await resend.emails.send({
       from: '61 Tracker <noreply@61tracker.com>',
       to: [studentEmail],

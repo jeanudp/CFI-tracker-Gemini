@@ -416,14 +416,24 @@ export default function Schedule() {
         
         // Queue notification about reschedule
         setPendingNotifications(prev => {
+          const existing = prev.find(n => n.studentName === payload.student_name);
+          const trueOriginalDate = existing ? existing.originalDate : editingLesson.date;
+          const trueOriginalTime = existing ? existing.originalTime : editingLesson.start_time?.substring(0, 5);
+
+          // If current state matches the true original state, remove notification
+          if (payload.date === trueOriginalDate && payload.start_time === trueOriginalTime) {
+            return prev.filter(n => n.studentName !== payload.student_name);
+          }
+
           const filtered = prev.filter(n => n.studentName !== payload.student_name);
           return [...filtered, {
             studentName: payload.student_name,
             changeType: 'rescheduled',
-            originalDate: editingLesson.date,
-            originalTime: editingLesson.start_time?.substring(0, 5),
+            originalDate: trueOriginalDate,
+            originalTime: trueOriginalTime,
             newDate: payload.date,
-            newTime: payload.start_time
+            newTime: payload.start_time,
+            userId: user?.id
           }];
         });
       } else {
@@ -461,7 +471,8 @@ export default function Schedule() {
           studentName: editingLesson.student_name,
           changeType: 'cancelled',
           originalDate: editingLesson.date,
-          originalTime: editingLesson.start_time?.substring(0, 5)
+          originalTime: editingLesson.start_time?.substring(0, 5),
+          userId: user?.id
         }];
       });
       
@@ -785,14 +796,24 @@ export default function Schedule() {
 
       // Queue notification about reschedule from drag-drop
       setPendingNotifications(prev => {
+        const existing = prev.find(n => n.studentName === lesson.student_name);
+        const trueOriginalDate = existing ? existing.originalDate : lesson.date;
+        const trueOriginalTime = existing ? existing.originalTime : lesson.start_time?.substring(0, 5);
+
+        // If current state matches the true original state, remove notification
+        if (dateStr === trueOriginalDate && newStartTime === trueOriginalTime) {
+          return prev.filter(n => n.studentName !== lesson.student_name);
+        }
+
         const filtered = prev.filter(n => n.studentName !== lesson.student_name);
         return [...filtered, {
           studentName: lesson.student_name,
           changeType: 'rescheduled',
-          originalDate: lesson.date,
-          originalTime: lesson.start_time?.substring(0, 5),
+          originalDate: trueOriginalDate,
+          originalTime: trueOriginalTime,
           newDate: dateStr,
-          newTime: newStartTime
+          newTime: newStartTime,
+          userId: user?.id
         }];
       });
 
@@ -1849,14 +1870,26 @@ export default function Schedule() {
 
                           // Queue notification about reschedule from conflict suggestion
                           setPendingNotifications(prev => {
+                            const existing = prev.find(n => n.studentName === conflictSuggestion.lesson.student_name);
+                            const trueOriginalDate = existing ? existing.originalDate : conflictSuggestion.lesson.date;
+                            const trueOriginalTime = existing ? existing.originalTime : conflictSuggestion.lesson.start_time?.substring(0, 5);
+
+                            const newTime = conflictSuggestion.suggestedTime.substring(0, 5);
+
+                            // If current state matches the true original state, remove notification
+                            if (conflictSuggestion.lesson.date === trueOriginalDate && newTime === trueOriginalTime) {
+                              return prev.filter(n => n.studentName !== conflictSuggestion.lesson.student_name);
+                            }
+
                             const filtered = prev.filter(n => n.studentName !== conflictSuggestion.lesson.student_name);
                             return [...filtered, {
                               studentName: conflictSuggestion.lesson.student_name,
                               changeType: 'rescheduled',
-                              originalDate: conflictSuggestion.lesson.date,
-                              originalTime: conflictSuggestion.lesson.start_time?.substring(0, 5),
+                              originalDate: trueOriginalDate,
+                              originalTime: trueOriginalTime,
                               newDate: conflictSuggestion.lesson.date,
-                              newTime: conflictSuggestion.suggestedTime.substring(0, 5)
+                              newTime: newTime,
+                              userId: user?.id
                             }];
                           });
 
