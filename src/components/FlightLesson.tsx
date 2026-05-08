@@ -2989,7 +2989,7 @@ export default function FlightLesson() {
               );
             });
 
-            const showExtraEmergencies = !isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review');
+            const const showExtraEmergencies = !isIR && rating?.code !== 'cfii' && = !isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review');
             const extraEmergencies = showExtraEmergencies ? (
               <React.Fragment key="extra_emergencies">
                 <div className="bg-[#c0392b] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center">
