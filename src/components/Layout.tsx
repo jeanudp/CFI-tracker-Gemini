@@ -1,214 +1,370 @@
-import React, { useState } from 'react';
-import { useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
-import { AlertTriangle, Lightbulb, X, Send, Menu, LogOut, LayoutDashboard, History, Settings, User } from 'lucide-react';
-import emailjs from '@emailjs/browser';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
+import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck, Calendar } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
-export default function Layout() {
-  const [isMaydayOpen, setIsMaydayOpen] = useState(false);
-  const [feedbackTab, setFeedbackTab] = useState<'bug' | 'idea'>('bug');
-  const [feedbackText, setFeedbackText] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [user, setUser] = useState<any>(null); // This would normally come from an auth context
+interface LayoutProps {
+  children: React.ReactNode;
+  user: any;
+}
+
+export default function Layout({ children, user }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const path = location.pathname;
+  const [isOnline, setIsOnline] = useState(true);
+  const [maydayOpen, setMaydayOpen] = useState(false);
+  const [maydayText, setMaydayText] = useState('');
+  const [maydaySending, setMaydaySending] = useState(false);
+  const [maydaySuccess, setMaydaySuccess] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = async () => {
-    // This would normally call auth.signOut()
-    navigate('/auth');
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('dark_mode') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dark_mode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const { error } = await supabase.from('students').select('id').limit(1);
+        setIsOnline(!error || error.message !== 'Failed to fetch');
+      } catch (err) {
+        setIsOnline(false);
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setNavOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Close dropdowns on route change
+  useEffect(() => {
+    setNavOpen(false);
+    setUserOpen(false);
+  }, [path]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
   };
 
   const handleMaydaySend = async () => {
-    if (!feedbackText.trim()) return;
-    setIsSending(true);
+    if (!maydayText.trim()) return;
+    setMaydaySending(true);
+    setMaydaySuccess(false);
     try {
-      const templateParams = {
-        from_name: user?.email || 'Anonymous',
-        message: feedbackText,
-        reply_to: user?.email || '',
-        type: feedbackTab,
-        page: location.pathname
-      };
-      // Note: Replace with actual service/template/user IDs from environment variables
-      await emailjs.send('service_default', 'template_default', templateParams, 'user_key');
-      setFeedbackText('');
-      setIsMaydayOpen(false);
-      alert('Feedback sent! Thanks for your help.');
+      await emailjs.send(
+        'service_nka0c1g',
+        'template_zegp5ps',
+        {
+          page: path,
+          user_email: user?.email || 'unknown',
+          date: new Date().toLocaleString(),
+          message: maydayText,
+        },
+        'mFm3-Cne6LHV8dZOJ'
+      );
+      setMaydaySuccess(true);
+      setMaydayText('');
+      setTimeout(() => {
+        setMaydayOpen(false);
+        setMaydaySuccess(false);
+      }, 2000);
     } catch (err) {
-      console.error(err);
+      console.error('Mayday send failed:', err);
       alert('Failed to send feedback. Please try again.');
     } finally {
-      setIsSending(false);
+      setMaydaySending(false);
     }
   };
 
-  const getPageTitle = () => {
-    const path = location.pathname;
-    if (path === '/') return 'Dashboard';
-    if (path === '/rating') return 'Select Rating';
-    if (path === '/lesson-type') return 'Lesson Type';
-    if (path === '/ground-lesson') return 'Ground Lesson';
-    if (path === '/flight-lesson') return 'Flight Lesson';
-    if (path === '/history') return 'History';
-    return 'FlightBase';
-  };
+  const NAV_ITEMS = [
+    { label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> },
+    { label: 'Schedule', path: '/schedule', icon: <Calendar size={14} /> },
+  ];
+
+  const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';
+  const shortName = displayName.split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#1c2333] font-sans">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-[#dde3ec] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center gap-8">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#1a3a5c] rounded-lg flex items-center justify-center text-white text-lg font-bold">F</div>
-                <span className="font-bold text-xl tracking-tight text-[#1a3a5c]">FlightBase</span>
-              </Link>
-              
-              <div className="hidden md:flex items-center gap-6">
-                <Link to="/dashboard" className={cn("text-sm font-bold transition-colors", location.pathname === '/dashboard' ? "text-[#1a3a5c]" : "text-[#6b7280] hover:text-[#1a3a5c]")}>Dashboard</Link>
-                <Link to="/history" className={cn("text-sm font-bold transition-colors", location.pathname === '/history' ? "text-[#1a3a5c]" : "text-[#6b7280] hover:text-[#1a3a5c]")}>History</Link>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => {
-                  setFeedbackTab('bug');
-                  setIsMaydayOpen(true);
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] bg-[#f4f5f7] text-[#6b7280] hover:bg-[#eceef1] hover:text-[#1a3a5c] transition-all text-xs font-bold"
-              >
-                <AlertTriangle size={14} />
-                <span className="hidden sm:inline">Report Issue</span>
-              </button>
-
-              <div className="h-8 w-[1px] bg-[#dde3ec] mx-1" />
-              
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col items-end hidden sm:flex">
-                  <span className="text-xs font-bold text-[#1c2333]">{user?.email || 'Instructor'}</span>
-                  <span className="text-[10px] text-[#6b7280] font-medium uppercase tracking-wider">CFI</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-[#1a3a5c]/10 border border-[#1a3a5c]/20 flex items-center justify-center text-[#1a3a5c]">
-                  <User size={18} />
-                </div>
-                <button onClick={handleLogout} className="p-2 text-[#6b7280] hover:text-[#c0392b] transition-colors">
-                  <LogOut size={20} />
-                </button>
-              </div>
-            </div>
+    <div
+      className="min-h-screen flex flex-col font-sans"
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+    >
+      <header
+        style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+        className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-3 sm:px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
+      >
+        {/* Logo */}
+        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity min-w-0 shrink-0">
+          <div className="relative">
+            <span
+              className="block font-black leading-none select-none"
+              style={{
+                fontSize: '34px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
+              }}
+            >
+              61
+            </span>
+            <div
+              className="absolute rounded-full"
+              style={{ bottom: '-3px', left: 0, width: '100%', height: '3px', backgroundColor: '#e8a020' }}
+            />
           </div>
-        </div>
-      </nav>
+          <div style={{ width: '2px', height: '30px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
+          <div className="flex flex-col justify-center gap-0.5">
+            <span
+              className="font-black uppercase leading-none"
+              style={{ fontSize: '13px', color: 'var(--navy)', letterSpacing: '1.5px' }}
+            >
+              TRACKER
+            </span>
+            <span
+              className="font-bold"
+              style={{ fontSize: '7px', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase' }}
+            >
+              BUILT FOR CFI<span style={{ textTransform: 'none' }}>s</span>
+            </span>
+          </div>
+        </Link>
 
-      {/* Main Content */}
-      <main className="pb-20 sm:pb-8">
-        <Outlet />
-      </main>
+        {/* Right side */}
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
 
-      {/* Feedback Modal */}
-      {isMaydayOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1c2333]/60 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-[#dde3ec] animate-in fade-in zoom-in duration-200">
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-[#dde3ec] flex justify-between items-center bg-[#f4f5f7]">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg",
-                  feedbackTab === 'bug' ? "bg-[#c0392b] shadow-[#c0392b]/20" : "bg-[#e8a020] shadow-[#e8a020]/20"
-                )}>
-                  {feedbackTab === 'bug' ? <AlertTriangle size={20} /> : <Lightbulb size={20} />}
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-[#1c2333]">
-                    {feedbackTab === 'bug' ? 'Report a Bug' : 'Share an Idea'}
-                  </h2>
-                  <p className="text-[10px] text-[#6b7280] font-medium uppercase tracking-widest">Feedback to Developer</p>
+          {/* Offline indicator */}
+          {!isOnline && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] font-bold text-red-500 uppercase tracking-widest">
+              <WifiOff size={10} />
+              <span className="hidden sm:inline">Offline</span>
+            </div>
+          )}
+
+          {/* Mayday button — icon only */}
+          <button
+            onClick={() => setMaydayOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg border transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderColor: 'rgba(220,38,38,0.25)', color: '#dc2626' }}
+            title="Report a problem"
+          >
+            <AlertTriangle size={15} />
+          </button>
+
+          {/* Navigation dropdown */}
+          <div className="relative" ref={navRef}>
+            <button
+              onClick={() => { setNavOpen(!navOpen); setUserOpen(false); }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: navOpen ? 'var(--bg-tertiary)' : 'transparent' }}
+            >
+              <Menu size={14} />
+              <span className="hidden sm:inline">Menu</span>
+              <ChevronDown size={12} className={cn("transition-transform", navOpen && "rotate-180")} />
+            </button>
+
+            {navOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 w-52 max-w-[calc(100vw-1.5rem)] rounded-2xl border shadow-xl overflow-hidden z-50"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+              >
+                <div className="p-1.5 space-y-0.5">
+                  {NAV_ITEMS.map(item => {
+                    const isActive = path === item.path;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all",
+                          isActive
+                            ? "text-white"
+                            : "hover:bg-[var(--bg-tertiary)]"
+                        )}
+                        style={isActive ? { backgroundColor: 'var(--navy)', color: 'white' } : { color: 'var(--text-primary)' }}
+                      >
+                        <span style={isActive ? { color: '#e8a020' } : { color: 'var(--text-muted)' }}>
+                          {item.icon}
+                        </span>
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
-              <button 
-                onClick={() => setIsMaydayOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#eceef1] text-[#6b7280] transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
+            )}
+          </div>
 
-            {/* Modal Tabs */}
-            <div className="flex bg-[#f4f5f7] border-b border-[#dde3ec]">
+          {/* User dropdown */}
+          {user && (
+            <div className="relative" ref={userRef}>
               <button
-                onClick={() => setFeedbackTab('bug')}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold transition-all",
-                  feedbackTab === 'bug' 
-                    ? "bg-white text-[#c0392b] border-b-2 border-[#c0392b]" 
-                    : "text-[#6b7280] hover:text-[#1c2333] hover:bg-[#eceef1]"
-                )}
+                onClick={() => { setUserOpen(!userOpen); setNavOpen(false); }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border text-[11px] font-bold transition-all hover:-translate-y-0.5 hover:shadow-md"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: userOpen ? 'var(--bg-tertiary)' : 'transparent' }}
               >
-                <AlertTriangle size={14} />
-                Report a Bug
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0"
+                  style={{ backgroundColor: 'var(--navy)' }}
+                >
+                  {shortName.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden sm:inline max-w-[100px] truncate">{shortName}</span>
+                <ChevronDown size={12} className={cn("transition-transform", userOpen && "rotate-180")} />
               </button>
-              <button
-                onClick={() => setFeedbackTab('idea')}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold transition-all",
-                  feedbackTab === 'idea' 
-                    ? "bg-white text-[#e8a020] border-b-2 border-[#e8a020]" 
-                    : "text-[#6b7280] hover:text-[#1c2333] hover:bg-[#eceef1]"
-                )}
-              >
-                <Lightbulb size={14} />
-                Share an Idea
-              </button>
-            </div>
 
-            <div className="p-6">
-              {/* Context Indicator */}
-              {feedbackTab === 'bug' && (
-                <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-[#f4f5f7] rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
-                  <span className="opacity-50">Current Page:</span>
-                  <span className="text-[#1a3a5c]">{getPageTitle()}</span>
+              {userOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl border shadow-xl overflow-hidden z-50"
+                  style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                >
+                  {/* User info header */}
+                  <div
+                    className="px-4 py-3 border-b"
+                    style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}
+                  >
+                    <p className="text-[11px] font-black truncate" style={{ color: 'var(--text-primary)' }}>
+                      {user.user_metadata?.full_name || 'CFI'}
+                    </p>
+                    <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
+                      {user.email}
+                    </p>
+                  </div>
+
+                  <div className="p-1.5 space-y-0.5">
+
+
+                    {/* Dark mode toggle */}
+                    <button
+                      onClick={() => setDarkMode(!darkMode)}
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-[var(--bg-tertiary)]"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <div className="flex items-center gap-3">
+                        {darkMode ? <Sun size={14} style={{ color: 'var(--text-muted)' }} /> : <Moon size={14} style={{ color: 'var(--text-muted)' }} />}
+                        {darkMode ? 'Light Mode' : 'Dark Mode'}
+                      </div>
+                      <div
+                        className={cn(
+                          "w-8 h-4 rounded-full transition-colors relative",
+                          darkMode ? "bg-[var(--navy)]" : "bg-[#dde3ec]"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform",
+                            darkMode ? "translate-x-4" : "translate-x-0.5"
+                          )}
+                        />
+                      </div>
+                    </button>
+
+                    <div className="h-px mx-3 my-1" style={{ backgroundColor: 'var(--border-color)' }} />
+
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-red-50 text-red-500"
+                    >
+                      <LogOut size={14} />
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      </header>
 
-              <textarea 
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                className="w-full h-40 p-4 text-sm border border-[#dde3ec] rounded-xl focus:outline-none focus:border-[#1a3a5c] focus:ring-4 focus:ring-[#1a3a5c]/5 transition-all resize-none placeholder:text-[#94a3b8]"
-                placeholder={feedbackTab === 'bug' 
-                  ? "Describe the issue... (What happened? What did you expect?)" 
-                  : "Tell us your idea for a feature or improvement..."
-                }
-              />
+      <main className="flex-1 overflow-auto min-h-0">
+        {children}
+      </main>
 
-              <div className="flex justify-end gap-3 mt-6">
-                <button 
-                  onClick={() => setIsMaydayOpen(false)}
-                  className="px-5 py-2 text-xs font-bold text-[#6b7280] hover:text-[#1c2333] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleMaydaySend}
-                  disabled={isSending || !feedbackText.trim()}
-                  className={cn(
-                    "px-6 py-2 rounded-xl text-white text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:grayscale disabled:scale-100",
-                    feedbackTab === 'bug' 
-                      ? "bg-[#c0392b] shadow-[#c0392b]/20 hover:bg-[#a93226]" 
-                      : "bg-[#e8a020] shadow-[#e8a020]/20 hover:bg-[#d4921d]"
-                  )}
-                >
-                  {isSending ? (
-                    'Sending...'
-                  ) : (
-                    <>
-                      <Send size={14} />
-                      Send to Developer
-                    </>
-                  )}
-                </button>
+      {/* Mayday Modal */}
+      {maydayOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+          >
+            <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderBottom: '1px solid rgba(220,38,38,0.15)' }}>
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={18} className="text-[#dc2626]" />
+                <div>
+                  <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>Mayday — Report a Problem</h3>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Your feedback goes directly to the developer</p>
+                </div>
               </div>
+              <button
+                onClick={() => { setMaydayOpen(false); setMaydayText(''); }}
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
+                📍 Page: {path}
+              </div>
+              <textarea
+                value={maydayText}
+                onChange={e => setMaydayText(e.target.value)}
+                placeholder="Describe what went wrong — what you were doing, what you expected, what happened instead..."
+                rows={5}
+                autoFocus
+                className="w-full text-sm rounded-xl px-4 py-3 border resize-none focus:outline-none transition-all"
+                style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                onFocus={e => e.target.style.borderColor = '#dc2626'}
+                onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+              />
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                Your feedback is sent directly to the 61 Tracker developer.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex gap-3" style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+              <button
+                onClick={() => { setMaydayOpen(false); setMaydayText(''); }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMaydaySend}
+                disabled={!maydayText.trim() || maydaySending || maydaySuccess}
+                className="flex-[2] py-2.5 rounded-xl text-xs font-black text-white transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg"
+                style={{ backgroundColor: maydaySuccess ? '#2d7a4f' : '#dc2626', boxShadow: maydaySuccess ? '0 4px 12px rgba(45,122,79,0.3)' : '0 4px 12px rgba(220,38,38,0.3)' }}
+              >
+                {maydaySending ? <Loader2 size={13} className="animate-spin" /> : maydaySuccess ? <CheckCircle2 size={13} /> : <Send size={13} />}
+                {maydaySending ? 'Sending...' : maydaySuccess ? 'Sent!' : 'Send to Developer'}
+              </button>
             </div>
           </div>
         </div>
