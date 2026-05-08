@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ALL_ACS, ALL_GROUND_ACS, RATINGS } from '../constants';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, BookOpen, CheckCircle2, AlertCircle, HelpCircle, Loader2, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ACSStandardsModal from './ACSStandardsModal';
@@ -17,6 +17,7 @@ export default function GroundLesson() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  const [expandedAreas, setExpandedAreas] = useState<Record<number, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [fillState, setFillState] = useState<Grade>('');
@@ -192,6 +193,28 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
 
   const toggleNoteExpand = (taskId: string) => {
     setExpandedNotes(prev => ({ ...prev, [taskId]: !prev[taskId] }));
+  };
+
+  const handleAreaToggle = (ai: number) => {
+    setExpandedAreas(prev => {
+      const isCurrentlyOpen = !!prev[ai];
+      if (isCurrentlyOpen) {
+        return { ...prev, [ai]: false };
+      } else {
+        const nextExpanded = { ...prev, [ai]: true };
+        Object.keys(prev).forEach(keyStr => {
+          const areaIdx = parseInt(keyStr);
+          if (areaIdx !== ai && prev[areaIdx]) {
+            const areaTasks = groundTasks.filter(t => t.ai === areaIdx);
+            const hasGraded = areaTasks.some(t => grades[t.id] && grades[t.id] !== '');
+            if (!hasGraded) {
+              nextExpanded[areaIdx] = false;
+            }
+          }
+        });
+        return nextExpanded;
+      }
+    });
   };
 
   const handleSave = async () => {
@@ -382,15 +405,142 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
         </div>
 
         <div className="divide-y divide-[#dde3ec]">
-          {acsData.map((area, ai) => {
-            const areaTasks = groundTasks.filter(t => t.ai === ai);
-            if (areaTasks.length === 0) return null;
-            return (
-              <React.Fragment key={area.area}>
-                <div className="bg-[#1a3a5c] text-white px-4 py-3 text-xs font-bold flex justify-between items-center">
-                  <span>{area.area}</span>
-                  <span className="opacity-60 font-normal">{areaTasks.length} tasks</span>
+          {rating?.code === 'cfii' ? (
+            acsData.map((area, ai) => {
+              const areaTasks = groundTasks.filter(t => t.ai === ai);
+              if (areaTasks.length === 0) return null;
+              const isAreaExpanded = expandedAreas[ai];
+              return (
+                <div key={area.area} className="border-b border-[#dde3ec] last:border-0">
+                  <button 
+                    onClick={() => handleAreaToggle(ai)}
+                    className="w-full bg-[#1a3a5c] text-white px-4 py-3 text-xs font-bold flex justify-between items-center hover:bg-[#1a3a5c]/95 transition-colors text-left"
+                  >
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span>{area.area}</span>
+                      <span className="opacity-60 font-normal text-[10px]">{areaTasks.length} tasks</span>
+                    </div>
+                    {isAreaExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  <AnimatePresence>
+                    {isAreaExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden divide-y divide-[#dde3ec]"
+                      >
+                        {areaTasks.map(task => {
+                          const g = grades[task.id] || '';
+                          const displayGrade = g === 'S' ? '3' : g === 'N' ? '2' : g;
+                          const n = notes[task.id] || '';
+                          const isExpanded = expandedTasks[task.id];
+                          return (
+                            <div key={task.id} className="flex flex-col sm:grid sm:grid-cols-[1fr_72px_1.3fr] hover:bg-[#fafbfd] transition-colors">
+                              <div className="p-4">
+                                <div
+                                  onClick={() => toggleExpand(task.id)}
+                                  className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#2a5a8c]"
+                                >
+                                  {task.name}
+                                  <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
+                                </div>
+                                {isExpanded && task.stds && task.stds.length > 0 && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    className="mt-3 p-3 bg-[#e4f5ec] rounded-lg border-l-4 border-[#2d7a4f] space-y-1.5"
+                                  >
+                                    {task.stds.map((std, idx) => (
+                                      <div key={idx} className="text-[11px] text-[#1a4a2e] leading-relaxed flex gap-2">
+                                        <span className="opacity-40 shrink-0">·</span>
+                                        <span>{std.code} — {std.description}</span>
+                                      </div>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-start px-4 sm:px-0.5 sm:pt-3 py-2 sm:border-x border-[#dde3ec]">
+                                <div className="grid grid-cols-4 sm:grid-cols-2 gap-1">
+                                  {[1, 2, 3, 4].map((gVal) => {
+                                    const gradeStr = gVal.toString();
+                                    const isSelected = displayGrade === gradeStr;
+                                    return (
+                                      <button
+                                        key={gVal}
+                                        onClick={() => handleGradeSet(task.id, gradeStr as Grade)}
+                                        className={cn(
+                                          "w-8 h-7 rounded-md border font-mono text-[10px] font-bold transition-all active:scale-95",
+                                          isSelected 
+                                            ? gVal === 4 ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm" :
+                                              gVal === 3 ? "bg-[#5a9e6f] border-[#5a9e6f] text-white shadow-sm" :
+                                              gVal === 2 ? "bg-[#e8a020] border-[#e8a020] text-white shadow-sm" :
+                                              "bg-[#c0392b] border-[#c0392b] text-white shadow-sm"
+                                            : "bg-[#f4f5f7] border-[#dde3ec] text-[#6b7280] hover:border-[#2a5a8c]"
+                                        )}
+                                      >
+                                        {gVal}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              <div className="px-4 py-2 sm:p-2 sm:pt-3 sm:pr-4 relative group">
+                                <textarea
+                                  value={n}
+                                  onChange={(e) => handleNoteChange(task.id, e.target.value)}
+                                  placeholder="Notes..."
+                                  rows={expandedNotes[task.id] ? undefined : 1}
+                                  className={cn(
+                                    "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
+                                    expandedNotes[task.id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
+                                  )}
+                                  onInput={(e) => {
+                                    if (expandedNotes[task.id]) {
+                                      const target = e.target as HTMLTextAreaElement;
+                                      target.style.height = 'auto';
+                                      target.style.height = target.scrollHeight + 'px';
+                                    }
+                                  }}
+                                  ref={(el) => {
+                                    if (el && expandedNotes[task.id]) {
+                                      el.style.height = 'auto';
+                                      el.style.height = el.scrollHeight + 'px';
+                                    }
+                                  }}
+                                />
+                                {!expandedNotes[task.id] && n.length > 0 && (
+                                  <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
+                                )}
+                                <button
+                                  onClick={() => toggleNoteExpand(task.id)}
+                                  className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
+                                  title={expandedNotes[task.id] ? "Collapse Notes" : "Expand Notes"}
+                                >
+                                  {expandedNotes[task.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+              );
+            })
+          ) : (
+            acsData.map((area, ai) => {
+              const areaTasks = groundTasks.filter(t => t.ai === ai);
+              if (areaTasks.length === 0) return null;
+              return (
+                <React.Fragment key={area.area}>
+                  <div className="bg-[#1a3a5c] text-white px-4 py-3 text-xs font-bold flex justify-between items-center">
+                    <span>{area.area}</span>
+                    <span className="opacity-60 font-normal">{areaTasks.length} tasks</span>
+                  </div>
                   {areaTasks.map(task => {
                     const g = grades[task.id] || '';
                     const displayGrade = g === 'S' ? '3' : g === 'N' ? '2' : g;
@@ -447,46 +597,47 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                           </div>
                         </div>
                         <div className="px-4 py-2 sm:p-2 sm:pt-3 sm:pr-4 relative group">
-                        <textarea
-                          value={n}
-                          onChange={(e) => handleNoteChange(task.id, e.target.value)}
-                          placeholder="Notes..."
-                          rows={expandedNotes[task.id] ? undefined : 1}
-                          className={cn(
-                            "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
-                            expandedNotes[task.id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
+                          <textarea
+                            value={n}
+                            onChange={(e) => handleNoteChange(task.id, e.target.value)}
+                            placeholder="Notes..."
+                            rows={expandedNotes[task.id] ? undefined : 1}
+                            className={cn(
+                              "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all resize-none",
+                              expandedNotes[task.id] ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
+                            )}
+                            onInput={(e) => {
+                              if (expandedNotes[task.id]) {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = target.scrollHeight + 'px';
+                              }
+                            }}
+                            ref={(el) => {
+                              if (el && expandedNotes[task.id]) {
+                                el.style.height = 'auto';
+                                el.style.height = el.scrollHeight + 'px';
+                              }
+                            }}
+                          />
+                          {!expandedNotes[task.id] && n.length > 0 && (
+                            <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
                           )}
-                          onInput={(e) => {
-                            if (expandedNotes[task.id]) {
-                              const target = e.target as HTMLTextAreaElement;
-                              target.style.height = 'auto';
-                              target.style.height = target.scrollHeight + 'px';
-                            }
-                          }}
-                          ref={(el) => {
-                            if (el && expandedNotes[task.id]) {
-                              el.style.height = 'auto';
-                              el.style.height = el.scrollHeight + 'px';
-                            }
-                          }}
-                        />
-                        {!expandedNotes[task.id] && n.length > 0 && (
-                          <div className="absolute bottom-3 right-10 w-1.5 h-1.5 bg-[#6b7280] rounded-full opacity-30 pointer-events-none" />
-                        )}
-                        <button
-                          onClick={() => toggleNoteExpand(task.id)}
-                          className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
-                          title={expandedNotes[task.id] ? "Collapse Notes" : "Expand Notes"}
-                        >
-                          {expandedNotes[task.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
+                          <button
+                            onClick={() => toggleNoteExpand(task.id)}
+                            className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#1a3a5c] transition-colors"
+                            title={expandedNotes[task.id] ? "Collapse Notes" : "Expand Notes"}
+                          >
+                            {expandedNotes[task.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            );
-          })}
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })
+          )}
         </div>
       </div>
 
