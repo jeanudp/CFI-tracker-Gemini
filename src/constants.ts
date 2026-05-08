@@ -4,6 +4,7 @@ import { CPL_ACS } from './constants/cplACS';
 import { CFI_GROUND_ACS } from './constants/cfiGroundACS';
 import { CFI_FLIGHT_ACS } from './constants/cfiFlightACS';
 import { CFII_GROUND_PTS } from './constants/cfiiGroundPTS';
+import { CFII_FLIGHT_PTS } from './constants/cfiiFlightPTS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -875,37 +876,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
   ir: IR_FLIGHT_ACS,
   cpl: CPL_ACS,
   cfi: CFI_FLIGHT_ACS,
-  cfii: [
-    { 
-      area: "I. Fundamentals of Instructing", 
-      tasks: [
-        createPlaceholderTask("Learning Process", "FII.I.A"),
-        createPlaceholderTask("Human Behavior and Effective Communication", "FII.I.B"),
-        createPlaceholderTask("The Teaching Process", "FII.I.C"),
-        createPlaceholderTask("Teaching Methods", "FII.I.D"),
-        createPlaceholderTask("Critique and Evaluation", "FII.I.E"),
-        createPlaceholderTask("Flight Instructor Characteristics and Responsibilities", "FII.I.F"),
-        createPlaceholderTask("Planning Instructional Activity", "FII.I.G")
-      ] 
-    },
-    { 
-      area: "II. Technical Subject Areas", 
-      tasks: [
-        createPlaceholderTask("Instrument Flight Deck Check", "FII.II.A"),
-        createPlaceholderTask("ATC Clearances", "FII.II.B"),
-        createPlaceholderTask("Compliance with Departure, En Route, and Arrival Procedures and Clearances", "FII.II.C"),
-        createPlaceholderTask("Holding Procedures", "FII.II.D"),
-        createPlaceholderTask("Intercepting and Tracking Navigational Systems and DME Arcs", "FII.II.E"),
-        createPlaceholderTask("Non-precision Approach", "FII.II.F"),
-        createPlaceholderTask("Precision Approach", "FII.II.G"),
-        createPlaceholderTask("Missed Approach", "FII.II.H"),
-        createPlaceholderTask("Circling Approach", "FII.II.I"),
-        createPlaceholderTask("Landing from an Instrument Approach", "FII.II.J"),
-        createPlaceholderTask("Loss of Communications", "FII.II.K"),
-        createPlaceholderTask("Loss of Primary Flight Instrument Indicator", "FII.II.L")
-      ] 
-    }
-  ],
+  cfii: CFII_FLIGHT_PTS,
   mei: [
     { 
       area: "I. Preflight Preparation", 

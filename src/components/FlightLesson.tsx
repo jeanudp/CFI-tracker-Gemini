@@ -352,7 +352,7 @@ export default function FlightLesson() {
     'PA.XII.A',
   ];
 
-  const showLessonTypeStep = rating?.code !== 'ir';
+  const showLessonTypeStep = rating?.code !== 'ir' && rating?.code !== 'cfii';
   const activeTiles = isCFI ? CFI_LESSON_TYPE_TILES : (isCPL ? CPL_LESSON_TYPE_TILES : LESSON_TYPE_TILES);
   const activePrefPostCodes = isCFI ? CFI_PREFLIGHT_POSTFLIGHT_CODES : (isCPL ? CPL_PREFLIGHT_POSTFLIGHT_CODES : PREFLIGHT_POSTFLIGHT_CODES);
 
