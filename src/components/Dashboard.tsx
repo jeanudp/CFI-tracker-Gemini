@@ -2249,7 +2249,7 @@ export default function Dashboard() {
                   style={{ backgroundColor: 'var(--navy)' }}
                 >
                   <Plane size={18} />
-                  Start New Lesson →
+                  Log a Lesson →
                 </button>
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent.name)}`}
