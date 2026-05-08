@@ -414,13 +414,13 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
                 <div key={area.area} className="border-b border-[#dde3ec] last:border-0">
                   <button 
                     onClick={() => handleAreaToggle(ai)}
-                    className="w-full bg-[#f4f5f7] text-[#1c2333] px-4 py-3 text-xs font-bold flex justify-between items-center hover:bg-[#eceef1] transition-colors text-left border-b border-[#dde3ec]"
+                    className="w-full bg-[#1a3a5c] text-white px-4 py-3 text-xs font-bold flex justify-between items-center hover:bg-[#1a3a5c]/95 transition-colors text-left"
                   >
                     <div className="flex flex-col items-start gap-0.5">
                       <span>{area.area}</span>
-                      <span className="text-[#6b7280] font-normal text-[10px]">{areaTasks.length} tasks</span>
+                      <span className="opacity-60 font-normal text-[10px]">{areaTasks.length} tasks</span>
                     </div>
-                    {isAreaExpanded ? <ChevronUp size={16} className="text-[#6b7280]" /> : <ChevronDown size={16} className="text-[#6b7280]" />}
+                    {isAreaExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
                   
                   <AnimatePresence>

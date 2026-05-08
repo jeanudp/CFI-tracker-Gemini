@@ -1106,7 +1106,7 @@ export default function FlightLesson() {
   };
 
   const acsData = rating ? ALL_ACS[rating.code] : [];
- const flightAreas = rating?.code === 'cfii' ? acsData : acsData.slice(1);
+  const flightAreas = acsData.slice(1);
   const extraEmergenciesCount = (!isIR && (lessonType === 'emergencies' || !lessonType || lessonType === 'review')) ? EMERGENCY_EXTRA_TASKS.length : 0;
   const totalTasks = flightAreas.reduce((acc, area) => acc + area.tasks.length, 0) + extraEmergenciesCount;
   const gradedTasks = Object.values(grades).filter(v => v).length;
