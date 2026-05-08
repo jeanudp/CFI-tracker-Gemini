@@ -1173,7 +1173,7 @@ export const RATINGS = {
   ir:   { label: 'Instrument Rating',   acs: 'FAA-S-ACS-8C',  groundPage: '/ground', flightPage: '/flight' },
   cpl:  { label: 'Commercial Pilot',    acs: 'FAA-S-ACS-7B',  groundPage: '/ground', flightPage: '/flight' },
   cfi:  { label: 'CFI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
-  cfii: { label: 'CFII',               acs: 'FAA-S-ACS-25',   groundPage: '/ground', flightPage: '/flight' },
+  cfii: { label: 'CFII',               acs: 'FAA-S-8081-9E',   groundPage: '/ground', flightPage: '/flight' },
   mei:  { label: 'MEI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
 };
 
