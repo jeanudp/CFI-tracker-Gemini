@@ -3,6 +3,7 @@ import { IR_GROUND_ACS, IR_FLIGHT_ACS } from './constants/irACS';
 import { CPL_ACS } from './constants/cplACS';
 import { CFI_GROUND_ACS } from './constants/cfiGroundACS';
 import { CFI_FLIGHT_ACS } from './constants/cfiFlightACS';
+import { CFII_GROUND_PTS } from './constants/cfiiGroundPTS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -1219,5 +1220,6 @@ export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
       tasks: CPL_ACS[0].tasks
     }
   ],
-  cfi: CFI_GROUND_ACS
+  cfi: CFI_GROUND_ACS,
+  cfii: CFII_GROUND_PTS
 };
