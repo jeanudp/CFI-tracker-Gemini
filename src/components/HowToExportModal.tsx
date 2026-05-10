@@ -50,6 +50,16 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
       step: 8,
       label: "Click Import",
       caption: "Your flights are now in MyFlightbook"
+    },
+    {
+      step: 9,
+      label: "Return to 61 Tracker and confirm the upload",
+      caption: "Click Yes, confirm upload only after MyFlightbook shows the import was successful. Confirming early marks flights as synced."
+    },
+    {
+      step: 10,
+      label: "Report any errors you cannot fix",
+      caption: "If you see errors you cannot resolve yourself, please report them to 61 Tracker support so we can improve the export."
     }
   ];
 
@@ -124,16 +134,8 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
                       {s.step}
                     </div>
                     <div className="pl-2">
-                      <h4 className="font-bold text-sm text-gray-900 mb-3">{s.label}</h4>
-                      <div className="w-full bg-gray-200/50 rounded-xl overflow-hidden border border-gray-200">
-                        <img 
-                          src={`/images/howto/Step ${s.step}.png`}
-                          alt={`Step ${s.step}`}
-                          className="w-full max-h-[180px] object-contain"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <p className="text-[10px] text-gray-500 mt-2 font-medium">
+                      <h4 className="font-bold text-sm text-gray-900 mb-1">{s.label}</h4>
+                      <p className="text-[10px] text-gray-500 font-medium">
                         {s.caption}
                       </p>
                     </div>

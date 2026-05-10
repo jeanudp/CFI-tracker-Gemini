@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import ExportButton from './ExportButton';
 import { Heart } from 'lucide-react';
+import HowToExportModal from './HowToExportModal';
 
 function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: string) {
   if (!medicalClass || !examDateStr || !dobStr) return null;
@@ -108,6 +109,7 @@ export default function CFIHours() {
   const [pendingExportIds, setPendingExportIds] = useState<string[]>([]);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
   const years = Array.from({ length: 11 }, (_, i) => (new Date().getFullYear() + i).toString().slice(-2));
@@ -1179,7 +1181,7 @@ export default function CFIHours() {
               Export Full Logbook
             </button>
             <button
-              onClick={() => window.open('/howto-export', '_blank')}
+              onClick={() => setShowHowTo(true)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] hover:bg-[#f8fafc] transition-all"
             >
               <HelpCircle size={12} />
@@ -1283,6 +1285,8 @@ export default function CFIHours() {
           </div>
         </div>
       </div>
+
+      <HowToExportModal isOpen={showHowTo} onClose={() => setShowHowTo(false)} />
     </div>
   );
 }

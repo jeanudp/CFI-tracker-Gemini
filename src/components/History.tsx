@@ -10,6 +10,7 @@ import EndorsementAdvisor from './EndorsementAdvisor';
 import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
+import HowToExportModal from './HowToExportModal';
 
 const CHECKLIST_PPL = [
   {
@@ -109,6 +110,7 @@ export default function History() {
     dualTime: number;
     isPermanent?: boolean;
   } | null>(null);
+  const [showHowTo, setShowHowTo] = useState(false);
   const [pendingExportLessonIds, setPendingExportLessonIds] = useState<string[]>([]);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
@@ -1751,7 +1753,7 @@ export default function History() {
                       Export Full Logbook
                     </button>
                     <button
-                      onClick={() => window.open('/howto-export', '_blank')}
+                      onClick={() => setShowHowTo(true)}
                       className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
                     >
                       <HelpCircle size={14} />
@@ -3376,6 +3378,7 @@ export default function History() {
         )}
       </AnimatePresence>
 
+      <HowToExportModal isOpen={showHowTo} onClose={() => setShowHowTo(false)} />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
