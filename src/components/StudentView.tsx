@@ -22,7 +22,8 @@ import {
   Trophy,
   Award,
   Sun,
-  Moon
+  Moon,
+  Download
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -98,6 +99,9 @@ export default function StudentView() {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [pendingExportLessonIds, setPendingExportLessonIds] = useState<string[]>([]);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'schedule' | 'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('schedule');
   const [isRequestDatePickerOpen, setIsRequestDatePickerOpen] = useState(false);
@@ -242,6 +246,129 @@ export default function StudentView() {
       setRequestError(err.message || "Failed to send request. Please try again.");
     } finally {
       setRequestLoading(false);
+    }
+  };
+
+  const handleStudentExport = async (newOnly: boolean) => {
+    // 1. Fetch already-exported lesson IDs
+    const { data: exportData } = await supabase
+      .from('student_exports')
+      .select('lesson_ids')
+      .eq('token', token);
+    
+    const alreadyExportedIds = (exportData || []).flatMap(d => d.lesson_ids || []);
+
+    // 2. Filter lessons
+    let listToExport = studentLessons.filter(l => l.type === 'flight');
+    if (newOnly) {
+      listToExport = listToExport.filter(l => !alreadyExportedIds.includes(l.id));
+    }
+
+    if (listToExport.length === 0) {
+      window.alert(newOnly ? "No new lessons to export" : "No lessons to export");
+      return;
+    }
+
+    // 3. Build CSV
+    const headers = [
+      "Date", "Tail Number", "Model", "Total Flight Time", "PIC", "Dual Received", "Solo", "Night", "IMC", 
+      "Simulated Instrument", "Ground Simulator", "Approaches", "Hold", "Landings", "FS Day Landings", 
+      "FS Night Landings", "X-Country", "Night Takeoffs", "Route", "Comments"
+    ];
+
+    const rows = [headers];
+
+    listToExport.forEach(l => {
+      const m = l.meta || {};
+      const row = new Array(headers.length).fill('');
+      
+      // Date conversion: YYYY-MM-DD to M/D/YYYY
+      if (m.date) {
+        const parts = m.date.split('-');
+        if (parts.length === 3) {
+          row[0] = `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
+        }
+      }
+
+      row[1] = m.aircraft || '';
+      row[2] = m.aircraftModel || '';
+      
+      const formatDecimal = (val: any) => {
+        const d = parseFloat(val || 0);
+        return d > 0 ? d.toFixed(1) : '';
+      };
+      
+      const formatInt = (val: any) => {
+        const i = parseInt(val || 0);
+        return i > 0 ? i.toString() : '';
+      };
+
+      row[3] = formatDecimal(m.totalFlight);
+      row[4] = formatDecimal(m.pic);
+      row[5] = formatDecimal(m.dual);
+      row[6] = formatDecimal(m.solo);
+      row[7] = formatDecimal(m.night);
+      row[8] = formatDecimal(m.imc);
+      row[9] = formatDecimal(m.simInst);
+      
+      const groundSim = (parseFloat(m.atd || 0) + parseFloat(m.ftd || 0) + parseFloat(m.ffs || 0));
+      row[10] = groundSim > 0 ? groundSim.toFixed(1) : '';
+      
+      row[11] = formatInt(m.approachCount);
+      row[12] = m.holdPerformed === true ? 'Yes' : '';
+      row[13] = formatInt(m.ldgTotal);
+      row[14] = formatInt(m.ldgDay);
+      row[15] = formatInt(m.ldgNight);
+      
+      const xc = (parseFloat(m.xcDual || 0) + parseFloat(m.xcSolo || 0) + parseFloat(m.xcPic || 0));
+      row[16] = xc > 0 ? xc.toFixed(1) : '';
+      
+      row[17] = formatInt(m.nightTakeoffs);
+      row[18] = m.route || '';
+      row[19] = l.label || '';
+
+      rows.push(row);
+    });
+
+    const csvContent = rows.map(row =>
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `MyFlightBook-Student-${dateStr}.csv`;
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    setPendingExportLessonIds(listToExport.map(l => l.id));
+    setShowExportConfirm(true);
+  };
+
+  const confirmStudentExport = async () => {
+    setExportLoading(true);
+    try {
+      const { error } = await supabase
+        .from('student_exports')
+        .insert({
+          token: token,
+          student_name: studentInfo?.student_name,
+          user_id: studentInfo?.user_id,
+          lesson_ids: pendingExportLessonIds,
+          lesson_count: pendingExportLessonIds.length
+        });
+
+      if (error) throw error;
+      
+      setShowExportConfirm(false);
+      setPendingExportLessonIds([]);
+    } catch (err) {
+      console.error('Error confirming student export:', err);
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -1073,6 +1200,46 @@ export default function StudentView() {
                   {/* Hours Summary Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     <div className="md:col-span-3 bg-white p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] shadow-sm">
+                       <div className="flex justify-end gap-2 mb-6">
+                         <button
+                           onClick={() => handleStudentExport(true)}
+                           className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                         >
+                           <Download size={12} />
+                           Export New
+                         </button>
+                         <button
+                           onClick={() => handleStudentExport(false)}
+                           className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                         >
+                           <Download size={12} />
+                           Export All
+                         </button>
+                       </div>
+                       
+                       {showExportConfirm && (
+                         <div className="w-full bg-amber-50 border border-amber-300 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                           <p className="text-sm font-bold text-[#1a3a5c]">
+                             CSV downloaded — did you successfully upload it to MyFlightbook?
+                           </p>
+                           <div className="flex items-center gap-3">
+                             <button
+                               onClick={confirmStudentExport}
+                               disabled={exportLoading}
+                               className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 transition-all shadow-md disabled:opacity-50"
+                             >
+                               {exportLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                               Yes, confirm upload
+                             </button>
+                             <button
+                               onClick={() => { setShowExportConfirm(false); setPendingExportLessonIds([]); }}
+                               className="px-4 py-2 bg-white text-amber-600 text-xs font-bold rounded-xl border border-amber-300 hover:bg-amber-50 transition-all"
+                             >
+                               Cancel
+                             </button>
+                           </div>
+                         </div>
+                       )}
                        <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
                          <Clock className="text-amber-500" size={20} />
                          <span className="sm:inline hidden">Total Cumulative Training Time</span>
