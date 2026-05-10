@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   GraduationCap, Search, Calendar, Clock, Plane, MapPin, 
   Download, ChevronRight, Loader2, Info, Shield, ChevronDown, 
-  Check, X, Pencil, AlertTriangle, Upload, RefreshCw
+  Check, X, Pencil, AlertTriangle, Upload, RefreshCw, HelpCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -108,6 +108,7 @@ export default function CFIHours() {
   const [pendingExportIds, setPendingExportIds] = useState<string[]>([]);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
   const years = Array.from({ length: 11 }, (_, i) => (new Date().getFullYear() + i).toString().slice(-2));
@@ -1164,23 +1165,34 @@ export default function CFIHours() {
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all"
             >
               <Download size={12} />
-              Export New
+              Export Unsynced
             </button>
             <button
               onClick={() => handleExport(false)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all"
             >
               <Download size={12} />
-              Export All
+              Export Full Logbook
+            </button>
+            <button
+              onClick={() => setShowHowTo(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] hover:bg-[#f8fafc] transition-all"
+            >
+              <HelpCircle size={12} />
+              How To
             </button>
           </div>
         </div>
 
         {showExportConfirm && (
           <div className="w-full bg-[#e4f5ec] border border-[#2d7a4f] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm font-bold text-[#1a3a5c]">
-              CSV downloaded — did you successfully upload it to MyFlightbook?
-            </p>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} className="text-[#e8a020] shrink-0 mt-0.5" />
+              <p className="text-[11px] font-bold text-[#1a3a5c] leading-relaxed">
+                CSV downloaded — return to 61 Tracker and click confirm only after your MyFlightbook import is fully complete. 
+                Confirming early will mark these flights as synced and they will not appear in future Unsynced exports.
+              </p>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={confirmExport}
@@ -1265,6 +1277,63 @@ export default function CFIHours() {
           </div>
         </div>
       </div>
+
+      {/* How To Modal */}
+      <AnimatePresence>
+        {showHowTo && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden relative"
+            >
+              <button
+                onClick={() => setShowHowTo(false)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="p-8 sm:p-10 space-y-8">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black text-[#1a3a5c]">How to Export to MyFlightbook</h2>
+                  <div className="h-1 w-20 bg-[#e8a020] rounded-full" />
+                </div>
+
+                <div className="space-y-6">
+                  {[
+                    { step: 1, text: "Click Export Unsynced to download only flights not yet uploaded, or Export Full Logbook for a complete export. A CSV file will download to your device." },
+                    { step: 2, text: "Go to myflightbook.com and sign in to your account." },
+                    { step: 3, text: "Click Logbook in the top navigation, then select Import from the dropdown menu." },
+                    { step: 4, text: "Click Proceed to Upload, then select the CSV file you just downloaded." },
+                    { step: 5, text: "Review the preview screen carefully. MyFlightbook will flag any potential duplicates before importing. Do not proceed if you see unexpected duplicates." },
+                    { step: 6, text: "Click Import to complete the upload." },
+                    { step: 7, text: "Return to 61 Tracker and click Yes, Confirm Upload in the confirmation banner. Only do this after the import in MyFlightbook is fully complete. Confirming early will mark flights as synced even if the upload failed." }
+                  ].map((s) => (
+                    <div key={s.step} className="flex gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#1a3a5c10] text-[#1a3a5c] flex items-center justify-center text-xs font-black">
+                        {s.step}
+                      </div>
+                      <p className="text-sm font-bold text-[#475569] leading-relaxed pt-1">
+                        <span className="text-[#1a3a5c] block mb-0.5">Step {s.step}</span>
+                        {s.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-[#f8fafc] border-2 border-dashed border-[#dde3ec] rounded-2xl p-12 flex flex-col items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#1a3a5c05] flex items-center justify-center">
+                    <Info size={24} className="text-[#94a3b8]" />
+                  </div>
+                  <p className="text-xs font-bold text-[#94a3b8] uppercase tracking-widest">Screenshots coming soon</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
