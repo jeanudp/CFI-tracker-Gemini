@@ -315,7 +315,10 @@ export default function Layout({ children, user }: LayoutProps) {
             className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
             style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
           >
-            <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderBottom: '1px solid rgba(220,38,38,0.15)' }}>
+            <div className="px-6 py-4 flex items-center justify-between" style={{ 
+              backgroundColor: maydayTab === 'bug' ? 'rgba(220,38,38,0.08)' : 'rgba(232,160,32,0.08)', 
+              borderBottom: maydayTab === 'bug' ? '1px solid rgba(220,38,38,0.15)' : '1px solid rgba(232,160,32,0.15)' 
+            }}>
               <div className="flex items-center gap-2">
                 {maydayTab === 'bug' ? (
                   <AlertTriangle size={18} className="text-[#dc2626]" />
