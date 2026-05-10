@@ -113,7 +113,7 @@ const HowToExport: React.FC = () => {
                 </div>
                 <div className="w-full bg-gray-50 rounded-2xl border border-gray-200 p-2">
                   <img 
-                    src={`/images/howto/Step ${s.step}.png`}
+                    src={`/images/howto/step${s.step}.png`}
                     alt={`Step ${s.step}`}
                     className="w-full max-h-[220px] object-contain rounded-xl"
                     referrerPolicy="no-referrer"
