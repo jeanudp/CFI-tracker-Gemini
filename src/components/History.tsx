@@ -7,9 +7,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
 
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2 } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
-import ExportButton from './ExportButton';
 import { QRCodeSVG } from 'qrcode.react';
 
 const CHECKLIST_PPL = [
@@ -110,6 +109,10 @@ export default function History() {
     dualTime: number;
     isPermanent?: boolean;
   } | null>(null);
+  const [pendingExportLessonIds, setPendingExportLessonIds] = useState<string[]>([]);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -385,6 +388,141 @@ export default function History() {
     }
     
     await finishPermanentDelete(lessonId, lessonLabel);
+  };
+
+  const handleStudentExport = async (newOnly: boolean) => {
+    if (!studentName) return;
+    setExportLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setExportLoading(false);
+        return;
+      }
+
+      const { data: exportRecords } = await supabase
+        .from('student_exports')
+        .select('lesson_ids')
+        .eq('student_name', studentName)
+        .eq('user_id', session.user.id);
+      
+      const alreadyExportedIds: string[] = (exportRecords || []).flatMap(r => r.lesson_ids || []);
+      
+      let lessonsToExport = studentLessons.filter(l => l.type === 'flight');
+      if (newOnly) {
+        lessonsToExport = lessonsToExport.filter(l => !alreadyExportedIds.includes(l.id));
+      }
+
+      if (lessonsToExport.length === 0) {
+        window.alert("No new lessons to export");
+        setExportLoading(false);
+        return;
+      }
+
+      const headers = ["Date", "Tail Number", "Model", "Total Flight Time", "PIC", "Dual Received", "Solo", "Night", "IMC", "Simulated Instrument", "Ground Simulator", "Approaches", "Hold", "Landings", "FS Day Landings", "FS Night Landings", "X-Country", "Night Takeoffs", "Route", "Comments"];
+      
+      const rows = [headers];
+
+      lessonsToExport.forEach(l => {
+        const m = l.meta || {};
+        
+        // Date: convert from YYYY-MM-DD to M/D/YYYY
+        let formattedDate = '';
+        if (m.date) {
+           const parts = m.date.split('-');
+           if (parts.length === 3) {
+             formattedDate = `${parseInt(parts[1])}/${parseInt(parts[2])}/${parseInt(parts[0])}`;
+           }
+        }
+
+        const totalFlight = parseFloat(m.totalFlight || '0');
+        const pic = parseFloat(m.pic || '0');
+        const dual = parseFloat(m.dual || '0');
+        const solo = parseFloat(m.solo || '0');
+        const night = parseFloat(m.night || '0');
+        const imc = parseFloat(m.imc || '0');
+        const simInst = parseFloat(m.simInst || '0');
+        const groundSim = (parseFloat(m.atd || '0') || 0) + (parseFloat(m.ftd || '0') || 0) + (parseFloat(m.ffs || '0') || 0);
+        const approaches = parseInt(m.approachCount || '0');
+        const landings = parseInt(m.ldgTotal || '0');
+        const ldgDay = parseInt(m.ldgDay || '0');
+        const ldgNight = parseInt(m.ldgNight || '0');
+        const xc = (parseFloat(m.xcDual || '0') || 0) + (parseFloat(m.xcSolo || '0') || 0) + (parseFloat(m.xcPic || '0') || 0);
+        const nightTakeoffs = parseInt(m.nightTakeoffs || '0');
+
+        const row = [
+          formattedDate,
+          m.aircraft || '',
+          m.aircraftModel || '',
+          totalFlight > 0 ? totalFlight.toFixed(1) : '',
+          pic > 0 ? pic.toFixed(1) : '',
+          dual > 0 ? dual.toFixed(1) : '',
+          solo > 0 ? solo.toFixed(1) : '',
+          night > 0 ? night.toFixed(1) : '',
+          imc > 0 ? imc.toFixed(1) : '',
+          simInst > 0 ? simInst.toFixed(1) : '',
+          groundSim > 0 ? groundSim.toFixed(1) : '',
+          approaches > 0 ? approaches.toString() : '',
+          m.holdPerformed ? 'Yes' : '',
+          landings > 0 ? landings.toString() : '',
+          ldgDay > 0 ? ldgDay.toString() : '',
+          ldgNight > 0 ? ldgNight.toString() : '',
+          xc > 0 ? xc.toFixed(1) : '',
+          nightTakeoffs > 0 ? nightTakeoffs.toString() : '',
+          m.route || '',
+          l.label || ''
+        ];
+        rows.push(row);
+      });
+
+      const csvContent = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `MyFlightBook-Student-${today}.csv`;
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      setPendingExportLessonIds(lessonsToExport.map(l => l.id));
+      setShowExportConfirm(true);
+    } catch (err) {
+      console.error('Export error:', err);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const confirmStudentExport = async () => {
+    setExportLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setExportLoading(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('student_exports')
+        .insert({
+          student_name: studentName,
+          user_id: session.user.id,
+          token: '',
+          lesson_ids: pendingExportLessonIds,
+          lesson_count: pendingExportLessonIds.length
+        });
+      
+      if (error) throw error;
+      
+      setShowExportConfirm(false);
+      setPendingExportLessonIds([]);
+    } catch (err) {
+      console.error('Finalize export error:', err);
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
@@ -1598,75 +1736,66 @@ export default function History() {
                       );
                     })()}
                   </div>
-                  <ExportButton
-                    onExportCSV={() => {
-                      const toHHMM = (decimal: string | number): string => {
-                        const val = parseFloat(String(decimal)) || 0;
-                        const hours = Math.floor(val);
-                        const minutes = Math.round((val - hours) * 60);
-                        return `${hours}:${String(minutes).padStart(2, '0')}`;
-                      };
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleStudentExport(true)}
+                      className="bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                    >
+                      <Download size={14} />
+                      Export Unsynced Lessons
+                    </button>
+                    <button
+                      onClick={() => handleStudentExport(false)}
+                      className="bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                    >
+                      <Download size={14} />
+                      Export Full Logbook
+                    </button>
+                    <button
+                      onClick={() => setShowHowTo(true)}
+                      className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                    >
+                      <HelpCircle size={14} />
+                      How To
+                    </button>
+                  </div>
 
-                      const downloadCSV = (rows: string[][], filename: string) => {
-                        const csvContent = rows.map(row =>
-                          row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-                        ).join('\n');
-                        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        link.click();
-                        URL.revokeObjectURL(url);
-                      };
-
-                      const headers = [
-                        "Date", "Flight ID", "Model", "ICAO Model", "Tail Number", "Display Tail", "Aircraft ID", "Category/Class", "Approaches", "Hold", "Landings", "FS Night Landings", "FS Day Landings", "X-Country", "Night", "IMC", "Simulated Instrument", "Ground Simulator", "Dual Received", "CFI", "SIC", "PIC", "Total Flight Time", "CFI Time (HH:MM)", "SIC Time (HH:MM)", "PIC (HH:MM)", "Total Flight Time (HH:MM)", "Route", "Flight Properties", "Comments", "Hobbs Start", "Hobbs End", "Engine Start", "Engine End", "Engine Time", "Flight Start", "Flight End", "Flying Time", "Complex", "Controllable pitch prop", "Flaps", "Retract", "Tailwheel", "High Performance", "Turbine", "TAA", "Signature State", "Date of Signature", "CFI Comment", "CFI Certificate", "CFI Name", "CFI Email", "CFI Expiration", "Public", "Approach Name(s)", "Approaches - ILS", "Approaches - Localizer", "Approaches - RNAV/GPS (LNAV)", "Approaches - RNAV/GPS (LPV)", "Checkride - Certified Flight Instructor", "Checkride - ATP", "Checkride - Commercial", "Checkride - Instrument", "Checkride - New Category/Class/Type", "Pilot Flying Time", "Pilot Monitoring Time", "Simulator/Training Device Identifier", "Solo Time", "Takeoffs (any)"
-                      ];
-
-                      const flightLessons = studentLessons.filter(l => l.type === 'flight' && (parseFloat(l.meta?.totalFlight || '0') > 0 || parseFloat(l.meta?.atd || '0') > 0));
-                      const rows = [headers];
-
-                      flightLessons.forEach(l => {
-                        const m = l.meta || {};
-                        const xc = parseFloat(m.xcDual || '0') + parseFloat(m.xcSolo || '0') + parseFloat(m.xcPic || '0');
-                        const catClass = (lessonRating === 'ppl' || lessonRating === 'cpl' || lessonRating === 'ir') ? 'ASEL' : '';
-                        
-                        const row = new Array(headers.length).fill('');
-                        row[0] = m.date || '';
-                        row[2] = m.aircraftModel || '';
-                        row[4] = m.aircraft || '';
-                        row[5] = m.aircraft || '';
-                        row[7] = catClass;
-                        row[8] = m.approachCount || '';
-                        row[9] = m.holdPerformed ? 'Yes' : '';
-                        row[10] = m.ldgTotal || '';
-                        row[11] = m.ldgNight || '';
-                        row[12] = m.ldgDay || '';
-                        row[13] = xc > 0 ? xc.toFixed(1) : '';
-                        row[14] = m.night || '';
-                        row[15] = m.imc || '';
-                        row[16] = m.simInst || '';
-                        row[17] = m.atd || '';
-                        row[18] = m.dual || '';
-                        row[19] = m.dual || '';
-                        row[21] = m.pic || '';
-                        row[22] = m.totalFlight || '';
-                        row[23] = toHHMM(m.dual);
-                        row[25] = toHHMM(m.pic);
-                        row[26] = toHHMM(m.totalFlight);
-                        row[27] = m.route || '';
-                        row[29] = `${l.label}${m.notes ? ': ' + m.notes : ''}`;
-                        row[67] = m.solo || '';
-                        row[68] = m.ldgTotal || '';
-                        rows.push(row);
-                      });
-
-                      const dateStr = new Date().toISOString().split('T')[0];
-                      const filename = `MyFlightBook-${selectedLesson.student_name.replace(/\s+/g, '-')}-${dateStr}.csv`;
-                      downloadCSV(rows, filename);
-                    }}
-                  />
+                  {showExportConfirm && (
+                    <div className="w-full bg-amber-50 border border-amber-300 rounded-xl p-4 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex gap-3">
+                        <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                        <div className="space-y-3">
+                          <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                            CSV downloaded — return here and click confirm only after your MyFlightbook import is fully complete. 
+                            Confirming early will mark these lessons as synced and they will not appear in future Unsynced exports.
+                          </p>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={confirmStudentExport}
+                              disabled={exportLoading}
+                              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                            >
+                              {exportLoading ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={14} />
+                              )}
+                              Yes, confirm upload
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowExportConfirm(false);
+                                setPendingExportLessonIds([]);
+                              }}
+                              className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
@@ -3242,6 +3371,58 @@ export default function History() {
                     </>
                   )}
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showHowTo && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-[480px] overflow-hidden relative"
+            >
+              <button
+                onClick={() => setShowHowTo(false)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="p-8 space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-[#1a3a5c]">How to Export Student Logbook to MyFlightbook</h2>
+                  <p className="text-sm text-gray-500 mt-1">Follow these steps after downloading the CSV file.</p>
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    { step: 1, text: "Click Export Unsynced Lessons to download only lessons not yet uploaded, or Export Full Logbook for a complete export. A CSV file will download to your device." },
+                    { step: 2, text: "Go to myflightbook.com and sign in, or create a free account if needed." },
+                    { step: 3, text: "Click Logbook in the top navigation, then select Import from the dropdown." },
+                    { step: 4, text: "Click Proceed to Upload, then select the CSV file you just downloaded." },
+                    { step: 5, text: "Review the preview screen carefully. MyFlightbook will flag potential duplicates before importing. Do not proceed if you see unexpected duplicates." },
+                    { step: 6, text: "Click Import to complete the upload." },
+                    { step: 7, text: "Return to 61 Tracker and click Yes, Confirm Upload in the confirmation banner. Only do this after the MyFlightbook import is fully complete. Confirming early will mark these lessons as synced and they will not appear in future Unsynced exports." }
+                  ].map((s) => (
+                    <div key={s.step} className="flex gap-4">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-bold">
+                        {s.step}
+                      </div>
+                      <p className="text-xs text-[#475569] leading-relaxed">
+                        {s.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 flex items-center justify-center">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Screenshots coming soon</p>
+                </div>
               </div>
             </motion.div>
           </div>
