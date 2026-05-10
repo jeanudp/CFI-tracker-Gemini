@@ -52,6 +52,7 @@ export interface LessonMeta {
   cfiDidLandings?: boolean;
   cfiDayLandings?: string;
   cfiNightLandings?: string;
+  cfiPic?: string;
   aircraftClass?: 'ASEL' | 'AMEL';
   mePic?: string;
   meDual?: string;
