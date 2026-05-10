@@ -156,6 +156,7 @@ export default function CFIHours() {
           dual_given: parseFloat(lesson.meta?.dual || '0') || 0,
           night_dual: parseFloat(lesson.meta?.nightDual || '0') || 0,
           instrument_given: parseFloat(lesson.meta?.simInst || '0') || 0,
+          cfi_pic: parseFloat(lesson.meta?.totalFlight || '0') || 0,
           day_landings: lesson.meta?.cfiDidLandings ? (parseInt(lesson.meta?.cfiDayLandings || '0') || 0) : 0,
           night_landings: lesson.meta?.cfiDidLandings ? (parseInt(lesson.meta?.cfiNightLandings || '0') || 0) : 0,
           xc_pic: parseFloat(lesson.meta?.xcDual || '0') || 0,
@@ -441,6 +442,7 @@ export default function CFIHours() {
 
   const stats = {
     totalFlight: entries.reduce((sum, e) => sum + (parseFloat(e.total_flight) || 0), 0) + (mfbSummary?.totalFlight || 0),
+    totalPic: entries.reduce((sum, e) => sum + (parseFloat(e.cfi_pic || '0') || 0), 0) + (mfbSummary?.pic || 0),
     totalDual: entries.reduce((sum, e) => sum + (parseFloat(e.dual_given) || 0), 0) + (mfbSummary?.dualGiven || 0),
     nightDual: entries.reduce((sum, e) => sum + (parseFloat(e.night_dual) || 0), 0) + (mfbSummary?.night || 0),
     instrumentGiven: entries.reduce((sum, e) => sum + (parseFloat(e.instrument_given) || 0), 0) + (mfbSummary?.simInst || 0),
@@ -715,7 +717,7 @@ export default function CFIHours() {
     }
 
     const headers = [
-      "Date", "Tail Number", "Model", "Total Flight Time", "CFI", "Night", 
+      "Date", "Tail Number", "Model", "Total Flight Time", "PIC", "Night", 
       "Simulated Instrument", "Approaches", "Hold", "Landings", 
       "FS Day Landings", "FS Night Landings", "X-Country", "Route", "Comments"
     ];
@@ -736,7 +738,9 @@ export default function CFIHours() {
       row[1] = e.aircraft || '';
       row[2] = e.aircraft_model || '';
       row[3] = parseFloat(e.total_flight || 0).toFixed(1);
-      row[4] = parseFloat(e.dual_given || 0).toFixed(1);
+      
+      const picVal = parseFloat(e.cfi_pic || 0);
+      row[4] = picVal > 0 ? picVal.toFixed(1) : '';
       
       const night = parseFloat(e.night_dual || 0);
       row[5] = night > 0 ? night.toFixed(1) : '';
@@ -1118,6 +1122,7 @@ export default function CFIHours() {
           {[
             { label: 'Total Flight', value: stats.totalFlight.toFixed(1), unit: 'hrs' },
             { label: 'Total Dual', value: stats.totalDual.toFixed(1), unit: 'hrs' },
+            { label: 'PIC Time', value: stats.totalPic.toFixed(1), unit: 'hrs' },
             { label: 'XC PIC', value: stats.xcPic.toFixed(1), unit: 'hrs' },
             { label: 'R-ATP XC', value: stats.ratpXc.toFixed(1), unit: 'hrs', badge: 'R-ATP' },
             { label: 'Multi-Engine', value: stats.multiEngine.toFixed(1), unit: 'hrs', badge: 'AMEL' },
@@ -1241,6 +1246,7 @@ export default function CFIHours() {
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Aircraft</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Route</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Total</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">PIC</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">Dual</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">XC PIC</th>
                   <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#64748b]">R-ATP XC</th>
@@ -1265,6 +1271,7 @@ export default function CFIHours() {
                     <td className="px-4 py-3 text-[11px] text-[#475569] whitespace-nowrap">{e.aircraft}</td>
                     <td className="px-4 py-3 text-[11px] text-[#475569] whitespace-nowrap">{e.route || 'Local'}</td>
                     <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b] whitespace-nowrap">{parseFloat(e.total_flight).toFixed(1)}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono font-bold text-[#1e293b] whitespace-nowrap">{parseFloat(e.cfi_pic || '0').toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.dual_given).toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.xc_pic || 0).toFixed(1)}</td>
                     <td className="px-4 py-3 text-[11px] font-mono text-[#475569] whitespace-nowrap">{parseFloat(e.ratp_xc || 0).toFixed(1)}</td>

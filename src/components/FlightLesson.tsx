@@ -81,6 +81,7 @@ export default function FlightLesson() {
     cfiHoldPerformed: false,
     cfiDayLandings: '',
     cfiNightLandings: '',
+    cfiPic: '',
     aircraftClass: 'ASEL',
     mePic: '',
     meDual: '',
@@ -129,8 +130,10 @@ export default function FlightLesson() {
   const [totalFlightError, setTotalFlightError] = useState(false);
   const [nightWarning, setNightWarning] = useState(false);
   const [overallGrade, setOverallGrade] = useState<'' | 'S' | 'N'>('');
+  const [showHoursVerification, setShowHoursVerification] = useState(false);
   const [cfiXcTime, setCfiXcTime] = useState<string>('');
   const cfiXcTimeManuallySet = useRef(false);
+  const cfiPicManuallySet = useRef(false);
   const navigate = useNavigate();
 
   const variants = {
@@ -415,6 +418,7 @@ export default function FlightLesson() {
       cfiDidLandings: false,
       cfiDayLandings: '',
       cfiNightLandings: '',
+      cfiPic: '',
       aircraftClass: 'ASEL',
       mePic: '',
       meDual: '',
@@ -436,6 +440,12 @@ export default function FlightLesson() {
       setCfiXcTime(meta.xcDual || '');
     }
   }, [meta.xcDual]);
+
+  useEffect(() => {
+    if (!cfiPicManuallySet.current && parseFloat(meta.dual || '0') > 0 && meta.totalFlight) {
+      handleMetaChange('cfiPic', meta.totalFlight);
+    }
+  }, [meta.totalFlight, meta.dual]);
 
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
@@ -881,6 +891,7 @@ export default function FlightLesson() {
       cfiDidLandings: meta.cfiDidLandings,
       cfiDayLandings: parseInt(meta.cfiDayLandings || '0') || 0,
       cfiNightLandings: parseInt(meta.cfiNightLandings || '0') || 0,
+      cfiPic: meta.cfiPic,
       aircraftClass: meta.aircraftClass || 'ASEL',
       mePic: meta.mePic,
       meDual: meta.meDual,
@@ -952,6 +963,7 @@ export default function FlightLesson() {
           dual_given: parseFloat(meta.dual || '0') || 0,
           night_dual: parseFloat(meta.nightDual || '0') || 0,
           instrument_given: parseFloat(meta.simInst || '0') || 0,
+          cfi_pic: parseFloat(meta.cfiPic || meta.totalFlight || '0') || 0,
           day_landings: meta.cfiDidLandings ? parseInt(meta.cfiDayLandings || '0') || 0 : 0,
           night_landings: meta.cfiDidLandings ? parseInt(meta.cfiNightLandings || '0') || 0 : 0,
           xc_pic: parseFloat(meta.xcDual || '0') || 0,
@@ -1035,6 +1047,7 @@ export default function FlightLesson() {
       cfiDidLandings: false,
       cfiDayLandings: '',
       cfiNightLandings: '',
+      cfiPic: '',
     });
     localStorage.removeItem('faa_current_lesson_flight');
   };
@@ -2546,6 +2559,24 @@ export default function FlightLesson() {
                                 <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time</p>
                               </div>
                               <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI PIC Time</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={meta.cfiPic || ''} 
+                                    onChange={(e) => {
+                                      handleMetaChange('cfiPic', e.target.value);
+                                      cfiPicManuallySet.current = true;
+                                    }} 
+                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                    placeholder="0.0" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time — edit if different</p>
+                              </div>
+                              <div className="space-y-1">
                                 <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Dual Given</label>
                                 <div className="flex items-center gap-2">
                                   <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
@@ -2759,7 +2790,37 @@ export default function FlightLesson() {
           Back
         </button>
         <button
-          onClick={handleNext}
+          onClick={() => {
+            const flightLogStep = showLessonTypeStep ? 3 : 2;
+            if (currentStep === flightLogStep) {
+              if (!meta.totalFlight || parseFloat(meta.totalFlight) <= 0) {
+                setTotalFlightError(true);
+                setStepValidationError('Total flight time is required.');
+                return;
+              }
+              setTotalFlightError(false);
+
+              const hasNightActivity =
+                parseInt(meta.ldgNight || '0') > 0 ||
+                parseFloat(meta.nightDual || '0') > 0 ||
+                parseFloat(meta.nightPic || '0') > 0 ||
+                parseFloat(meta.nightSolo || '0') > 0 ||
+                parseInt(meta.nightTakeoffs || '0') > 0 ||
+                parseFloat(meta.meNight || '0') > 0;
+
+              const hasNightTime = parseFloat(meta.night || '0') > 0;
+
+              if (hasNightActivity && !hasNightTime) {
+                setNightWarning(true);
+                return;
+              }
+              
+              setStepValidationError(null);
+              setShowHoursVerification(true);
+            } else {
+              handleNext();
+            }
+          }}
           className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2"
         >
           Next: ACS Grading
@@ -3161,6 +3222,167 @@ export default function FlightLesson() {
           </div>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {showHoursVerification && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative"
+            >
+              <button 
+                onClick={() => setShowHoursVerification(false)}
+                className="absolute top-4 right-4 p-2 hover:bg-[#f1f5f9] rounded-full text-[#6b7280] transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="p-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-[#1a3a5c]">Verify Hours Before Grading</h2>
+                  <p className="text-sm text-[#6b7280] mt-1">Review both sets of hours carefully. You can edit any field directly here.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                  {/* Student Hours */}
+                  <div className="space-y-4">
+                    <div className="bg-[#1a3a5c] text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
+                      Student Hours
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Total Flight</label>
+                        <input type="number" step="0.1" value={meta.totalFlight} onChange={(e) => handleMetaChange('totalFlight', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Received</label>
+                        <input type="number" step="0.1" value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Solo</label>
+                        <input type="number" step="0.1" value={meta.solo} onChange={(e) => handleMetaChange('solo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">PIC</label>
+                        <input type="number" step="0.1" value={meta.pic} onChange={(e) => handleMetaChange('pic', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night</label>
+                        <input type="number" step="0.1" value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Sim Inst</label>
+                        <input type="number" step="0.1" value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">IMC</label>
+                        <input type="number" step="0.1" value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">XC Dual</label>
+                        <input type="number" step="0.1" value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">XC Solo</label>
+                        <input type="number" step="0.1" value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Day Landings</label>
+                        <input type="number" step="1" value={meta.ldgDay} onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night Landings</label>
+                        <input type="number" step="1" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Approaches</label>
+                        <input type="number" step="1" value={meta.approachCount} onChange={(e) => handleMetaChange('approachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1 col-span-2 sm:col-span-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Holding</label>
+                        <div className="flex items-center h-[30px]">
+                          <input type="checkbox" checked={meta.holdPerformed} readOnly className="w-4 h-4 text-[#1a3a5c] border-[#dde3ec] rounded" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CFI Hours */}
+                  <div className="space-y-4">
+                    <div className="bg-[#e8a020] text-[#1a3a5c] px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
+                      CFI Hours
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Total</label>
+                        <input type="text" readOnly value={meta.totalFlight || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI PIC</label>
+                        <input type="number" step="0.1" value={meta.cfiPic} onChange={(e) => { handleMetaChange('cfiPic', e.target.value); cfiPicManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Given</label>
+                        <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night Dual</label>
+                        <input type="number" step="0.1" value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Inst Given</label>
+                        <input type="text" readOnly value={meta.simInst || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI XC Time</label>
+                        <input type="number" step="0.1" value={cfiXcTime} onChange={(e) => { setCfiXcTime(e.target.value); cfiXcTimeManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                      </div>
+                      {meta.cfiDidLandings && (
+                        <>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Day Ldg</label>
+                            <input type="number" step="1" value={meta.cfiDayLandings} onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Night Ldg</label>
+                            <input type="number" step="1" value={meta.cfiNightLandings} onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                          </div>
+                        </>
+                      )}
+                      {meta.cfiFlewApproaches && (
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI App</label>
+                          <input type="number" step="1" value={meta.cfiApproachCount} onChange={(e) => handleMetaChange('cfiApproachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-6 border-t border-[#dde3ec]">
+                  <button
+                    onClick={() => setShowHoursVerification(false)}
+                    className="flex-1 px-6 py-3 rounded-xl bg-[#f1f5f9] text-[#6b7280] font-bold text-sm hover:bg-[#e2e8f0] transition-all"
+                  >
+                    Go Back and Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowHoursVerification(false);
+                      handleNext();
+                    }}
+                    className="flex-2 px-8 py-3 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm hover:bg-[#2a5a8c] transition-all shadow-lg"
+                  >
+                    Confirm and Grade
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {nightWarning && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
