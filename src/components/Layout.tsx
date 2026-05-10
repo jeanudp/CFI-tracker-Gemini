@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck, Calendar, Lightbulb } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck, Calendar, Lightbulb, Headset } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 
 interface LayoutProps {
@@ -173,10 +173,20 @@ export default function Layout({ children, user }: LayoutProps) {
           <button
             onClick={() => setMaydayOpen(true)}
             className="w-9 h-9 flex items-center justify-center rounded-lg border transition-all hover:-translate-y-0.5 hover:shadow-md"
-            style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderColor: 'rgba(220,38,38,0.25)', color: '#dc2626' }}
+            style={{ 
+              background: 'linear-gradient(to bottom right, rgba(232,160,32,0.12), rgba(220,38,38,0.12))', 
+              borderColor: 'rgba(232,160,32,0.35)' 
+            }}
             title="Report a problem"
           >
-            <AlertTriangle size={15} />
+            <Headset 
+              size={15} 
+              style={{ 
+                background: 'linear-gradient(to bottom right, #e8a020, #dc2626)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
+            />
           </button>
 
           {/* Navigation dropdown */}
