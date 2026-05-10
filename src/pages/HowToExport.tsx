@@ -41,7 +41,12 @@ const HowToExport: React.FC = () => {
     {
       step: 8,
       label: "Click Import",
-      caption: "Your flights are now in MyFlightbook. Return to 61 Tracker and click Yes Confirm Upload."
+      caption: "Your flights are now in MyFlightbook."
+    },
+    {
+      step: 9,
+      label: "Return to 61 Tracker and confirm the upload",
+      caption: "Click Yes, confirm upload only after MyFlightbook shows the import was successful. This marks your flights as synced so they won't appear in future Unsynced exports."
     }
   ];
 
