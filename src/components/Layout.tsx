@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
-import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck, Calendar } from 'lucide-react';
+import { Plane, LogOut, History as HistoryIcon, BookOpen, WifiOff, BarChart3, Moon, Sun, AlertTriangle, X, Send, Loader2, CheckCircle2, ChevronDown, Menu, User, Home, BookOpenCheck, Calendar, Lightbulb } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 
 interface LayoutProps {
@@ -19,6 +19,7 @@ export default function Layout({ children, user }: LayoutProps) {
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
   const [maydaySuccess, setMaydaySuccess] = useState(false);
+  const [maydayTab, setMaydayTab] = useState<'bug' | 'idea'>('bug');
   const [navOpen, setNavOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
@@ -81,6 +82,7 @@ export default function Layout({ children, user }: LayoutProps) {
         'service_nka0c1g',
         'template_zegp5ps',
         {
+          type: maydayTab,
           page: path,
           user_email: user?.email || 'unknown',
           date: new Date().toLocaleString(),
@@ -315,9 +317,15 @@ export default function Layout({ children, user }: LayoutProps) {
           >
             <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: 'rgba(220,38,38,0.08)', borderBottom: '1px solid rgba(220,38,38,0.15)' }}>
               <div className="flex items-center gap-2">
-                <AlertTriangle size={18} className="text-[#dc2626]" />
+                {maydayTab === 'bug' ? (
+                  <AlertTriangle size={18} className="text-[#dc2626]" />
+                ) : (
+                  <Lightbulb size={18} className="text-[#e8a020]" />
+                )}
                 <div>
-                  <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>Mayday — Report a Problem</h3>
+                  <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>
+                    {maydayTab === 'bug' ? 'Report a Bug' : 'Share an Idea'}
+                  </h3>
                   <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Your feedback goes directly to the developer</p>
                 </div>
               </div>
@@ -329,19 +337,50 @@ export default function Layout({ children, user }: LayoutProps) {
                 <X size={14} />
               </button>
             </div>
+
+            {/* Tab Bar */}
+            <div className="flex border-b" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+              <button
+                onClick={() => { setMaydayTab('bug'); setMaydayText(''); }}
+                className="flex-1 py-3 flex items-center justify-center gap-2 text-[11px] font-bold transition-all"
+                style={{
+                  backgroundColor: maydayTab === 'bug' ? 'var(--bg-secondary)' : 'transparent',
+                  color: maydayTab === 'bug' ? '#dc2626' : 'var(--text-muted)',
+                  borderBottom: maydayTab === 'bug' ? '2px solid #dc2626' : '2px solid transparent'
+                }}
+              >
+                <AlertTriangle size={13} />
+                Report a Bug
+              </button>
+              <button
+                onClick={() => { setMaydayTab('idea'); setMaydayText(''); }}
+                className="flex-1 py-3 flex items-center justify-center gap-2 text-[11px] font-bold transition-all"
+                style={{
+                  backgroundColor: maydayTab === 'idea' ? 'var(--bg-secondary)' : 'transparent',
+                  color: maydayTab === 'idea' ? '#e8a020' : 'var(--text-muted)',
+                  borderBottom: maydayTab === 'idea' ? '2px solid #e8a020' : '2px solid transparent'
+                }}
+              >
+                <Lightbulb size={13} />
+                Share an Idea
+              </button>
+            </div>
+
             <div className="p-6 space-y-4">
-              <div className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
-                📍 Page: {path}
-              </div>
+              {maydayTab === 'bug' && (
+                <div className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
+                  📍 Page: {path}
+                </div>
+              )}
               <textarea
                 value={maydayText}
                 onChange={e => setMaydayText(e.target.value)}
-                placeholder="Describe what went wrong — what you were doing, what you expected, what happened instead..."
+                placeholder={maydayTab === 'bug' ? "Describe what went wrong — what you were doing, what you expected, what happened instead..." : "Tell us your idea for a feature or improvement..."}
                 rows={5}
                 autoFocus
                 className="w-full text-sm rounded-xl px-4 py-3 border resize-none focus:outline-none transition-all"
                 style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                onFocus={e => e.target.style.borderColor = '#dc2626'}
+                onFocus={e => e.target.style.borderColor = maydayTab === 'bug' ? '#dc2626' : '#e8a020'}
                 onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
               />
               <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
@@ -360,7 +399,12 @@ export default function Layout({ children, user }: LayoutProps) {
                 onClick={handleMaydaySend}
                 disabled={!maydayText.trim() || maydaySending || maydaySuccess}
                 className="flex-[2] py-2.5 rounded-xl text-xs font-black text-white transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 hover:shadow-lg"
-                style={{ backgroundColor: maydaySuccess ? '#2d7a4f' : '#dc2626', boxShadow: maydaySuccess ? '0 4px 12px rgba(45,122,79,0.3)' : '0 4px 12px rgba(220,38,38,0.3)' }}
+                style={{ 
+                  backgroundColor: maydaySuccess ? '#2d7a4f' : (maydayTab === 'bug' ? '#dc2626' : '#e8a020'), 
+                  boxShadow: maydaySuccess 
+                    ? '0 4px 12px rgba(45,122,79,0.3)' 
+                    : (maydayTab === 'bug' ? '0 4px 12px rgba(220,38,38,0.3)' : '0 4px 12px rgba(232,160,32,0.3)') 
+                }}
               >
                 {maydaySending ? <Loader2 size={13} className="animate-spin" /> : maydaySuccess ? <CheckCircle2 size={13} /> : <Send size={13} />}
                 {maydaySending ? 'Sending...' : maydaySuccess ? 'Sent!' : 'Send to Developer'}
