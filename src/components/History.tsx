@@ -112,7 +112,6 @@ export default function History() {
   const [pendingExportLessonIds, setPendingExportLessonIds] = useState<string[]>([]);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [showHowTo, setShowHowTo] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -1752,7 +1751,7 @@ export default function History() {
                       Export Full Logbook
                     </button>
                     <button
-                      onClick={() => setShowHowTo(true)}
+                      onClick={() => window.open('/howto-export', '_blank')}
                       className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
                     >
                       <HelpCircle size={14} />
@@ -3377,57 +3376,6 @@ export default function History() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showHowTo && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-[480px] overflow-hidden relative"
-            >
-              <button
-                onClick={() => setShowHowTo(false)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="p-8 space-y-6">
-                <div>
-                  <h2 className="text-xl font-bold text-[#1a3a5c]">How to Export Student Logbook to MyFlightbook</h2>
-                  <p className="text-sm text-gray-500 mt-1">Follow these steps after downloading the CSV file.</p>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { step: 1, text: "Click Export Unsynced Lessons to download only lessons not yet uploaded, or Export Full Logbook for a complete export. A CSV file will download to your device." },
-                    { step: 2, text: "Go to myflightbook.com and sign in, or create a free account if needed." },
-                    { step: 3, text: "Click Logbook in the top navigation, then select Import from the dropdown." },
-                    { step: 4, text: "Click Proceed to Upload, then select the CSV file you just downloaded." },
-                    { step: 5, text: "Review the preview screen carefully. MyFlightbook will flag potential duplicates before importing. Do not proceed if you see unexpected duplicates." },
-                    { step: 6, text: "Click Import to complete the upload." },
-                    { step: 7, text: "Return to 61 Tracker and click Yes, Confirm Upload in the confirmation banner. Only do this after the MyFlightbook import is fully complete. Confirming early will mark these lessons as synced and they will not appear in future Unsynced exports." }
-                  ].map((s) => (
-                    <div key={s.step} className="flex gap-4">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-bold">
-                        {s.step}
-                      </div>
-                      <p className="text-xs text-[#475569] leading-relaxed">
-                        {s.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 flex items-center justify-center">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Screenshots coming soon</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {

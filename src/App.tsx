@@ -25,6 +25,7 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import HowToExport from './pages/HowToExport';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function App() {
@@ -184,6 +185,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/view/:token" element={<StudentView />} />
+        <Route path="/howto-export" element={<HowToExport />} />
 
         <Route
           path="/dashboard"
