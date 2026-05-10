@@ -105,6 +105,9 @@ export default function CFIHours() {
   const [profileDraft, setProfileDraft] = useState({ full_name: '', cert_number: '', re_exp_date: '', home_airport: '', dob: '', medical_class: '', medical_exam_date: '' });
   const [reExpMonth, setReExpMonth] = useState('01');
   const [reExpYear, setReExpYear] = useState(() => new Date().getFullYear().toString().slice(-2));
+  const [pendingExportIds, setPendingExportIds] = useState<string[]>([]);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
   const years = Array.from({ length: 11 }, (_, i) => (new Date().getFullYear() + i).toString().slice(-2));
@@ -699,6 +702,106 @@ export default function CFIHours() {
     downloadCSV(rows, filename);
   };
 
+  const handleExport = (newOnly: boolean) => {
+    let listToExport = entries;
+    if (newOnly) {
+      listToExport = entries.filter(e => !e.exported_at);
+    }
+
+    if (listToExport.length === 0) {
+      window.alert(newOnly ? "No new entries to export" : "No entries to export");
+      return;
+    }
+
+    const headers = [
+      "Date", "Tail Number", "Model", "Total Flight Time", "CFI", "Night", 
+      "Simulated Instrument", "Approaches", "Hold", "Landings", 
+      "FS Day Landings", "FS Night Landings", "X-Country", "Route", "Comments"
+    ];
+
+    const rows = [headers];
+
+    listToExport.forEach(e => {
+      const row = new Array(headers.length).fill('');
+      
+      // Date conversion: YYYY-MM-DD to M/D/YYYY
+      if (e.date) {
+        const parts = e.date.split('-');
+        if (parts.length === 3) {
+          row[0] = `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
+        }
+      }
+
+      row[1] = e.aircraft || '';
+      row[2] = e.aircraft_model || '';
+      row[3] = parseFloat(e.total_flight || 0).toFixed(1);
+      row[4] = parseFloat(e.dual_given || 0).toFixed(1);
+      
+      const night = parseFloat(e.night_dual || 0);
+      row[5] = night > 0 ? night.toFixed(1) : '';
+      
+      const simInst = parseFloat(e.instrument_given || 0);
+      row[6] = simInst > 0 ? simInst.toFixed(1) : '';
+      
+      const approaches = parseInt(e.cfi_approach_count || 0);
+      row[7] = approaches > 0 ? approaches.toString() : '';
+      
+      row[8] = e.cfi_hold_performed === true ? 'Yes' : '';
+      
+      const dLdg = parseInt(e.day_landings || 0);
+      const nLdg = parseInt(e.night_landings || 0);
+      const totalLdg = dLdg + nLdg;
+      row[9] = totalLdg > 0 ? totalLdg.toString() : '';
+      row[10] = dLdg > 0 ? dLdg.toString() : '';
+      row[11] = nLdg > 0 ? nLdg.toString() : '';
+      
+      const xc = parseFloat(e.xc_pic || 0);
+      row[12] = xc > 0 ? xc.toFixed(1) : '';
+      
+      row[13] = e.route || '';
+      row[14] = `CFI instruction — ${e.student_name}`;
+
+      rows.push(row);
+    });
+
+    const csvContent = rows.map(row =>
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `MyFlightBook-CFI-${dateStr}.csv`;
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    setPendingExportIds(listToExport.map(e => e.id));
+    setShowExportConfirm(true);
+  };
+
+  const confirmExport = async () => {
+    setExportLoading(true);
+    try {
+      const { error } = await supabase
+        .from('cfi_hours')
+        .update({ exported_at: new Date().toISOString() })
+        .in('id', pendingExportIds);
+
+      if (error) throw error;
+      
+      await fetchEntries();
+      setShowExportConfirm(false);
+      setPendingExportIds([]);
+    } catch (err) {
+      console.error('Error confirming export:', err);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -1056,15 +1159,46 @@ export default function CFIHours() {
               </label>
               <span className="absolute -top-1.5 -right-1.5 bg-[#e8a020] text-white text-[6px] font-black uppercase px-1 rounded-full">SOON</span>
             </div>
-            <div className="relative">
-              <button disabled className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] cursor-not-allowed opacity-50 hover:bg-[#f8fafc] transition-all">
-                <Download size={12} />
-                Export
-              </button>
-              <span className="absolute -top-1.5 -right-1.5 bg-[#e8a020] text-white text-[6px] font-black uppercase px-1 rounded-full">SOON</span>
-            </div>
+            <button
+              onClick={() => handleExport(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all"
+            >
+              <Download size={12} />
+              Export New
+            </button>
+            <button
+              onClick={() => handleExport(false)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all"
+            >
+              <Download size={12} />
+              Export All
+            </button>
           </div>
         </div>
+
+        {showExportConfirm && (
+          <div className="w-full bg-[#e4f5ec] border border-[#2d7a4f] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm font-bold text-[#1a3a5c]">
+              CSV downloaded — did you successfully upload it to MyFlightbook?
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={confirmExport}
+                disabled={exportLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-[#2d7a4f] text-white text-xs font-bold rounded-xl hover:bg-[#25633f] transition-all shadow-md disabled:opacity-50"
+              >
+                {exportLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Yes, confirm upload
+              </button>
+              <button
+                onClick={() => { setShowExportConfirm(false); setPendingExportIds([]); }}
+                className="px-4 py-2 bg-[#f1f5f9] text-[#64748b] text-xs font-bold rounded-xl border border-[#dde3ec] hover:bg-[#e2e8f0] transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#dde3ec] bg-[#f8fafc] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
