@@ -933,10 +933,8 @@ export default function Schedule() {
           {user && (
             <button
               onClick={() => setMaydayOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg border border-transparent transition-all hover:-translate-y-0.5 hover:shadow-md text-white"
-              style={{ 
-                background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)'
-              }}
+              className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md text-white"
+              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' }}
               title="Report a problem"
             >
               <Headset size={15} color="white" />
