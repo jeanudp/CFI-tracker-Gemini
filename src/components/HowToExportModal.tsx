@@ -103,8 +103,8 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl space-y-2" style={{ backgroundColor: '#fffbeb', borderColor: '#fde68a' }}>
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
-                    <Download size={18} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fef3c7' }}>
+                    <Download size={18} style={{ color: '#d97706' }} />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900">Export Unsynced</h4>
                   <p className="text-xs text-gray-500 leading-relaxed">
@@ -112,8 +112,8 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
                   </p>
                 </div>
                 <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-2" style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }}>
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                    <Download size={18} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#dbeafe' }}>
+                    <Download size={18} style={{ color: '#2563eb' }} />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900">Export Full Logbook</h4>
                   <p className="text-xs text-gray-500 leading-relaxed">
