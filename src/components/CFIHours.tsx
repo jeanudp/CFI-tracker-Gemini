@@ -1187,8 +1187,7 @@ export default function CFIHours() {
             <div className="flex items-start gap-3">
               <AlertTriangle size={18} className="text-[#e8a020] shrink-0 mt-0.5" />
               <p className="text-[11px] font-bold text-[#1a3a5c] leading-relaxed">
-                CSV downloaded — return to 61 Tracker and click confirm only after your MyFlightbook import is fully complete. 
-                Confirming early will mark these flights as synced and they will not appear in future Unsynced exports.
+                Only confirm after verifying your upload was successful in MyFlightbook. Confirming early will mark these flights as synced and hide them from future Unsynced exports.
               </p>
             </div>
             <div className="flex items-center gap-3">
