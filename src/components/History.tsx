@@ -1426,7 +1426,7 @@ export default function History() {
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <button
                     onClick={() => setIsFlightLogOpen(!isFlightLogOpen)}
-                    className="w-full bg-gradient-to-r from-[#f4f5f7] to-[#f8fafc] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
+                    className="w-full bg-[var(--bg-tertiary)] px-4 py-3 flex items-center justify-between hover:bg-[#ebedf0] transition-all border-b border-[#dde3ec]"
                   >
                     <div className="flex items-center gap-2">
                       <Clock size={16} className="text-[#6b7280]" />
