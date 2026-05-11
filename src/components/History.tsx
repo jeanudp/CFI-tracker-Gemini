@@ -1767,8 +1767,7 @@ export default function History() {
                         <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
                         <div className="space-y-3">
                           <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                            CSV downloaded — return here and click confirm only after your MyFlightbook import is fully complete. 
-                            Confirming early will mark these lessons as synced and they will not appear in future Unsynced exports.
+                            Only confirm after verifying your upload was successful in your logbook app. MyFlightbook, ForeFlight, and most electronic logbooks accept this CSV format. Confirming early will mark these flights as synced and hide them from future Unsynced exports.
                           </p>
                           <div className="flex gap-3">
                             <button

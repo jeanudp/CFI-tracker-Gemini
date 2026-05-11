@@ -1231,8 +1231,7 @@ export default function StudentView() {
                            <div className="flex items-start gap-3">
                              <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
                              <p className="text-sm font-bold text-[#1a3a5c]">
-                               CSV downloaded — return to this page and click confirm only after your MyFlightbook import is fully complete. 
-                               Confirming early will mark these lessons as synced and they will not appear in future Unsynced exports.
+                                Only confirm after verifying your upload was successful in your logbook app. MyFlightbook, ForeFlight, and most electronic logbooks accept this CSV format. Confirming early will mark these flights as synced and hide them from future Unsynced exports.
                              </p>
                            </div>
                            <div className="flex items-center gap-3">
