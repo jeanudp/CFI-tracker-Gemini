@@ -1160,16 +1160,16 @@ export default function CFIHours() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleExport(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white text-[11px] font-bold hover:bg-amber-600 transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#fef3c7] text-[#d97706] border border-amber-200 text-[11px] font-bold hover:bg-[#fef3c7]/80 transition-all"
             >
-              <Download size={14} />
+              <Download size={14} style={{ color: '#d97706' }} />
               Export Unsynced
             </button>
             <button
               onClick={() => handleExport(false)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1a3a5c] text-white text-[11px] font-bold hover:bg-[#1a3a5c]/90 transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#dbeafe] text-[#2563eb] border border-blue-200 text-[11px] font-bold hover:bg-[#dbeafe]/80 transition-all"
             >
-              <Download size={14} />
+              <Download size={14} style={{ color: '#2563eb' }} />
               Export Full Logbook
             </button>
             <button
