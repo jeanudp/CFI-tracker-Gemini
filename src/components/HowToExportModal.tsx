@@ -81,9 +81,10 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="relative w-full max-w-[600px] max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+          style={{ backgroundColor: '#ffffff', color: '#111827' }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between p-6 border-b border-gray-100" style={{ backgroundColor: '#ffffff' }}>
             <h2 className="text-xl font-bold text-[#1a3a5c]">Exporting to MyFlightbook</h2>
             <button
               onClick={onClose}
@@ -94,14 +95,14 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide" style={{ backgroundColor: '#ffffff' }}>
             {/* Section 1 */}
             <div className="space-y-4">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">
                 Which export should I use?
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-2">
+                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-2" style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }}>
                   <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
                     <Download size={18} />
                   </div>
@@ -110,7 +111,7 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
                     Only flights not yet uploaded. Use this for regular syncing.
                   </p>
                 </div>
-                <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl space-y-2">
+                <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl space-y-2" style={{ backgroundColor: '#fffbeb', borderColor: '#fde68a' }}>
                   <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
                     <Download size={18} />
                   </div>
@@ -129,7 +130,7 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
               </h3>
               <div className="space-y-6">
                 {steps.map((s) => (
-                  <div key={s.step} className="relative p-5 bg-gray-50 border border-gray-100 rounded-2xl space-y-3">
+                  <div key={s.step} className="relative p-5 bg-gray-50 border border-gray-100 rounded-2xl space-y-3" style={{ backgroundColor: '#f9fafb' }}>
                     <div className="absolute -top-3 -left-3 w-7 h-7 rounded-full bg-[#1a3a5c] text-white flex items-center justify-center text-[10px] font-bold shadow-md shadow-[#1a3a5c]/20">
                       {s.step}
                     </div>
@@ -154,7 +155,7 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-100 bg-gray-50/50">
+          <div className="p-6 border-t border-gray-100 bg-gray-50/50" style={{ backgroundColor: '#f9fafb' }}>
             <button
               onClick={onClose}
               className="w-full bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-[#1a3a5c]/10 active:scale-[0.98]"
