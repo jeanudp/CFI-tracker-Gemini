@@ -930,16 +930,6 @@ export default function Schedule() {
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
         <div className="flex items-center gap-3">
-          {user && (
-            <button
-              onClick={() => setMaydayOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md text-white"
-              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' }}
-              title="Report a problem"
-            >
-              <Headset size={15} color="white" />
-            </button>
-          )}
           {/* 61 numeral mark */}
           <div className="relative">
             <span
@@ -997,6 +987,14 @@ export default function Schedule() {
         <div className="flex items-center gap-3">
           {user && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMaydayOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md text-white shrink-0"
+                style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' }}
+                title="Report a problem"
+              >
+                <Headset size={15} color="white" />
+              </button>
               <AnimatePresence>
                 {(pendingNotifications.length > 0 || showNotificationSuccess) && (
                   <motion.button
