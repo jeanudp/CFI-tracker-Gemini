@@ -220,7 +220,7 @@ export default function History() {
           "relative group flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all",
           selectedLesson?.id === lesson.id
             ? "border-[#1a3a5c] bg-[#d4e8f5]"
-            : "border-[#dde3ec] bg-white hover:border-[#1a3a5c] hover:bg-[#f8fafc]"
+            : "border-[#dde3ec] bg-[var(--bg-secondary)] hover:border-[#1a3a5c] hover:bg-[#f8fafc]"
         )}
       >
         <div
@@ -1046,7 +1046,7 @@ export default function History() {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-white border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
+          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-[var(--bg-secondary)] border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
           sidebarOpen ? "w-[85%] md:w-[300px] translate-x-0" : "w-[85%] md:w-0 -translate-x-full md:translate-x-0"
         )}
       >
@@ -1223,7 +1223,7 @@ export default function History() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 bg-[#f1f5f9] p-3 sm:p-8 overflow-y-auto">
+      <main className="flex-1 min-w-0 bg-[var(--bg-primary)] p-3 sm:p-8 overflow-y-auto">
         {!selectedLesson ? (
           <div className="h-full flex flex-col items-center justify-center text-[#6b7280]">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
@@ -1236,7 +1236,7 @@ export default function History() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="relative bg-white rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
+            <div className="relative bg-[var(--bg-secondary)] rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
               <div className="p-4 sm:p-8 relative">
                 {/* Print-only logo */}
