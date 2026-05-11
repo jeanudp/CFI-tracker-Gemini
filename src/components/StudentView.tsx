@@ -1205,16 +1205,16 @@ export default function StudentView() {
                        <div className="flex justify-end gap-2 mb-6">
                          <button
                            onClick={() => handleStudentExport(true)}
-                           className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                           className="bg-[#fef3c7] hover:bg-[#fef3c7]/80 text-[#d97706] border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
                          >
-                           <Download size={12} />
+                           <Download size={12} style={{ color: '#d97706' }} />
                            Export Unsynced Lessons
                          </button>
                          <button
                            onClick={() => handleStudentExport(false)}
-                           className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                           className="bg-[#dbeafe] hover:bg-[#dbeafe]/80 text-[#2563eb] border border-blue-200 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
                          >
-                           <Download size={12} />
+                           <Download size={12} style={{ color: '#2563eb' }} />
                            Export Full Logbook
                          </button>
                          <button
