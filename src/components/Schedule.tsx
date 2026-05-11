@@ -989,11 +989,14 @@ export default function Schedule() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setMaydayOpen(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md text-white shrink-0"
-                style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)' }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md shrink-0"
+                style={{ 
+                  background: 'rgba(251,191,36,0.15)',
+                  border: '1px solid rgba(239,68,68,0.6)'
+                }}
                 title="Report a problem"
               >
-                <Headset size={15} color="white" />
+                <Headset size={15} color="#dc2626" />
               </button>
               <AnimatePresence>
                 {(pendingNotifications.length > 0 || showNotificationSuccess) && (
