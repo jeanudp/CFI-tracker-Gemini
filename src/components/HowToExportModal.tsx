@@ -102,8 +102,8 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
                 Which export should I use?
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-2" style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }}>
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl space-y-2" style={{ backgroundColor: '#fffbeb', borderColor: '#fde68a' }}>
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
                     <Download size={18} />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900">Export Unsynced</h4>
@@ -111,8 +111,8 @@ const HowToExportModal: React.FC<HowToExportModalProps> = ({ isOpen, onClose }) 
                     Only flights not yet uploaded. Use this for regular syncing.
                   </p>
                 </div>
-                <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-2xl space-y-2" style={{ backgroundColor: '#fffbeb', borderColor: '#fde68a' }}>
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+                <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-2" style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }}>
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
                     <Download size={18} />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900">Export Full Logbook</h4>
