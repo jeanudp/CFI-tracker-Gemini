@@ -1158,33 +1158,30 @@ export default function CFIHours() {
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] cursor-not-allowed opacity-50 hover:bg-[#f8fafc] transition-all">
-                <Upload size={12} />
-                Import
-                <input type="file" className="hidden" disabled />
-              </label>
-              <span className="absolute -top-1.5 -right-1.5 bg-[#e8a020] text-white text-[6px] font-black uppercase px-1 rounded-full">SOON</span>
-            </div>
+            <label className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#dde3ec] text-[11px] font-bold text-[#64748b] cursor-not-allowed opacity-50 bg-[#f8fafc] transition-all">
+              <Upload size={14} />
+              Import
+              <input type="file" className="hidden" disabled />
+            </label>
             <button
               onClick={() => handleExport(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1a3a5c] text-white text-[11px] font-bold hover:bg-[#1a3a5c]/90 transition-all"
             >
-              <Download size={12} />
+              <Download size={14} />
               Export Unsynced
             </button>
             <button
               onClick={() => handleExport(false)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#1a3a5c] hover:bg-[#f8fafc] transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white text-[11px] font-bold hover:bg-amber-600 transition-all"
             >
-              <Download size={12} />
+              <Download size={14} />
               Export Full Logbook
             </button>
             <button
               onClick={() => setShowHowTo(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#dde3ec] text-[10px] font-bold text-[#64748b] hover:bg-[#f8fafc] transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] text-[11px] font-bold hover:bg-[#f8fafc] transition-all"
             >
-              <HelpCircle size={12} />
+              <HelpCircle size={14} />
               How To
             </button>
           </div>
