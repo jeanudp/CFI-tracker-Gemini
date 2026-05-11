@@ -172,21 +172,13 @@ export default function Layout({ children, user }: LayoutProps) {
           {/* Mayday button — icon only */}
           <button
             onClick={() => setMaydayOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg border transition-all hover:-translate-y-0.5 hover:shadow-md"
+            className="w-9 h-9 flex items-center justify-center rounded-lg border border-transparent transition-all hover:-translate-y-0.5 hover:shadow-md text-white"
             style={{ 
-              background: 'linear-gradient(to bottom right, rgba(232,160,32,0.12), rgba(220,38,38,0.12))', 
-              borderColor: 'rgba(232,160,32,0.35)' 
+              background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)'
             }}
             title="Report a problem"
           >
-            <Headset 
-              size={15} 
-              style={{ 
-                background: 'linear-gradient(to bottom right, #e8a020, #dc2626)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}
-            />
+            <Headset size={15} color="white" />
           </button>
 
           {/* Navigation dropdown */}

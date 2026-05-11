@@ -930,6 +930,18 @@ export default function Schedule() {
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
       >
         <div className="flex items-center gap-3">
+          {user && (
+            <button
+              onClick={() => setMaydayOpen(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-transparent transition-all hover:-translate-y-0.5 hover:shadow-md text-white"
+              style={{ 
+                background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)'
+              }}
+              title="Report a problem"
+            >
+              <Headset size={15} color="white" />
+            </button>
+          )}
           {/* 61 numeral mark */}
           <div className="relative">
             <span
@@ -1029,25 +1041,6 @@ export default function Schedule() {
                 <LayoutDashboard size={14} />
                 <span className="text-xs font-bold">Dashboard</span>
               </Link>
-
-              <button
-                onClick={() => setMaydayOpen(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-lg border transition-all hover:-translate-y-0.5 hover:shadow-md"
-                style={{ 
-                  background: 'linear-gradient(to bottom right, rgba(232,160,32,0.12), rgba(220,38,38,0.12))', 
-                  borderColor: 'rgba(232,160,32,0.35)' 
-                }}
-                title="Report a problem"
-              >
-                <Headset 
-                  size={15} 
-                  style={{ 
-                    background: 'linear-gradient(to bottom right, #e8a020, #dc2626)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                  }}
-                />
-              </button>
 
               <div className="relative">
                 <button
