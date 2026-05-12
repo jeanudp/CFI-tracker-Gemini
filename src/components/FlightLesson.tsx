@@ -464,6 +464,12 @@ export default function FlightLesson() {
   }, [meta.aircraftClass, meta.dual]);
 
   useEffect(() => {
+    if (meta.aircraftClass === 'AMEL' && meta.night && meta.night !== '') {
+      handleMetaChange('meNight', meta.night);
+    }
+  }, [meta.aircraftClass, meta.night]);
+
+  useEffect(() => {
     setIsComplexAircraft(!!meta.complex);
   }, [meta.complex]);
 
