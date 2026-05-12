@@ -2,6 +2,10 @@ import { ACSArea } from '../types';
 
 export const MEI_ADDON_FLIGHT_ACS: ACSArea[] = [
   {
+    area: "",
+    tasks: []
+  },
+  {
     area: "I. Fundamentals of Instructing",
     tasks: [
       {

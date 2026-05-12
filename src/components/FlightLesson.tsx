@@ -448,6 +448,12 @@ export default function FlightLesson() {
   }, [meta.totalFlight, meta.dual]);
 
   useEffect(() => {
+    if (meta.meDual && meta.meDual !== '') {
+      handleMetaChange('dual', meta.meDual);
+    }
+  }, [meta.meDual]);
+
+  useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
       JSON.parse(localStorage.getItem('faa_student_info') || '{}').student || '';
     const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
@@ -2265,65 +2271,6 @@ export default function FlightLesson() {
                   </AnimatePresence>
                 </div>
 
-                {/* Group 5.5 — Multi Engine Time (Conditional) */}
-                {meta.aircraftClass === 'AMEL' && (
-                  <div className="bg-white">
-                    <button
-                      onClick={() => setExpandedGroups(prev => ({ ...prev, multi: !prev.multi }))}
-                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#f4f5f7] hover:to-[#f8fafc] transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-2">
-                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multi && "rotate-90")} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed]">Multi Engine Time</span>
-                      </div>
-                      <div className="text-[10px] font-mono text-[#6b7280]">
-                        {meta.totalFlight || '0.0'} hrs
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {expandedGroups.multi && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden bg-[#f5f3ff]"
-                        >
-                          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Total Time</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.totalFlight} readOnly className="w-full text-sm font-mono bg-gray-50 border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi PIC</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.mePic} onChange={(e) => handleMetaChange('mePic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Dual</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.meDual} onChange={(e) => handleMetaChange('meDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Night</label>
-                              <div className="flex items-center gap-2">
-                                <input type="number" step="0.1" value={meta.meNight} onChange={(e) => handleMetaChange('meNight', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-
                 {/* Group 6 — Sim Time */}
                 <div className="bg-white">
                   <button
@@ -2488,7 +2435,7 @@ export default function FlightLesson() {
                                 </div>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Dual</label>
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Dual Received</label>
                                 <div className="flex items-center gap-2">
                                   <input 
                                     type="number" 
@@ -3050,7 +2997,7 @@ export default function FlightLesson() {
               );
             });
 
-           const showExtraEmergencies = !isIR && rating?.code !== 'cfii' && (lessonType === 'emergencies' || !lessonType || lessonType === 'review');
+           const showExtraEmergencies = !isIR && rating?.code !== 'cfii' && (lessonType === 'emergencies' || !lessonType || lessonType === 'review') && rating?.code !== 'mei_addon' && rating?.code !== 'mei_initial';
             const extraEmergencies = showExtraEmergencies ? (
               <React.Fragment key="extra_emergencies">
                 <div className="bg-[#c0392b] text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider flex justify-between items-center">
