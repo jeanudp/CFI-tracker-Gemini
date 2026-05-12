@@ -120,6 +120,7 @@ export default function FlightLesson() {
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
   const [isAutoPopulated, setIsAutoPopulated] = useState(false);
+  const [isComplexAircraft, setIsComplexAircraft] = useState(!!meta.complex);
   const [recentAircraft, setRecentAircraft] = useState<any[]>([]);
   const [showClassToggle, setShowClassToggle] = useState(false);
   const [showAddAircraftModal, setShowAddAircraftModal] = useState(false);
@@ -455,6 +456,10 @@ export default function FlightLesson() {
       handleMetaChange('dual', meta.meDual);
     }
   }, [meta.meDual]);
+
+  useEffect(() => {
+    setIsComplexAircraft(!!meta.complex);
+  }, [meta.complex]);
 
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
@@ -909,7 +914,7 @@ export default function FlightLesson() {
       studentActedAsSafetyPilot: meta.studentActedAsSafetyPilot,
       safetyPilotPic: meta.safetyPilotPic,
       overallGrade,
-      complex: meta.complex === true,
+      complex: isComplexAircraft === true,
     };
 
     const lessonData: any = {
@@ -944,7 +949,7 @@ export default function FlightLesson() {
           aircraft_model: meta.aircraftModel.trim(),
           aircraft_icao: meta.aircraftIcao || '',
           aircraft_class: meta.aircraftClass || 'ASEL',
-          complex: meta.complex === true,
+          complex: isComplexAircraft === true,
           last_used: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           use_count: 1
@@ -1414,17 +1419,16 @@ export default function FlightLesson() {
                       )}
                       
                       <label className="flex items-center gap-2 cursor-pointer group ml-1">
-                        <div className="relative flex items-center justify-center">
-                          <input
-                            type="checkbox"
-                            checked={!!meta.complex}
-                            onChange={(e) => {
-                              handleMetaChange('complex', e.target.checked);
-                            }}
-                            className="peer appearance-none w-3.5 h-3.5 border border-[#dde3ec] rounded bg-white checked:bg-[#1a3a5c] checked:border-[#1a3a5c] transition-all duration-200 cursor-pointer"
-                          />
-                          <Check className="absolute w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200 pointer-events-none" />
-                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isComplexAircraft}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setIsComplexAircraft(checked);
+                            handleMetaChange('complex', checked);
+                          }}
+                          className="w-4 h-4 text-[#1a3a5c] border-[#dde3ec] rounded focus:ring-[#1a3a5c]"
+                        />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Complex aircraft</span>
                       </label>
                     </div>
