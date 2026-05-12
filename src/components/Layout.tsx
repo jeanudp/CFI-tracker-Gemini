@@ -174,12 +174,12 @@ export default function Layout({ children, user }: LayoutProps) {
             onClick={() => setMaydayOpen(true)}
             className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
             style={{ 
-              background: 'rgba(251,191,36,0.15)',
-              border: '1px solid rgba(239,68,68,0.6)'
+              background: '#1a3a5c',
+              border: '2px solid white'
             }}
             title="Report a problem"
           >
-            <Headset size={15} color="#dc2626" />
+            <Headset size={15} color="white" />
           </button>
 
           {/* Navigation dropdown */}

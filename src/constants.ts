@@ -5,6 +5,7 @@ import { CFI_GROUND_ACS } from './constants/cfiGroundACS';
 import { CFI_FLIGHT_ACS } from './constants/cfiFlightACS';
 import { CFII_GROUND_PTS } from './constants/cfiiGroundPTS';
 import { CFII_FLIGHT_PTS } from './constants/cfiiFlightPTS';
+import { MEI_ADDON_GROUND_ACS } from './constants/meiAddonGroundACS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -1192,5 +1193,6 @@ export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
     }
   ],
   cfi: CFI_GROUND_ACS,
-  cfii: CFII_GROUND_PTS
+  cfii: CFII_GROUND_PTS,
+  mei_addon: MEI_ADDON_GROUND_ACS
 };

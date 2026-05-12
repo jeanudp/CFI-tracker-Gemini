@@ -15,6 +15,7 @@ export default function RatingSelection() {
   const [subscription, setSubscription] = useState<any>(null);
   const [loadingSub, setLoadingSub] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [pendingMeiSubType, setPendingMeiSubType] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -58,6 +59,11 @@ export default function RatingSelection() {
   };
 
   const handleSelectRating = (code: string) => {
+    if (code === 'mei') {
+      setPendingMeiSubType('mei');
+      return;
+    }
+
     const rating = (RATINGS as any)[code];
     if (!rating || !rating.groundPage) return;
 
@@ -184,7 +190,8 @@ export default function RatingSelection() {
           const locked = !unlocked && !isComingSoon;
 
           return (
-            <motion.div
+            <React.Fragment key={code}>
+              <motion.div
               key={code}
               whileHover={!isComingSoon ? { y: -3 } : {}}
               onClick={() => !isComingSoon && handleSelectRating(code)}
@@ -221,8 +228,54 @@ export default function RatingSelection() {
                 <div className="text-[10px] text-[#6b7280] mt-1">{locked ? 'Upgrade to unlock' : rating.acs}</div>
               </div>
             </motion.div>
-          );
-        })}
+            {code === 'mei' && pendingMeiSubType === 'mei' && (
+              <div key="mei-subtype-panel" className="col-span-full my-2 bg-white border border-[#dde3ec] rounded-2xl p-6 shadow-xl text-center animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-[#1c2333]">Initial or Add-On?</h3>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setPendingMeiSubType(''); }}
+                    className="p-1 hover:bg-[#f4f5f7] rounded-full transition-colors cursor-pointer"
+                  >
+                    <X size={16} className="text-[#6b7280]" />
+                  </button>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rating = (RATINGS as any)['mei'];
+                      localStorage.setItem('selected_rating', JSON.stringify({ 
+                        code: 'mei', 
+                        ...rating,
+                        subType: 'initial'
+                      }));
+                      navigate('/lesson-type');
+                    }}
+                    className="px-6 py-2 rounded-xl border border-[#dde3ec] text-[#1a3a5c] text-sm font-bold hover:bg-[#f8fafc] transition-colors cursor-pointer"
+                  >
+                    Initial
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rating = (RATINGS as any)['mei'];
+                      localStorage.setItem('selected_rating', JSON.stringify({ 
+                        code: 'mei_addon', 
+                        ...rating,
+                        subType: 'addon'
+                      }));
+                      navigate('/lesson-type');
+                    }}
+                    className="px-6 py-2 rounded-xl bg-[#1a3a5c] text-white text-sm font-bold hover:bg-[#2a5a8c] transition-colors cursor-pointer"
+                  >
+                    Add-On
+                  </button>
+                </div>
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
       </div>
 
       <Link to="/dashboard" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
