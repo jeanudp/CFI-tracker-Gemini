@@ -2514,20 +2514,6 @@ export default function FlightLesson() {
                                 <p className="text-[8px] text-[#6b7280] italic">Auto-filled from Total Flight Time</p>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi PIC</label>
-                                <div className="flex items-center gap-2">
-                                  <input 
-                                    type="number" 
-                                    step="0.1" 
-                                    value={meta.mePic} 
-                                    onChange={(e) => handleMetaChange('mePic', e.target.value)} 
-                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
-                                    placeholder="0.0" 
-                                  />
-                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                </div>
-                              </div>
-                              <div className="space-y-1">
                                 <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Dual Received</label>
                                 <div className="flex items-center gap-2">
                                   <input 
