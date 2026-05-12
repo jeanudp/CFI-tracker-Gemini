@@ -1836,13 +1836,6 @@ export default function FlightLesson() {
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC Dual</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Dual</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
