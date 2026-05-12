@@ -681,7 +681,7 @@ export default function FlightLesson() {
 
         const { data, error } = await supabase
           .from('saved_aircraft')
-          .select('aircraft_model, aircraft_icao, aircraft_class')
+          .select('aircraft_model, aircraft_icao, aircraft_class, complex')
           .eq('user_id', session.user.id)
           .eq('tail_number', meta.aircraft.toUpperCase().trim())
           .maybeSingle();
@@ -691,7 +691,8 @@ export default function FlightLesson() {
             ...prev,
             aircraftModel: data.aircraft_model,
             aircraftIcao: data.aircraft_icao,
-            aircraftClass: data.aircraft_class || 'ASEL'
+            aircraftClass: data.aircraft_class || 'ASEL',
+            complex: data.complex === true
           }));
           setIsAutoPopulated(true);
         } else {
