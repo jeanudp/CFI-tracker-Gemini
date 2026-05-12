@@ -238,6 +238,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
 
   // Step 2 — Rating
   const [selectedRating, setSelectedRating] = useState<string | null>('ppl');
+  const [meiSubType, setMeiSubType] = useState('');
 
   // Step 3 — Prior Hours
   const [priorHours, setPriorHours] = useState<Record<string, string>>({});
@@ -275,7 +276,11 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
       setError('Please select a rating');
       return;
     }
-    if (step === 1 && selectedRating && !isRatingUnlocked(selectedRating)) {
+    
+    // For MEI sub-ratings, we check the base 'mei' lock status
+    const ratingToCheck = (selectedRating === 'mei_addon' || selectedRating === 'mei_initial') ? 'mei' : selectedRating;
+    
+    if (step === 1 && selectedRating && !isRatingUnlocked(ratingToCheck)) {
       setError('This rating requires an upgrade. Please select Private Pilot or upgrade your plan.');
       return;
     }
@@ -546,8 +551,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                     </p>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {Object.entries(RATINGS).map(([code, rating]) => {
-                      const isSelected = selectedRating === code;
+                    {Object.entries(RATINGS).filter(([code]) => !code.includes('_')).map(([code, rating]) => {
+                      const isSelected = selectedRating === code || (code === 'mei' && (selectedRating === 'mei_initial' || selectedRating === 'mei_addon'));
                       const colors = ratingColors[code];
                       const Icon = ratingIcons[code];
                       const unlocked = isRatingUnlocked(code);
@@ -560,7 +565,12 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                           whileTap={unlocked ? { scale: 0.97 } : {}}
                           onClick={() => {
                             if (!unlocked) return;
-                            setSelectedRating(code);
+                            if (code === 'mei') {
+                              setSelectedRating('mei');
+                              setMeiSubType('');
+                            } else {
+                              setSelectedRating(code);
+                            }
                           }}
                           className="relative rounded-2xl border-2 p-5 text-center transition-all flex flex-col items-center gap-3"
                           style={{
@@ -625,6 +635,42 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                       );
                     })}
                   </div>
+
+                  {selectedRating && (selectedRating === 'mei' || selectedRating === 'mei_initial' || selectedRating === 'mei_addon') && (
+                    <div className="mt-4 p-4 rounded-xl border border-[#f5c0bc] bg-[#fdecea] animate-in fade-in slide-in-from-top-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Select pathway:</p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setMeiSubType('initial');
+                            setSelectedRating('mei_initial');
+                          }}
+                          className={cn(
+                            "flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer",
+                            meiSubType === 'initial' 
+                              ? "bg-[#c0392b] text-white shadow-md" 
+                              : "bg-white border border-[#dde3ec] text-[#6b7280]"
+                          )}
+                        >
+                          Initial
+                        </button>
+                        <button
+                          onClick={() => {
+                            setMeiSubType('addon');
+                            setSelectedRating('mei_addon');
+                          }}
+                          className={cn(
+                            "flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer",
+                            meiSubType === 'addon' 
+                              ? "bg-[#c0392b] text-white shadow-md" 
+                              : "bg-white border border-[#dde3ec] text-[#6b7280]"
+                          )}
+                        >
+                          Add-On
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <p className="text-center text-[10px] mt-4" style={{ color: '#6b7280' }}>
                     ASEL only · MEI includes AMEL · Other classes not yet supported.

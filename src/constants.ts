@@ -1176,6 +1176,8 @@ export const RATINGS = {
   cfi:  { label: 'CFI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
   cfii: { label: 'CFII',               acs: 'FAA-S-ACS-25',   groundPage: '/ground', flightPage: '/flight' },
   mei:  { label: 'MEI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
+  mei_addon: { label: 'MEI Add-On', acs: 'FAA-S-ACS-25', groundPage: '/ground', flightPage: '/flight' },
+  mei_initial: { label: 'MEI Initial', acs: 'FAA-S-ACS-25', groundPage: '/ground', flightPage: '/flight' },
 };
 
 export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
