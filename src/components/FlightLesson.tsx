@@ -1829,7 +1829,7 @@ export default function FlightLesson() {
                       >
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Dual Received</label>
+                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">{meta.aircraftClass === 'AMEL' ? 'AMEL Dual Received' : 'ASEL Dual Received'}</label>
                             <div className="flex items-center gap-2">
                               <input type="number" step="0.1" value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
