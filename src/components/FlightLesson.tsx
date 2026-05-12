@@ -2585,7 +2585,7 @@ export default function FlightLesson() {
                                 <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time</p>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI PIC Time</label>
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">{meta.aircraftClass === 'AMEL' ? 'CFI AMEL PIC Time' : 'CFI ASEL PIC Time'}</label>
                                 <div className="flex items-center gap-2">
                                   <input 
                                     type="number" 
