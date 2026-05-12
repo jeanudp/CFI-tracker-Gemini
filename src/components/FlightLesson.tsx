@@ -2379,22 +2379,19 @@ export default function FlightLesson() {
 
                 {/* Multi Engine Time Group */}
                 {meta.aircraftClass === 'AMEL' && (
-                  <div className="bg-white border border-[#dde3ec] rounded-xl shadow-sm overflow-hidden mt-4">
+                  <div className="bg-white">
                     <button
                       type="button"
                       onClick={() => setExpandedGroups(prev => ({ ...prev, multiEngine: !prev.multiEngine }))}
-                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-[#f8fafc] transition-colors"
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#f4f5f7] hover:to-[#f8fafc] transition-all duration-200"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#7c3aed] bg-opacity-10 rounded-lg flex items-center justify-center text-[#7c3aed]">
-                          <Plane size={18} />
-                        </div>
-                        <div className="text-left">
-                          <div className="text-xs font-bold text-[#1c2333]">Multi Engine Time</div>
-                          <div className="text-[10px] text-[#6b7280]">AMEL specific flight hours</div>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multiEngine && "rotate-90")} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed]">Multi Engine Time</span>
                       </div>
-                      <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multiEngine && "rotate-90")} />
+                      <div className="text-[10px] font-mono text-[#6b7280]">
+                        {meta.totalFlight || '0.0'} hrs
+                      </div>
                     </button>
 
                     <AnimatePresence>
