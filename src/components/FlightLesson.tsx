@@ -120,7 +120,7 @@ export default function FlightLesson() {
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
   const [isAutoPopulated, setIsAutoPopulated] = useState(false);
-  const [isComplexAircraft, setIsComplexAircraft] = useState(false);
+  const [isComplexAircraft, setIsComplexAircraft] = useState(!!meta.complex);
   const [recentAircraft, setRecentAircraft] = useState<any[]>([]);
   const [showClassToggle, setShowClassToggle] = useState(false);
   const [showAddAircraftModal, setShowAddAircraftModal] = useState(false);
@@ -913,6 +913,7 @@ export default function FlightLesson() {
       studentActedAsSafetyPilot: meta.studentActedAsSafetyPilot,
       safetyPilotPic: meta.safetyPilotPic,
       overallGrade,
+      complex: meta.complex === true,
     };
 
     const lessonData: any = {
@@ -947,6 +948,7 @@ export default function FlightLesson() {
           aircraft_model: meta.aircraftModel.trim(),
           aircraft_icao: meta.aircraftIcao || '',
           aircraft_class: meta.aircraftClass || 'ASEL',
+          complex: meta.complex === true,
           last_used: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           use_count: 1

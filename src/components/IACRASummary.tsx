@@ -94,9 +94,19 @@ export default function IACRASummary() {
       else totals.dualReceivedASEL += parseFloat(m.dual || '0') || 0;
 
       totals.soloTime += parseFloat(m.solo || '0') || 0;
-      totals.picTime += parseFloat(m.pic || '0') || 0;
-      if (isAMEL) totals.picTimeAMEL += parseFloat(m.pic || '0') || 0;
-      else totals.picTimeASEL += parseFloat(m.pic || '0') || 0;
+      
+      if (m.aselPic !== undefined || m.amelPic !== undefined) {
+        const asel = parseFloat(m.aselPic || '0') || 0;
+        const amel = parseFloat(m.amelPic || '0') || 0;
+        totals.picTimeASEL += asel;
+        totals.picTimeAMEL += amel;
+        totals.picTime += (asel + amel);
+      } else {
+        const picVal = parseFloat(m.pic || '0') || 0;
+        totals.picTime += picVal;
+        if (isAMEL) totals.picTimeAMEL += picVal;
+        else totals.picTimeASEL += picVal;
+      }
 
       totals.xcDual += parseFloat(m.xcDual || '0') || 0;
       totals.xcSolo += parseFloat(m.xcSolo || '0') || 0;
@@ -212,6 +222,7 @@ export default function IACRASummary() {
       row[26] = toHHMM(m.totalFlight);
       row[27] = m.route || '';
       row[29] = `${l.label}${m.notes ? ': ' + m.notes : ''}`;
+      row[38] = m.complex ? '1' : '';
       row[67] = m.solo || '';
       row[68] = m.ldgTotal || '';
       rows.push(row);
