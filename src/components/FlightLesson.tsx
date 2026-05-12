@@ -86,6 +86,9 @@ export default function FlightLesson() {
     mePic: '',
     meDual: '',
     meNight: '',
+    aselPic: '',
+    amelPic: '',
+    complex: false,
     studentActedAsSafetyPilot: false,
     safetyPilotPic: '',
   });
@@ -117,6 +120,7 @@ export default function FlightLesson() {
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
   const [isAutoPopulated, setIsAutoPopulated] = useState(false);
+  const [isComplexAircraft, setIsComplexAircraft] = useState(false);
   const [recentAircraft, setRecentAircraft] = useState<any[]>([]);
   const [showClassToggle, setShowClassToggle] = useState(false);
   const [showAddAircraftModal, setShowAddAircraftModal] = useState(false);
@@ -452,6 +456,10 @@ export default function FlightLesson() {
       handleMetaChange('dual', meta.meDual);
     }
   }, [meta.meDual]);
+
+  useEffect(() => {
+    setIsComplexAircraft(!!meta.complex);
+  }, [meta.complex]);
 
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
@@ -1406,6 +1414,23 @@ export default function FlightLesson() {
                           ))}
                         </div>
                       )}
+                      
+                      <label className="flex items-center gap-2 cursor-pointer group ml-1">
+                        <div className="relative flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={isComplexAircraft}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setIsComplexAircraft(checked);
+                              handleMetaChange('complex', checked);
+                            }}
+                            className="peer appearance-none w-3.5 h-3.5 border border-[#dde3ec] rounded bg-white checked:bg-[#1a3a5c] checked:border-[#1a3a5c] transition-all duration-200 cursor-pointer"
+                          />
+                          <Check className="absolute w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Complex aircraft</span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1682,13 +1707,76 @@ export default function FlightLesson() {
                         className="overflow-hidden bg-[#f8fafc]"
                       >
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">PIC Time</label>
-                            <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.pic} onChange={(e) => handleMetaChange('pic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
-                              <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                          {meta.aircraftClass === 'AMEL' ? (
+                            <>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">AMEL PIC</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={meta.amelPic} 
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      handleMetaChange('amelPic', val);
+                                      const aselVal = parseFloat(meta.aselPic || '0') || 0;
+                                      const amelVal = parseFloat(val || '0') || 0;
+                                      handleMetaChange('pic', (aselVal + amelVal).toFixed(1));
+                                    }} 
+                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                    placeholder="0.0" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ASEL PIC</label>
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    value={meta.aselPic} 
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      handleMetaChange('aselPic', val);
+                                      const aselVal = parseFloat(val || '0') || 0;
+                                      const amelVal = parseFloat(meta.amelPic || '0') || 0;
+                                      handleMetaChange('pic', (aselVal + amelVal).toFixed(1));
+                                    }} 
+                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                    placeholder="0.0" 
+                                  />
+                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                </div>
+                              </div>
+                              <div className="col-span-full mb-[-8px]">
+                                <div className="flex items-center justify-between p-2 bg-gray-50 border border-[#dde3ec] rounded-lg">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Total PIC</span>
+                                  <span className="text-sm font-mono text-[#1a3a5c] font-bold">
+                                    {((parseFloat(meta.amelPic || '0') || 0) + (parseFloat(meta.aselPic || '0') || 0)).toFixed(1)} hrs
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ASEL PIC</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="number" 
+                                  step="0.1" 
+                                  value={meta.aselPic} 
+                                  onChange={(e) => {
+                                    handleMetaChange('pic', e.target.value);
+                                    handleMetaChange('aselPic', e.target.value);
+                                  }} 
+                                  className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                  placeholder="0.0" 
+                                />
+                                <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                              </div>
                             </div>
-                          </div>
+                          )}
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Cross Country PIC</label>
                             <div className="flex items-center gap-2">

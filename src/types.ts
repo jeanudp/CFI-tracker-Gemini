@@ -57,6 +57,9 @@ export interface LessonMeta {
   mePic?: string;
   meDual?: string;
   meNight?: string;
+  aselPic?: string;
+  amelPic?: string;
+  complex?: boolean;
   overallGrade?: string;
   lessonType?: string;
   studentActedAsSafetyPilot?: boolean;
