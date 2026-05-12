@@ -6,6 +6,7 @@ import { CFI_FLIGHT_ACS } from './constants/cfiFlightACS';
 import { CFII_GROUND_PTS } from './constants/cfiiGroundPTS';
 import { CFII_FLIGHT_PTS } from './constants/cfiiFlightPTS';
 import { MEI_ADDON_GROUND_ACS } from './constants/meiAddonGroundACS';
+import { MEI_ADDON_FLIGHT_ACS } from './constants/meiAddonFlightACS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -943,7 +944,9 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
         createPlaceholderTask("After Landing, Parking, and Securing", "ME.VII.A")
       ] 
     }
-  ]
+  ],
+  mei_addon: MEI_ADDON_FLIGHT_ACS,
+  mei_initial: MEI_ADDON_FLIGHT_ACS, // Using addon as placeholder or initial if requested
 };
 
 export const ACS_ELEMENTS: Record<string, string[]> = {
@@ -1196,5 +1199,6 @@ export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
   ],
   cfi: CFI_GROUND_ACS,
   cfii: CFII_GROUND_PTS,
-  mei_addon: MEI_ADDON_GROUND_ACS
+  mei_addon: MEI_ADDON_GROUND_ACS,
+  mei_initial: MEI_ADDON_GROUND_ACS
 };

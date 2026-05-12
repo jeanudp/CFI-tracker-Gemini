@@ -19,6 +19,8 @@ const ratingConfig: Record<string, { bg: string, text: string, light: string, bo
   cfi:  { bg: '#e67e22', text: 'white', light: '#fdf0e4', border: '#e67e22', icon: ClipboardList, label: 'CFI' },
   cfii: { bg: '#16a34a', text: 'white', light: '#e0f5f2', border: '#16a34a', icon: Compass,      label: 'CFII' },
   mei:  { bg: '#c0392b', text: 'white', light: '#fdecea', border: '#c0392b', icon: Navigation,   label: 'MEI' },
+  mei_addon: { bg: '#e85d4a', text: 'white', light: '#fde8e5', border: '#e85d4a', icon: Navigation, label: 'MEI Add-On' },
+  mei_initial: { bg: '#8b1a0f', text: 'white', light: '#f5d5d2', border: '#8b1a0f', icon: Navigation, label: 'MEI Initial' },
 };
 
 function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: string) {
@@ -1590,6 +1592,8 @@ export default function Dashboard() {
                 cfi:  '#d97706',
                 cfii: '#0d9488',
                 mei:  '#dc2626',
+                mei_addon: '#e85d4a',
+                mei_initial: '#8b1a0f',
               };
               const accent = ratingAccents[student.current_rating] || '#2563eb';
 
@@ -1740,6 +1744,8 @@ export default function Dashboard() {
                       cfi: '#e67e22',
                       cfii: '#16a34a',
                       mei: '#c0392b',
+                      mei_addon: '#e85d4a',
+                      mei_initial: '#8b1a0f',
                     };
                     const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
                     

@@ -153,7 +153,7 @@ export default function FlightLesson() {
 
   const isIR = rating?.code === 'ir';
   const isCPL = rating?.code === 'cpl';
-  const isCFI = ['cfi', 'cfii', 'mei'].includes(rating?.code);
+  const isCFI = ['cfi', 'cfii', 'mei', 'mei_addon', 'mei_initial'].includes(rating?.code);
 
   const isPassingGrade = (grade: any) => {
     if (grade === null || grade === undefined || grade === '') return false;
