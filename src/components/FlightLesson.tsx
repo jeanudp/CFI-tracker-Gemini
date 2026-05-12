@@ -914,7 +914,7 @@ export default function FlightLesson() {
       studentActedAsSafetyPilot: meta.studentActedAsSafetyPilot,
       safetyPilotPic: meta.safetyPilotPic,
       overallGrade,
-      complex: meta.complex === true,
+      complex: isComplexAircraft === true,
     };
 
     const lessonData: any = {
@@ -949,7 +949,7 @@ export default function FlightLesson() {
           aircraft_model: meta.aircraftModel.trim(),
           aircraft_icao: meta.aircraftIcao || '',
           aircraft_class: meta.aircraftClass || 'ASEL',
-          complex: meta.complex === true,
+          complex: isComplexAircraft === true,
           last_used: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           use_count: 1
