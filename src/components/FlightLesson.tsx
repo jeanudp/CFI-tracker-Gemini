@@ -2378,7 +2378,7 @@ export default function FlightLesson() {
                 </div>
 
                 {/* Multi Engine Time Group */}
-                {meta.aircraftClass === 'AMEL' && (
+                {(meta.aircraftClass === 'AMEL' || rating?.code === 'mei_addon' || rating?.code === 'mei_initial') && (
                   <div className="bg-white">
                     <button
                       type="button"
