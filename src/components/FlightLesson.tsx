@@ -2476,7 +2476,7 @@ export default function FlightLesson() {
                     >
                       <div className="flex items-center gap-2">
                         <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multiEngine && "rotate-90")} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#7c3aed]">Multi Engine Time</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Multi Engine Time</span>
                       </div>
                       <div className="text-[10px] font-mono text-[#6b7280]">
                         {meta.totalFlight || '0.0'} hrs
