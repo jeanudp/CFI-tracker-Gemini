@@ -458,6 +458,12 @@ export default function FlightLesson() {
   }, [meta.meDual]);
 
   useEffect(() => {
+    if (meta.aircraftClass === 'AMEL' && (!meta.cfiDualAMEL || meta.cfiDualAMEL === '') && meta.dual && meta.dual !== '0.0') {
+      handleMetaChange('cfiDualAMEL', meta.dual);
+    }
+  }, [meta.aircraftClass, meta.dual]);
+
+  useEffect(() => {
     setIsComplexAircraft(!!meta.complex);
   }, [meta.complex]);
 
@@ -907,6 +913,8 @@ export default function FlightLesson() {
       cfiDayLandings: parseInt(meta.cfiDayLandings || '0') || 0,
       cfiNightLandings: parseInt(meta.cfiNightLandings || '0') || 0,
       cfiPic: meta.cfiPic,
+      cfiDualAMEL: meta.cfiDualAMEL,
+      cfiDualASEL: meta.cfiDualASEL,
       aircraftClass: meta.aircraftClass || 'ASEL',
       mePic: meta.mePic,
       meDual: meta.meDual,
@@ -2608,13 +2616,49 @@ export default function FlightLesson() {
                                 </div>
                                 <p className="text-[8px] text-[#94a3b8]">Auto-filled from Total Flight Time — edit if different</p>
                               </div>
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Dual Given</label>
-                                <div className="flex items-center gap-2">
-                                  <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" />
-                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">AMEL Dual Given</label>
+                                  <div className="flex items-center gap-2">
+                                    <input 
+                                      type="number" 
+                                      step="0.1" 
+                                      value={meta.cfiDualAMEL || ''} 
+                                      onChange={(e) => handleMetaChange('cfiDualAMEL', e.target.value)} 
+                                      className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                      placeholder="0.0" 
+                                    />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
                                 </div>
-                                <p className="text-[8px] text-[#94a3b8]">Auto-filled from Dual Received</p>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ASEL Dual Given</label>
+                                  <div className="flex items-center gap-2">
+                                    <input 
+                                      type="number" 
+                                      step="0.1" 
+                                      value={meta.cfiDualASEL || ''} 
+                                      onChange={(e) => handleMetaChange('cfiDualASEL', e.target.value)} 
+                                      className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
+                                      placeholder="0.0" 
+                                    />
+                                    <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                                  </div>
+                                </div>
+                                <div className="col-span-full border-t border-[#f1f5f9] pt-2 mt-1">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#1a3a5c]">Total Dual Given</label>
+                                      <span className="text-sm font-mono font-bold text-[#1a3a5c]">
+                                        {((parseFloat(meta.cfiDualAMEL || '0') || 0) + (parseFloat(meta.cfiDualASEL || '0') || 0)).toFixed(1)} hrs
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-[#94a3b8]">Must equal Dual Received</span>
+                                      <span className="text-xs font-mono text-[#94a3b8]">{meta.dual || '0.0'} hrs</span>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                               <div className="space-y-1">
                                 <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">CFI Night Time</label>
