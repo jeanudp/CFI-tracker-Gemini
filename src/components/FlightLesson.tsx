@@ -294,6 +294,53 @@ export default function FlightLesson() {
     'AI.V.A', 'AI.V.B', 'AI.V.C', 'AI.V.D', 'AI.V.E', 'AI.V.F', 'AI.XIV.A'
   ];
 
+  const MEI_ADDON_LESSON_TYPE_TILES = [
+    {
+      id: 'takeoffs-landings',
+      label: 'Takeoffs and Landings',
+      subtitle: 'Normal, short-field takeoffs and landings, go-arounds',
+      emoji: '🛩️',
+      color: '#1a3a5c',
+      taskCodes: ['AI.VII.A', 'AI.VII.B', 'AI.VII.E', 'AI.VII.F', 'AI.VII.N'],
+    },
+    {
+      id: 'performance',
+      label: 'Performance Maneuvers',
+      subtitle: 'Steep turns, slow flight, power-off, power-on, accelerated stalls',
+      emoji: '📐',
+      color: '#7c3aed',
+      taskCodes: ['AI.IX.A', 'AI.X.A', 'AI.X.C', 'AI.X.D', 'AI.X.E'],
+    },
+    {
+      id: 'emergencies',
+      label: 'Emergencies',
+      subtitle: 'Engine failures, emergency descent, malfunctions, single-engine landing',
+      emoji: '⚠️',
+      color: '#c0392b',
+      taskCodes: ['AI.XII.A', 'AI.XII.C', 'AI.XII.D', 'AI.XII.E', 'AI.XII.F', 'AI.XII.G'],
+    },
+    {
+      id: 'multiengine',
+      label: 'Multiengine Operations',
+      subtitle: 'OEI maneuvering, VMC demo, airspeed and configuration effects',
+      emoji: '✈️',
+      color: '#0d9488',
+      taskCodes: ['AI.XIII.A', 'AI.XIII.B', 'AI.XIII.C'],
+    },
+    {
+      id: 'review',
+      label: 'Full Review',
+      subtitle: 'All MEI Add-On ACS tasks — checkride prep or general review',
+      emoji: '📋',
+      color: '#475569',
+      taskCodes: [],
+    },
+  ];
+
+  const MEI_ADDON_PREFLIGHT_POSTFLIGHT_CODES = [
+    'AI.II.C', 'AI.II.K', 'AI.II.P', 'AI.V.A', 'AI.V.B', 'AI.V.C', 'AI.V.D', 'AI.V.F'
+  ];
+
   const LESSON_TYPE_TILES = [
     {
       id: 'landings',
@@ -360,8 +407,8 @@ export default function FlightLesson() {
   ];
 
   const showLessonTypeStep = rating?.code !== 'ir' && rating?.code !== 'cfii';
-  const activeTiles = isCFI ? CFI_LESSON_TYPE_TILES : (isCPL ? CPL_LESSON_TYPE_TILES : LESSON_TYPE_TILES);
-  const activePrefPostCodes = isCFI ? CFI_PREFLIGHT_POSTFLIGHT_CODES : (isCPL ? CPL_PREFLIGHT_POSTFLIGHT_CODES : PREFLIGHT_POSTFLIGHT_CODES);
+  const activeTiles = (rating?.code === 'mei_addon' || rating?.code === 'mei_initial') ? MEI_ADDON_LESSON_TYPE_TILES : (isCFI ? CFI_LESSON_TYPE_TILES : (isCPL ? CPL_LESSON_TYPE_TILES : LESSON_TYPE_TILES));
+  const activePrefPostCodes = (rating?.code === 'mei_addon' || rating?.code === 'mei_initial') ? MEI_ADDON_PREFLIGHT_POSTFLIGHT_CODES : (isCFI ? CFI_PREFLIGHT_POSTFLIGHT_CODES : (isCPL ? CPL_PREFLIGHT_POSTFLIGHT_CODES : PREFLIGHT_POSTFLIGHT_CODES));
 
   const steps = showLessonTypeStep ? [
     { number: 1, label: 'Lesson Setup', icon: ClipboardList },
