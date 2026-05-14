@@ -155,6 +155,8 @@ export default function CFIHours() {
           route: lesson.meta?.route || '',
           total_flight: parseFloat(lesson.meta?.totalFlight || '0') || 0,
           dual_given: parseFloat(lesson.meta?.dual || '0') || 0,
+          dual_given_amel: parseFloat(lesson.meta?.cfiDualAMEL || '0') || 0,
+          dual_given_asel: parseFloat(lesson.meta?.cfiDualASEL || '0') || 0,
           night_dual: parseFloat(lesson.meta?.nightDual || '0') || 0,
           instrument_given: parseFloat(lesson.meta?.simInst || '0') || 0,
           cfi_pic: parseFloat(lesson.meta?.totalFlight || '0') || 0,
@@ -163,6 +165,7 @@ export default function CFIHours() {
           xc_pic: parseFloat(lesson.meta?.xcDual || '0') || 0,
           ratp_xc: parseFloat(lesson.meta?.ratpXCTime || '0') || 0,
           ratp_xc_eligible: lesson.meta?.ratpXCEligible || false,
+          aircraft_class: lesson.meta?.aircraftClass || 'ASEL',
           rating_code: lesson.meta?.rating_code || 'ppl',
           cfi_approach_count: lesson.meta?.cfiFlewApproaches ? (parseInt(lesson.meta?.cfiApproachCount || '0') || 0) : 0,
           cfi_approach_types: lesson.meta?.cfiFlewApproaches ? (lesson.meta?.cfiApproachTypes || '[]') : '[]',
@@ -452,6 +455,24 @@ export default function CFIHours() {
     xcPic: entries.reduce((sum, e) => sum + (parseFloat(e.xc_pic) || 0), 0) + (mfbSummary?.xc || 0),
     ratpXc: entries.reduce((sum, e) => sum + (parseFloat(e.ratp_xc) || 0), 0),
     multiEngine: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.total_flight) || 0) : 0), 0),
+    
+    // AMEL Breakdowns
+    amelTotal: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.total_flight) || 0) : 0), 0),
+    amelDual: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.dual_given) || 0) : 0), 0) + entries.reduce((sum, e) => sum + (parseFloat(e.dual_given_amel) || 0), 0),
+    amelPic: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.cfi_pic || '0') || 0) : 0), 0),
+    amelNight: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.night_dual) || 0) : 0), 0),
+    amelXc: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.xc_pic) || 0) : 0), 0),
+    amelDayLandings: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseInt(e.day_landings) || 0) : 0), 0),
+    amelNightLandings: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseInt(e.night_landings) || 0) : 0), 0),
+
+    // ASEL Breakdowns (Defaulting null/missing to ASEL)
+    aselTotal: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.total_flight) || 0) : 0), 0),
+    aselDual: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.dual_given) || 0) : 0), 0) + entries.reduce((sum, e) => sum + (parseFloat(e.dual_given_asel) || 0), 0),
+    aselPic: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.cfi_pic || '0') || 0) : 0), 0),
+    aselNight: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.night_dual) || 0) : 0), 0),
+    aselXc: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.xc_pic) || 0) : 0), 0),
+    aselDayLandings: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseInt(e.day_landings) || 0) : 0), 0),
+    aselNightLandings: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseInt(e.night_landings) || 0) : 0), 0),
   };
 
   // Currency calculations
@@ -1126,7 +1147,6 @@ export default function CFIHours() {
             { label: 'PIC Time', value: stats.totalPic.toFixed(1), unit: 'hrs' },
             { label: 'XC PIC', value: stats.xcPic.toFixed(1), unit: 'hrs' },
             { label: 'R-ATP XC', value: stats.ratpXc.toFixed(1), unit: 'hrs', badge: 'R-ATP' },
-            { label: 'Multi-Engine', value: stats.multiEngine.toFixed(1), unit: 'hrs', badge: 'AMEL' },
             { label: 'Night Instruction', value: stats.nightDual.toFixed(1), unit: 'hrs' },
             { label: 'Day Landings', value: stats.dayLandings, unit: 'ldg' },
             { label: 'Night Landings', value: stats.nightLandings, unit: 'ldg' },
@@ -1147,6 +1167,74 @@ export default function CFIHours() {
             </div>
           ))}
         </div>
+
+        {/* Multi-Engine Section */}
+        {(stats.amelTotal > 0 || stats.amelDual > 0 || stats.amelPic > 0) && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Multiengine — AMEL</div>
+              <div className="h-[1px] w-full bg-[#dde3ec] opacity-30" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
+              {[
+                { label: 'AMEL Total', value: stats.amelTotal.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+                { label: 'AMEL Dual Given', value: stats.amelDual.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+                { label: 'AMEL PIC', value: stats.amelPic.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+                { label: 'AMEL Night', value: stats.amelNight.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+                { label: 'AMEL XC PIC', value: stats.amelXc.toFixed(1), unit: 'hrs', badge: 'AMEL' },
+                { label: 'AMEL Day Landings', value: stats.amelDayLandings, unit: 'ldg', badge: 'AMEL' },
+                { label: 'AMEL Night Landings', value: stats.amelNightLandings, unit: 'ldg', badge: 'AMEL' },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white p-3 rounded-xl border border-[#dde3ec] shadow-sm">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="text-[8px] font-bold uppercase tracking-widest text-[#64748b]">{stat.label}</div>
+                    <span className="text-[6px] font-black bg-[#1a3a5c] text-white px-1 py-0.25 rounded">
+                      {stat.badge}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-sm font-bold text-[#1a3a5c]">{stat.value}</span>
+                    <span className="text-[8px] font-mono text-[#94a3b8]">{stat.unit}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Single-Engine Section */}
+        {stats.aselTotal > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Single-Engine — ASEL</div>
+              <div className="h-[1px] w-full bg-[#dde3ec] opacity-30" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
+              {[
+                { label: 'ASEL Total', value: stats.aselTotal.toFixed(1), unit: 'hrs', badge: 'ASEL' },
+                { label: 'ASEL Dual Given', value: stats.aselDual.toFixed(1), unit: 'hrs', badge: 'ASEL' },
+                { label: 'ASEL PIC', value: stats.aselPic.toFixed(1), unit: 'hrs', badge: 'ASEL' },
+                { label: 'ASEL Night', value: stats.aselNight.toFixed(1), unit: 'hrs', badge: 'ASEL' },
+                { label: 'ASEL XC PIC', value: stats.aselXc.toFixed(1), unit: 'hrs', badge: 'ASEL' },
+                { label: 'ASEL Day Landings', value: stats.aselDayLandings, unit: 'ldg', badge: 'ASEL' },
+                { label: 'ASEL Night Landings', value: stats.aselNightLandings, unit: 'ldg', badge: 'ASEL' },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white p-3 rounded-xl border border-[#dde3ec] shadow-sm">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="text-[8px] font-bold uppercase tracking-widest text-[#64748b]">{stat.label}</div>
+                    <span className="text-[6px] font-black bg-[#475569] text-white px-1 py-0.25 rounded">
+                      {stat.badge}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="text-sm font-bold text-[#1a3a5c]">{stat.value}</span>
+                    <span className="text-[8px] font-mono text-[#94a3b8]">{stat.unit}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Section 3: Logbook */}

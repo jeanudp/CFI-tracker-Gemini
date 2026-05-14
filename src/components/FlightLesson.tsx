@@ -1030,6 +1030,8 @@ export default function FlightLesson() {
           route: meta.route || '',
           total_flight: parseFloat(meta.totalFlight || '0') || 0,
           dual_given: parseFloat(meta.dual || '0') || 0,
+          dual_given_amel: parseFloat(meta.cfiDualAMEL || '0') || 0,
+          dual_given_asel: parseFloat(meta.cfiDualASEL || '0') || 0,
           night_dual: parseFloat(meta.nightDual || '0') || 0,
           instrument_given: parseFloat(meta.simInst || '0') || 0,
           cfi_pic: parseFloat(meta.cfiPic || meta.totalFlight || '0') || 0,
