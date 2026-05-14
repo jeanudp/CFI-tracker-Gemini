@@ -458,7 +458,7 @@ export default function CFIHours() {
     
     // AMEL Breakdowns
     amelTotal: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.total_flight) || 0) : 0), 0),
-    amelDual: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.dual_given) || 0) : 0), 0) + entries.reduce((sum, e) => sum + (parseFloat(e.dual_given_amel) || 0), 0),
+    amelDual: entries.reduce((sum, e) => sum + (parseFloat(e.dual_given_amel) || 0), 0),
     amelPic: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.cfi_pic || '0') || 0) : 0), 0),
     amelNight: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.night_dual) || 0) : 0), 0),
     amelXc: entries.reduce((sum, e) => sum + (e.aircraft_class === 'AMEL' ? (parseFloat(e.xc_pic) || 0) : 0), 0),
@@ -467,7 +467,7 @@ export default function CFIHours() {
 
     // ASEL Breakdowns (Defaulting null/missing to ASEL)
     aselTotal: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.total_flight) || 0) : 0), 0),
-    aselDual: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.dual_given) || 0) : 0), 0) + entries.reduce((sum, e) => sum + (parseFloat(e.dual_given_asel) || 0), 0),
+    aselDual: entries.reduce((sum, e) => sum + (parseFloat(e.dual_given_asel) || 0), 0),
     aselPic: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.cfi_pic || '0') || 0) : 0), 0),
     aselNight: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.night_dual) || 0) : 0), 0),
     aselXc: entries.reduce((sum, e) => sum + ((e.aircraft_class === 'ASEL' || !e.aircraft_class) ? (parseFloat(e.xc_pic) || 0) : 0), 0),
