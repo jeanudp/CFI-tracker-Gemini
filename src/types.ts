@@ -66,6 +66,7 @@ export interface LessonMeta {
   lessonType?: string;
   studentActedAsSafetyPilot?: boolean;
   safetyPilotPic?: string;
+  interceptTracking?: boolean;
 }
 
 export interface Lesson {

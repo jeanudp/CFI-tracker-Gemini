@@ -83,6 +83,7 @@ export default function FlightLesson() {
     cfiNightLandings: '',
     cfiPic: '',
     aircraftClass: 'ASEL',
+    interceptTracking: false,
     mePic: '',
     meDual: '',
     meNight: '',
@@ -949,6 +950,7 @@ export default function FlightLesson() {
       approachCount: meta.approachCount,
       approachTypes: meta.approachTypes,
       holdPerformed: meta.holdPerformed,
+      interceptTracking: meta.interceptTracking || false,
       cfiFlewApproaches: meta.cfiFlewApproaches || false,
       cfiApproachCount: parseInt(meta.cfiApproachCount || '0') || 0,
       cfiApproachTypes: meta.cfiApproachTypes || '[]',
@@ -1119,6 +1121,7 @@ export default function FlightLesson() {
       cfiDayLandings: '',
       cfiNightLandings: '',
       cfiPic: '',
+      interceptTracking: false,
     });
     localStorage.removeItem('faa_current_lesson_flight');
   };
@@ -2116,6 +2119,21 @@ export default function FlightLesson() {
                                   <Check size={10} className="absolute left-0.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                                 </div>
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Holding procedure performed this lesson</span>
+                              </label>
+                            </div>
+                            <div className="space-y-1 flex flex-col justify-end">
+                              <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={meta.interceptTracking}
+                                    onChange={(e) => handleMetaChange('interceptTracking', e.target.checked)}
+                                    className="peer sr-only"
+                                  />
+                                  <div className="w-4 h-4 border-2 border-[#dde3ec] rounded bg-white peer-checked:bg-[#1a3a5c] peer-checked:border-[#1a3a5c] transition-all" />
+                                  <Check size={10} className="absolute left-0.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Intercept and Tracking performed</span>
                               </label>
                             </div>
                           </div>
@@ -3560,6 +3578,17 @@ export default function FlightLesson() {
                             type="checkbox" 
                             checked={meta.holdPerformed} 
                             onChange={(e) => handleMetaChange('holdPerformed', e.target.checked)} 
+                            className="w-5 h-5 text-[#1a3a5c] border-[#cbd5e1] rounded cursor-pointer" 
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-[#64748b] uppercase">Tracking</label>
+                        <div className="flex items-center h-[42px]">
+                          <input 
+                            type="checkbox" 
+                            checked={meta.interceptTracking} 
+                            onChange={(e) => handleMetaChange('interceptTracking', e.target.checked)} 
                             className="w-5 h-5 text-[#1a3a5c] border-[#cbd5e1] rounded cursor-pointer" 
                           />
                         </div>
