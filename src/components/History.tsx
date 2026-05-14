@@ -653,6 +653,7 @@ export default function History() {
   const getCumulativeStats = (lessonsToSum = studentLessons) => {
     let totFlight = 0, totDual = 0, totXc = 0, totNight = 0, totNightLdg = 0, totSim = 0, totSolo = 0, totSoloXc = 0, totLdg = 0, totLdgDay = 0, totLdgNight = 0;
     let totAtd = 0, totXcDual = 0, totXcSolo = 0, totXcPic = 0, totAtdInst = 0, totNightDual = 0, totNightPic = 0, totNightTakeoffs = 0, totFtd = 0, totFfs = 0, totAtdSE = 0;
+    let totAmelFlight = 0, totAmelPic = 0, totAmelDual = 0, totAmelDualGiven = 0, totAmelNight = 0, totAmelXc = 0;
     let totFtdInst = 0, totFfsInst = 0, totRatpSimInst = 0, totRatpActualInst = 0;
     let totApproachCount = 0, totHoldPerformed = 0, totRatpXC = 0, totIacraXC = 0;
     const approachTypesFreq: Record<string, number> = {};
@@ -694,6 +695,15 @@ export default function History() {
 
       totApproachCount += parseInt(m.approachCount || '0') || 0;
       if (m.holdPerformed) totHoldPerformed += 1;
+      
+      if (m.aircraftClass === 'AMEL') {
+        totAmelFlight += parseFloat(m.totalFlight || '0') || 0;
+        totAmelDual += parseFloat(m.dual || '0') || 0;
+        totAmelNight += parseFloat(m.night || '0') || 0;
+        totAmelXc += regXC;
+      }
+      totAmelPic += parseFloat(m.amelPic || '0') || 0;
+      totAmelDualGiven += parseFloat(m.cfiDualAMEL || '0') || 0;
       
       try {
         const types = JSON.parse(m.approachTypes || '[]');
@@ -746,6 +756,7 @@ export default function History() {
     return { 
       totFlight, totDual, totXc, totNight, totNightLdg, totSim, totSolo, totSoloXc, totLdg, totLdgDay, totLdgNight,
       totAtd, totXcDual, totXcSolo, totXcPic, totAtdInst, totNightDual, totNightPic, totNightTakeoffs, totFtd, totFfs, totAtdSE, totFtdInst, totFfsInst, picTime,
+      totAmelFlight, totAmelPic, totAmelDual, totAmelDualGiven, totAmelNight, totAmelXc,
       totRatpSimInst, totRatpActualInst, totApproachCount, totHoldPerformed, approachTypesFreq, totRatpXC, totIacraXC
     };
   };
@@ -2060,6 +2071,27 @@ export default function History() {
                                     ))}
                                   </div>
                                 </div>
+
+                                {(stats.totAmelFlight > 0 || stats.totAmelPic > 0 || stats.totAmelDualGiven > 0) && (
+                                  <div>
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Multiengine (AMEL)</h4>
+                                    <div className="space-y-1">
+                                      {[
+                                        ['AMEL Total Flight Time', `${stats.totAmelFlight.toFixed(1)}h`],
+                                        ['AMEL PIC', `${stats.totAmelPic.toFixed(1)}h`],
+                                        ['AMEL Dual Received', `${stats.totAmelDual.toFixed(1)}h`],
+                                        ['AMEL Dual Given as CFI', `${stats.totAmelDualGiven.toFixed(1)}h`],
+                                        stats.totAmelNight > 0 ? ['AMEL Night', `${stats.totAmelNight.toFixed(1)}h`] : null,
+                                        stats.totAmelXc > 0 ? ['AMEL Cross Country', `${stats.totAmelXc.toFixed(1)}h`] : null,
+                                      ].filter(Boolean).map((item: any) => (
+                                        <div key={item[0]} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                          <span className="text-xs text-[#64748b]">{item[0]}</span>
+                                          <span className="text-sm font-bold text-[#1e293b]">{item[1]}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
                                 <div>
                                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
