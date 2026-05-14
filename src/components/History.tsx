@@ -2291,7 +2291,10 @@ export default function History() {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <EndorsementAdvisor studentName={studentName} ratingCode={lessonRating} />
+                  <EndorsementAdvisor 
+                    studentName={studentName} 
+                    ratingCode={lessonRating.startsWith('mei') ? 'mei' : lessonRating.startsWith('cfii') ? 'cfii' : lessonRating} 
+                  />
                 </div>
               </div>
             )}
