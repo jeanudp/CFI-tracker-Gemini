@@ -2486,19 +2486,48 @@ export default function History() {
                       { key: 'A.46', label: 'A.46 — Flight instructor aeronautical knowledge test: 14 CFR § 61.183(f)' },
                       { key: 'A.48', label: 'A.48 — Flight instructor certificate with instrument rating/practical test: 14 CFR §§ 61.183(g) and 61.187(a) and (b)(7)' }
                     ];
-                  } else if (lessonRating === 'mei') {
+                  } else if (['mei', 'mei_addon', 'mei_initial'].includes(lessonRating)) {
                     REQS = [
-                      { section: 'Flight Time Requirements', ref: '§61.195(h)', rows: [
-                        { label: 'CFI certificate held', ref: '§61.183', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld' },
-                        { label: 'Multiengine rating held', ref: '§61.183', have: getManualValue('multiengineHeld'), need: 1, unit: 'rating', mk: 'multiengineHeld' },
-                        { label: 'PIC in multiengine airplane', ref: '§61.195(h)(3)', have: getManualValue('mePic'), need: 5, unit: 'hrs', mk: 'mePic' }
+                      { section: 'Flight Time Requirements', ref: '§61.183 + §61.191', rows: [
+                        { label: 'Commercial Pilot certificate with AMEL class rating held', ref: '§61.183(c)(1)', have: getManualValue('commercialAMELHeld'), need: 1, unit: 'cert', mk: 'commercialAMELHeld' },
+                        { label: 'Instrument rating held', ref: '§61.183(c)(2)(ii)', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld' },
+                        { label: 'CFI certificate held (required for add-on)', ref: '§61.191', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld' },
+                        { 
+                          label: 'PIC in multiengine airplane', 
+                          ref: '§61.183(j)', 
+                          have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.amelPic || '0') || 0), 0), 
+                          need: 15, 
+                          unit: 'hrs' 
+                        },
+                        { 
+                          label: 'Practical test prep dual within preceding 2 calendar months', 
+                          ref: '§61.39(a)(6)(i)', 
+                          have: recentDual, 
+                          need: 3, 
+                          unit: 'hrs', 
+                          note: sixtyDaysStr 
+                        },
+                        { label: 'Logbook endorsement on §61.187(b) areas of operation for multiengine', ref: '§61.183(g)', have: getManualValue('meiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'meiAreasEndorsement' }
                       ]}
                     ];
                     ENDORSEMENTS = [
-                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii)' },
-                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required' },
-                      { key: 'A.46', label: 'A.46 — Flight instructor aeronautical knowledge test: 14 CFR § 61.183(f)' },
-                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g)' }
+                      { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii). I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of Flight Instructor Multiengine Add-On.' },
+                      { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required. I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the airman knowledge test.' },
+                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.183(g) for the multiengine instructor rating. I have determined they are prepared for the Flight Instructor Multiengine Add-On practical test.' }
+                    ];
+                    SOLO_OPTIONS = [
+                      {
+                        id: '1',
+                        label: 'Section 1 — Practical Test Prerequisites',
+                        description: 'Required before the FAA Flight Instructor Multiengine Add-On practical test.',
+                        endorsements: [ENDORSEMENTS[0], ENDORSEMENTS[1]]
+                      },
+                      {
+                        id: '2',
+                        label: 'Section 2 — Practical Test Endorsement',
+                        description: 'Required before the FAA Flight Instructor Multiengine Add-On practical test with a DPE.',
+                        endorsements: [ENDORSEMENTS[2]]
+                      }
                     ];
                   }
 
@@ -2527,7 +2556,7 @@ export default function History() {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49') && allAcsMet;
                   } else if (lessonRating === 'cfii') {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.48') && allAcsMet;
-                  } else if (lessonRating === 'mei') {
+                  } else if (['mei', 'mei_addon', 'mei_initial'].includes(lessonRating)) {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && allAcsMet;
                   }
 
@@ -2547,7 +2576,7 @@ export default function History() {
                     if (ratingCode === 'cpl') return 'Flight Time Requirements — §61.129(a)';
                     if (ratingCode === 'cfi') return 'Flight Time Requirements — §61.183';
                     if (ratingCode === 'cfii') return 'Flight Time Requirements — §61.187(b)';
-                    if (ratingCode === 'mei') return 'Flight Time Requirements — §61.195(h)';
+                    if (['mei', 'mei_addon', 'mei_initial'].includes(ratingCode)) return 'Flight Time Requirements — §61.183 + §61.191';
                     return 'Flight Time Requirements';
                   };
 
