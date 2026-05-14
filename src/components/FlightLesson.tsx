@@ -911,6 +911,8 @@ export default function FlightLesson() {
       dual: meta.dual,
       solo: meta.solo,
       pic: meta.pic,
+      amelPic: meta.amelPic,
+      aselPic: meta.aselPic,
       xcDual: meta.xcDual,
       xcSolo: meta.xcSolo,
       xcPic: meta.xcPic,
