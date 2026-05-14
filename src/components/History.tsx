@@ -2475,9 +2475,9 @@ export default function History() {
                   } else if (lessonRating === 'cfii') {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.183 + §61.187(b)(7) + §61.191', rows: [
-                        { label: 'Commercial Pilot certificate with appropriate category and class rating held', ref: '§61.183(c)(1)', have: getManualValue('commercialHeld'), need: 1, unit: 'cert', mk: 'commercialHeld' },
-                        { label: 'Instrument rating held on pilot certificate', ref: '§61.183(c)(2)', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld' },
-                        { label: 'CFI certificate held (required for add-on)', ref: '§61.191', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld' },
+                        { label: 'Commercial Pilot certificate with appropriate category and class rating held', ref: '§61.183(c)(1)', have: getManualValue('commercialHeld'), need: 1, unit: 'cert', mk: 'commercialHeld', checkbox: true },
+                        { label: 'Instrument rating held on pilot certificate', ref: '§61.183(c)(2)', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld', checkbox: true },
+                        { label: 'CFI certificate held (required for add-on)', ref: '§61.191', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld', checkbox: true },
                         { 
                           label: 'PIC in airplane category', 
                           ref: '§61.183(j)', 
@@ -2485,7 +2485,7 @@ export default function History() {
                           need: 15, 
                           unit: 'hrs' 
                         },
-                        { label: 'Instrument currency under §61.57(c)', ref: '§61.187(b)', have: getManualValue('instRecent'), need: 1, unit: 'current', mk: 'instRecent' },
+                        { label: 'Instrument currency under §61.57(c)', ref: '§61.187(b)', have: getManualValue('instRecent'), need: 1, unit: 'current', mk: 'instRecent', checkbox: true },
                         { 
                           label: 'Practical test prep dual within preceding 2 calendar months', 
                           ref: '§61.39(a)(6)(i)', 
@@ -2494,7 +2494,7 @@ export default function History() {
                           unit: 'hrs', 
                           note: sixtyDaysStr 
                         },
-                        { label: 'Logbook endorsement on §61.187(b)(7) areas of operation for instrument', ref: '§61.183(g)', have: getManualValue('cfiiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'cfiiAreasEndorsement' }
+                        { label: 'Logbook endorsement on §61.187(b)(7) areas of operation for instrument', ref: '§61.183(g)', have: getManualValue('cfiiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'cfiiAreasEndorsement', checkbox: true }
                       ]}
                     ];
                     ENDORSEMENTS = [
@@ -2526,9 +2526,9 @@ export default function History() {
                   } else if (['mei', 'mei_addon', 'mei_initial'].includes(lessonRating)) {
                     REQS = [
                       { section: 'Flight Time Requirements', ref: '§61.183 + §61.191', rows: [
-                        { label: 'Commercial Pilot certificate with AMEL class rating held', ref: '§61.183(c)(1)', have: getManualValue('commercialAMELHeld'), need: 1, unit: 'cert', mk: 'commercialAMELHeld' },
-                        { label: 'Instrument rating held', ref: '§61.183(c)(2)(ii)', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld' },
-                        { label: 'CFI certificate held (required for add-on)', ref: '§61.191', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld' },
+                        { label: 'Commercial Pilot certificate with AMEL class rating held', ref: '§61.183(c)(1)', have: getManualValue('commercialAMELHeld'), need: 1, unit: 'cert', mk: 'commercialAMELHeld', checkbox: true },
+                        { label: 'Instrument rating held', ref: '§61.183(c)(2)(ii)', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld', checkbox: true },
+                        { label: 'CFI certificate held (required for add-on)', ref: '§61.191', have: getManualValue('cfiHeld'), need: 1, unit: 'cert', mk: 'cfiHeld', checkbox: true },
                         { 
                           label: 'PIC in multiengine airplane', 
                           ref: '§61.183(j)', 
@@ -2544,7 +2544,7 @@ export default function History() {
                           unit: 'hrs', 
                           note: sixtyDaysStr 
                         },
-                        { label: 'Logbook endorsement on §61.187(b) areas of operation for multiengine', ref: '§61.183(g)', have: getManualValue('meiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'meiAreasEndorsement' }
+                        { label: 'Logbook endorsement on §61.187(b) areas of operation for multiengine', ref: '§61.183(g)', have: getManualValue('meiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'meiAreasEndorsement', checkbox: true }
                       ]}
                     ];
                     ENDORSEMENTS = [
@@ -2692,6 +2692,29 @@ export default function History() {
                                     {section.rows.map(row => {
                                       const met = row.have >= row.need;
                                       const pct = Math.min(100, Math.round((row.have / row.need) * 100));
+
+                                      if (row.checkbox) {
+                                        return (
+                                          <div key={row.label} className={cn("p-4 flex items-center justify-between gap-4", met && "bg-[#fafffe]")}>
+                                            <div className="flex items-center gap-3">
+                                              <div className="shrink-0">
+                                                <span className="text-[10px] font-bold font-mono text-[#6b7280] bg-[#f4f5f7] px-1.5 py-0.5 rounded">{row.ref}</span>
+                                              </div>
+                                              <div className="text-[13px] font-medium text-[#1c2333] leading-tight">{row.label}</div>
+                                            </div>
+                                            <button 
+                                              onClick={() => handleToggleChecklist(row.mk!, row.have >= 1)}
+                                              className={cn(
+                                                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                                met ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" : "border-[#dde3ec] text-transparent hover:border-[#2a5a8c]"
+                                              )}
+                                            >
+                                              <Check size={14} strokeWidth={3} />
+                                            </button>
+                                          </div>
+                                        );
+                                      }
+
                                       return (
                                         <div key={row.label} className={cn("p-4 flex flex-col sm:flex-row items-start gap-3 sm:gap-4", met && "bg-[#fafffe]")}>
                                           <div className="mt-0.5 shrink-0">
