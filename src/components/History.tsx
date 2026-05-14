@@ -1477,10 +1477,12 @@ export default function History() {
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
                             <div className="space-y-1">
                               {[
+                                selectedLesson.meta?.aircraftClass === 'AMEL' ? ['AMEL Dual Received', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''] : null,
+                                selectedLesson.meta?.aircraftClass === 'AMEL' && (parseFloat(selectedLesson.meta?.aselDual || '0') > 0) ? ['ASEL Dual Received', `${selectedLesson.meta.aselDual}h`] : null,
                                 ['Dual Instruction', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''],
                                 ['Solo Flight Time', selectedLesson.meta?.solo ? `${selectedLesson.meta.solo}h` : ''],
                                 ['Solo XC', selectedLesson.meta?.soloXc ? `${selectedLesson.meta.soloXc}h` : ''],
-                              ].filter(d => d[1]).map(([label, val]) => (
+                              ].filter((d: any) => d && d[1]).map(([label, val]: any) => (
                                 <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
@@ -1494,9 +1496,11 @@ export default function History() {
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
                             <div className="space-y-1">
                               {[
+                                selectedLesson.meta?.aircraftClass === 'AMEL' ? ['AMEL PIC', selectedLesson.meta?.amelPic ? `${selectedLesson.meta.amelPic}h` : ''] : null,
+                                selectedLesson.meta?.aircraftClass === 'AMEL' && (parseFloat(selectedLesson.meta?.aselPic || '0') > 0) ? ['ASEL PIC', `${selectedLesson.meta.aselPic}h`] : null,
                                 ['PIC Time', selectedLesson.meta?.pic ? `${selectedLesson.meta.pic}h` : ''],
                                 ['As CFI', selectedLesson.meta?.cfi ? `${selectedLesson.meta.cfi}h` : ''],
-                              ].filter(d => d[1]).map(([label, val]) => (
+                              ].filter((d: any) => d && d[1]).map(([label, val]: any) => (
                                 <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
@@ -1504,6 +1508,26 @@ export default function History() {
                               ))}
                             </div>
                           </div>
+
+                          {/* CFI Hours (Class Breakdown) */}
+                          {selectedLesson.meta?.aircraftClass === 'AMEL' && ((parseFloat(selectedLesson.meta?.cfiDualAMEL || '0') || 0) > 0 || (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') || 0) > 0) && (
+                            <div>
+                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">CFI Hours (Class Breakdown)</h4>
+                              <div className="space-y-1">
+                                {[
+                                  ['CFI AMEL Dual Given', selectedLesson.meta?.cfiDualAMEL ? `${selectedLesson.meta.cfiDualAMEL}h` : ''],
+                                  ['CFI ASEL Dual Given', (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') > 0) ? `${selectedLesson.meta.cfiDualASEL}h` : ''],
+                                  ['CFI AMEL PIC Time', selectedLesson.meta?.cfiAmelPic ? `${selectedLesson.meta.cfiAmelPic}h` : ''],
+                                  ['Total Dual Given', ((parseFloat(selectedLesson.meta?.cfiDualAMEL || '0') || 0) + (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') || 0)) > 0 ? `${((parseFloat(selectedLesson.meta?.cfiDualAMEL || '0') || 0) + (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') || 0)).toFixed(1)}h` : ''],
+                                ].filter((d: any) => d && d[1]).map(([label, val]: any) => (
+                                  <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                    <span className="text-xs text-[#64748b]">{label}</span>
+                                    <span className="text-sm font-bold text-[#1e293b]">{val}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Group 4 — Cross Country */}
                           <div>
