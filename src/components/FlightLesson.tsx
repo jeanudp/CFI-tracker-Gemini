@@ -505,12 +505,6 @@ export default function FlightLesson() {
   }, [meta.aircraftClass, meta.dual]);
 
   useEffect(() => {
-    if (meta.aircraftClass === 'AMEL' && meta.night && meta.night !== '') {
-      handleMetaChange('meNight', meta.night);
-    }
-  }, [meta.aircraftClass, meta.night]);
-
-  useEffect(() => {
     setIsComplexAircraft(!!meta.complex);
   }, [meta.complex]);
 
@@ -1162,8 +1156,7 @@ export default function FlightLesson() {
         parseFloat(meta.nightDual || '0') > 0 ||
         parseFloat(meta.nightPic || '0') > 0 ||
         parseFloat(meta.nightSolo || '0') > 0 ||
-        parseInt(meta.nightTakeoffs || '0') > 0 ||
-        parseFloat(meta.meNight || '0') > 0;
+        parseInt(meta.nightTakeoffs || '0') > 0;
 
       const hasNightTime = parseFloat(meta.night || '0') > 0;
 
@@ -1621,6 +1614,7 @@ export default function FlightLesson() {
                         <input
                           type="number"
                           step="0.1"
+                          onWheel={(e) => e.currentTarget.blur()}
                           value={meta.totalFlight}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -1651,6 +1645,7 @@ export default function FlightLesson() {
                         type="number"
                         step="1"
                         min="0"
+                        onWheel={(e) => e.currentTarget.blur()}
                         value={meta.ldgDay}
                         onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
                         onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')}
@@ -1667,6 +1662,7 @@ export default function FlightLesson() {
                         type="number"
                         step="1"
                         min="0"
+                        onWheel={(e) => e.currentTarget.blur()}
                         value={meta.ldgNight}
                         onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
                         onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')}
@@ -1722,14 +1718,14 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Solo Flight Time</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.solo} onChange={(e) => handleMetaChange('solo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.solo} onChange={(e) => handleMetaChange('solo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Solo Cross Country</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -1770,13 +1766,19 @@ export default function FlightLesson() {
                                   <input 
                                     type="number" 
                                     step="0.1" 
+                                    onWheel={(e) => e.currentTarget.blur()}
                                     value={meta.amelPic} 
                                     onChange={(e) => {
                                       const val = e.target.value;
-                                      handleMetaChange('amelPic', val);
-                                      const aselVal = parseFloat(meta.aselPic || '0') || 0;
-                                      const amelVal = parseFloat(val || '0') || 0;
-                                      handleMetaChange('pic', (aselVal + amelVal).toFixed(1));
+                                      setMeta(prev => {
+                                        const newMeta = {
+                                          ...prev,
+                                          amelPic: val,
+                                          pic: ((parseFloat(prev.aselPic || '0') || 0) + (parseFloat(val || '0') || 0)).toFixed(1)
+                                        };
+                                        saveToLocal(grades, notes, newMeta);
+                                        return newMeta;
+                                      });
                                     }} 
                                     className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
                                     placeholder="0.0" 
@@ -1790,13 +1792,19 @@ export default function FlightLesson() {
                                   <input 
                                     type="number" 
                                     step="0.1" 
+                                    onWheel={(e) => e.currentTarget.blur()}
                                     value={meta.aselPic} 
                                     onChange={(e) => {
                                       const val = e.target.value;
-                                      handleMetaChange('aselPic', val);
-                                      const aselVal = parseFloat(val || '0') || 0;
-                                      const amelVal = parseFloat(meta.amelPic || '0') || 0;
-                                      handleMetaChange('pic', (aselVal + amelVal).toFixed(1));
+                                      setMeta(prev => {
+                                        const newMeta = {
+                                          ...prev,
+                                          aselPic: val,
+                                          pic: ((parseFloat(val || '0') || 0) + (parseFloat(prev.amelPic || '0') || 0)).toFixed(1)
+                                        };
+                                        saveToLocal(grades, notes, newMeta);
+                                        return newMeta;
+                                      });
                                     }} 
                                     className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
                                     placeholder="0.0" 
@@ -1820,6 +1828,7 @@ export default function FlightLesson() {
                                 <input 
                                   type="number" 
                                   step="0.1" 
+                                  onWheel={(e) => e.currentTarget.blur()}
                                   value={meta.aselPic} 
                                   onChange={(e) => {
                                     handleMetaChange('pic', e.target.value);
@@ -1835,14 +1844,14 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Cross Country PIC</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xcPic} onChange={(e) => handleMetaChange('xcPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcPic} onChange={(e) => handleMetaChange('xcPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night PIC</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.nightPic} onChange={(e) => handleMetaChange('nightPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.nightPic} onChange={(e) => handleMetaChange('nightPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -1878,14 +1887,14 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">{meta.aircraftClass === 'AMEL' ? 'AMEL Dual Received' : 'ASEL Dual Received'}</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Dual</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -1923,7 +1932,7 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Simulated Instrument</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                             <p className="text-[8px] text-[#6b7280] italic">Foggles or view limiting device in actual aircraft</p>
@@ -1931,7 +1940,7 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Actual Instrument</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                             <p className="text-[8px] text-[#6b7280] italic">Flight in actual IMC conditions</p>
@@ -1939,7 +1948,7 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Instrument on Simulator</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                             <p className="text-[8px] text-[#6b7280] italic">Instrument procedures in ATD FTD or FFS</p>
@@ -1981,6 +1990,7 @@ export default function FlightLesson() {
                                         <input 
                                           type="number" 
                                           step="0.1" 
+                                          onWheel={(e) => e.currentTarget.blur()}
                                           value={meta.safetyPilotPic} 
                                           onChange={(e) => handleMetaChange('safetyPilotPic', e.target.value)} 
                                           className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
@@ -2034,6 +2044,7 @@ export default function FlightLesson() {
                               <div className="flex items-center gap-2">
                                 <input 
                                   type="number" 
+                                  onWheel={(e) => e.currentTarget.blur()}
                                   value={meta.approachCount} 
                                   onChange={(e) => handleMetaChange('approachCount', e.target.value)} 
                                   className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
@@ -2272,21 +2283,21 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC Dual</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC Solo</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">XC PIC</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.xcPic} onChange={(e) => handleMetaChange('xcPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcPic} onChange={(e) => handleMetaChange('xcPic', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
@@ -2340,6 +2351,7 @@ export default function FlightLesson() {
                                       <input
                                         type="number"
                                         step="0.1"
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         value={meta.ratpXCTime}
                                         onChange={(e) => handleMetaChange('ratpXCTime', e.target.value)}
                                         placeholder="0.0"
@@ -2387,14 +2399,14 @@ export default function FlightLesson() {
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night (Total)</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="0.1" value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                             </div>
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Night Takeoffs</label>
                             <div className="flex items-center gap-2">
-                              <input type="number" step="1" min="0" value={meta.nightTakeoffs} onChange={(e) => handleMetaChange('nightTakeoffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
+                              <input type="number" step="1" min="0" onWheel={(e) => e.currentTarget.blur()} value={meta.nightTakeoffs} onChange={(e) => handleMetaChange('nightTakeoffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0" />
                               <span className="text-[10px] text-[#6b7280] font-mono">count</span>
                             </div>
                           </div>
@@ -2454,14 +2466,14 @@ export default function FlightLesson() {
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Total Time</label>
                                   <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={meta.atd} onChange={(e) => handleMetaChange('atd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.atd} onChange={(e) => handleMetaChange('atd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                     <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">ATD Instrument Time</label>
                                   <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                     <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                   </div>
                                 </div>
@@ -2472,14 +2484,14 @@ export default function FlightLesson() {
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Time</label>
                                   <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.ftd} onChange={(e) => handleMetaChange('ftd', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                     <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FTD Instrument Time</label>
                                   <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={meta.ftdInst} onChange={(e) => handleMetaChange('ftdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.ftdInst} onChange={(e) => handleMetaChange('ftdInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                     <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                   </div>
                                 </div>
@@ -2490,14 +2502,14 @@ export default function FlightLesson() {
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Time</label>
                                   <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.ffs} onChange={(e) => handleMetaChange('ffs', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                     <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1">
                                   <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">FFS Instrument Time</label>
                                   <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={meta.ffsInst} onChange={(e) => handleMetaChange('ffsInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
+                                    <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.ffsInst} onChange={(e) => handleMetaChange('ffsInst', e.target.value)} className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" placeholder="0.0" />
                                     <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                                   </div>
                                 </div>
@@ -2512,68 +2524,6 @@ export default function FlightLesson() {
                     )}
                   </AnimatePresence>
                 </div>
-
-                {/* Multi Engine Time Group */}
-                {(meta.aircraftClass === 'AMEL' || rating?.code === 'mei_addon' || rating?.code === 'mei_initial') && (
-                  <div className="bg-white">
-                    <button
-                      type="button"
-                      onClick={() => setExpandedGroups(prev => ({ ...prev, multiEngine: !prev.multiEngine }))}
-                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-[#f4f5f7] hover:to-[#f8fafc] transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-2">
-                        <ChevronRight size={12} className={cn("text-[#6b7280] transition-transform", expandedGroups.multiEngine && "rotate-90")} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">Multi Engine Time</span>
-                      </div>
-                      <div className="text-[10px] font-mono text-[#6b7280]">
-                        {meta.totalFlight || '0.0'} hrs
-                      </div>
-                    </button>
-
-                    <AnimatePresence>
-                      {expandedGroups.multiEngine && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="p-4 bg-[#f8fafc] border-t border-[#dde3ec] space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Total Time</label>
-                                <div className="flex items-center gap-2">
-                                  <input 
-                                    type="number" 
-                                    readOnly 
-                                    value={meta.totalFlight} 
-                                    className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1 text-[#64748b]" 
-                                  />
-                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                </div>
-                                <p className="text-[8px] text-[#6b7280] italic">Auto-filled from Total Flight Time</p>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Multi Night</label>
-                                <div className="flex items-center gap-2">
-                                  <input 
-                                    type="number" 
-                                    step="0.1" 
-                                    value={meta.meNight} 
-                                    onChange={(e) => handleMetaChange('meNight', e.target.value)} 
-                                    className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
-                                    placeholder="0.0" 
-                                  />
-                                  <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
 
                 {/* CFI Hours — Always last group unless student flew solo */}
                 {!meta.studentFlewSolo && (
@@ -2616,6 +2566,7 @@ export default function FlightLesson() {
                                   <input 
                                     type="number" 
                                     step="0.1" 
+                                    onWheel={(e) => e.currentTarget.blur()}
                                     value={meta.cfiPic || ''} 
                                     onChange={(e) => {
                                       handleMetaChange('cfiPic', e.target.value);
@@ -2635,6 +2586,7 @@ export default function FlightLesson() {
                                     <input 
                                       type="number" 
                                       step="0.1" 
+                                      onWheel={(e) => e.currentTarget.blur()}
                                       value={meta.cfiDualAMEL || ''} 
                                       onChange={(e) => handleMetaChange('cfiDualAMEL', e.target.value)} 
                                       className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
@@ -2649,6 +2601,7 @@ export default function FlightLesson() {
                                     <input 
                                       type="number" 
                                       step="0.1" 
+                                      onWheel={(e) => e.currentTarget.blur()}
                                       value={meta.cfiDualASEL || ''} 
                                       onChange={(e) => handleMetaChange('cfiDualASEL', e.target.value)} 
                                       className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
@@ -2720,6 +2673,7 @@ export default function FlightLesson() {
                                       type="number" 
                                       step="1"
                                       min="0"
+                                      onWheel={(e) => e.currentTarget.blur()}
                                       value={meta.cfiDayLandings} 
                                       onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
                                       onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} 
@@ -2733,6 +2687,7 @@ export default function FlightLesson() {
                                       type="number" 
                                       step="1"
                                       min="0"
+                                      onWheel={(e) => e.currentTarget.blur()}
                                       value={meta.cfiNightLandings} 
                                       onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
                                       onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} 
@@ -2747,116 +2702,7 @@ export default function FlightLesson() {
                               </p>
                             </div>
 
-                            <div className="h-px bg-[#e2e8f0] my-3" />
 
-                            <div className="space-y-3">
-                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Approaches</h4>
-                              <label className="flex items-center gap-2 cursor-pointer group">
-                                <input 
-                                  type="checkbox" 
-                                  checked={meta.cfiFlewApproaches} 
-                                  onChange={(e) => handleMetaChange('cfiFlewApproaches', e.target.checked)}
-                                  className="rounded border-[#cbd5e1] text-[#0ea5e9] focus:ring-[#0ea5e9]" 
-                                />
-                                <span className="text-[11px] transition-colors" style={{ color: 'var(--text-primary)' }}>I did approaches this lesson</span>
-                              </label>
-
-                              {meta.cfiFlewApproaches && (
-                                <div className="space-y-4 pt-2 border-l-2 border-[#e2e8f0] pl-4 ml-1">
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                      <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Number of CFI Approaches</label>
-                                      <div className="flex items-center gap-2">
-                                        <input 
-                                          type="number" 
-                                          value={meta.cfiApproachCount} 
-                                          onChange={(e) => handleMetaChange('cfiApproachCount', e.target.value)} 
-                                          className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
-                                          placeholder="0" 
-                                        />
-                                        <span className="text-[10px] text-[#6b7280] font-mono">count</span>
-                                      </div>
-                                    </div>
-                                    <div className="space-y-1 flex flex-col justify-end">
-                                      <label className="flex items-center gap-2 cursor-pointer group">
-                                        <div className="relative flex items-center">
-                                          <input
-                                            type="checkbox"
-                                            checked={meta.cfiHoldPerformed}
-                                            onChange={(e) => handleMetaChange('cfiHoldPerformed', e.target.checked)}
-                                            className="peer sr-only"
-                                          />
-                                          <div className="w-4 h-4 border-2 border-[#dde3ec] rounded bg-white peer-checked:bg-[#1a3a5c] peer-checked:border-[#1a3a5c] transition-all" />
-                                          <Check size={10} className="absolute left-0.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                        </div>
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] group-hover:text-[#1a3a5c] transition-colors">Holding performed</span>
-                                      </label>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#6b7280]">Approach Types</label>
-                                    
-                                    <div className="flex flex-wrap gap-1.5 mb-2">
-                                      {JSON.parse(meta.cfiApproachTypes || '[]').map((type: string) => (
-                                        <span key={type} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#1a3a5c] text-white text-[10px] font-bold rounded-full">
-                                          {type}
-                                          <button
-                                            onClick={() => {
-                                              const current = JSON.parse(meta.cfiApproachTypes || '[]');
-                                              handleMetaChange('cfiApproachTypes', JSON.stringify(current.filter((t: string) => t !== type)));
-                                            }}
-                                            className="hover:text-red-300 transition-colors"
-                                          >
-                                            <X size={10} />
-                                          </button>
-                                        </span>
-                                      ))}
-                                    </div>
-
-                                    <div className="relative">
-                                      <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
-                                      <input
-                                        type="text"
-                                        value={cfiApproachSearch}
-                                        onChange={(e) => setCfiApproachSearch(e.target.value)}
-                                        placeholder="Search approach types..."
-                                        className="w-full text-xs border border-[#dde3ec] rounded-lg pl-8 pr-3 py-2 bg-white focus:outline-none focus:border-[#1a3a5c] transition-all"
-                                      />
-                                    </div>
-
-                                    <div className="max-h-40 overflow-y-auto border border-[#dde3ec] rounded-lg bg-white divide-y divide-[#f1f5f9] custom-scrollbar">
-                                      {APPROACH_TYPES.filter(t => 
-                                        t.label.toLowerCase().includes(cfiApproachSearch.toLowerCase()) || 
-                                        t.code.toLowerCase().includes(cfiApproachSearch.toLowerCase())
-                                      ).map(type => {
-                                        const isSelected = JSON.parse(meta.cfiApproachTypes || '[]').includes(type.code);
-                                        return (
-                                          <button
-                                            key={type.code}
-                                            onClick={() => {
-                                              const current = JSON.parse(meta.cfiApproachTypes || '[]');
-                                              if (isSelected) {
-                                                handleMetaChange('cfiApproachTypes', JSON.stringify(current.filter((t: string) => t !== type.code)));
-                                              } else {
-                                                handleMetaChange('cfiApproachTypes', JSON.stringify([...current, type.code]));
-                                              }
-                                            }}
-                                            className={cn(
-                                              "w-full px-3 py-2 text-left text-[11px] transition-colors flex items-center justify-between",
-                                              isSelected ? "bg-[#f0f9ff] text-[#1a3a5c]" : "hover:bg-[#f8fafc] text-[#64748b]"
-                                            )}
-                                          >
-                                            <span>{type.label}</span>
-                                            {isSelected && <Check size={12} className="text-[#1a3a5c]" />}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
                           </div>
                         </motion.div>
                       )}
@@ -2893,8 +2739,7 @@ export default function FlightLesson() {
                 parseFloat(meta.nightDual || '0') > 0 ||
                 parseFloat(meta.nightPic || '0') > 0 ||
                 parseFloat(meta.nightSolo || '0') > 0 ||
-                parseInt(meta.nightTakeoffs || '0') > 0 ||
-                parseFloat(meta.meNight || '0') > 0;
+                parseInt(meta.nightTakeoffs || '0') > 0;
 
               const hasNightTime = parseFloat(meta.night || '0') > 0;
 
@@ -3341,56 +3186,110 @@ export default function FlightLesson() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Total Flight</label>
-                        <input type="number" step="0.1" value={meta.totalFlight} onChange={(e) => handleMetaChange('totalFlight', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.totalFlight} onChange={(e) => handleMetaChange('totalFlight', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Received</label>
-                        <input type="number" step="0.1" value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Solo</label>
-                        <input type="number" step="0.1" value={meta.solo} onChange={(e) => handleMetaChange('solo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.solo} onChange={(e) => handleMetaChange('solo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">PIC</label>
-                        <input type="number" step="0.1" value={meta.pic} onChange={(e) => handleMetaChange('pic', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
+                      {meta.aircraftClass === 'AMEL' ? (
+                        <>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">AMEL PIC</label>
+                            <input 
+                              type="number" 
+                              step="0.1" 
+                              onWheel={(e) => e.currentTarget.blur()} 
+                              value={meta.amelPic} 
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setMeta(prev => {
+                                  const newMeta = {
+                                    ...prev,
+                                    amelPic: val,
+                                    pic: ((parseFloat(val || '0') || 0) + (parseFloat(prev.aselPic || '0') || 0)).toFixed(1)
+                                  };
+                                  saveToLocal(grades, notes, newMeta);
+                                  return newMeta;
+                                });
+                              }} 
+                              className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">ASEL PIC</label>
+                            <input 
+                              type="number" 
+                              step="0.1" 
+                              onWheel={(e) => e.currentTarget.blur()} 
+                              value={meta.aselPic} 
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setMeta(prev => {
+                                  const newMeta = {
+                                    ...prev,
+                                    aselPic: val,
+                                    pic: ((parseFloat(prev.amelPic || '0') || 0) + (parseFloat(val || '0') || 0)).toFixed(1)
+                                  };
+                                  saveToLocal(grades, notes, newMeta);
+                                  return newMeta;
+                                });
+                              }} 
+                              className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" 
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-[#6b7280] uppercase">PIC</label>
+                          <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.pic} onChange={(e) => handleMetaChange('pic', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        </div>
+                      )}
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night</label>
-                        <input type="number" step="0.1" value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Sim Inst</label>
-                        <input type="number" step="0.1" value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">IMC</label>
-                        <input type="number" step="0.1" value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">XC Dual</label>
-                        <input type="number" step="0.1" value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">XC Solo</label>
-                        <input type="number" step="0.1" value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Day Landings</label>
-                        <input type="number" step="1" value={meta.ldgDay} onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.ldgDay} onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night Landings</label>
-                        <input type="number" step="1" value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Approaches</label>
-                        <input type="number" step="1" value={meta.approachCount} onChange={(e) => handleMetaChange('approachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.approachCount} onChange={(e) => handleMetaChange('approachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
                       <div className="space-y-1 col-span-2 sm:col-span-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Holding</label>
                         <div className="flex items-center h-[30px]">
-                          <input type="checkbox" checked={meta.holdPerformed} readOnly className="w-4 h-4 text-[#1a3a5c] border-[#dde3ec] rounded" />
+                          <input 
+                            type="checkbox" 
+                            checked={meta.holdPerformed} 
+                            onChange={(e) => handleMetaChange('holdPerformed', e.target.checked)} 
+                            className="w-4 h-4 text-[#1a3a5c] border-[#dde3ec] rounded" 
+                          />
                         </div>
                       </div>
                     </div>
@@ -3408,15 +3307,28 @@ export default function FlightLesson() {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI PIC</label>
-                        <input type="number" step="0.1" value={meta.cfiPic} onChange={(e) => { handleMetaChange('cfiPic', e.target.value); cfiPicManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiPic} onChange={(e) => { handleMetaChange('cfiPic', e.target.value); cfiPicManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Given</label>
-                        <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
-                      </div>
+                      {meta.aircraftClass === 'AMEL' ? (
+                        <>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">AMEL Dual Given</label>
+                            <input type="text" readOnly value={meta.cfiDualAMEL || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">ASEL Dual Given</label>
+                            <input type="text" readOnly value={meta.cfiDualASEL || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Given</label>
+                          <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                        </div>
+                      )}
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night Dual</label>
-                        <input type="number" step="0.1" value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">Inst Given</label>
@@ -3424,24 +3336,24 @@ export default function FlightLesson() {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI XC Time</label>
-                        <input type="number" step="0.1" value={cfiXcTime} onChange={(e) => { setCfiXcTime(e.target.value); cfiXcTimeManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={cfiXcTime} onChange={(e) => { setCfiXcTime(e.target.value); cfiXcTimeManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
                       </div>
                       {meta.cfiDidLandings && (
                         <>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Day Ldg</label>
-                            <input type="number" step="1" value={meta.cfiDayLandings} onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                            <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiDayLandings} onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Night Ldg</label>
-                            <input type="number" step="1" value={meta.cfiNightLandings} onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                            <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiNightLandings} onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
                           </div>
                         </>
                       )}
                       {meta.cfiFlewApproaches && (
                         <div className="space-y-1">
                           <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI App</label>
-                          <input type="number" step="1" value={meta.cfiApproachCount} onChange={(e) => handleMetaChange('cfiApproachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                          <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiApproachCount} onChange={(e) => handleMetaChange('cfiApproachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
                         </div>
                       )}
                     </div>
