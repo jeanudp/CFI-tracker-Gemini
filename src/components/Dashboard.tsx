@@ -678,6 +678,7 @@ export default function Dashboard() {
           student_cert_number: editForm.student_cert_number || null,
           medical_class: editForm.medical_class || null,
           medical_exam_date: editForm.medical_exam_date || null,
+          last_flight_review_date: editForm.last_flight_review_date || null,
           notes: editForm.notes || null,
         })
         .eq('id', selectedStudent.id);
@@ -1873,6 +1874,7 @@ export default function Dashboard() {
                         student_cert_number: (selectedStudent as any).student_cert_number || '',
                         medical_class: (selectedStudent as any).medical_class || '',
                         medical_exam_date: (selectedStudent as any).medical_exam_date || '',
+                        last_flight_review_date: (selectedStudent as any).last_flight_review_date || '',
                         notes: (selectedStudent as any).notes || '',
                       });
                     }}
@@ -1897,6 +1899,7 @@ export default function Dashboard() {
                       { key: 'dob', label: 'Date of Birth', icon: Calendar, type: 'date', placeholder: '' },
                       { key: 'student_cert_number', label: 'Student Cert Number', icon: FileText, type: 'text', placeholder: 'Certificate number' },
                       { key: 'medical_exam_date', label: 'Medical Exam Date', icon: Calendar, type: 'date', placeholder: '' },
+                      { key: 'last_flight_review_date', label: 'Last Flight Review Date', icon: Calendar, type: 'date', placeholder: '' },
                     ].map(({ key, label, icon: Icon, type, placeholder }) => (
                       <div key={key} className="space-y-1">
                         <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
@@ -2212,13 +2215,94 @@ export default function Dashboard() {
                   const aselLandings = aselFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgDay || '0') || 0) + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
                   const isDayCurrentASEL = aselLandings >= 3;
                   const hasEverLoggedASEL = studentLessons.some(l => l.meta?.aircraftClass === 'ASEL');
+
+                  // Night Passenger Currency §61.57(b)
+                  const aselNightLandings90 = aselFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                  const isNightCurrentASEL = aselNightLandings90 >= 3;
+                  const hasEverLoggedNightASEL = studentLessons.some(l => l.meta?.aircraftClass === 'ASEL' && (parseInt(l.meta?.ldgNight || '0') || 0) > 0);
+
+                  // AMEL Day Currency §61.57(a)
+                  const amelFlights = recentFlights.filter(l => l.meta?.aircraftClass === 'AMEL');
+                  const amelLandings = amelFlights.reduce((sum, l) => sum + (parseInt(l.meta?.ldgDay || '0') || 0) + (parseInt(l.meta?.ldgNight || '0') || 0), 0);
+                  const isDayCurrentAMEL = amelLandings >= 3;
+                  const hasEverLoggedAMEL = studentLessons.some(l => l.meta?.aircraftClass === 'AMEL');
+
                   const recentIFR = studentLessons.filter(l => l.type === 'flight' && new Date(l.saved_at) >= sixMonthsAgo);
                   const totalApproaches = recentIFR.reduce((sum, l) => sum + (parseInt(l.meta?.approachCount || '0') || 0), 0);
                   const holdPerformed = recentIFR.some(l => l.meta?.holdPerformed === true);
-                  const isIFRCurrent = totalApproaches >= 6 && holdPerformed;
+                  const interceptTracking = recentIFR.some(l => l.meta?.interceptTracking === true);
+                  const isIFRCurrent = totalApproaches >= 6 && holdPerformed && interceptTracking;
                   const hasEverLoggedApproaches = studentLessons.some(l => (parseInt(l.meta?.approachCount || '0') || 0) > 0);
-                  const allCurrent = (!hasEverLoggedASEL || isDayCurrentASEL) && (!hasEverLoggedApproaches || isIFRCurrent);
-                  const noneCurrent = (hasEverLoggedASEL && !isDayCurrentASEL) && (hasEverLoggedApproaches && !isIFRCurrent);
+
+                  // Flight Review §61.56
+                  const parseCheckrideDate = (dateStr: string) => {
+                    const months: Record<string, number> = {
+                      January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
+                      July: 6, August: 7, September: 8, October: 9, November: 10, December: 11
+                    };
+                    const parts = dateStr.replace(',', '').split(' ');
+                    if (parts.length !== 3) return null;
+                    const month = months[parts[0]];
+                    const day = parseInt(parts[1]);
+                    const year = parseInt(parts[2]);
+                    if (month === undefined || isNaN(day) || isNaN(year)) return null;
+                    return new Date(year, month, day);
+                  };
+
+                  const getLatestFlightReviewInfo = () => {
+                    let latestDate: Date | null = null;
+                    let source: 'Checkride pass' | 'Manual date on file' | null = null;
+                    let displayDate = '—';
+
+                    if (selectedStudent.checkride_passed_ratings?.length) {
+                      selectedStudent.checkride_passed_ratings.forEach(r => {
+                        const d = parseCheckrideDate(r.date);
+                        if (d && (!latestDate || d > latestDate)) {
+                          latestDate = d;
+                          source = 'Checkride pass';
+                          displayDate = r.date;
+                        }
+                      });
+                    }
+
+                    if (selectedStudent.last_flight_review_date) {
+                      const d = new Date(selectedStudent.last_flight_review_date + 'T00:00:00');
+                      if (!isNaN(d.getTime())) {
+                        if (!latestDate || d > latestDate) {
+                          latestDate = d;
+                          source = 'Manual date on file';
+                          displayDate = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                        }
+                      }
+                    }
+                    return { latestDate, source, displayDate };
+                  };
+
+                  const frInfo = getLatestFlightReviewInfo();
+                  const today = new Date();
+                  const expiryDate = frInfo.latestDate ? new Date(frInfo.latestDate) : null;
+                  if (expiryDate) {
+                    expiryDate.setMonth(expiryDate.getMonth() + 24 + 1);
+                    expiryDate.setDate(0); // End of the month 24 months later
+                    expiryDate.setHours(23, 59, 59, 999);
+                  }
+
+                  const isFlightReviewCurrent = expiryDate ? today <= expiryDate : false;
+                  const hasFlightReviewOnRecord = frInfo.latestDate !== null;
+
+                  const allCurrent = 
+                    (!hasEverLoggedASEL || isDayCurrentASEL) && 
+                    (!hasEverLoggedNightASEL || isNightCurrentASEL) &&
+                    (!hasEverLoggedAMEL || isDayCurrentAMEL) &&
+                    (!hasEverLoggedApproaches || isIFRCurrent) &&
+                    (!hasFlightReviewOnRecord || isFlightReviewCurrent);
+
+                  const noneCurrent = 
+                    (hasEverLoggedASEL && !isDayCurrentASEL) && 
+                    (hasEverLoggedNightASEL && !isNightCurrentASEL) &&
+                    (hasEverLoggedAMEL && !isDayCurrentAMEL) &&
+                    (hasEverLoggedApproaches && !isIFRCurrent) &&
+                    (hasFlightReviewOnRecord && !isFlightReviewCurrent);
 
                   return (
                     <div className="rounded-xl border-2 overflow-hidden" style={{ borderColor: allCurrent ? 'var(--green)' : noneCurrent ? 'var(--red)' : 'var(--amber)' }}>
@@ -2246,6 +2330,26 @@ export default function Dashboard() {
                                 </div>
                               </CurrencyRow>
                             )}
+                            {hasEverLoggedNightASEL && (
+                              <CurrencyRow title="Passenger Currency Night" reference="§61.57(b)" isCurrent={isNightCurrentASEL} classBadge="ASEL" isExpanded={expandedCurrencyRow === 'night_asel'} onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'night_asel' ? null : 'night_asel')}>
+                                <div className="p-4 space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                  <div className="flex justify-between text-xs">
+                                    <span style={{ color: 'var(--text-secondary)' }}>Night landings (90 days)</span>
+                                    <span className="font-mono font-bold" style={{ color: isNightCurrentASEL ? 'var(--green)' : 'var(--red)' }}>{aselNightLandings90} / 3</span>
+                                  </div>
+                                </div>
+                              </CurrencyRow>
+                            )}
+                            {hasEverLoggedAMEL && (
+                              <CurrencyRow title="Passenger Currency Day" reference="§61.57(a)" isCurrent={isDayCurrentAMEL} classBadge="AMEL" isExpanded={expandedCurrencyRow === 'day_amel'} onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'day_amel' ? null : 'day_amel')}>
+                                <div className="p-4 space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                  <div className="flex justify-between text-xs">
+                                    <span style={{ color: 'var(--text-secondary)' }}>Landings (90 days)</span>
+                                    <span className="font-mono font-bold" style={{ color: isDayCurrentAMEL ? 'var(--green)' : 'var(--red)' }}>{amelLandings} / 3</span>
+                                  </div>
+                                </div>
+                              </CurrencyRow>
+                            )}
                             <CurrencyRow title="IFR Currency" reference="§61.57(c)" isCurrent={isIFRCurrent} isNotApplicable={!hasEverLoggedApproaches} isExpanded={expandedCurrencyRow === 'ifr'} onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'ifr' ? null : 'ifr')}>
                               <div className="p-4 space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                                 <div className="flex justify-between text-xs">
@@ -2256,7 +2360,23 @@ export default function Dashboard() {
                                   <span style={{ color: 'var(--text-secondary)' }}>Holding performed</span>
                                   <span style={{ color: holdPerformed ? 'var(--green)' : 'var(--red)' }}>{holdPerformed ? 'Yes' : 'No'}</span>
                                 </div>
+                                <div className="flex justify-between text-xs">
+                                  <span style={{ color: 'var(--text-secondary)' }}>Intercept and tracking performed</span>
+                                  <span style={{ color: interceptTracking ? 'var(--green)' : 'var(--red)' }}>{interceptTracking ? 'Yes' : 'No'}</span>
+                                </div>
                               </div>
+                            </CurrencyRow>
+                            <CurrencyRow title="Flight Review" reference="§61.56" isCurrent={isFlightReviewCurrent} isNotApplicable={!hasFlightReviewOnRecord} isExpanded={expandedCurrencyRow === 'flight_review'} onToggle={() => setExpandedCurrencyRow(expandedCurrencyRow === 'flight_review' ? null : 'flight_review')}>
+                                <div className="p-4 space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                                  <div className="flex justify-between text-xs">
+                                    <span style={{ color: 'var(--text-secondary)' }}>Most recent review</span>
+                                    <span className="font-bold" style={{ color: isFlightReviewCurrent ? 'var(--green)' : 'var(--red)' }}>{frInfo.displayDate}</span>
+                                  </div>
+                                  <div className="flex justify-between text-xs">
+                                    <span style={{ color: 'var(--text-secondary)' }}>Source</span>
+                                    <span style={{ color: 'var(--text-primary)' }}>{frInfo.source}</span>
+                                  </div>
+                                </div>
                             </CurrencyRow>
                           </motion.div>
                         )}
