@@ -138,6 +138,7 @@ export default function FlightLesson() {
   const [cfiXcTime, setCfiXcTime] = useState<string>('');
   const cfiXcTimeManuallySet = useRef(false);
   const cfiPicManuallySet = useRef(false);
+  const cfiDualManuallySet = useRef(false);
   const navigate = useNavigate();
 
   const variants = {
@@ -493,12 +494,6 @@ export default function FlightLesson() {
   }, [meta.xcDual]);
 
   useEffect(() => {
-    if (meta.aircraftClass === 'AMEL' && (!meta.cfiDualAMEL || meta.cfiDualAMEL === '') && meta.dual && meta.dual !== '0.0') {
-      handleMetaChange('cfiDualAMEL', meta.dual);
-    }
-  }, [meta.aircraftClass, meta.dual]);
-
-  useEffect(() => {
     setIsComplexAircraft(!!meta.complex);
   }, [meta.complex]);
 
@@ -709,6 +704,11 @@ export default function FlightLesson() {
       if (parseFloat(newMeta.dual || '0') > 0 && newMeta.totalFlight) {
         newMeta.cfiPic = newMeta.totalFlight;
       }
+    }
+
+    // Auto-sync CFI Dual AMEL when dual Received changes (if not manually overridden)
+    if (field === 'dual' && !cfiDualManuallySet.current && newMeta.aircraftClass === 'AMEL') {
+      newMeta.cfiDualAMEL = val;
     }
 
     setMeta(newMeta);
@@ -2634,7 +2634,10 @@ export default function FlightLesson() {
                                       step="0.1" 
                                       onWheel={(e) => e.currentTarget.blur()}
                                       value={meta.cfiDualAMEL || ''} 
-                                      onChange={(e) => handleMetaChange('cfiDualAMEL', e.target.value)} 
+                                      onChange={(e) => {
+                                        handleMetaChange('cfiDualAMEL', e.target.value);
+                                        cfiDualManuallySet.current = true;
+                                      }} 
                                       className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
                                       placeholder="0.0" 
                                     />
@@ -2649,7 +2652,10 @@ export default function FlightLesson() {
                                       step="0.1" 
                                       onWheel={(e) => e.currentTarget.blur()}
                                       value={meta.cfiDualASEL || ''} 
-                                      onChange={(e) => handleMetaChange('cfiDualASEL', e.target.value)} 
+                                      onChange={(e) => {
+                                        handleMetaChange('cfiDualASEL', e.target.value);
+                                        cfiDualManuallySet.current = true;
+                                      }} 
                                       className="w-full text-sm font-mono bg-white border border-[#dde3ec] rounded-lg px-2 py-1" 
                                       placeholder="0.0" 
                                     />
