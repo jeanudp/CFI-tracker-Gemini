@@ -2302,23 +2302,36 @@ export default function History() {
             {activeTab === 'checkride' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 {(() => {
-                  const sls = studentLessons.filter(l => (l.meta?.rating_code || 'ppl') === lessonRating);
-                  const stats = getCumulativeStats(sls);
+                  const isRatingMatch = (l: any) => {
+                    const code = l.meta?.rating_code || 'ppl';
+                    if (['mei', 'mei_addon', 'mei_initial'].includes(lessonRating)) {
+                      return ['mei', 'mei_addon', 'mei_initial'].includes(code);
+                    }
+                    if (lessonRating.startsWith('cfii')) {
+                      return (code || '').startsWith('cfii');
+                    }
+                    return code === lessonRating;
+                  };
+
+                  const sls = studentLessons.filter(isRatingMatch);
+                  const allFlightSls = studentLessons.filter(l => l.type === 'flight');
+                  
+                  const stats = getCumulativeStats(allFlightSls);
                   const sixtyDaysAgo = new Date();
                   sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
                   const sixtyDaysStr = `Calculated from ${sixtyDaysAgo.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} to ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
 
-                  const recentDual = sls
+                  const recentDual = allFlightSls
                     .filter(l => new Date(l.saved_at) >= sixtyDaysAgo)
                     .reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') || 0), 0);
 
-                  const recentInst = sls
+                  const recentInst = allFlightSls
                     .filter(l => new Date(l.saved_at) >= sixtyDaysAgo)
                     .reduce((sum, l) => sum + (parseFloat(l.meta?.simInst || '0') || 0), 0);
 
                   const sixMonthsAgo = new Date();
                   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-                  const recentInst6mo = sls
+                  const recentInst6mo = allFlightSls
                     .filter(l => new Date(l.saved_at) >= sixMonthsAgo)
                     .reduce((sum, l) => sum + (parseFloat(l.meta?.simInst || '0') || 0), 0);
 
@@ -2375,7 +2388,7 @@ export default function History() {
                       { section: 'Flight Time Requirements', ref: '§61.65(d)', rows: [
                         { label: 'Cross-Country PIC Time', ref: '§61.65(d)(1)', have: stats.totXcPic, need: 50, unit: 'hrs' },
                         { label: 'Actual or Simulated Instrument Time', ref: '§61.65(d)(2)', have: stats.totSim, need: 40, unit: 'hrs' },
-                        { label: 'Instrument Training from Authorized Instructor', ref: '§61.65(d)(3)', have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.simInst || '0') : 0), 0), need: 15, unit: 'hrs' },
+                        { label: 'Instrument Training from Authorized Instructor', ref: '§61.65(d)(3)', have: allFlightSls.reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') > 0 ? parseFloat(l.meta?.simInst || '0') : 0), 0), need: 15, unit: 'hrs' },
                         { label: 'Instrument Training within 60 Days', ref: '§61.65(d)(4)', have: recentInst, need: 3, unit: 'hrs', note: sixtyDaysStr },
                         { label: 'IFR Cross-Country Flight 250NM', ref: '§61.65(d)(5)', have: getManualValue('ifrXc250'), need: 1, unit: 'flight', mk: 'ifrXc250', note: 'One cross-country flight in actual or simulated IMC along airways or ATC routing with an instrument approach at each airport and three different kinds of approaches with a total distance of at least 250NM' }
                       ]}
@@ -2484,7 +2497,7 @@ export default function History() {
                         { 
                           label: 'PIC in airplane category', 
                           ref: '§61.183(j)', 
-                          have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.aselPic || '0') || 0) + (parseFloat(l.meta?.amelPic || '0') || 0), 0), 
+                          have: allFlightSls.reduce((sum, l) => sum + (parseFloat(l.meta?.aselPic || '0') || 0) + (parseFloat(l.meta?.amelPic || '0') || 0), 0), 
                           need: 15, 
                           unit: 'hrs' 
                         },
@@ -2535,7 +2548,7 @@ export default function History() {
                         { 
                           label: 'PIC in multiengine airplane', 
                           ref: '§61.183(j)', 
-                          have: sls.reduce((sum, l) => sum + (parseFloat(l.meta?.amelPic || '0') || 0), 0), 
+                          have: allFlightSls.reduce((sum, l) => sum + (parseFloat(l.meta?.amelPic || '0') || 0), 0), 
                           need: 15, 
                           unit: 'hrs' 
                         },
@@ -2653,7 +2666,10 @@ export default function History() {
                         <div className="bg-white rounded-xl border border-[#dde3ec] p-4 shadow-sm text-center">
                           <div className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-1">Total Time</div>
                           <div className="text-2xl font-mono font-bold text-[#1a3a5c]">{stats.totFlight.toFixed(1)}</div>
-                          <div className="text-[9px] text-[#6b7280] mt-1">hours logged</div>
+                          <div className="text-[9px] text-[#6b7280] mt-1 space-x-1">
+                            <span>hours logged</span>
+                            <span className="text-[8px] opacity-70 font-medium">(Career Total)</span>
+                          </div>
                         </div>
                       </div>
 
