@@ -493,12 +493,6 @@ export default function FlightLesson() {
   }, [meta.xcDual]);
 
   useEffect(() => {
-    if (!cfiPicManuallySet.current && parseFloat(meta.dual || '0') > 0 && meta.totalFlight) {
-      handleMetaChange('cfiPic', meta.totalFlight);
-    }
-  }, [meta.totalFlight, meta.dual]);
-
-  useEffect(() => {
     if (meta.aircraftClass === 'AMEL' && (!meta.cfiDualAMEL || meta.cfiDualAMEL === '') && meta.dual && meta.dual !== '0.0') {
       handleMetaChange('cfiDualAMEL', meta.dual);
     }
@@ -708,6 +702,13 @@ export default function FlightLesson() {
 
     if (['night', 'ldgNight', 'nightDual', 'nightPic', 'nightTakeoffs', 'meNight', 'nightSolo'].includes(field)) {
       setNightWarning(false);
+    }
+
+    // Auto-populate CFI PIC from Total Flight when dual is > 0
+    if ((field === 'dual' || field === 'totalFlight') && !cfiPicManuallySet.current) {
+      if (parseFloat(newMeta.dual || '0') > 0 && newMeta.totalFlight) {
+        newMeta.cfiPic = newMeta.totalFlight;
+      }
     }
 
     setMeta(newMeta);
@@ -1596,17 +1597,17 @@ export default function FlightLesson() {
               <div className="p-4 border-b border-[#dde3ec] bg-white">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Route (From → To, via)</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Route (From → Via → To)</label>
                     <input
                       type="text"
                       value={meta.route}
                       onChange={(e) => handleMetaChange('route', e.target.value.toUpperCase())}
-                      placeholder="e.g. KORD → KMDW → KORD"
+                      placeholder="e.g. KRDM → KBDN → KRDM"
                       className="w-full text-sm font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] focus:bg-[#d4e8f5] transition-all"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Total Flight Time</label>
                     <div className="flex flex-col gap-1">
@@ -1670,6 +1671,51 @@ export default function FlightLesson() {
                         placeholder="0"
                       />
                       <span className="text-[10px] text-[#6b7280] font-mono">count</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                      {meta.aircraftClass === 'AMEL' ? "AMEL PIC" : "ASEL PIC"}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.1"
+                        onWheel={(e) => e.currentTarget.blur()}
+                        value={meta.aircraftClass === 'AMEL' ? meta.amelPic : meta.aselPic}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setMeta(prev => {
+                            const newMeta = {
+                              ...prev,
+                              [meta.aircraftClass === 'AMEL' ? 'amelPic' : 'aselPic']: val,
+                              pic: ((parseFloat(meta.aircraftClass === 'AMEL' ? val || '0' : prev.amelPic || '0') || 0) + (parseFloat(meta.aircraftClass === 'AMEL' ? prev.aselPic || '0' : val || '0') || 0)).toFixed(1)
+                            };
+                            saveToLocal(grades, notes, newMeta);
+                            return newMeta;
+                          });
+                        }}
+                        className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                        placeholder="0.0"
+                      />
+                      <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">
+                      {meta.aircraftClass === 'AMEL' ? "AMEL Dual Received" : "ASEL Dual Received"}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.1"
+                        onWheel={(e) => e.currentTarget.blur()}
+                        value={meta.dual}
+                        onChange={(e) => handleMetaChange('dual', e.target.value)}
+                        className="w-full text-sm font-bold font-mono border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
+                        placeholder="0.0"
+                      />
+                      <span className="text-[10px] text-[#6b7280] font-mono">hrs</span>
                     </div>
                   </div>
                 </div>
