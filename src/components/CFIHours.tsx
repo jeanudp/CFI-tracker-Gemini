@@ -1170,10 +1170,10 @@ export default function CFIHours() {
 
         {/* Multi-Engine Section */}
         {(stats.amelTotal > 0 || stats.amelDual > 0 || stats.amelPic > 0) && (
-          <div className="space-y-4">
+          <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[16px] p-5 space-y-4">
             <div className="flex items-center gap-4">
               <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Multiengine — AMEL</div>
-              <div className="h-[1px] w-full bg-[#dde3ec] opacity-30" />
+              <div className="h-[1px] w-full bg-[#dde3ec] opacity-60" />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
               {[
@@ -1204,10 +1204,10 @@ export default function CFIHours() {
 
         {/* Single-Engine Section */}
         {stats.aselTotal > 0 && (
-          <div className="space-y-4">
+          <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[16px] p-5 space-y-4 mt-6">
             <div className="flex items-center gap-4">
               <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#94a3b8] whitespace-nowrap">Single-Engine — ASEL</div>
-              <div className="h-[1px] w-full bg-[#dde3ec] opacity-30" />
+              <div className="h-[1px] w-full bg-[#dde3ec] opacity-60" />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
               {[
