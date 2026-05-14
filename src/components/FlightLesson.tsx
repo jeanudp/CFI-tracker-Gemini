@@ -6,7 +6,7 @@ import { IR_FLIGHT_ACS } from '../constants/irACS';
 import { AIRCRAFT_MODELS, isAMEL } from '../constants/aircraft';
 import { Grade, LessonMeta, ACSTask, ACSStandard } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, ChevronLeft, Loader2, Check, Search, X, Plus, ClipboardList, Clock, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Save, Trash2, ArrowLeft, ArrowRight, Plane, CheckCircle2, AlertCircle, HelpCircle, ChevronRight, ChevronLeft, Loader2, Check, Search, X, Plus, ClipboardList, Clock, AlertTriangle, User, Users, Milestone, Moon, CloudDrizzle, PlaneLanding } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ACSStandardsModal from './ACSStandardsModal';
 
@@ -3229,186 +3229,350 @@ export default function FlightLesson() {
                   <p className="text-sm text-[#6b7280] mt-1">Review both sets of hours carefully. You can edit any field directly here.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                  {/* Student Hours */}
-                  <div className="space-y-4">
-                    <div className="bg-[#1a3a5c] text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                      Student Hours
+                <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar mb-8">
+                  {/* Group 1: Total Time */}
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} className="text-[#1a3a5c]" />
+                      <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Total Time</h3>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Total Flight</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.totalFlight} onChange={(e) => handleMetaChange('totalFlight', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#64748b] uppercase">Total Flight Time</label>
+                        <input 
+                          type="number" 
+                          step="0.1" 
+                          onWheel={(e) => e.currentTarget.blur()} 
+                          value={meta.totalFlight} 
+                          onChange={(e) => handleMetaChange('totalFlight', e.target.value)} 
+                          className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] focus:ring-2 focus:ring-[#1a3a5c]/10 outline-none transition-all"
+                        />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Received</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.dual} onChange={(e) => handleMetaChange('dual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Solo</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.solo} onChange={(e) => handleMetaChange('solo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
-                      {meta.aircraftClass === 'AMEL' ? (
-                        <>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">AMEL PIC</label>
-                            <input 
-                              type="number" 
-                              step="0.1" 
-                              onWheel={(e) => e.currentTarget.blur()} 
-                              value={meta.amelPic} 
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setMeta(prev => {
-                                  const newMeta = {
-                                    ...prev,
-                                    amelPic: val,
-                                    pic: ((parseFloat(val || '0') || 0) + (parseFloat(prev.aselPic || '0') || 0)).toFixed(1)
-                                  };
-                                  saveToLocal(grades, notes, newMeta);
-                                  return newMeta;
-                                });
-                              }} 
-                              className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" 
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">ASEL PIC</label>
-                            <input 
-                              type="number" 
-                              step="0.1" 
-                              onWheel={(e) => e.currentTarget.blur()} 
-                              value={meta.aselPic} 
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setMeta(prev => {
-                                  const newMeta = {
-                                    ...prev,
-                                    aselPic: val,
-                                    pic: ((parseFloat(prev.amelPic || '0') || 0) + (parseFloat(val || '0') || 0)).toFixed(1)
-                                  };
-                                  saveToLocal(grades, notes, newMeta);
-                                  return newMeta;
-                                });
-                              }} 
-                              className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" 
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-[#6b7280] uppercase">PIC</label>
-                          <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.pic} onChange={(e) => handleMetaChange('pic', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#64748b] uppercase">CFI Flight Time</label>
+                        <div className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#cbd5e1] rounded-xl px-3 py-2 text-[#64748b]">
+                          {meta.totalFlight || '0.0'}
                         </div>
-                      )}
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Sim Inst</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                    </div>
+                    {(() => {
+                      const studentTotal = meta.totalFlight || '0.0';
+                      const cfiTotal = meta.totalFlight || '0.0'; // Still mirrored
+                      const matches = studentTotal === cfiTotal;
+                      return matches ? (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-100 italic transition-all">
+                          <CheckCircle2 size={14} className="text-green-600" />
+                          <span className="text-[11px] font-medium text-green-700">CFI total matches student total</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 italic transition-all">
+                          <AlertCircle size={14} className="text-amber-600" />
+                          <span className="text-[11px] font-medium text-amber-700">
+                            Mismatch: Student {studentTotal} · CFI {cfiTotal}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Group 2: Pilot in Command */}
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-[#1a3a5c]" />
+                      <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Pilot in Command</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-4">
+                        {meta.aircraftClass === 'AMEL' ? (
+                          <>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-[#64748b] uppercase">AMEL PIC</label>
+                              <input 
+                                type="number" 
+                                step="0.1" 
+                                onWheel={(e) => e.currentTarget.blur()} 
+                                value={meta.amelPic} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setMeta(prev => {
+                                    const newMeta = {
+                                      ...prev,
+                                      amelPic: val,
+                                      pic: ((parseFloat(val || '0') || 0) + (parseFloat(prev.aselPic || '0') || 0)).toFixed(1)
+                                    };
+                                    saveToLocal(grades, notes, newMeta);
+                                    return newMeta;
+                                  });
+                                }} 
+                                className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] focus:ring-2 focus:ring-[#1a3a5c]/10 outline-none transition-all"
+                              />
+                            </div>
+                            {(parseFloat(meta.aselPic || '0') > 0) && (
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-[#64748b] uppercase">ASEL PIC</label>
+                                <input 
+                                  type="number" 
+                                  step="0.1" 
+                                  onWheel={(e) => e.currentTarget.blur()} 
+                                  value={meta.aselPic} 
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setMeta(prev => {
+                                      const newMeta = {
+                                        ...prev,
+                                        aselPic: val,
+                                        pic: ((parseFloat(prev.amelPic || '0') || 0) + (parseFloat(val || '0') || 0)).toFixed(1)
+                                      };
+                                      saveToLocal(grades, notes, newMeta);
+                                      return newMeta;
+                                    });
+                                  }} 
+                                  className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] focus:ring-2 focus:ring-[#1a3a5c]/10 outline-none transition-all"
+                                />
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-[#64748b] uppercase">PIC</label>
+                            <input 
+                              type="number" 
+                              step="0.1" 
+                              onWheel={(e) => e.currentTarget.blur()} 
+                              value={meta.pic} 
+                              onChange={(e) => handleMetaChange('pic', e.target.value)} 
+                              className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] focus:ring-2 focus:ring-[#1a3a5c]/10 outline-none transition-all"
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">IMC</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[#64748b] uppercase">CFI PIC</label>
+                        <input 
+                          type="number" 
+                          step="0.1" 
+                          onWheel={(e) => e.currentTarget.blur()} 
+                          value={meta.cfiPic} 
+                          onChange={(e) => { 
+                            handleMetaChange('cfiPic', e.target.value); 
+                            cfiPicManuallySet.current = true; 
+                          }} 
+                          className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#e8a020] focus:ring-2 focus:ring-[#e8a020]/10 outline-none transition-all"
+                        />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">XC Dual</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
+                    </div>
+                    <div className="text-[11px] font-bold text-[#64748b] uppercase border-t border-[#e2e8f0] pt-3 text-right">
+                      Total Student PIC: <span className="text-[#1a3a5c] font-mono">{(parseFloat(meta.amelPic || '0') + parseFloat(meta.aselPic || '0')).toFixed(1)} hrs</span>
+                    </div>
+                  </div>
+
+                  {/* Group 3: Dual Instruction */}
+                  {parseFloat(meta.dual || '0') > 0 && (
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Users size={16} className="text-[#1a3a5c]" />
+                        <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Dual Instruction</h3>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">XC Solo</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Day Landings</label>
-                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.ldgDay} onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night Landings</label>
-                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Approaches</label>
-                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.approachCount} onChange={(e) => handleMetaChange('approachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#1a3a5c] focus:outline-none" />
-                      </div>
-                      <div className="space-y-1 col-span-2 sm:col-span-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Holding</label>
-                        <div className="flex items-center h-[30px]">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">
+                            {meta.aircraftClass === 'AMEL' ? 'AMEL Dual Received' : 'ASEL Dual Received'}
+                          </label>
                           <input 
-                            type="checkbox" 
-                            checked={meta.holdPerformed} 
-                            onChange={(e) => handleMetaChange('holdPerformed', e.target.checked)} 
-                            className="w-4 h-4 text-[#1a3a5c] border-[#dde3ec] rounded" 
+                            type="number" 
+                            step="0.1" 
+                            onWheel={(e) => e.currentTarget.blur()} 
+                            value={meta.dual} 
+                            onChange={(e) => handleMetaChange('dual', e.target.value)} 
+                            className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] focus:ring-2 focus:ring-[#1a3a5c]/10 outline-none transition-all"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-[#64748b] uppercase">AMEL Dual Given</label>
+                            <div className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#cbd5e1] rounded-xl px-3 py-2 text-[#64748b]">
+                              {meta.cfiDualAMEL || '0.0'}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-[#64748b] uppercase">ASEL Dual Given</label>
+                            <div className="w-full text-sm font-mono bg-[#f1f5f9] border border-[#cbd5e1] rounded-xl px-3 py-2 text-[#64748b]">
+                              {meta.cfiDualASEL || '0.0'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="text-[11px] font-bold text-[#64748b] uppercase text-right">
+                          Total Dual Given: <span className="text-[#1a3a5c] font-mono">{(parseFloat(meta.cfiDualAMEL || '0') + parseFloat(meta.cfiDualASEL || '0')).toFixed(1)} hrs</span>
+                        </div>
+                        {(() => {
+                          const studentDualValue = parseFloat(meta.dual || '0');
+                          const cfiDualValue = parseFloat(meta.cfiDualAMEL || '0') + parseFloat(meta.cfiDualASEL || '0');
+                          const matchesValue = Math.abs(studentDualValue - cfiDualValue) < 0.01;
+                          return matchesValue ? (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-100 italic transition-all self-end">
+                              <CheckCircle2 size={13} className="text-green-600" />
+                              <span className="text-[10px] font-medium text-green-700">Dual given equals dual received</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100 italic transition-all self-end">
+                              <AlertCircle size={13} className="text-amber-600" />
+                              <span className="text-[10px] font-medium text-amber-700">
+                                Mismatch: Student received {meta.dual} · CFI gave {cfiDualValue.toFixed(1)} · diff: {Math.abs(studentDualValue - cfiDualValue).toFixed(1)}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Group 4: Cross Country */}
+                  {(parseFloat(meta.xcDual || '0') > 0 || parseFloat(meta.xcSolo || '0') > 0 || parseFloat(meta.xcPic || '0') > 0) && (
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Milestone size={16} className="text-[#1a3a5c]" />
+                        <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Cross Country</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          {parseFloat(meta.xcDual || '0') > 0 && (
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-[#64748b] uppercase">XC Dual</label>
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcDual} onChange={(e) => handleMetaChange('xcDual', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                            </div>
+                          )}
+                          {parseFloat(meta.xcSolo || '0') > 0 && (
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-[#64748b] uppercase">XC Solo</label>
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcSolo} onChange={(e) => handleMetaChange('xcSolo', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                            </div>
+                          )}
+                          {parseFloat(meta.xcPic || '0') > 0 && (
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-[#64748b] uppercase">XC PIC</label>
+                              <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.xcPic} onChange={(e) => handleMetaChange('xcPic', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">CFI XC Time</label>
+                          <input 
+                            type="number" 
+                            step="0.1" 
+                            onWheel={(e) => e.currentTarget.blur()} 
+                            value={cfiXcTime} 
+                            onChange={(e) => { 
+                              setCfiXcTime(e.target.value); 
+                              cfiXcTimeManuallySet.current = true; 
+                            }} 
+                            className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#e8a020] outline-none"
                           />
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* CFI Hours */}
-                  <div className="space-y-4">
-                    <div className="bg-[#e8a020] text-[#1a3a5c] px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                      CFI Hours
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Total</label>
-                        <input type="text" readOnly value={meta.totalFlight || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                  {/* Group 5: Night */}
+                  {(parseFloat(meta.night || '0') > 0 || parseFloat(meta.nightDual || '0') > 0 || parseInt(meta.nightTakeoffs || '0') > 0) && (
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Moon size={16} className="text-[#1a3a5c]" />
+                        <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Night</h3>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI PIC</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiPic} onChange={(e) => { handleMetaChange('cfiPic', e.target.value); cfiPicManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
-                      </div>
-                      {meta.aircraftClass === 'AMEL' ? (
-                        <>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">AMEL Dual Given</label>
-                            <input type="text" readOnly value={meta.cfiDualAMEL || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">ASEL Dual Given</label>
-                            <input type="text" readOnly value={meta.cfiDualASEL || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-[#6b7280] uppercase">Dual Given</label>
-                          <input type="text" readOnly value={meta.dual || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">Night Total</label>
+                          <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.night} onChange={(e) => handleMetaChange('night', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
                         </div>
-                      )}
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Night Dual</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">Night Dual</label>
+                          <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.nightDual} onChange={(e) => handleMetaChange('nightDual', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#e8a020] outline-none" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">Night Takeoffs</label>
+                          <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.nightTakeoffs} onChange={(e) => handleMetaChange('nightTakeoffs', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">Inst Given</label>
-                        <input type="text" readOnly value={meta.simInst || '0.0'} className="w-full text-xs font-mono bg-[#f1f5f9] border border-[#dde3ec] rounded-lg px-2 py-1.5 text-[#64748b]" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI XC Time</label>
-                        <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={cfiXcTime} onChange={(e) => { setCfiXcTime(e.target.value); cfiXcTimeManuallySet.current = true; }} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
-                      </div>
-                      {meta.cfiDidLandings && (
-                        <>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Day Ldg</label>
-                            <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiDayLandings} onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI Night Ldg</label>
-                            <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiNightLandings} onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
-                          </div>
-                        </>
-                      )}
-                      {meta.cfiFlewApproaches && (
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-[#6b7280] uppercase">CFI App</label>
-                          <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiApproachCount} onChange={(e) => handleMetaChange('cfiApproachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-xs font-mono border border-[#dde3ec] rounded-lg px-2 py-1.5 focus:border-[#e8a020] focus:outline-none" />
+                      {parseInt(meta.ldgNight || '0') > 0 && parseFloat(meta.night || '0') === 0 && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 italic transition-all mt-2">
+                          <AlertTriangle size={14} className="text-amber-600" />
+                          <span className="text-[10px] font-medium text-amber-700">Night landings logged but no night flight time</span>
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {/* Group 6: Instrument */}
+                  {(parseFloat(meta.simInst || '0') > 0 || parseFloat(meta.imc || '0') > 0 || parseFloat(meta.atdInst || '0') > 0) && (
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <CloudDrizzle size={16} className="text-[#1a3a5c]" />
+                        <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Instrument</h3>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">Simulated Inst</label>
+                          <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.simInst} onChange={(e) => handleMetaChange('simInst', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-[#64748b] uppercase">Actual IMC</label>
+                          <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.imc} onChange={(e) => handleMetaChange('imc', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                        </div>
+                        {parseFloat(meta.atdInst || '0') > 0 && (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-[#64748b] uppercase">ATD Instrument</label>
+                            <input type="number" step="0.1" onWheel={(e) => e.currentTarget.blur()} value={meta.atdInst} onChange={(e) => handleMetaChange('atdInst', e.target.value)} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Group 7: Landings and Approaches */}
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <PlaneLanding size={16} className="text-[#1a3a5c]" />
+                      <h3 className="text-sm font-bold text-[#1a3a5c] uppercase tracking-wider">Landings and Approaches</h3>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-[#64748b] uppercase">Day Ldg</label>
+                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.ldgDay} onChange={(e) => handleMetaChange('ldgDay', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-[#64748b] uppercase">Night Ldg</label>
+                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.ldgNight} onChange={(e) => handleMetaChange('ldgNight', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-[#64748b] uppercase">Approaches</label>
+                        <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.approachCount} onChange={(e) => handleMetaChange('approachCount', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-sm font-mono border border-[#cbd5e1] rounded-xl px-3 py-2 focus:border-[#1a3a5c] outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-[#64748b] uppercase">Holding</label>
+                        <div className="flex items-center h-[42px]">
+                          <input 
+                            type="checkbox" 
+                            checked={meta.holdPerformed} 
+                            onChange={(e) => handleMetaChange('holdPerformed', e.target.checked)} 
+                            className="w-5 h-5 text-[#1a3a5c] border-[#cbd5e1] rounded cursor-pointer" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {meta.cfiDidLandings && (
+                      <div className="grid grid-cols-2 gap-4 border-t border-[#e2e8f0] pt-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-bold text-[#64748b] uppercase italic text-[#e8a020]">CFI Day Landings</label>
+                          <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiDayLandings} onChange={(e) => handleMetaChange('cfiDayLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-sm font-mono border border-[#e8a020]/30 rounded-xl px-3 py-2 focus:border-[#e8a020] outline-none" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] font-bold text-[#64748b] uppercase italic text-[#e8a020]">CFI Night Landings</label>
+                          <input type="number" step="1" onWheel={(e) => e.currentTarget.blur()} value={meta.cfiNightLandings} onChange={(e) => handleMetaChange('cfiNightLandings', e.target.value ? parseInt(e.target.value).toString() : '')} className="w-full text-sm font-mono border border-[#e8a020]/30 rounded-xl px-3 py-2 focus:border-[#e8a020] outline-none" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
