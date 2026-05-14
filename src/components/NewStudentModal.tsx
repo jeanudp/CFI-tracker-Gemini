@@ -239,6 +239,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   // Step 2 — Rating
   const [selectedRating, setSelectedRating] = useState<string | null>('ppl');
   const [meiSubType, setMeiSubType] = useState('');
+  const [cplSubType, setCplSubType] = useState('');
 
   // Step 3 — Prior Hours
   const [priorHours, setPriorHours] = useState<Record<string, string>>({});
@@ -257,6 +258,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     setMedicalExamDate('');
     setNotes('');
     setSelectedRating('ppl');
+    setMeiSubType('');
+    setCplSubType('');
     setPriorHours({});
     setIncludePrior(false);
     setError(null);
@@ -277,8 +280,11 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
       return;
     }
     
-    // For MEI sub-ratings, we check the base 'mei' lock status
-    const ratingToCheck = (selectedRating === 'mei_addon' || selectedRating === 'mei_initial') ? 'mei' : selectedRating;
+    // For sub-ratings, we check the base lock status
+    const ratingToCheck = 
+      (selectedRating === 'mei_addon' || selectedRating === 'mei_initial') ? 'mei' : 
+      (selectedRating === 'cpl' || selectedRating === 'cpl_amel') ? 'cpl' : 
+      selectedRating;
     
     if (step === 1 && selectedRating && !isRatingUnlocked(ratingToCheck)) {
       setError('This rating requires an upgrade. Please select Private Pilot or upgrade your plan.');
@@ -552,7 +558,9 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {Object.entries(RATINGS).filter(([code]) => !code.includes('_')).map(([code, rating]) => {
-                      const isSelected = selectedRating === code || (code === 'mei' && (selectedRating === 'mei_initial' || selectedRating === 'mei_addon'));
+                      const isSelected = selectedRating === code || 
+                        (code === 'mei' && (selectedRating === 'mei_initial' || selectedRating === 'mei_addon')) ||
+                        (code === 'cpl' && (selectedRating === 'cpl' || selectedRating === 'cpl_amel'));
                       const colors = ratingColors[code];
                       const Icon = ratingIcons[code];
                       const unlocked = isRatingUnlocked(code);
@@ -568,8 +576,15 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                             if (code === 'mei') {
                               setSelectedRating('mei');
                               setMeiSubType('');
+                              setCplSubType('');
+                            } else if (code === 'cpl') {
+                              setSelectedRating('cpl');
+                              setCplSubType('');
+                              setMeiSubType('');
                             } else {
                               setSelectedRating(code);
+                              setMeiSubType('');
+                              setCplSubType('');
                             }
                           }}
                           className="relative rounded-2xl border-2 p-5 text-center transition-all flex flex-col items-center gap-3"
@@ -635,6 +650,44 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                       );
                     })}
                   </div>
+
+                  {selectedRating && (selectedRating === 'cpl' || selectedRating === 'cpl_amel') && (
+                    <div className="mt-4 p-4 rounded-xl border border-[#e4f5ec] bg-[#e4f5ec] animate-in fade-in slide-in-from-top-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3">Select pathway:</p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setCplSubType('asel');
+                            setSelectedRating('cpl');
+                          }}
+                          className={cn(
+                            "flex-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer flex flex-col items-center",
+                            cplSubType === 'asel' || (selectedRating === 'cpl' && cplSubType === '')
+                              ? "bg-[#2d7a4f] text-white shadow-md" 
+                              : "bg-white border border-[#dde3ec] text-[#6b7280]"
+                          )}
+                        >
+                          <span className="text-xs font-bold">ASEL</span>
+                          <span className={cn("text-[8px] font-medium opacity-80", (cplSubType === 'asel' || (selectedRating === 'cpl' && cplSubType === '')) ? "text-white" : "text-[#94a3b8]")}>Standard commercial certificate</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCplSubType('amel');
+                            setSelectedRating('cpl_amel');
+                          }}
+                          className={cn(
+                            "flex-1 py-1.5 px-3 rounded-xl transition-all cursor-pointer flex flex-col items-center",
+                            cplSubType === 'amel' || selectedRating === 'cpl_amel'
+                              ? "bg-[#2d7a4f] text-white shadow-md" 
+                              : "bg-white border border-[#dde3ec] text-[#6b7280]"
+                          )}
+                        >
+                          <span className="text-xs font-bold">AMEL Add-On</span>
+                          <span className={cn("text-[8px] font-medium opacity-80", (cplSubType === 'amel' || selectedRating === 'cpl_amel') ? "text-white" : "text-[#94a3b8]")}>Already holds CPL ASEL</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {selectedRating && (selectedRating === 'mei' || selectedRating === 'mei_initial' || selectedRating === 'mei_addon') && (
                     <div className="mt-4 p-4 rounded-xl border border-[#f5c0bc] bg-[#fdecea] animate-in fade-in slide-in-from-top-2">

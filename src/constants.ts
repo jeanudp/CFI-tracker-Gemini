@@ -7,6 +7,8 @@ import { CFII_GROUND_PTS } from './constants/cfiiGroundPTS';
 import { CFII_FLIGHT_PTS } from './constants/cfiiFlightPTS';
 import { MEI_ADDON_GROUND_ACS } from './constants/meiAddonGroundACS';
 import { MEI_ADDON_FLIGHT_ACS } from './constants/meiAddonFlightACS';
+import { CPL_AMEL_ACS } from './constants/cplAmelFlightACS';
+import { CPL_AMEL_GROUND_ACS } from './constants/cplAmelGroundACS';
 
 const createPlaceholderTask = (name: string, code: string): ACSTask => ({
   name,
@@ -877,6 +879,7 @@ export const ALL_ACS: Record<string, ACSArea[]> = {
   ],
   ir: IR_FLIGHT_ACS,
   cpl: CPL_ACS,
+  cpl_amel: CPL_AMEL_ACS,
   cfi: CFI_FLIGHT_ACS,
   cfii: CFII_FLIGHT_PTS,
   mei: [
@@ -1176,6 +1179,7 @@ export const RATINGS = {
   ppl:  { label: 'Private Pilot ASEL',  acs: 'FAA-S-ACS-6B',  groundPage: '/ground', flightPage: '/flight' },
   ir:   { label: 'Instrument Rating',   acs: 'FAA-S-ACS-8C',  groundPage: '/ground', flightPage: '/flight' },
   cpl:  { label: 'Commercial Pilot',    acs: 'FAA-S-ACS-7B',  groundPage: '/ground', flightPage: '/flight' },
+  cpl_amel: { label: 'CPL AMEL Add-On', acs: 'FAA-S-ACS-7B', groundPage: '/ground', flightPage: '/flight' },
   cfi:  { label: 'CFI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
   cfii: { label: 'CFII',               acs: 'FAA-S-ACS-25',   groundPage: '/ground', flightPage: '/flight' },
   mei:  { label: 'MEI',                 acs: 'FAA-S-ACS-25',  groundPage: '/ground', flightPage: '/flight' },
@@ -1197,6 +1201,7 @@ export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
       tasks: CPL_ACS[0].tasks
     }
   ],
+  cpl_amel: CPL_AMEL_GROUND_ACS,
   cfi: CFI_GROUND_ACS,
   cfii: CFII_GROUND_PTS,
   mei_addon: MEI_ADDON_GROUND_ACS,

@@ -142,6 +142,11 @@ const ENDORSEMENTS_DATA: Record<string, { ref: string; title: string; text: stri
     title: 'Spin training',
     text: 'I certify that [First name, MI, Last name] has received the required training in spin entry, spins, and spin recovery procedures in accordance with 14 CFR § 61.183(i)(1).',
   },
+  'A.76': {
+    ref: '14 CFR § 61.63(c)(1)',
+    title: 'Additional class rating (AMEL Add-On)',
+    text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.63(c)(1). I have determined that they are competent in the areas of operation in 14 CFR § 61.127(b)(2) appropriate to the [make and model] aircraft.',
+  },
   'A.77': {
     ref: '14 CFR § 61.49',
     title: 'Retesting after failure of knowledge or practical test',
@@ -268,6 +273,27 @@ const MEI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.Rea
   { id: 'checkride', label: 'Practical Test Endorsement', sub: 'A.47', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.47'] },
 ];
 
+const CPL_AMEL_SCENARIOS: { id: Scenario; label: string; sub: string; body?: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+  { 
+    id: 'checkride', 
+    label: 'Practical Test Prerequisites', 
+    sub: 'Required before AMEL Add-On checkride', 
+    body: 'The student needs the practical-test prerequisites endorsement (§61.39(a)(6)(i) and §61.63(c)) before the AMEL Add-On checkride.',
+    icon: <CheckCircle size={20} />, 
+    color: '#1a3a5c', 
+    required: ['A.1'] 
+  },
+  { 
+    id: 'solo-90day', 
+    label: 'Additional Class Rating — AMEL', 
+    sub: 'Multiengine class rating add-on', 
+    body: 'Multiengine class rating add-on (§61.63(c)(1)). The CFI must sign a logbook endorsement attesting the student is competent in the areas of operation in §61.127(b)(2) before the practical test.',
+    icon: <Award size={20} />, 
+    color: '#2d7a4f', 
+    required: ['A.76'] 
+  },
+];
+
 export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: EndorsementAdvisorProps) {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const activeScenarios = ratingCode === 'ir' ? IR_SCENARIOS
@@ -275,6 +301,7 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
     : ratingCode === 'cfi' ? CFI_SCENARIOS
     : ratingCode === 'cfii' ? CFII_SCENARIOS
     : ratingCode === 'mei' ? MEI_SCENARIOS
+    : ratingCode === 'cpl_amel' ? CPL_AMEL_SCENARIOS
     : SCENARIOS;
   const [showPrinter, setShowPrinter] = useState(false);
   const [classBChoice, setClassBChoice] = useState<'airspace' | 'airport' | 'both' | null>(null);
@@ -656,6 +683,11 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                       <div className="flex-1 min-w-0">
                         <p className="text-base font-bold text-[#1c2333] leading-tight mb-1">{s.label}</p>
                         <p className="text-[11px] text-[#6b7280] font-mono opacity-80 uppercase tracking-tighter">{s.sub}</p>
+                        {(s as any).body && (
+                          <p className="text-[11px] text-[#64748b] mt-1.5 border-t border-[#dde3ec] pt-1.5 leading-relaxed">
+                            {(s as any).body}
+                          </p>
+                        )}
                       </div>
                       {allGiven && <CheckCircle size={20} className="text-[#2d7a4f] shrink-0" />}
                       {!allGiven && someGiven && <AlertTriangle size={20} className="text-[#e8a020] shrink-0" />}

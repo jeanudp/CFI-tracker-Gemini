@@ -49,6 +49,22 @@ const ALL_ENDORSEMENTS: Record<string, EndorsementDef[]> = {
     { key: 'A.39', title: 'Flight proficiency / practical test — Commercial Pilot', ref: '14 CFR §§ 61.123(e), 61.127, and 61.129', template: 'I certify that {First name, MI, Last name} has received the required training in accordance with 14 CFR §§ 61.127 and 61.129. I have determined they are prepared for the {name of} practical test.', group: 'Practical Test' },
     { key: 'A.77', title: 'Retesting after failure of knowledge or practical test', ref: '14 CFR § 61.49', template: 'I certify that {First name, MI, Last name} has received the additional training required for retesting by 14 CFR § 61.49. I have determined that they are prepared for the {name of} {knowledge/practical} test.', group: 'Retesting' },
   ],
+  cpl_amel: [
+    { 
+      key: 'A.1', 
+      title: 'A.1 — Prerequisites for practical test', 
+      ref: '14 CFR § 61.39(a)(6)(i) and (ii)', 
+      template: 'I certify that {First name, MI, Last name} has received and logged training time within the preceding 2 calendar months in preparation for the practical test and they are prepared for the required practical test for the issuance of {Commercial Pilot — Airplane Multiengine Land Add-On}, and that they have demonstrated satisfactory knowledge of the subject areas in which a deficient grade was shown on the airman knowledge test (or that the applicant did not take a knowledge test as applicable).',
+      group: 'Practical Test'
+    },
+    { 
+      key: 'A.76', 
+      title: 'A.76 — Additional Aircraft Class Rating', 
+      ref: '14 CFR § 61.63(c)(1)', 
+      template: 'I certify that {First name, MI, Last name} has received the required training of 14 CFR § 61.63(c)(1). I have determined that they are competent in the areas of operation in 14 CFR § 61.127(b)(2) appropriate to the {make and model} aircraft.',
+      group: 'Practical Test'
+    },
+  ],
   cfi: [
     { key: 'A.45', title: 'Fundamentals of instructing knowledge test', ref: '14 CFR § 61.183(d)', template: 'I certify that {First name, MI, Last name} has received a home study course on the fundamentals of instructing from {name of course}. I have reviewed the course and determined it meets the requirements of 14 CFR § 61.185(a)(1).', group: 'Knowledge Tests' },
     { key: 'A.46', title: 'Flight instructor aeronautical knowledge test', ref: '14 CFR § 61.183(f)', template: 'I certify that {First name, MI, Last name} has received the required ground training of 14 CFR § 61.185. I have determined they are prepared for the flight instructor aeronautical knowledge test.', group: 'Knowledge Tests' },
@@ -78,6 +94,7 @@ const RATING_LABELS: Record<string, string> = {
   cfi: 'CFI',
   cfii: 'CFII',
   mei: 'MEI',
+  cpl_amel: 'CPL AMEL Add-On',
 };
 
 function parseTemplate(template: string): { type: 'text' | 'field'; value: string }[] {

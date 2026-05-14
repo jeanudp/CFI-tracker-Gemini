@@ -2381,6 +2381,10 @@ export default function History() {
                     .filter(l => new Date(l.saved_at) >= sixtyDaysAgo)
                     .reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') || 0), 0);
 
+                  const recentAmelDual = allFlightSls
+                    .filter(l => new Date(l.saved_at) >= sixtyDaysAgo && l.meta?.aircraftClass === 'AMEL')
+                    .reduce((sum, l) => sum + (parseFloat(l.meta?.dual || '0') || 0), 0);
+
                   const recentInst = allFlightSls
                     .filter(l => new Date(l.saved_at) >= sixtyDaysAgo)
                     .reduce((sum, l) => sum + (parseFloat(l.meta?.simInst || '0') || 0), 0);
@@ -2525,6 +2529,22 @@ export default function History() {
                         description: 'Required if the student fails any knowledge or practical test.',
                         endorsements: [ENDORSEMENTS[4]]
                       }
+                    ];
+                  } else if (lessonRating === 'cpl_amel') {
+                    REQS = [
+                      { section: 'Prerequisites for Add-On', ref: '§61.63(c)', rows: [
+                        { label: 'Commercial ASEL certificate held', ref: '§61.63(c)', have: getManualValue('cpl_asel_held'), need: 1, unit: 'cert', mk: 'cpl_asel_held', checkbox: true },
+                        { label: 'Instrument rating held', ref: '§61.63(c)', have: getManualValue('instrumentHeld'), need: 1, unit: 'rating', mk: 'instrumentHeld', checkbox: true },
+                        { 
+                          label: 'Practical test prep dual within preceding 2 calendar months', 
+                          ref: '§61.39(a)(6)(i)', 
+                          have: recentAmelDual, 
+                          need: 3, 
+                          unit: 'hrs', 
+                          note: sixtyDaysStr 
+                        },
+                        { label: 'Logbook endorsement on §61.127(b)(2) areas of operation', ref: '§61.127(b)(2)', have: getManualValue('cpl_amel_endorsement_signed'), need: 1, unit: 'endorsement', mk: 'cpl_amel_endorsement_signed', checkbox: true }
+                      ]}
                     ];
                   } else if (lessonRating === 'cfi') {
                     REQS = [
@@ -2672,6 +2692,8 @@ export default function History() {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && isEndorsementMet('A.49') && allAcsMet;
                   } else if (lessonRating === 'cfii') {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.48') && allAcsMet;
+                  } else if (lessonRating === 'cpl_amel') {
+                    allMet = metCount === allRows.length && allAcsMet;
                   } else if (['mei', 'mei_addon', 'mei_initial'].includes(lessonRating)) {
                     allMet = metCount === allRows.length && isEndorsementMet('A.1') && isEndorsementMet('A.47') && allAcsMet;
                   }
@@ -2690,6 +2712,7 @@ export default function History() {
                     if (ratingCode === 'ppl') return 'Flight Time Requirements — §61.109(a)';
                     if (ratingCode === 'ir') return 'Flight Time Requirements — §61.65(d)';
                     if (ratingCode === 'cpl') return 'Flight Time Requirements — §61.129(a)';
+                    if (ratingCode === 'cpl_amel') return 'Prerequisites for Add-On — §61.63(c)';
                     if (ratingCode === 'cfi') return 'Flight Time Requirements — §61.183';
                     if (ratingCode === 'cfii') return 'Flight Time Requirements — §61.183 + §61.187(b)(7) + §61.191';
                     if (['mei', 'mei_addon', 'mei_initial'].includes(ratingCode)) return 'Flight Time Requirements — §61.183 + §61.191';

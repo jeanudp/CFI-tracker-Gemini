@@ -16,6 +16,7 @@ const ratingConfig: Record<string, { bg: string, text: string, light: string, bo
   ppl:  { bg: '#1a3a5c', text: 'white', light: '#d4e8f5', border: '#1a3a5c', icon: Plane,        label: 'Private Pilot' },
   ir:   { bg: '#7c3aed', text: 'white', light: '#ede8f8', border: '#7c3aed', icon: Cloud,        label: 'Instrument Rating' },
   cpl:  { bg: '#2d7a4f', text: 'white', light: '#e4f5ec', border: '#2d7a4f', icon: Gauge,        label: 'Commercial Pilot' },
+  cpl_amel: { bg: '#38a169', text: 'white', light: '#f0fdf4', border: '#38a169', icon: Gauge,   label: 'CPL AMEL Add-On' },
   cfi:  { bg: '#e67e22', text: 'white', light: '#fdf0e4', border: '#e67e22', icon: ClipboardList, label: 'CFI' },
   cfii: { bg: '#16a34a', text: 'white', light: '#e0f5f2', border: '#16a34a', icon: Compass,      label: 'CFII' },
   mei:  { bg: '#c0392b', text: 'white', light: '#fdecea', border: '#c0392b', icon: Navigation,   label: 'MEI' },
@@ -219,7 +220,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('storage', checkGuide);
   }, []);
 
-  const ratingOrder = ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'];
+  const ratingOrder = ['ppl', 'ir', 'cpl', 'cpl_amel', 'cfi', 'cfii', 'mei'];
   const sortedStudents = [...students].sort((a, b) => {
     const ratingDiff = ratingOrder.indexOf(a.current_rating) - ratingOrder.indexOf(b.current_rating);
     if (ratingDiff !== 0) return ratingDiff;
@@ -1590,6 +1591,7 @@ export default function Dashboard() {
                 ppl:  '#2563eb',
                 ir:   '#7c3aed',
                 cpl:  '#059669',
+                cpl_amel: '#10b981',
                 cfi:  '#d97706',
                 cfii: '#0d9488',
                 mei:  '#dc2626',
@@ -1742,6 +1744,7 @@ export default function Dashboard() {
                       ppl: '#1a3a5c',
                       ir: '#7c3aed',
                       cpl: '#2d7a4f',
+                      cpl_amel: '#38a169',
                       cfi: '#e67e22',
                       cfii: '#16a34a',
                       mei: '#c0392b',
@@ -2528,7 +2531,7 @@ export default function Dashboard() {
                     requestDayLessons.map((lesson, idx) => {
                       const student = students.find(s => s.name === lesson.student_name);
                       const ratingAccents: Record<string, string> = {
-                        ppl: '#1a3a5c', ir: '#7c3aed', cpl: '#2d7a4f', cfi: '#e67e22', cfii: '#16a34a', mei: '#c0392b',
+                        ppl: '#1a3a5c', ir: '#7c3aed', cpl: '#2d7a4f', cpl_amel: '#38a169', cfi: '#e67e22', cfii: '#16a34a', mei: '#c0392b',
                       };
                       const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
 

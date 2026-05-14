@@ -142,6 +142,7 @@ export interface ACSTask {
   code: string;
   references: string;
   objective: string;
+  note?: string;
   stds: ACSStandard[];
 }
 

@@ -16,6 +16,7 @@ export default function RatingSelection() {
   const [loadingSub, setLoadingSub] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [pendingMeiSubType, setPendingMeiSubType] = useState('');
+  const [pendingCplSubType, setPendingCplSubType] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -61,8 +62,18 @@ export default function RatingSelection() {
   const handleSelectRating = (code: string) => {
     if (code === 'mei') {
       setPendingMeiSubType('mei');
+      setPendingCplSubType('');
       return;
     }
+
+    if (code === 'cpl') {
+      setPendingCplSubType('cpl');
+      setPendingMeiSubType('');
+      return;
+    }
+
+    setPendingMeiSubType('');
+    setPendingCplSubType('');
 
     const rating = (RATINGS as any)[code];
     if (!rating || !rating.groundPage) return;
@@ -228,6 +239,53 @@ export default function RatingSelection() {
                 <div className="text-[10px] text-[#6b7280] mt-1">{locked ? 'Upgrade to unlock' : rating.acs}</div>
               </div>
             </motion.div>
+            {code === 'cpl' && pendingCplSubType === 'cpl' && (
+              <div key="cpl-subtype-panel" className="col-span-full my-2 bg-white border border-[#dde3ec] rounded-2xl p-6 shadow-xl text-center animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-[#1c2333]">ASEL or AMEL Add-On?</h3>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setPendingCplSubType(''); }}
+                    className="p-1 hover:bg-[#f4f5f7] rounded-full transition-colors cursor-pointer"
+                  >
+                    <X size={16} className="text-[#6b7280]" />
+                  </button>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rating = (RATINGS as any)['cpl'];
+                      localStorage.setItem('selected_rating', JSON.stringify({ 
+                        code: 'cpl', 
+                        ...rating,
+                        subType: 'asel'
+                      }));
+                      navigate('/lesson-type');
+                    }}
+                    className="flex-1 max-w-[160px] py-3 px-4 rounded-xl border border-[#dde3ec] text-[#2d7a4f] hover:bg-[#f8fafc] transition-all cursor-pointer flex flex-col items-center gap-1"
+                  >
+                    <span className="text-sm font-black">ASEL</span>
+                    <span className="text-[9px] font-medium text-[#6b7280]">Standard commercial</span>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rating = (RATINGS as any)['cpl_amel'];
+                      localStorage.setItem('selected_rating', JSON.stringify({ 
+                        code: 'cpl_amel', 
+                        ...rating,
+                        subType: 'amel'
+                      }));
+                      navigate('/lesson-type');
+                    }}
+                    className="flex-1 max-w-[160px] py-3 px-4 rounded-xl bg-[#2d7a4f] text-white shadow-lg hover:bg-[#235e3d] transition-all cursor-pointer flex flex-col items-center gap-1"
+                  >
+                    <span className="text-sm font-black">AMEL Add-On</span>
+                    <span className="text-[9px] font-medium text-white/80">Already holds CPL ASEL</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {code === 'mei' && pendingMeiSubType === 'mei' && (
               <div key="mei-subtype-panel" className="col-span-full my-2 bg-white border border-[#dde3ec] rounded-2xl p-6 shadow-xl text-center animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between mb-4">
