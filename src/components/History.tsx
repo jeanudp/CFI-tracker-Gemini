@@ -2513,7 +2513,8 @@ export default function History() {
                     ENDORSEMENTS = [
                       { key: 'A.1', label: 'A.1 — Prerequisites for practical test: 14 CFR § 61.39(a)(6)(i) and (ii). I certify that [First name, MI, Last name] has received and logged training time within 2 calendar months preceding the month of application in preparation for the practical test and they are prepared for the required practical test for the issuance of Flight Instructor Multiengine Add-On.' },
                       { key: 'A.2', label: 'A.2 — Review of deficiencies identified on airman knowledge test: 14 CFR § 61.39(a)(6)(iii), as required. I certify that [First name, MI, Last name] has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the airman knowledge test.' },
-                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.183(g) for the multiengine instructor rating. I have determined they are prepared for the Flight Instructor Multiengine Add-On practical test.' }
+                      { key: 'A.47', label: 'A.47 — Flight instructor ground and flight proficiency/practical test: 14 CFR § 61.183(g). I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.183(g) for the multiengine instructor rating. I have determined they are prepared for the Flight Instructor Multiengine Add-On practical test.' },
+                      { key: 'A.77', label: 'A.77 — Retesting after failure of a knowledge or practical test: 14 CFR § 61.49. I certify that [First name, MI, Last name] has received the additional [flight and/or ground, as appropriate] training as required by 14 CFR § 61.49. I have determined that they are proficient to pass the [name of] knowledge/practical test.' }
                     ];
                     SOLO_OPTIONS = [
                       {
@@ -2527,6 +2528,12 @@ export default function History() {
                         label: 'Section 2 — Practical Test Endorsement',
                         description: 'Required before the FAA Flight Instructor Multiengine Add-On practical test with a DPE.',
                         endorsements: [ENDORSEMENTS[2]]
+                      },
+                      {
+                        id: '3',
+                        label: 'Section 3 — Retesting After Failure',
+                        description: 'Required only if the applicant fails a knowledge or practical test and needs to retake it.',
+                        endorsements: [ENDORSEMENTS[3]]
                       }
                     ];
                   }
