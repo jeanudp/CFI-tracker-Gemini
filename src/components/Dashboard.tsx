@@ -1834,13 +1834,13 @@ export default function Dashboard() {
                     else if (dateObj.getTime() === tomorrow.getTime()) dateLabel = "Tomorrow";
 
                     return (
-                      <div key={group.date} className={idx > 0 ? "pt-4" : ""}>
-                        <div className="flex items-center justify-between mb-2">
+                      <div key={group.date} className={idx > 0 ? "pt-2" : ""}>
+                        <div className="flex items-center justify-between mb-1">
                           <span className="text-[12px] font-bold" style={{ color: 'var(--text-primary)' }}>{dateLabel}</span>
                           <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{group.lessons.length} {group.lessons.length === 1 ? 'lesson' : 'lessons'}</span>
                         </div>
-                        <div className="h-px w-full mb-2" style={{ backgroundColor: 'var(--border-color)' }} />
-                        <div className="space-y-0.5">
+                        <div className="h-px w-full mb-1" style={{ backgroundColor: 'var(--border-color)' }} />
+                        <div className="space-y-px">
                           {group.lessons.map((lesson: any) => {
                             const student = students.find(s => s.name === lesson.student_name);
                             const ratingAccents: Record<string, string> = {
@@ -1857,11 +1857,11 @@ export default function Dashboard() {
                             const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
                             
                             return (
-                              <div key={lesson.id} className="flex items-center gap-3 py-2 px-2 rounded-lg transition-colors hover:bg-[var(--bg-tertiary)] group">
-                                <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: accent }} />
+                              <div key={lesson.id} className="flex items-center gap-3 py-1 px-2 rounded-lg transition-colors hover:bg-[var(--bg-tertiary)] group">
+                                <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: accent }} />
                                 <div className="flex-1 flex items-center justify-between min-w-0">
                                   <div className="flex items-center gap-3 min-w-0">
-                                    <span className="text-[14px] font-bold w-12 shrink-0 tabular-nums" style={{ color: 'var(--text-primary)' }}>{lesson.start_time?.substring(0, 5)}</span>
+                                    <span className="text-[13px] font-bold w-12 shrink-0 tabular-nums" style={{ color: 'var(--text-primary)' }}>{lesson.start_time?.substring(0, 5)}</span>
                                     <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</span>
                                   </div>
                                   <div className="shrink-0">
