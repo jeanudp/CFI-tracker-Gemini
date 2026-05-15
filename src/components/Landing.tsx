@@ -128,7 +128,7 @@ export default function Landing() {
                 letterSpacing: '3px',
               }}
             >
-              From first lesson to checkride
+              Built by a CFI, for CFIs.
             </span>
             <div
               style={{
