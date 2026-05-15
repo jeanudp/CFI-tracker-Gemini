@@ -165,8 +165,27 @@ export default function Landing() {
             The complete lesson tracker for Part 61 flight instructors. Track ACS grades, manage endorsements, and know exactly when your student is checkride ready.
           </p>
         </motion.div>
-
-        {/* CTA Buttons */}
+        
+        {/* Free PPL Callout */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.22 }}
+          className="flex justify-center mb-10"
+        >
+          <div 
+            className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-sm"
+            style={{ 
+              backgroundColor: 'rgba(45,122,79,0.1)', 
+              borderColor: 'rgba(45,122,79,0.25)' 
+            }}
+          >
+            <CheckCircle2 size={13} style={{ color: '#2d7a4f' }} />
+            <span className="text-[11px] font-bold" style={{ color: '#2d7a4f' }}>
+              Private Pilot is free forever — no credit card, unlimited students
+            </span>
+          </div>
+        </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -450,18 +469,19 @@ export default function Landing() {
             }}
           >
             <h3 className="text-sm font-black mb-1" style={{ color: 'var(--text-primary)' }}>Free</h3>
-            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Try it with your PPL students at no cost</p>
+            <p className="text-[10px] mb-4" style={{ color: 'var(--text-muted)' }}>Free forever for Private Pilot. No credit card required.</p>
             <div className="mb-6">
               <span className="text-4xl font-black" style={{ color: 'var(--navy)' }}>$0</span>
-              <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>forever</span>
+              <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>forever, no card</span>
             </div>
             <div className="space-y-2 mb-6 flex-1">
               {[
                 'Private Pilot rating only',
+                'Unlimited PPL students',
+                'No credit card to start',
                 'Full ACS task grading',
                 'AC 61-65K endorsements',
                 '§61.109 hour tracking',
-                'Unlimited PPL students',
               ].map(f => (
                 <div key={f} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
                   <CheckCircle2 size={12} style={{ color: '#2d7a4f', flexShrink: 0 }} />
@@ -474,7 +494,7 @@ export default function Landing() {
               className="w-full py-2.5 rounded-xl text-xs font-bold border-2 transition-all hover:-translate-y-0.5 cursor-pointer"
               style={{ borderColor: 'var(--border-color)', color: 'var(--navy)', backgroundColor: 'transparent' }}
             >
-              Get Started Free
+              Get Started — No Card Required
             </button>
           </motion.div>
 
