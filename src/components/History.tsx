@@ -2636,7 +2636,7 @@ export default function History() {
                           unit: 'hrs', 
                           note: sixtyDaysStr 
                         },
-                        { label: 'Logbook endorsement on §61.187(b) areas of operation for multiengine', ref: '§61.183(g)', have: getManualValue('meiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'meiAreasEndorsement', checkbox: true }
+                        { label: 'Logbook endorsement on §61.187(b) areas of operation for multiengine [A.47]', ref: '§61.183(g)', have: getManualValue('meiAreasEndorsement'), need: 1, unit: 'endorsement', mk: 'meiAreasEndorsement', checkbox: true }
                       ]}
                     ];
                     ENDORSEMENTS = [
