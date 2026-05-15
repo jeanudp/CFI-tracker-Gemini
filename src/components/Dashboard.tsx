@@ -1807,52 +1807,83 @@ export default function Dashboard() {
               </div>
             </button>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="space-y-4">
               {upcomingLessons.length > 0 ? (
-                <>
-                  {upcomingLessons.map((lesson: any) => {
-                    const student = students.find(s => s.name === lesson.student_name);
-                    const ratingAccents: Record<string, string> = {
-                      ppl: '#1a3a5c',
-                      ir: '#7c3aed',
-                      cpl: '#2d7a4f',
-                      cpl_amel: '#38a169',
-                      cfi: '#e67e22',
-                      cfii: '#16a34a',
-                      mei: '#c0392b',
-                      mei_addon: '#e85d4a',
-                      mei_initial: '#8b1a0f',
-                    };
-                    const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
-                    
-                    const lessonDate = new Date(lesson.date);
-                    const dateStr = lessonDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                (() => {
+                  const grouped = upcomingLessons.reduce((groups: any[], lesson: any) => {
+                    const date = lesson.date;
+                    const existingGroup = groups.find(g => g.date === date);
+                    if (existingGroup) {
+                      existingGroup.lessons.push(lesson);
+                    } else {
+                      groups.push({ date, lessons: [lesson] });
+                    }
+                    return groups;
+                  }, []);
+
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+
+                  return grouped.map((group, idx) => {
+                    const dateObj = new Date(group.date);
+                    dateObj.setHours(0, 0, 0, 0);
+                    let dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                    if (dateObj.getTime() === today.getTime()) dateLabel = "Today";
+                    else if (dateObj.getTime() === tomorrow.getTime()) dateLabel = "Tomorrow";
 
                     return (
-                      <div key={lesson.id} className="flex items-center gap-3 p-3 rounded-xl transition-colors border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] bg-[var(--bg-primary)]/40">
-                        <div className="w-1.5 h-8 rounded-full" style={{ backgroundColor: accent }} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <p className="text-xs font-bold truncate leading-tight" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</p>
-                            <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{dateStr}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>{lesson.start_time?.substring(0, 5)}</span>
-                            {lesson.tail_number === 'GROUND' ? (
-                              <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>Ground</span>
-                            ) : lesson.tail_number ? (
-                              <span className="text-[10px] font-black uppercase tracking-tighter text-white px-1.5 rounded-sm" style={{ backgroundColor: 'var(--navy)', opacity: 0.8 }}>
-                                {lesson.tail_number}
-                              </span>
-                            ) : null}
-                          </div>
+                      <div key={group.date} className={idx > 0 ? "pt-4" : ""}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[12px] font-bold" style={{ color: 'var(--text-primary)' }}>{dateLabel}</span>
+                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{group.lessons.length} {group.lessons.length === 1 ? 'lesson' : 'lessons'}</span>
+                        </div>
+                        <div className="h-px w-full mb-2" style={{ backgroundColor: 'var(--border-color)' }} />
+                        <div className="space-y-0.5">
+                          {group.lessons.map((lesson: any) => {
+                            const student = students.find(s => s.name === lesson.student_name);
+                            const ratingAccents: Record<string, string> = {
+                              ppl: '#1a3a5c',
+                              ir: '#7c3aed',
+                              cpl: '#2d7a4f',
+                              cpl_amel: '#38a169',
+                              cfi: '#e67e22',
+                              cfii: '#16a34a',
+                              mei: '#c0392b',
+                              mei_addon: '#e85d4a',
+                              mei_initial: '#8b1a0f',
+                            };
+                            const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
+                            
+                            return (
+                              <div key={lesson.id} className="flex items-center gap-3 py-2 px-2 rounded-lg transition-colors hover:bg-[var(--bg-tertiary)] group">
+                                <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: accent }} />
+                                <div className="flex-1 flex items-center justify-between min-w-0">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <span className="text-[14px] font-bold w-12 shrink-0 tabular-nums" style={{ color: 'var(--text-primary)' }}>{lesson.start_time?.substring(0, 5)}</span>
+                                    <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</span>
+                                  </div>
+                                  <div className="shrink-0">
+                                    {lesson.tail_number === 'GROUND' ? (
+                                      <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>Ground</span>
+                                    ) : lesson.tail_number ? (
+                                      <span className="text-[9px] font-black uppercase tracking-tight text-white px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: 'var(--navy)' }}>
+                                        {lesson.tail_number}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
-                  })}
-                </>
+                  });
+                })()
               ) : (
-                <div className="col-span-full py-8 text-center px-4">
+                <div className="py-8 text-center px-4">
                   <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No upcoming lessons</p>
                 </div>
               )}
