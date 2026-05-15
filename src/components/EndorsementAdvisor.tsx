@@ -147,6 +147,16 @@ const ENDORSEMENTS_DATA: Record<string, { ref: string; title: string; text: stri
     title: 'Additional class rating (AMEL Add-On)',
     text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.63(c)(1). I have determined that they are competent in the areas of operation in 14 CFR § 61.127(b)(2) appropriate to the [make and model] aircraft.',
   },
+  'A.72': {
+    ref: '14 CFR § 61.31(e)',
+    title: 'To act as PIC in a complex airplane',
+    text: 'I certify that [First name, MI, Last name], [pilot grade] [certificate number], has received the required training of 14 CFR § 61.31(e) in a [make and model] complex airplane, and that I have determined they are proficient in the operation and systems of a complex airplane.',
+  },
+  'A.73': {
+    ref: '14 CFR § 61.31(f)',
+    title: 'To act as PIC in a high-performance airplane',
+    text: 'I certify that [First name, MI, Last name], [pilot grade] [certificate number], has received the required training of 14 CFR § 61.31(f) in a [make and model] high-performance airplane, and that I have determined they are proficient in the operation and systems of a high-performance airplane.',
+  },
   'A.77': {
     ref: '14 CFR § 61.49',
     title: 'Retesting after failure of knowledge or practical test',
@@ -163,7 +173,9 @@ type Scenario =
   | 'solo-90day'
   | 'solo-classb'
   | 'xc-review'
-  | 'checkride';
+  | 'checkride'
+  | 'complex-airplane'
+  | 'high-performance';
 
 const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
   {
@@ -251,6 +263,8 @@ const CPL_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.Rea
   { id: 'xc-review', label: 'Practical Test Prerequisites', sub: 'A.1, A.2', icon: <CheckCircle size={20} />, color: '#1a3a5c', required: ['A.1', 'A.2'] },
   { id: 'solo-90day', label: 'Practical Test Endorsement', sub: 'A.39', icon: <Plane size={20} />, color: '#e67e22', required: ['A.39'] },
   { id: 'solo-classb', label: 'Retesting After Failure', sub: 'A.77', icon: <RefreshCw size={20} />, color: '#c0392b', required: ['A.77'] },
+  { id: 'complex-airplane', label: 'Complex Airplane', sub: 'A.72', icon: <Plane size={20} />, color: '#0891b2', required: ['A.72'] },
+  { id: 'high-performance', label: 'High-Performance Airplane', sub: 'A.73', icon: <Plane size={20} />, color: '#7c3aed', required: ['A.73'] },
 ];
 
 const CFI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
@@ -271,6 +285,8 @@ const MEI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.Rea
   { id: 'xc-review', label: 'CFI Knowledge Test', sub: 'A.46', icon: <CheckCircle size={20} />, color: '#7c3aed', required: ['A.46'] },
   { id: 'solo-beyond-50', label: 'Practical Test Prerequisites', sub: 'A.1, A.2', icon: <MapPin size={20} />, color: '#1a3a5c', required: ['A.1', 'A.2'] },
   { id: 'checkride', label: 'Practical Test Endorsement', sub: 'A.47', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.47'] },
+  { id: 'complex-airplane', label: 'Complex Airplane', sub: 'A.72', icon: <Plane size={20} />, color: '#0891b2', required: ['A.72'] },
+  { id: 'high-performance', label: 'High-Performance Airplane', sub: 'A.73', icon: <Plane size={20} />, color: '#7c3aed', required: ['A.73'] },
 ];
 
 const CPL_AMEL_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
