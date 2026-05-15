@@ -149,6 +149,7 @@ export default function Dashboard() {
   const [endorsements, setEndorsements] = useState<any[]>([]);
   const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
   const [isNewStudentOpen, setIsNewStudentOpen] = useState(false);
+  const [isArchivedModalOpen, setIsArchivedModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
@@ -163,7 +164,6 @@ export default function Dashboard() {
   const [selectedNextRating, setSelectedNextRating] = useState<string | null>(null);
   const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
   const [expandedCurrencyRow, setExpandedCurrencyRow] = useState<string | null>(null);
-  const [archivedExpanded, setArchivedExpanded] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -1866,45 +1866,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-
-        {/* Archived Students */}
-        <div className="mt-6 border-t pt-4" style={{ borderColor: 'var(--border-color)' }}>
-          <button
-            onClick={() => setArchivedExpanded(!archivedExpanded)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            <div className="flex items-center gap-2">
-              <Archive size={14} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Archived Students ({archivedStudents.length})</span>
-            </div>
-            <ChevronRight size={14} className={cn("transition-transform", archivedExpanded && "rotate-90")} />
-          </button>
-          <AnimatePresence>
-            {archivedExpanded && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                {archivedStudents.length === 0 ? (
-                  <p className="text-xs italic text-center py-4" style={{ color: 'var(--text-muted)' }}>No archived students.</p>
-                ) : archivedStudents.map(student => (
-                  <div key={student.id} className="flex items-center justify-between px-4 py-3 rounded-xl opacity-60 mb-1" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <div>
-                      <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{student.name}</p>
-                      <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Archived {formatDate(student.deleted_at!)}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => handleRestoreStudent(student.id)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer" style={{ color: 'var(--green)' }}>
-                        <RotateCcw size={13} />
-                      </button>
-                      <button onClick={() => handlePermanentDelete(student.id, student.name)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer" style={{ color: 'var(--red)' }}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
 
       {/* ============================================
@@ -3035,6 +2996,14 @@ export default function Dashboard() {
                   <User size={14} style={{ color: 'var(--navy)' }} />
                   Account
                 </Link>
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); setIsArchivedModalOpen(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <Archive size={14} style={{ color: 'var(--navy)' }} />
+                  Archived Students
+                </button>
                 {user?.email === 'jeanudp@gmail.com' && (
                   <Link
                     to="/admin"
@@ -3425,6 +3394,88 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {/* Archived Students Modal */}
+      <AnimatePresence>
+        {isArchivedModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsArchivedModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md rounded-3xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden"
+              style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+            >
+              <div className="p-6 border-b flex items-center justify-between shrink-0" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(26,58,92,0.1)' }}>
+                    <Archive size={16} style={{ color: 'var(--navy)' }} />
+                  </div>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Archived Students</h3>
+                </div>
+                <button
+                  onClick={() => setIsArchivedModalOpen(false)}
+                  className="w-8 h-8 rounded-full hover:bg-[var(--bg-tertiary)] flex items-center justify-center transition-colors cursor-pointer"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+                {archivedStudents.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>No archived students.</p>
+                  </div>
+                ) : (
+                  archivedStudents.map(student => (
+                    <div key={student.id} className="flex items-center justify-between p-4 rounded-2xl border transition-all" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{student.name}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Archived {formatDate(student.deleted_at!)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button 
+                          onClick={() => handleRestoreStudent(student.id)} 
+                          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer bg-white shadow-sm border border-[var(--border-color)]" 
+                          style={{ color: 'var(--green)' }}
+                          title="Restore Student"
+                        >
+                          <RotateCcw size={15} />
+                        </button>
+                        <button 
+                          onClick={() => handlePermanentDelete(student.id, student.name)} 
+                          className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 cursor-pointer bg-white shadow-sm border border-[var(--border-color)]" 
+                          style={{ color: 'var(--red)' }}
+                          title="Permanently Delete"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="p-6 bg-[var(--bg-tertiary)] border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <button
+                  onClick={() => setIsArchivedModalOpen(false)}
+                  className="w-full py-3 text-white font-bold rounded-xl transition-all cursor-pointer"
+                  style={{ backgroundColor: 'var(--navy)', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
