@@ -1807,7 +1807,7 @@ export default function Dashboard() {
               </div>
             </button>
 
-            <div className="space-y-4">
+            <div className={upcomingLessons.length > 0 ? "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4" : "space-y-4"}>
               {upcomingLessons.length > 0 ? (
                 (() => {
                   const grouped = upcomingLessons.reduce((groups: any[], lesson: any) => {
@@ -1826,7 +1826,7 @@ export default function Dashboard() {
                   const tomorrow = new Date(today);
                   tomorrow.setDate(tomorrow.getDate() + 1);
 
-                  return grouped.map((group, idx) => {
+                  return grouped.map((group) => {
                     const dateObj = new Date(group.date);
                     dateObj.setHours(0, 0, 0, 0);
                     let dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -1834,10 +1834,10 @@ export default function Dashboard() {
                     else if (dateObj.getTime() === tomorrow.getTime()) dateLabel = "Tomorrow";
 
                     return (
-                      <div key={group.date} className={idx > 0 ? "pt-2" : ""}>
+                      <div key={group.date}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[12px] font-bold" style={{ color: 'var(--text-primary)' }}>{dateLabel}</span>
-                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{group.lessons.length} {group.lessons.length === 1 ? 'lesson' : 'lessons'}</span>
+                          <span className="text-[11px] font-bold" style={{ color: 'var(--text-primary)' }}>{dateLabel}</span>
+                          <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{group.lessons.length} {group.lessons.length === 1 ? 'lesson' : 'lessons'}</span>
                         </div>
                         <div className="h-px w-full mb-1" style={{ backgroundColor: 'var(--border-color)' }} />
                         <div className="space-y-px">
@@ -1881,7 +1881,7 @@ export default function Dashboard() {
                   });
                 })()
               ) : (
-                <div className="py-8 text-center px-4">
+                <div className="py-8 text-center px-4 md:col-span-2">
                   <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No upcoming lessons</p>
                 </div>
               )}
