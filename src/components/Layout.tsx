@@ -174,12 +174,23 @@ export default function Layout({ children, user }: LayoutProps) {
             onClick={() => setMaydayOpen(true)}
             className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
             style={{ 
-              background: '#1a3a5c',
-              border: '2px solid white'
+              background: 'var(--navy)'
             }}
             title="Report a problem"
           >
             <Headset size={15} color="white" />
+          </button>
+
+          {/* Dark mode toggle — icon only */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ 
+              background: 'var(--navy)'
+            }}
+            title="Toggle dark mode"
+          >
+            {darkMode ? <Sun size={15} color="white" /> : <Moon size={15} color="white" />}
           </button>
 
           {/* Navigation dropdown */}
@@ -263,35 +274,6 @@ export default function Layout({ children, user }: LayoutProps) {
                   </div>
 
                   <div className="p-1.5 space-y-0.5">
-
-
-                    {/* Dark mode toggle */}
-                    <button
-                      onClick={() => setDarkMode(!darkMode)}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-[var(--bg-tertiary)]"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      <div className="flex items-center gap-3">
-                        {darkMode ? <Sun size={14} style={{ color: 'var(--text-muted)' }} /> : <Moon size={14} style={{ color: 'var(--text-muted)' }} />}
-                        {darkMode ? 'Light Mode' : 'Dark Mode'}
-                      </div>
-                      <div
-                        className={cn(
-                          "w-8 h-4 rounded-full transition-colors relative",
-                          darkMode ? "bg-[var(--navy)]" : "bg-[#dde3ec]"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform",
-                            darkMode ? "translate-x-4" : "translate-x-0.5"
-                          )}
-                        />
-                      </div>
-                    </button>
-
-                    <div className="h-px mx-3 my-1" style={{ backgroundColor: 'var(--border-color)' }} />
-
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-red-50 text-red-500"
