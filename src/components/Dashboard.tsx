@@ -1201,8 +1201,7 @@ export default function Dashboard() {
               onClick={() => setMaydayOpen(true)}
               className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
               style={{ 
-                background: 'var(--navy)',
-                border: '2px solid white'
+                background: 'var(--navy)'
               }}
               title="Report a problem"
             >
@@ -1212,8 +1211,7 @@ export default function Dashboard() {
               onClick={() => setDarkMode(!darkMode)}
               className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
               style={{ 
-                background: 'var(--navy)',
-                border: '2px solid white'
+                background: 'var(--navy)'
               }}
               title="Toggle dark mode"
             >
