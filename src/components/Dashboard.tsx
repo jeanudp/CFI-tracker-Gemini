@@ -204,8 +204,19 @@ export default function Dashboard() {
   const [reviewingRequest, setReviewingRequest] = useState<any>(null);
   const [requestDayLessons, setRequestDayLessons] = useState<any[]>([]);
 
+  const [sortMode, setSortMode] = useState<'rating' | 'alphabetical'>(() => {
+    const saved = localStorage.getItem('student_sort_mode');
+    return (saved === 'rating' || saved === 'alphabetical') ? saved : 'rating';
+  });
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('student_sort_mode', sortMode);
+  }, [sortMode]);
+
   useEffect(() => {
     const checkGuide = () => {
+      if (localStorage.getItem('onboarding_done') === 'true') return;
       const startGuide = localStorage.getItem('61t_start_guide');
       if (startGuide === 'true') {
         setTimeout(() => {
@@ -222,6 +233,9 @@ export default function Dashboard() {
 
   const ratingOrder = ['ppl', 'ir', 'cpl', 'cpl_amel', 'cfi', 'cfii', 'mei'];
   const sortedStudents = [...students].sort((a, b) => {
+    if (sortMode === 'alphabetical') {
+      return a.name.localeCompare(b.name);
+    }
     const ratingDiff = ratingOrder.indexOf(a.current_rating) - ratingOrder.indexOf(b.current_rating);
     if (ratingDiff !== 0) return ratingDiff;
     return a.name.localeCompare(b.name);
@@ -673,6 +687,9 @@ export default function Dashboard() {
       await supabase
         .from('students')
         .update({
+          name: editForm.name || selectedStudent.name,
+          current_rating: editForm.current_rating || selectedStudent.current_rating,
+          current_rating_label: editForm.current_rating_label || selectedStudent.current_rating_label,
           phone: editForm.phone || null,
           email_address: editForm.email_address || null,
           dob: editForm.dob || null,
@@ -683,6 +700,11 @@ export default function Dashboard() {
           notes: editForm.notes || null,
         })
         .eq('id', selectedStudent.id);
+
+      if (editForm.name && editForm.name !== selectedStudent.name) {
+        localStorage.setItem('sb_selected_student', editForm.name);
+        localStorage.setItem('faa_student_info', JSON.stringify({ student: editForm.name }));
+      }
 
       setStudents(prev => prev.map(s =>
         s.id === selectedStudent.id ? { ...s, ...editForm } : s
@@ -1187,6 +1209,17 @@ export default function Dashboard() {
               <Headset size={15} color="white" />
             </button>
             <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ 
+                background: '#1a3a5c',
+                border: '2px solid white'
+              }}
+              title="Toggle dark mode"
+            >
+              {darkMode ? <Sun size={15} color="white" /> : <Moon size={15} color="white" />}
+            </button>
+            <button
               onClick={() => navigate('/schedule')}
               className="px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
             >
@@ -1552,10 +1585,51 @@ export default function Dashboard() {
                 Add Student
               </button>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-              Sorted by rating
-              <ChevronDown size={10} />
-            </span>
+            <div className="relative">
+              <button
+                onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {sortMode === 'rating' ? 'Sorted by Rating' : 'Sorted Alphabetically'}
+                <ChevronDown size={10} className={cn("transition-transform duration-200", isSortMenuOpen && "rotate-180")} />
+              </button>
+
+              <AnimatePresence>
+                {isSortMenuOpen && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[98]"
+                      onClick={() => setIsSortMenuOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 top-full mt-2 w-48 py-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl z-[99]"
+                    >
+                      <button
+                        onClick={() => { setSortMode('rating'); setIsSortMenuOpen(false); }}
+                        className="w-full px-4 py-2 text-left flex items-center justify-between hover:bg-[var(--bg-tertiary)] transition-colors"
+                      >
+                        <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Sort by Rating</span>
+                        {sortMode === 'rating' && <Check size={14} style={{ color: 'var(--navy)' }} />}
+                      </button>
+                      <button
+                        onClick={() => { setSortMode('alphabetical'); setIsSortMenuOpen(false); }}
+                        className="w-full px-4 py-2 text-left flex items-center justify-between hover:bg-[var(--bg-tertiary)] transition-colors"
+                      >
+                        <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Sort Alphabetically</span>
+                        {sortMode === 'alphabetical' && <Check size={14} style={{ color: 'var(--navy)' }} />}
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         )}
         {loading ? (
@@ -1871,6 +1945,9 @@ export default function Dashboard() {
                     onClick={() => {
                       setIsEditingInfo(!isEditingInfo);
                       setEditForm({
+                        name: selectedStudent.name || '',
+                        current_rating: selectedStudent.current_rating || '',
+                        current_rating_label: selectedStudent.current_rating_label || '',
                         phone: (selectedStudent as any).phone || '',
                         email_address: (selectedStudent as any).email_address || '',
                         dob: (selectedStudent as any).dob || '',
@@ -1896,6 +1973,48 @@ export default function Dashboard() {
                 {isEditingInfo ? (
                   /* Edit mode */
                   <div className="space-y-4">
+                    {[
+                      { key: 'name', label: 'Full Name', icon: User, type: 'text', placeholder: 'First and Last Name' },
+                    ].map(({ key, label, icon: Icon, type, placeholder }) => (
+                      <div key={key} className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
+                        <div className="relative">
+                          <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                          <input
+                            type={type}
+                            value={editForm[key] || ''}
+                            onChange={e => setEditForm((prev: any) => ({ ...prev, [key]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full text-sm rounded-xl pl-9 pr-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all"
+                            style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Current Rating Selector */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Current Rating</label>
+                      <div className="relative">
+                        <Award size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                        <select
+                          value={editForm.current_rating || ''}
+                          onChange={e => {
+                            const code = e.target.value;
+                            const label = ratingConfig[code]?.label || '';
+                            setEditForm((prev: any) => ({ ...prev, current_rating: code, current_rating_label: label }));
+                          }}
+                          className="w-full text-sm rounded-xl pl-9 pr-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all appearance-none"
+                          style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                        >
+                          {Object.entries(ratingConfig).map(([code, config]) => (
+                            <option key={code} value={code}>{config.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+                      </div>
+                    </div>
+
                     {[
                       { key: 'phone', label: 'Phone', icon: Phone, type: 'tel', placeholder: '(555) 000-0000' },
                       { key: 'email_address', label: 'Email', icon: Mail, type: 'email', placeholder: 'student@email.com' },
@@ -1963,82 +2082,112 @@ export default function Dashboard() {
                       { icon: Calendar, label: 'Date of Birth', value: (selectedStudent as any).dob ? formatDate((selectedStudent as any).dob) : null },
                       { icon: FileText, label: 'Student Cert Number', value: (selectedStudent as any).student_cert_number },
                     ].map(({ icon: Icon, label, value }) => (
-                      value ? (
-                        <div key={label} className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                            <Icon size={14} style={{ color: 'var(--navy-light)' }} />
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</p>
-                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
-                          </div>
+                      <div key={label} className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                          <Icon size={14} style={{ color: 'var(--navy-light)' }} />
                         </div>
-                      ) : null
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                          {value ? (
+                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
+                          ) : (
+                            <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
+                          )}
+                        </div>
+                      </div>
                     ))}
 
+                    <div className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                        <Award size={14} style={{ color: 'var(--navy-light)' }} />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Current Rating</p>
+                        {selectedStudent.current_rating_label ? (
+                          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{selectedStudent.current_rating_label}</p>
+                        ) : (
+                          <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                        <Calendar size={14} style={{ color: 'var(--navy-light)' }} />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Last Flight Review</p>
+                        {(selectedStudent as any).last_flight_review_date ? (
+                          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{formatDate((selectedStudent as any).last_flight_review_date)}</p>
+                        ) : (
+                          <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Medical Section */}
-                    {(selectedStudent as any).medical_class && (selectedStudent as any).medical_exam_date && (
-                      <div className="py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                            <Heart size={14} style={{ color: 'var(--navy-light)' }} />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Medical Status</p>
-                              {(() => {
-                                const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
-                                if (!status) return null;
-                                return (
-                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider" style={{
-                                    backgroundColor: status.statusColor === 'green' ? 'rgba(74,222,128,0.1)' : status.statusColor === 'amber' ? 'rgba(232,160,32,0.1)' : 'rgba(239,68,68,0.1)',
-                                    color: status.statusColor === 'green' ? 'var(--green)' : status.statusColor === 'amber' ? 'var(--amber)' : 'var(--red)'
-                                  }}>
-                                    {status.isExpired ? 'Expired' : status.daysUntilExpiry <= 60 ? 'Expiring Soon' : 'Current'}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                            <div className="flex items-center justify-between mt-0.5">
-                              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).medical_class}</p>
-                              {(() => {
-                                const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
-                                if (!status) return null;
-                                return (
-                                  <p className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
-                                    {status.isExpired ? 'Expired' : `Expires ${status.expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-                                  </p>
-                                );
-                              })()}
-                            </div>
+                    <div className="py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                          <Heart size={14} style={{ color: 'var(--navy-light)' }} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Medical Status</p>
                             {(() => {
                               const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
-                              if (status && status.currentClass !== status.currentPrivileges && !status.isExpired) {
-                                return (
-                                  <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--amber)' }}>
-                                    Exercising: {status.currentPrivileges}
-                                  </p>
-                                );
-                              }
-                              return null;
+                              if (!status) return null;
+                              return (
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider" style={{
+                                  backgroundColor: status.statusColor === 'green' ? 'rgba(74,222,128,0.1)' : status.statusColor === 'amber' ? 'rgba(232,160,32,0.1)' : 'rgba(239,68,68,0.1)',
+                                  color: status.statusColor === 'green' ? 'var(--green)' : status.statusColor === 'amber' ? 'var(--amber)' : 'var(--red)'
+                                }}>
+                                  {status.isExpired ? 'Expired' : status.daysUntilExpiry <= 60 ? 'Expiring Soon' : 'Current'}
+                                </span>
+                              );
                             })()}
                           </div>
+                          <div className="flex items-center justify-between mt-0.5">
+                            {((selectedStudent as any).medical_class && (selectedStudent as any).medical_exam_date) ? (
+                              <>
+                                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).medical_class}</p>
+                                {(() => {
+                                  const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
+                                  if (!status) return null;
+                                  return (
+                                    <p className="text-[10px] font-bold" style={{ color: 'var(--text-secondary)' }}>
+                                      {status.isExpired ? 'Expired' : `Expires ${status.expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                                    </p>
+                                  );
+                                })()}
+                              </>
+                            ) : (
+                              <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
+                            )}
+                          </div>
+                          {(() => {
+                            const status = getMedicalStatus((selectedStudent as any).medical_class, (selectedStudent as any).medical_exam_date, (selectedStudent as any).dob);
+                            if (status && status.currentClass !== status.currentPrivileges && !status.isExpired) {
+                              return (
+                                <p className="text-[10px] font-bold mt-1" style={{ color: 'var(--amber)' }}>
+                                  Exercising: {status.currentPrivileges}
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
-                    )}
-                    {(selectedStudent as any).notes && (
-                      <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
+                    </div>
+
+                    <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                      <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
+                      {(selectedStudent as any).notes ? (
                         <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{(selectedStudent as any).notes}</p>
-                      </div>
-                    )}
-                    {!((selectedStudent as any).phone || (selectedStudent as any).email_address || (selectedStudent as any).notes) && (
-                      <div className="py-8 text-center">
-                        <div className="text-3xl mb-2">📋</div>
-                        <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>No info on file</p>
-                        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Tap the pencil icon to add details</p>
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => {
@@ -2437,6 +2586,15 @@ export default function Dashboard() {
                   <span className="hidden sm:inline">IACRA Summary</span>
                   <span className="sm:hidden">IACRA</span>
                 </Link>
+                <button
+                  onClick={(e) => handleShareStudent(e, selectedStudent)}
+                  className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: 'rgba(45,122,79,0.05)', color: '#2d7a4f', borderColor: 'rgba(45,122,79,0.3)' }}
+                >
+                  <Share2 size={18} />
+                  <span className="hidden sm:inline">Share Progress</span>
+                  <span className="sm:hidden">Share</span>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -2891,17 +3049,7 @@ export default function Dashboard() {
                   </Link>
                 )}
               </div>
-              <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
-                <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Dark Mode</span>
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg border transition-all"
-                  style={{ backgroundColor: darkMode ? 'var(--navy)' : 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: darkMode ? 'white' : 'var(--text-secondary)' }}
-                >
-                  {darkMode ? <Moon size={12} /> : <Sun size={12} />}
-                  <span className="text-[10px] font-bold">{darkMode ? 'On' : 'Off'}</span>
-                </button>
-              </div>
+
               <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
                 <button
                   onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
