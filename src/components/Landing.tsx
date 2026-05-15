@@ -315,7 +315,7 @@ export default function Landing() {
         transition={{ duration: 0.6, delay: 0.5 }}
         className="w-full flex flex-col items-center px-6 py-24"
       >
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-3xl">
           <div className="text-center mb-12">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 block" style={{ color: 'var(--text-muted)' }}>
               Supported Ratings
@@ -324,11 +324,11 @@ export default function Landing() {
               Built for every fixed-wing rating
             </h2>
             <p className="text-sm max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
-              7 ratings supported today, with helicopter and sport pilot ratings on the roadmap.
+              7 ratings supported today. More on the way.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { code: 'PPL', name: 'Private Pilot', desc: 'Pre-solo through checkride with full §61.109 hour tracking.' },
               { code: 'IR', name: 'Instrument Rating', desc: 'Approaches, holds, and intercept tracking with §61.65 currency.' },
@@ -362,34 +362,6 @@ export default function Landing() {
                 </p>
               </motion.div>
             ))}
-          </div>
-
-          <div className="pt-12 border-t" style={{ borderColor: 'var(--border-color)' }}>
-            <div className="text-center mb-8">
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                Not yet supported
-              </span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 opacity-60">
-              {[
-                { name: 'Helicopter', full: 'Rotorcraft category ratings', desc: 'On the roadmap' },
-                { name: 'Glider', full: 'Glider category ratings', desc: 'On the roadmap' },
-                { name: 'Sport Pilot', full: 'Sport pilot certificate', desc: 'On the roadmap' },
-                { name: 'ATP', full: 'Airline Transport Pilot', desc: 'On the roadmap' },
-              ].map((item) => (
-                <div key={item.name} className="flex flex-col items-center text-center">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                    <Plane size={14} style={{ color: 'var(--text-muted)' }} />
-                  </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                    {item.name}
-                  </p>
-                  <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
-                    {item.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </motion.div>
