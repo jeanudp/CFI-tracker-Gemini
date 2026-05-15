@@ -147,20 +147,25 @@ const ENDORSEMENTS_DATA: Record<string, { ref: string; title: string; text: stri
     title: 'Additional class rating (AMEL Add-On)',
     text: 'I certify that [First name, MI, Last name] has received the required training of 14 CFR § 61.63(c)(1). I have determined that they are competent in the areas of operation in 14 CFR § 61.127(b)(2) appropriate to the [make and model] aircraft.',
   },
-  'A.72': {
-    ref: '14 CFR § 61.31(e)',
-    title: 'To act as PIC in a complex airplane',
-    text: 'I certify that [First name, MI, Last name], [pilot grade] [certificate number], has received the required training of 14 CFR § 61.31(e) in a [make and model] complex airplane, and that I have determined they are proficient in the operation and systems of a complex airplane.',
-  },
-  'A.73': {
-    ref: '14 CFR § 61.31(f)',
-    title: 'To act as PIC in a high-performance airplane',
-    text: 'I certify that [First name, MI, Last name], [pilot grade] [certificate number], has received the required training of 14 CFR § 61.31(f) in a [make and model] high-performance airplane, and that I have determined they are proficient in the operation and systems of a high-performance airplane.',
-  },
   'A.77': {
     ref: '14 CFR § 61.49',
     title: 'Retesting after failure of knowledge or practical test',
     text: 'I certify that [First name, MI, Last name] has received the additional training required for retesting by 14 CFR § 61.49. I have determined that they are prepared for the [name of] [knowledge/practical] test.',
+  },
+  'A.72': {
+    ref: '14 CFR § 61.31(e)',
+    title: 'To act as PIC in a complex airplane',
+    text: 'I certify that [First name, MI, Last name], [grade of pilot certificate] [certificate number], has received the required training of 14 CFR § 61.31(e) in a [M/M] complex airplane, and that I have determined they are proficient in the operation and systems of a complex airplane.',
+  },
+  'A.73': {
+    ref: '14 CFR § 61.31(f)',
+    title: 'To act as PIC in a high-performance airplane',
+    text: 'I certify that [First name, MI, Last name], [grade of pilot certificate] [certificate number], has received the required training of 14 CFR § 61.31(f) in a [M/M] high-performance airplane, and that I have determined they are proficient in the operation and systems of a high-performance airplane.',
+  },
+  'A.75': {
+    ref: '14 CFR § 61.31(i)',
+    title: 'To act as PIC in a tailwheel airplane',
+    text: 'I certify that [First name, MI, Last name], [grade of pilot certificate] [certificate number], has received the required training of 14 CFR § 61.31(i) in a [M/M] tailwheel airplane, and that I have determined they are proficient in the operation of a tailwheel airplane.',
   },
 };
 
@@ -175,7 +180,8 @@ type Scenario =
   | 'xc-review'
   | 'checkride'
   | 'complex-airplane'
-  | 'high-performance';
+  | 'high-performance'
+  | 'tailwheel';
 
 const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
   {
@@ -250,6 +256,9 @@ const SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNo
     color: '#2d7a4f',
     required: ['A.1', 'A.2', 'A.36', 'A.37'],
   },
+  { id: 'complex-airplane', label: 'Complex Airplane', sub: 'A.72', icon: <Plane size={20} />, color: '#0891b2', required: ['A.72'] },
+  { id: 'high-performance', label: 'High-Performance Airplane', sub: 'A.73', icon: <Plane size={20} />, color: '#7c3aed', required: ['A.73'] },
+  { id: 'tailwheel', label: 'Tailwheel Airplane', sub: 'A.75', icon: <Plane size={20} />, color: '#e67e22', required: ['A.75'] },
 ];
 
 const IR_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
@@ -265,6 +274,7 @@ const CPL_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.Rea
   { id: 'solo-classb', label: 'Retesting After Failure', sub: 'A.77', icon: <RefreshCw size={20} />, color: '#c0392b', required: ['A.77'] },
   { id: 'complex-airplane', label: 'Complex Airplane', sub: 'A.72', icon: <Plane size={20} />, color: '#0891b2', required: ['A.72'] },
   { id: 'high-performance', label: 'High-Performance Airplane', sub: 'A.73', icon: <Plane size={20} />, color: '#7c3aed', required: ['A.73'] },
+  { id: 'tailwheel', label: 'Tailwheel Airplane', sub: 'A.75', icon: <Plane size={20} />, color: '#e67e22', required: ['A.75'] },
 ];
 
 const CFI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
@@ -481,6 +491,9 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
       return found?.required || [];
     }
     // PPL logic unchanged
+    if (scenario === 'complex-airplane') return ['A.72'];
+    if (scenario === 'high-performance') return ['A.73'];
+    if (scenario === 'tailwheel') return ['A.75'];
     if (scenario === 'first-solo') return ['A.3', 'A.4', 'A.6'];
     if (scenario === 'solo-night') return ['A.5'];
     if (scenario === 'solo-within-25') return ['A.8', 'A.11'];
