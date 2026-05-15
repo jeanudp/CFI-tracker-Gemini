@@ -1859,11 +1859,9 @@ export default function Dashboard() {
                             return (
                               <div key={lesson.id} className="flex items-center gap-3 py-1 px-2 rounded-lg transition-colors hover:bg-[var(--bg-tertiary)] group">
                                 <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: accent }} />
-                                <div className="flex items-center gap-8 min-w-0">
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <span className="text-[13px] font-bold w-12 shrink-0 tabular-nums" style={{ color: 'var(--text-primary)' }}>{lesson.start_time?.substring(0, 5)}</span>
-                                    <span className="text-[13px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</span>
-                                  </div>
+                                <div className="flex items-center min-w-0">
+                                  <span className="text-[13px] font-bold w-12 mr-3 shrink-0 tabular-nums" style={{ color: 'var(--text-primary)' }}>{lesson.start_time?.substring(0, 5)}</span>
+                                  <span className="text-[13px] font-semibold truncate w-36 shrink-0 mr-2" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</span>
                                   <div className="shrink-0">
                                     {lesson.tail_number === 'GROUND' ? (
                                       <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>Ground</span>
