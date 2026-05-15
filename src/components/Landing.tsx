@@ -305,11 +305,94 @@ export default function Landing() {
             </motion.div>
           ))}
         </motion.div>
-        
-        <p className="text-center text-[10px] mb-12" style={{ color: 'var(--text-muted)' }}>
-          Currently supports ASEL and AMEL airplane ratings · Helicopters, gliders, and sport aircraft not yet supported.
-        </p>
       </div>
+
+      {/* Supported Ratings Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        className="w-full flex flex-col items-center px-6 py-24"
+      >
+        <div className="w-full max-w-4xl">
+          <div className="text-center mb-12">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 block" style={{ color: 'var(--text-muted)' }}>
+              Supported Ratings
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black mb-4" style={{ color: 'var(--text-primary)' }}>
+              Built for every fixed-wing rating
+            </h2>
+            <p className="text-sm max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
+              7 ratings supported today, with helicopter and sport pilot ratings on the roadmap.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+            {[
+              { code: 'PPL', name: 'Private Pilot', desc: 'Pre-solo through checkride with full §61.109 hour tracking.' },
+              { code: 'IR', name: 'Instrument Rating', desc: 'Approaches, holds, and intercept tracking with §61.65 currency.' },
+              { code: 'CPL', name: 'Commercial Pilot', desc: 'ASEL commercial maneuvers with §61.129 hour breakdowns.' },
+              { code: 'CPL AMEL', name: 'Commercial Pilot — AMEL Add-On', desc: 'Multiengine class rating add-on under §61.63(c)(1).' },
+              { code: 'CFI', name: 'Certificated Flight Instructor', desc: 'FOI, spin training, and §61.183 practical test prep.' },
+              { code: 'CFII', name: 'Flight Instructor — Instrument', desc: 'Instrument instructor with §61.187(b)(7) endorsements.' },
+              { code: 'MEI', name: 'Multi-Engine Instructor', desc: 'Initial and Add-On paths with full multiengine ACS.' },
+            ].map((rating) => (
+              <motion.div
+                key={rating.code}
+                className="rounded-2xl p-5 text-left transition-all border"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderColor: 'var(--border-color)',
+                  boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+                }}
+                whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+              >
+                <div className="mb-3">
+                  <CheckCircle2 size={18} style={{ color: 'var(--green)' }} />
+                </div>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
+                  {rating.code}
+                </p>
+                <h4 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {rating.name}
+                </h4>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {rating.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="pt-12 border-t" style={{ borderColor: 'var(--border-color)' }}>
+            <div className="text-center mb-8">
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                Not yet supported
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 opacity-60">
+              {[
+                { name: 'Helicopter', full: 'Rotorcraft category ratings', desc: 'On the roadmap' },
+                { name: 'Glider', full: 'Glider category ratings', desc: 'On the roadmap' },
+                { name: 'Sport Pilot', full: 'Sport pilot certificate', desc: 'On the roadmap' },
+                { name: 'ATP', full: 'Airline Transport Pilot', desc: 'On the roadmap' },
+              ].map((item) => (
+                <div key={item.name} className="flex flex-col items-center text-center">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                    <Plane size={14} style={{ color: 'var(--text-muted)' }} />
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                    {item.name}
+                  </p>
+                  <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Pricing Section */}
       <motion.div
