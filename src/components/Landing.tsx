@@ -40,16 +40,13 @@ export default function Landing() {
       >
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className="p-2 rounded-lg border transition-all"
+          className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
           style={{
-            backgroundColor: 'var(--bg-tertiary)',
-            borderColor: 'var(--border-color)',
-            color: 'var(--text-secondary)',
-            boxShadow: '0 1px 3px rgba(26,58,92,0.1), 0 2px 8px rgba(26,58,92,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
+            backgroundColor: 'var(--navy)',
           }}
           title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          {darkMode ? <Sun size={15} color="white" /> : <Moon size={15} color="white" />}
         </button>
       </div>
 
@@ -310,7 +307,7 @@ export default function Landing() {
         </motion.div>
         
         <p className="text-center text-[10px] mb-12" style={{ color: 'var(--text-muted)' }}>
-          Currently supports ASEL · MEI includes AMEL · Helicopters, gliders, and sport aircraft not yet supported.
+          Currently supports ASEL and AMEL airplane ratings · Helicopters, gliders, and sport aircraft not yet supported.
         </p>
       </div>
 
@@ -454,7 +451,7 @@ export default function Landing() {
             <div className="space-y-2 mb-6 flex-1">
               {[
                 'Everything in Free',
-                'IR · CPL · CFI · CFII · MEI',
+                'IR · CPL · CPL AMEL · CFI · CFII · MEI',
                 'Full ACS grading all ratings',
                 'All endorsements unlocked',
                 'Checkride readiness all ratings',
@@ -518,7 +515,7 @@ export default function Landing() {
                 'Everything in All Ratings',
                 'Locked in at $8.25/month effective',
                 'No monthly billing surprises',
-                'Full year of all 6 ratings',
+                'Full year of all 7 ratings',
                 'First month still free',
                 'Cancel anytime — access until year ends',
               ].map(f => (
