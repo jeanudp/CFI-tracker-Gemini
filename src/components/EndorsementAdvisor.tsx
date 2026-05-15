@@ -273,12 +273,11 @@ const MEI_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.Rea
   { id: 'checkride', label: 'Practical Test Endorsement', sub: 'A.47', icon: <Plane size={20} />, color: '#2d7a4f', required: ['A.47'] },
 ];
 
-const CPL_AMEL_SCENARIOS: { id: Scenario; label: string; sub: string; body?: string; icon: React.ReactNode; color: string; required: string[] }[] = [
+const CPL_AMEL_SCENARIOS: { id: Scenario; label: string; sub: string; icon: React.ReactNode; color: string; required: string[] }[] = [
   { 
     id: 'checkride', 
     label: 'Practical Test Prerequisites', 
-    sub: 'Required before AMEL Add-On checkride', 
-    body: 'The student needs the practical-test prerequisites endorsement (§61.39(a)(6)(i) and §61.63(c)) before the AMEL Add-On checkride.',
+    sub: 'A.1', 
     icon: <CheckCircle size={20} />, 
     color: '#1a3a5c', 
     required: ['A.1'] 
@@ -286,8 +285,7 @@ const CPL_AMEL_SCENARIOS: { id: Scenario; label: string; sub: string; body?: str
   { 
     id: 'solo-90day', 
     label: 'Additional Class Rating — AMEL', 
-    sub: 'Multiengine class rating add-on', 
-    body: 'Multiengine class rating add-on (§61.63(c)(1)). The CFI must sign a logbook endorsement attesting the student is competent in the areas of operation in §61.127(b)(2) before the practical test.',
+    sub: 'A.76', 
     icon: <Award size={20} />, 
     color: '#2d7a4f', 
     required: ['A.76'] 
@@ -683,11 +681,6 @@ export default function EndorsementAdvisor({ studentName, ratingCode = 'ppl' }: 
                       <div className="flex-1 min-w-0">
                         <p className="text-base font-bold text-[#1c2333] leading-tight mb-1">{s.label}</p>
                         <p className="text-[11px] text-[#6b7280] font-mono opacity-80 uppercase tracking-tighter">{s.sub}</p>
-                        {(s as any).body && (
-                          <p className="text-[11px] text-[#64748b] mt-1.5 border-t border-[#dde3ec] pt-1.5 leading-relaxed">
-                            {(s as any).body}
-                          </p>
-                        )}
                       </div>
                       {allGiven && <CheckCircle size={20} className="text-[#2d7a4f] shrink-0" />}
                       {!allGiven && someGiven && <AlertTriangle size={20} className="text-[#e8a020] shrink-0" />}
