@@ -114,6 +114,7 @@ export default function History() {
   const [pendingExportLessonIds, setPendingExportLessonIds] = useState<string[]>([]);
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [showIacraHelp, setShowIacraHelp] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -1058,10 +1059,10 @@ export default function History() {
       <aside 
         className={cn(
           "fixed md:relative top-0 bottom-0 left-0 z-50 bg-[var(--bg-secondary)] border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
-          sidebarOpen ? "w-[85%] md:w-[300px] translate-x-0" : "w-[85%] md:w-0 -translate-x-full md:translate-x-0"
+          sidebarOpen ? "w-[90%] md:w-[300px] translate-x-0" : "w-[90%] md:w-0 -translate-x-full md:translate-x-0"
         )}
       >
-        <div className="w-full min-w-[300px] h-full flex flex-col">
+        <div className="w-full md:min-w-[300px] h-full flex flex-col">
           <div className="p-6 border-b border-[#dde3ec] space-y-4">
             {studentName ? (
               <div className="space-y-3">
@@ -1236,7 +1237,7 @@ export default function History() {
       {/* Main Content */}
       <main className="flex-1 min-w-0 bg-[var(--bg-primary)] p-3 sm:p-8 overflow-y-auto">
         {!selectedLesson ? (
-          <div className="h-full flex flex-col items-center justify-center text-[#6b7280]">
+          <div className="min-h-[60vh] sm:h-full flex flex-col items-center justify-center text-[#6b7280]">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
               <HistoryIcon size={48} className="opacity-20" />
             </div>
@@ -1247,7 +1248,7 @@ export default function History() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="relative bg-[var(--bg-secondary)] rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
+            <div className="relative bg-[var(--bg-secondary)] rounded-2xl sm:rounded-3xl shadow-2xl shadow-[#1a3a5c]/10 border border-[#dde3ec] border-t-white border-t-2 overflow-hidden flex flex-col h-full relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-60" />
               <div className="p-4 sm:p-8 relative">
                 {/* Print-only logo */}
@@ -1278,27 +1279,29 @@ export default function History() {
                     {activeTab === 'lesson' && selectedLesson && (
                       <button
                         onClick={handleShareFromHistory}
-                        className="bg-white text-[#1a3a5c] border border-[#dde3ec] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center gap-2 shadow-sm"
+                        title="Share"
+                        className="bg-white text-[#1a3a5c] border border-[#dde3ec] w-[44px] h-[44px] sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
                       >
-                        <Share2 size={14} />
-                        <span>Share</span>
+                        <Share2 size={14} className="shrink-0" />
+                        <span className="hidden sm:inline">Share</span>
                       </button>
                     )}
                     <button
                       onClick={() => handleEditLesson(selectedLesson)}
-                      className="bg-white text-[#1a3a5c] border border-[#dde3ec] px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center gap-2 shadow-sm"
+                      title="Edit Lesson"
+                      className="bg-white text-[#1a3a5c] border border-[#dde3ec] w-[44px] h-[44px] sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
                     >
-                      <Edit size={14} />
-                      Edit Lesson
+                      <Edit size={14} className="shrink-0" />
+                      <span className="hidden sm:inline">Edit Lesson</span>
                     </button>
                   </div>
 
                   {/* Tabs Row */}
-                  <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-full overflow-x-auto order-2">
+                  <div className="flex bg-[#f8fafc] rounded-2xl p-1.5 border border-[#e2e8f0] w-full overflow-x-auto order-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <button
                       onClick={() => setActiveTab('lesson')}
                       className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-none sm:flex-1 justify-center min-h-[44px] sm:min-h-0",
                         activeTab === 'lesson' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1310,7 +1313,7 @@ export default function History() {
                     <button
                       onClick={() => setActiveTab('cumulative')}
                       className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-none sm:flex-1 justify-center min-h-[44px] sm:min-h-0",
                         activeTab === 'cumulative' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1322,7 +1325,7 @@ export default function History() {
                     <button
                       onClick={() => setActiveTab('checkride')}
                       className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-none sm:flex-1 justify-center min-h-[44px] sm:min-h-0",
                         activeTab === 'checkride' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1334,7 +1337,7 @@ export default function History() {
                     <button
                       onClick={() => setActiveTab('endorsements')}
                       className={cn(
-                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center",
+                        "px-3 sm:px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-none sm:flex-1 justify-center min-h-[44px] sm:min-h-0",
                         activeTab === 'endorsements' 
                           ? "bg-[#1a3a5c] text-white shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm" 
                           : "text-[#64748b] hover:text-[#1a3a5c] hover:-translate-y-0.5"
@@ -1345,7 +1348,7 @@ export default function History() {
                     </button>
                     <button
                       onClick={() => navigate(`/student/${studentName}`)}
-                      className="px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2 whitespace-nowrap flex-1 justify-center"
+                      className="px-3 sm:px-5 py-2 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1a3a5c] transition-all flex items-center gap-2 whitespace-nowrap flex-none sm:flex-1 justify-center min-h-[44px] sm:min-h-0"
                     >
                       <BarChart3 size={14} />
                       Analytics
@@ -1355,9 +1358,9 @@ export default function History() {
 
             {activeTab === 'lesson' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-2xl font-bold text-[#1c2333]">{selectedLesson.label}</h1>
-                  <div className="flex items-center gap-1 bg-white border border-[#dde3ec] rounded-lg px-2 py-1 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
+                  <h1 className="text-2xl font-bold text-[#1c2333] w-full sm:w-auto leading-tight">{selectedLesson.label}</h1>
+                  <div className="flex items-center gap-1 bg-white border border-[#dde3ec] rounded-lg px-2 py-1 shadow-sm shrink-0">
                     <button 
                       onClick={handlePrev}
                       disabled={filteredLessons.findIndex(l => l.id === selectedLessonId) === 0}
@@ -1469,13 +1472,13 @@ export default function History() {
                         <div className="p-4 space-y-6">
                           {/* Group 1 — Total Time */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
                             <div className="space-y-1">
                               {[
                                 ['Total Flight Time', selectedLesson.meta?.totalFlight ? `${selectedLesson.meta.totalFlight}h` : ''],
                                 ['ATD Time', selectedLesson.meta?.atd ? `${selectedLesson.meta.atd}h` : ''],
                               ].filter(d => d[1]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1485,7 +1488,7 @@ export default function History() {
 
                           {/* Group 2 — Instruction and Solo */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
                             <div className="space-y-1">
                               {[
                                 selectedLesson.meta?.aircraftClass === 'AMEL' ? ['AMEL Dual Received', selectedLesson.meta?.dual ? `${selectedLesson.meta.dual}h` : ''] : null,
@@ -1494,7 +1497,7 @@ export default function History() {
                                 ['Solo Flight Time', selectedLesson.meta?.solo ? `${selectedLesson.meta.solo}h` : ''],
                                 ['Solo XC', selectedLesson.meta?.soloXc ? `${selectedLesson.meta.soloXc}h` : ''],
                               ].filter((d: any) => d && d[1]).map(([label, val]: any) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1504,7 +1507,7 @@ export default function History() {
 
                           {/* Group 3 — Pilot in Command */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
                             <div className="space-y-1">
                               {[
                                 selectedLesson.meta?.aircraftClass === 'AMEL' ? ['AMEL PIC', selectedLesson.meta?.amelPic ? `${selectedLesson.meta.amelPic}h` : ''] : null,
@@ -1512,7 +1515,7 @@ export default function History() {
                                 ['PIC Time', selectedLesson.meta?.pic ? `${selectedLesson.meta.pic}h` : ''],
                                 ['As CFI', selectedLesson.meta?.cfi ? `${selectedLesson.meta.cfi}h` : ''],
                               ].filter((d: any) => d && d[1]).map(([label, val]: any) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1523,7 +1526,7 @@ export default function History() {
                           {/* CFI Hours (Class Breakdown) */}
                           {selectedLesson.meta?.aircraftClass === 'AMEL' && ((parseFloat(selectedLesson.meta?.cfiDualAMEL || '0') || 0) > 0 || (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') || 0) > 0) && (
                             <div>
-                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">CFI Hours (Class Breakdown)</h4>
+                              <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">CFI Hours (Class Breakdown)</h4>
                               <div className="space-y-1">
                                 {[
                                   ['CFI AMEL Dual Given', selectedLesson.meta?.cfiDualAMEL ? `${selectedLesson.meta.cfiDualAMEL}h` : ''],
@@ -1531,7 +1534,7 @@ export default function History() {
                                   ['CFI AMEL PIC Time', selectedLesson.meta?.cfiAmelPic ? `${selectedLesson.meta.cfiAmelPic}h` : ''],
                                   ['Total Dual Given', ((parseFloat(selectedLesson.meta?.cfiDualAMEL || '0') || 0) + (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') || 0)) > 0 ? `${((parseFloat(selectedLesson.meta?.cfiDualAMEL || '0') || 0) + (parseFloat(selectedLesson.meta?.cfiDualASEL || '0') || 0)).toFixed(1)}h` : ''],
                                 ].filter((d: any) => d && d[1]).map(([label, val]: any) => (
-                                  <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                     <span className="text-xs text-[#64748b]">{label}</span>
                                     <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                   </div>
@@ -1542,7 +1545,7 @@ export default function History() {
 
                           {/* Group 4 — Cross Country */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
                             <div className="space-y-1">
                               {[
                                 ['XC (Total)', (parseFloat(selectedLesson.meta?.xcDual || '0') + parseFloat(selectedLesson.meta?.xcSolo || '0') + parseFloat(selectedLesson.meta?.xcPic || '0')) > 0 ? `${(parseFloat(selectedLesson.meta?.xcDual || '0') + parseFloat(selectedLesson.meta?.xcSolo || '0') + parseFloat(selectedLesson.meta?.xcPic || '0')).toFixed(1)}h` : ''],
@@ -1550,13 +1553,13 @@ export default function History() {
                                 ['XC Solo', selectedLesson.meta?.xcSolo ? `${selectedLesson.meta.xcSolo}h` : ''],
                                 ['XC PIC', selectedLesson.meta?.xcPic ? `${selectedLesson.meta.xcPic}h` : ''],
                               ].filter(d => d[1]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
                               ))}
                               {selectedLesson.meta?.ratpXCTime && (
-                                <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-xs text-[#64748b]">R-ATP XC Time</span>
                                     <span className="px-1.5 py-0.5 bg-[#f5f3ff] text-[#7c3aed] text-[9px] font-bold rounded border border-[#ddd6fe]">R-ATP</span>
@@ -1569,7 +1572,7 @@ export default function History() {
 
                           {/* Group 5 — Instrument */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
                             <div className="space-y-1">
                               {[
                                 ['Simulated Instrument', selectedLesson.meta?.simInst ? `${selectedLesson.meta.simInst}h` : ''],
@@ -1578,7 +1581,7 @@ export default function History() {
                                 ['FTD Instrument', selectedLesson.meta?.ftdInst ? `${selectedLesson.meta.ftdInst}h` : ''],
                                 ['FFS Instrument', selectedLesson.meta?.ffsInst ? `${selectedLesson.meta.ffsInst}h` : ''],
                               ].filter(d => d[1]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1588,7 +1591,7 @@ export default function History() {
 
                           {/* Group 6 — Night */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
                             <div className="space-y-1">
                               {(lessonRating === 'ppl' ? [
                                 ['Night (Total)', selectedLesson.meta?.night ? `${selectedLesson.meta.night}h` : ''],
@@ -1602,7 +1605,7 @@ export default function History() {
                                 ['Night Takeoffs', selectedLesson.meta?.nightTakeoffs],
                                 ['Night Landings', selectedLesson.meta?.ldgNight],
                               ]).filter(d => d[1]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1612,14 +1615,14 @@ export default function History() {
 
                           {/* Group 7 — Simulator and Device */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
                             <div className="space-y-1">
                               {[
                                 ['FTD Time', selectedLesson.meta?.ftd ? `${selectedLesson.meta.ftd}h` : ''],
                                 ['FFS Time', selectedLesson.meta?.ffs ? `${selectedLesson.meta.ffs}h` : ''],
                                 ['ATD SE', selectedLesson.meta?.atdSE ? `${selectedLesson.meta.atdSE}h` : ''],
                               ].filter(d => d[1]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1630,13 +1633,13 @@ export default function History() {
                           {/* Restricted ATP */}
                           {(selectedLesson.meta?.ratpSimInst || selectedLesson.meta?.ratpActualInst) && (
                             <div>
-                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
+                              <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
                               <div className="space-y-1">
                                 {[
                                   ['Simulated Instrument (R-ATP)', selectedLesson.meta?.ratpSimInst ? `${selectedLesson.meta.ratpSimInst}h` : ''],
                                   ['Actual Instrument (R-ATP)', selectedLesson.meta?.ratpActualInst ? `${selectedLesson.meta.ratpActualInst}h` : ''],
                                 ].filter(d => d[1]).map(([label, val]) => (
-                                  <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                  <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                     <span className="text-xs text-[#64748b]">{label}</span>
                                     <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                   </div>
@@ -1648,13 +1651,13 @@ export default function History() {
                           {/* Approaches and Holds */}
                           {(selectedLesson.meta?.approachCount || selectedLesson.meta?.holdPerformed || (selectedLesson.meta?.approachTypes && selectedLesson.meta.approachTypes !== '[]')) && (
                             <div>
-                              <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
+                              <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
                               <div className="space-y-2">
-                                <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9]">
                                   <span className="text-xs text-[#64748b]">Number of Approaches</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{selectedLesson.meta?.approachCount || '0'}</span>
                                 </div>
-                                <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9]">
                                   <span className="text-xs text-[#64748b]">Holding Performed</span>
                                   {selectedLesson.meta?.holdPerformed ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#dcfce7] text-[#166534] text-[10px] font-bold rounded-full">
@@ -1682,7 +1685,7 @@ export default function History() {
 
                           {/* Other Details */}
                           <div>
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
+                            <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
                             <div className="space-y-1">
                               {[
                                 ['Date', selectedLesson.meta?.date],
@@ -1691,7 +1694,7 @@ export default function History() {
                                 ['Total Landings', selectedLesson.meta?.ldgTotal],
                                 ['Day Landings', selectedLesson.meta?.ldgDay],
                               ].filter(d => d[1]).map(([label, val]) => (
-                                <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                   <span className="text-xs text-[#64748b]">{label}</span>
                                   <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                 </div>
@@ -1726,21 +1729,28 @@ export default function History() {
                           </div>
                           {tasksInArea.map(t => (
                             <div key={t.id} className="flex flex-col sm:grid sm:grid-cols-[1fr_50px_1fr] items-start sm:items-center min-h-[34px] border-b border-[#dde3ec] last:border-0">
-                              <div className="px-4 py-2 text-xs font-medium text-[#1c2333]">{t.name}</div>
-                              <div className="text-center">
-                                <span className={cn(
-                                  "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white mx-4 sm:mx-auto my-1 sm:my-0",
-                                  selectedLesson.grades[t.id] === '4' ? "bg-[#2d7a4f]" :
-                                  selectedLesson.grades[t.id] === '3' ? "bg-[#5a9e6f]" :
-                                  selectedLesson.grades[t.id] === '2' ? "bg-[#e8a020]" :
-                                  selectedLesson.grades[t.id] === '1' ? "bg-[#c0392b]" :
-                                  selectedLesson.grades[t.id] === 'S' ? "bg-[#2d7a4f]" :
-                                  selectedLesson.grades[t.id] === 'N' ? "bg-[#c0392b]" : ""
-                                )}>
-                                  {(selectedLesson.grades[t.id] as any) === 'I' ? '' : selectedLesson.grades[t.id]}
-                                </span>
+                              <div className="flex items-center justify-between w-full sm:contents">
+                                <div className="px-4 py-2 sm:px-4 text-xs font-medium text-[#1c2333] flex-1 sm:flex-none">{t.name}</div>
+                                <div className="text-right sm:text-center px-4 sm:px-0 shrink-0">
+                                  <span className={cn(
+                                    "inline-flex items-center justify-center w-8 h-5 rounded text-[10px] font-bold font-mono text-white sm:mx-auto",
+                                    selectedLesson.grades[t.id] === '4' ? "bg-[#2d7a4f]" :
+                                    selectedLesson.grades[t.id] === '3' ? "bg-[#5a9e6f]" :
+                                    selectedLesson.grades[t.id] === '2' ? "bg-[#e8a020]" :
+                                    selectedLesson.grades[t.id] === '1' ? "bg-[#c0392b]" :
+                                    selectedLesson.grades[t.id] === 'S' ? "bg-[#2d7a4f]" :
+                                    selectedLesson.grades[t.id] === 'N' ? "bg-[#c0392b]" : ""
+                                  )}>
+                                    {(selectedLesson.grades[t.id] as any) === 'I' ? '' : selectedLesson.grades[t.id]}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="px-4 py-1 sm:py-2 text-[11px] text-[#6b7280] italic">{selectedLesson.notes?.[t.id] || ''}</div>
+                              {selectedLesson.notes?.[t.id] && (
+                                <div className="px-4 pb-2 sm:py-2 text-[11px] text-[#6b7280] italic w-full">
+                                  {selectedLesson.notes[t.id]}
+                                </div>
+                              )}
+                              {!selectedLesson.notes?.[t.id] && <div className="hidden sm:block" />}
                             </div>
                           ))}
                         </React.Fragment>
@@ -1756,8 +1766,8 @@ export default function History() {
 
             {activeTab === 'cumulative' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4 sm:gap-0">
+                  <div className="w-full sm:w-auto">
                     <div className="text-xs font-bold uppercase tracking-widest text-[#6b7280]">
                       Cumulative — {selectedLesson.student_name}
                     </div>
@@ -1772,66 +1782,66 @@ export default function History() {
                       );
                     })()}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => handleStudentExport(true)}
-                      className="bg-[#fef3c7] hover:bg-[#fef3c7]/80 text-[#d97706] border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                      className="bg-[#fef3c7] hover:bg-[#fef3c7]/80 text-[#d97706] border border-amber-200 px-3 py-1.5 sm:py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm w-full sm:w-auto min-h-[44px] sm:min-h-0"
                     >
                       <Download size={14} style={{ color: '#d97706' }} />
                       Export Unsynced Lessons
                     </button>
                     <button
                       onClick={() => handleStudentExport(false)}
-                      className="bg-[#dbeafe] hover:bg-[#dbeafe]/80 text-[#2563eb] border border-blue-200 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                      className="bg-[#dbeafe] hover:bg-[#dbeafe]/80 text-[#2563eb] border border-blue-200 px-3 py-1.5 sm:py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm w-full sm:w-auto min-h-[44px] sm:min-h-0"
                     >
                       <Download size={14} style={{ color: '#2563eb' }} />
                       Export Full Logbook
                     </button>
                     <button
                       onClick={() => setShowHowTo(true)}
-                      className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                      className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-3 py-1.5 sm:py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm w-full sm:w-auto min-h-[44px] sm:min-h-0"
                     >
                       <HelpCircle size={14} />
                       How To
                     </button>
                   </div>
+                </div>
 
-                  {showExportConfirm && (
-                    <div className="w-full bg-amber-50 border border-amber-300 rounded-xl p-4 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex gap-3">
-                        <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                        <div className="space-y-3">
-                          <p className="text-xs text-amber-900 leading-relaxed font-medium">
-                            Only confirm after verifying your upload was successful in your logbook app. MyFlightbook, ForeFlight, and most electronic logbooks accept this CSV format. Confirming early will mark these flights as synced and hide them from future Unsynced exports.
-                          </p>
-                          <div className="flex gap-3">
-                            <button
-                              onClick={confirmStudentExport}
-                              disabled={exportLoading}
-                              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
-                            >
-                              {exportLoading ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                <CheckCircle2 size={14} />
-                              )}
-                              Yes, confirm upload
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowExportConfirm(false);
-                                setPendingExportLessonIds([]);
-                              }}
-                              className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm"
-                            >
-                              Cancel
-                            </button>
-                          </div>
+                {showExportConfirm && (
+                  <div className="w-full bg-amber-50 border border-amber-300 rounded-xl p-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex gap-3">
+                      <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                      <div className="space-y-3">
+                        <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                          Only confirm after verifying your upload was successful in your logbook app. MyFlightbook, ForeFlight, and most electronic logbooks accept this CSV format. Confirming early will mark these flights as synced and hide them from future Unsynced exports.
+                        </p>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={confirmStudentExport}
+                            disabled={exportLoading}
+                            className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                          >
+                            {exportLoading ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={14} />
+                            )}
+                            Yes, confirm upload
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowExportConfirm(false);
+                              setPendingExportLessonIds([]);
+                            }}
+                            className="bg-white hover:bg-gray-50 text-gray-600 border border-gray-300 px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
                   <button
@@ -2027,13 +2037,13 @@ export default function History() {
                             return (
                               <>
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Total Time</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['Total Flight Time', `${stats.totFlight.toFixed(1)}h`],
                                       ['ATD Time', `${stats.totAtd.toFixed(1)}h`],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2042,14 +2052,14 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instruction and Solo</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['Dual Instruction', `${stats.totDual.toFixed(1)}h`],
                                       ['Solo Flight Time', `${stats.totSolo.toFixed(1)}h`],
                                       ['Solo XC', `${stats.totSoloXc.toFixed(1)}h`],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2058,13 +2068,13 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Pilot in Command</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['PIC Time', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0).toFixed(1)}h`],
                                       ['As CFI', `${studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.cfi || '0') || 0), 0).toFixed(1)}h`],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2074,7 +2084,7 @@ export default function History() {
 
                                 {(stats.totAmelFlight > 0 || stats.totAmelPic > 0 || stats.totAmelDualGiven > 0) && (
                                   <div>
-                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Multiengine (AMEL)</h4>
+                                    <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Multiengine (AMEL)</h4>
                                     <div className="space-y-1">
                                       {[
                                         ['AMEL Total Flight Time', `${stats.totAmelFlight.toFixed(1)}h`],
@@ -2084,7 +2094,7 @@ export default function History() {
                                         stats.totAmelNight > 0 ? ['AMEL Night', `${stats.totAmelNight.toFixed(1)}h`] : null,
                                         stats.totAmelXc > 0 ? ['AMEL Cross Country', `${stats.totAmelXc.toFixed(1)}h`] : null,
                                       ].filter(Boolean).map((item: any) => (
-                                        <div key={item[0]} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                        <div key={item[0]} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                           <span className="text-xs text-[#64748b]">{item[0]}</span>
                                           <span className="text-sm font-bold text-[#1e293b]">{item[1]}</span>
                                         </div>
@@ -2094,13 +2104,13 @@ export default function History() {
                                 )}
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Cross Country</h4>
                                   <div className="space-y-1">
                                     {(() => {
                                       const xcTotal = stats.totXcDual + stats.totXcSolo + stats.totXcPic + stats.totRatpXC;
                                       return (
                                         <>
-                                          <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                          <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9]">
                                             <span className="text-xs text-[#64748b]">XC (Total)</span>
                                             <span className="text-sm font-bold text-[#1e293b]">{xcTotal.toFixed(1)}h</span>
                                           </div>
@@ -2110,7 +2120,7 @@ export default function History() {
                                             ['XC Solo', `${stats.totXcSolo.toFixed(1)}h`],
                                             ['XC PIC', `${stats.totXcPic.toFixed(1)}h`],
                                           ].map(([label, val]) => (
-                                            <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                            <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                               <span className="text-xs text-[#64748b]">{label}</span>
                                               <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                             </div>
@@ -2118,20 +2128,38 @@ export default function History() {
                                         </>
                                       );
                                     })()}
-                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                    <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                       <div className="flex items-center gap-1.5">
                                         <span className="text-xs text-[#1e293b] font-bold">R-ATP XC</span>
                                       </div>
                                       <span className="text-sm font-bold text-[#1e293b]">{stats.totRatpXC.toFixed(1)}h</span>
                                     </div>
-                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                    <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                       <div className="flex items-center gap-1.5">
                                         <span className="text-xs text-[#1a3a5c] font-bold">Total XC for IACRA</span>
-                                        <div className="group relative">
-                                          <HelpCircle size={10} className="text-[#1a3a5c] cursor-help" />
-                                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#1e293b] text-white text-[9px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                                            Combined total of regular cross country and R-ATP eligible cross country time, ensuring no double counting.
-                                          </div>
+                                        <div className="relative">
+                                          <HelpCircle 
+                                            size={10} 
+                                            className="text-[#1a3a5c] cursor-help" 
+                                            onMouseEnter={() => setShowIacraHelp(true)}
+                                            onMouseLeave={() => setShowIacraHelp(false)}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setShowIacraHelp(!showIacraHelp);
+                                            }}
+                                          />
+                                          <AnimatePresence>
+                                            {showIacraHelp && (
+                                              <motion.div 
+                                                initial={{ opacity: 0, y: 5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 5 }}
+                                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-[#1e293b] text-white text-[9px] rounded shadow-lg z-50 text-center leading-relaxed"
+                                              >
+                                                Combined total of regular cross country and R-ATP eligible cross country time, ensuring no double counting.
+                                              </motion.div>
+                                            )}
+                                          </AnimatePresence>
                                         </div>
                                       </div>
                                       <span className="text-sm font-bold text-[#1a3a5c]">{stats.totIacraXC.toFixed(1)}h</span>
@@ -2140,7 +2168,7 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Instrument</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['Instrument (Total)', `${stats.totSim.toFixed(1)}h`],
@@ -2148,7 +2176,7 @@ export default function History() {
                                       ['FTD Instrument', `${stats.totFtdInst.toFixed(1)}h`],
                                       ['FFS Instrument', `${stats.totFfsInst.toFixed(1)}h`],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2157,7 +2185,7 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Night</h4>
                                   <div className="space-y-1">
                                     {(lessonRating === 'ppl' ? [
                                       ['Night (Total)', `${stats.totNight.toFixed(1)}h`],
@@ -2171,7 +2199,7 @@ export default function History() {
                                       ['Night Takeoffs', stats.totNightTakeoffs],
                                       ['Night Landings', stats.totNightLdg],
                                     ]).map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2180,14 +2208,14 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Simulator and Device</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['FTD Time', `${stats.totFtd.toFixed(1)}h`],
                                       ['FFS Time', `${stats.totFfs.toFixed(1)}h`],
                                       ['ATD SE', `${stats.totAtdSE.toFixed(1)}h`],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2196,13 +2224,13 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Restricted ATP</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['Simulated Instrument (R-ATP)', `${stats.totRatpSimInst.toFixed(1)}h`],
                                       ['Actual Instrument (R-ATP)', `${stats.totRatpActualInst.toFixed(1)}h`],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2211,13 +2239,13 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Approaches and Holds</h4>
                                   <div className="space-y-2">
-                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                    <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9]">
                                       <span className="text-xs text-[#64748b]">Total Approaches</span>
                                       <span className="text-sm font-bold text-[#1e293b]">{stats.totApproachCount}</span>
                                     </div>
-                                    <div className="flex justify-between items-center py-1 border-b border-[#f1f5f9]">
+                                    <div className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9]">
                                       <span className="text-xs text-[#64748b]">Lessons with Holding</span>
                                       <span className="text-sm font-bold text-[#1e293b]">{stats.totHoldPerformed}</span>
                                     </div>
@@ -2239,13 +2267,13 @@ export default function History() {
                                 </div>
 
                                 <div>
-                                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
+                                  <h4 className="text-[11px] sm:text-[10px] font-bold uppercase tracking-widest text-[#1a3a5c] mb-2">Other Details</h4>
                                   <div className="space-y-1">
                                     {[
                                       ['Total Landings', stats.totLdg],
                                       ['Day Landings', stats.totLdgDay],
                                     ].map(([label, val]) => (
-                                      <div key={label} className="flex justify-between items-center py-1 border-b border-[#f1f5f9] last:border-0">
+                                      <div key={label} className="flex justify-between items-center py-2 sm:py-1 border-b border-[#f1f5f9] last:border-0">
                                         <span className="text-xs text-[#64748b]">{label}</span>
                                         <span className="text-sm font-bold text-[#1e293b]">{val}</span>
                                       </div>
@@ -2321,7 +2349,7 @@ export default function History() {
                             </span>
                           </div>
                           {g.notes && (
-                            <div className="ml-[70px] text-[11px] text-[#64748b] italic leading-relaxed">
+                            <div className="ml-0 sm:ml-[70px] text-[11px] text-[#64748b] italic leading-relaxed">
                               "{g.notes}"
                             </div>
                           )}
@@ -2791,27 +2819,27 @@ export default function History() {
                                       const met = row.have >= row.need;
                                       const pct = Math.min(100, Math.round((row.have / row.need) * 100));
 
-                                      if (row.checkbox) {
-                                        return (
-                                          <div key={row.label} className={cn("p-4 flex items-center justify-between gap-4", met && "bg-[#fafffe]")}>
-                                            <div className="flex items-center gap-3">
-                                              <div className="shrink-0">
-                                                <span className="text-[10px] font-bold font-mono text-[#6b7280] bg-[#f4f5f7] px-1.5 py-0.5 rounded">{row.ref}</span>
+                                        if (row.checkbox) {
+                                          return (
+                                            <div key={row.label} className={cn("p-4 flex items-start sm:items-center justify-between gap-4", met && "bg-[#fafffe]")}>
+                                              <div className="flex items-start gap-3">
+                                                <div className="shrink-0 mt-0.5 sm:mt-0">
+                                                  <span className="text-[10px] font-bold font-mono text-[#6b7280] bg-[#f4f5f7] px-1.5 py-0.5 rounded">{row.ref}</span>
+                                                </div>
+                                                <div className="text-[13px] font-medium text-[#1c2333] leading-tight pt-0.5 sm:pt-0">{row.label}</div>
                                               </div>
-                                              <div className="text-[13px] font-medium text-[#1c2333] leading-tight">{row.label}</div>
+                                              <button 
+                                                onClick={() => handleToggleChecklist(row.mk!, row.have >= 1)}
+                                                className={cn(
+                                                  "w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 sm:mt-0",
+                                                  met ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" : "border-[#dde3ec] text-transparent hover:border-[#2a5a8c]"
+                                                )}
+                                              >
+                                                <Check size={14} strokeWidth={3} />
+                                              </button>
                                             </div>
-                                            <button 
-                                              onClick={() => handleToggleChecklist(row.mk!, row.have >= 1)}
-                                              className={cn(
-                                                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                                met ? "bg-[#2d7a4f] border-[#2d7a4f] text-white" : "border-[#dde3ec] text-transparent hover:border-[#2a5a8c]"
-                                              )}
-                                            >
-                                              <Check size={14} strokeWidth={3} />
-                                            </button>
-                                          </div>
-                                        );
-                                      }
+                                          );
+                                        }
 
                                       return (
                                         <div key={row.label} className={cn("p-4 flex flex-col sm:flex-row items-start gap-3 sm:gap-4", met && "bg-[#fafffe]")}>
@@ -2843,32 +2871,32 @@ export default function History() {
                                             <div className="shrink-0 w-full sm:w-auto">
                                               {row.mk === 'nightXc100' || row.mk === 'soloXc150' || row.mk === 'soloTowered' || row.mk === 'ifrXc250' ? (
                                                 met ? (
-                                                  <div className="flex flex-col items-end gap-1">
+                                                  <div className="flex flex-col items-start sm:items-end gap-1 w-full sm:w-auto">
                                                     <div className="flex items-center gap-2 text-[#2d7a4f] font-bold text-[11px]">
                                                       <CheckCircle2 size={14} />
                                                       {row.mk === 'soloTowered' ? `${row.have} of ${row.need} landings — ` : ''}
                                                       Completed on {formatDate(getManualDate(row.mk))}
                                                     </div>
                                                     {editingDateKey === row.mk ? (
-                                                      <div className="flex items-center gap-2 mt-1">
+                                                      <div className="flex items-center gap-2 mt-1 w-full sm:w-auto">
                                                         <input 
                                                           type="date"
                                                           value={tempDate}
                                                           onChange={(e) => setTempDate(e.target.value)}
-                                                          className="h-[44px] border border-[#dde3ec] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#2a5a8c]"
+                                                          className="h-[44px] flex-1 border border-[#dde3ec] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#2a5a8c] min-w-0"
                                                         />
                                                         <button 
                                                           onClick={() => {
                                                             saveManualDate(row.mk!, tempDate);
                                                             setEditingDateKey(null);
                                                           }}
-                                                          className="text-[10px] font-bold text-[#2d7a4f] hover:underline"
+                                                          className="text-[10px] font-bold text-[#2d7a4f] hover:underline shrink-0"
                                                         >
                                                           Save
                                                         </button>
                                                         <button 
                                                           onClick={() => setEditingDateKey(null)}
-                                                          className="text-[10px] font-bold text-[#6b7280] hover:underline"
+                                                          className="text-[10px] font-bold text-[#6b7280] hover:underline shrink-0"
                                                         >
                                                           Cancel
                                                         </button>
@@ -2887,7 +2915,7 @@ export default function History() {
                                                     )}
                                                   </div>
                                                 ) : (
-                                                  <div className="flex flex-col gap-2 min-w-[160px]">
+                                                  <div className="flex flex-col gap-2 w-full sm:min-w-[160px] sm:w-auto">
                                                     {row.mk === 'soloTowered' && (
                                                       <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider">Landings Count</label>
@@ -2910,7 +2938,7 @@ export default function History() {
                                                           type="date"
                                                           id={`date-${row.mk}`}
                                                           defaultValue={new Date().toISOString().split('T')[0]}
-                                                          className="h-[44px] flex-1 border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c]"
+                                                          className="h-[44px] flex-1 border border-[#dde3ec] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2a5a8c] min-w-0"
                                                         />
                                                         <button
                                                           onClick={() => {
@@ -2918,7 +2946,7 @@ export default function History() {
                                                             const countVal = row.mk === 'soloTowered' ? parseInt((document.getElementById(`count-${row.mk}`) as HTMLInputElement).value) : 1;
                                                             handleSpecialLog(row, dateVal, countVal);
                                                           }}
-                                                          className="h-[44px] px-4 rounded-lg bg-[#1a3a5c] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#2a5a8c] transition-all"
+                                                          className="h-[44px] px-4 rounded-lg bg-[#1a3a5c] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#2a5a8c] transition-all shrink-0"
                                                         >
                                                           Log
                                                         </button>
@@ -3100,7 +3128,7 @@ export default function History() {
 
                             {/* Checkride Readiness Checklist (PPL Only) */}
                             {lessonRating === 'ppl' && (
-                              <div className="mt-12">
+                              <div className="mt-6 sm:mt-12">
                                 {(() => {
                                   const allChecklistItems = CHECKLIST_PPL.flatMap(g => g.items);
                                   const checkedCount = allChecklistItems.filter(item => {
@@ -3342,10 +3370,9 @@ export default function History() {
           )}
         </main>
 
-      {/* Manual Hours Modal */}
       <AnimatePresence>
         {isModalOpen && modalData && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -3413,7 +3440,7 @@ export default function History() {
       </AnimatePresence>
 
       {cfiHoursPrompt && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setCfiHoursPrompt(null)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center gap-3">
@@ -3476,10 +3503,9 @@ export default function History() {
         </div>
       )}
 
-      {/* Share Progress Modal */}
       <AnimatePresence>
         {shareModalData && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
