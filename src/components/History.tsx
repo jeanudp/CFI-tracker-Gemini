@@ -300,12 +300,16 @@ export default function History() {
       setManualHours(manualData || []);
       setEndorsements(endorsementsData || []);
       const preSelectedStudent = localStorage.getItem('sb_selected_student');
-      if (preSelectedStudent && lessonsData && lessonsData.length > 0) {
-        const studentLesson = lessonsData.find(l => l.student_name === preSelectedStudent);
-        if (studentLesson) {
-          setSelectedLessonId(studentLesson.id);
+      if (preSelectedStudent) {
+        if (lessonsData && lessonsData.length > 0) {
+          const studentLesson = lessonsData.find(l => l.student_name === preSelectedStudent);
+          if (studentLesson) {
+            setSelectedLessonId(studentLesson.id);
+          } else {
+            setSelectedLessonId(null);
+          }
         } else {
-          setSelectedLessonId(lessonsData[0].id);
+          setSelectedLessonId(null);
         }
       } else if (lessonsData && lessonsData.length > 0) {
         setSelectedLessonId(lessonsData[0].id);
@@ -575,7 +579,7 @@ export default function History() {
     return matchesSearch;
   });
 
-  const studentLessons = studentName ? lessons.filter(l => l.student_name === studentName) : [];
+  const studentLessons = (studentName || activeStudentFilter) ? lessons.filter(l => l.student_name === (studentName || activeStudentFilter)) : [];
 
   const groundLessons = filteredLessons.filter(l => l.type === 'ground');
   const flightLessons = filteredLessons.filter(l => l.type === 'flight');
@@ -619,7 +623,7 @@ export default function History() {
     return 'bg-[#94a3b8]';
   };
 
-  const studentStats = studentName ? {
+  const studentStats = (studentName || activeStudentFilter) ? {
     count: studentLessons.length,
     hours: studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.totalFlight || '0') || 0), 0),
     sGrades: studentLessons.reduce((sum, l) => sum + Object.values(l.grades || {}).filter(g => isPassingGrade(g)).length, 0)
@@ -1064,11 +1068,11 @@ export default function History() {
       >
         <div className="w-full md:min-w-[300px] h-full flex flex-col">
           <div className="p-6 border-b border-[#dde3ec] space-y-4">
-            {studentName ? (
+            {(studentName || activeStudentFilter) ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-black text-[#1a3a5c] tracking-tight truncate pr-2">
-                    {studentName}
+                    {studentName || activeStudentFilter}
                   </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1241,10 +1245,21 @@ export default function History() {
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
               <HistoryIcon size={48} className="opacity-20" />
             </div>
-            <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">Select a lesson</h3>
-            <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed">
-              Choose a lesson from the sidebar to view detailed performance metrics and student progress.
-            </p>
+            {activeStudentFilter ? (
+              <>
+                <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">No lessons have been completed for this student yet</h3>
+                <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed">
+                  Lessons logged through the Flight Lesson or Ground Lesson pages will appear here.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">Select a lesson</h3>
+                <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed">
+                  Choose a lesson from the sidebar to view detailed performance metrics and student progress.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">

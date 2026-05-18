@@ -114,7 +114,7 @@ export default function Layout({ children, user }: LayoutProps) {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-sans"
+      className="min-h-screen flex flex-col font-sans overflow-x-hidden"
       style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
     >
       <header
@@ -122,12 +122,11 @@ export default function Layout({ children, user }: LayoutProps) {
         className="sticky top-0 z-50 backdrop-blur-md border-b shadow-sm px-3 sm:px-6 h-16 flex items-center justify-between shrink-0 transition-colors duration-300"
       >
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity min-w-0 shrink-0">
+        <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity min-w-0 shrink-0">
           <div className="relative">
             <span
-              className="block font-black leading-none select-none"
+              className="block font-black leading-none select-none text-[26px] sm:text-[34px]"
               style={{
-                fontSize: '34px',
                 color: 'var(--navy)',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
                 letterSpacing: '-1.5px',
@@ -141,16 +140,16 @@ export default function Layout({ children, user }: LayoutProps) {
               style={{ bottom: '-3px', left: 0, width: '100%', height: '3px', backgroundColor: '#e8a020' }}
             />
           </div>
-          <div style={{ width: '2px', height: '30px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
+          <div className="hidden sm:block" style={{ width: '2px', height: '30px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
           <div className="flex flex-col justify-center gap-0.5">
             <span
-              className="font-black uppercase leading-none"
-              style={{ fontSize: '13px', color: 'var(--navy)', letterSpacing: '1.5px' }}
+              className="font-black uppercase leading-none text-[11px] sm:text-[13px]"
+              style={{ color: 'var(--navy)', letterSpacing: '1.5px' }}
             >
               TRACKER
             </span>
             <span
-              className="font-bold"
+              className="font-bold hidden sm:inline"
               style={{ fontSize: '7px', color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase' }}
             >
               BUILT FOR CFI<span style={{ textTransform: 'none' }}>s</span>
@@ -159,7 +158,7 @@ export default function Layout({ children, user }: LayoutProps) {
         </Link>
 
         {/* Right side */}
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
 
           {/* Offline indicator */}
           {!isOnline && (
@@ -197,7 +196,7 @@ export default function Layout({ children, user }: LayoutProps) {
           <div className="relative" ref={navRef}>
             <button
               onClick={() => { setNavOpen(!navOpen); setUserOpen(false); }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"
               style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: navOpen ? 'var(--bg-tertiary)' : 'transparent' }}
             >
               <Menu size={14} />
@@ -242,7 +241,7 @@ export default function Layout({ children, user }: LayoutProps) {
             <div className="relative" ref={userRef}>
               <button
                 onClick={() => { setUserOpen(!userOpen); setNavOpen(false); }}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border text-[11px] font-bold transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold transition-all hover:-translate-y-0.5 hover:shadow-md"
                 style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: userOpen ? 'var(--bg-tertiary)' : 'transparent' }}
               >
                 <div
