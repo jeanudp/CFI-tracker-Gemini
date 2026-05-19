@@ -92,10 +92,6 @@ export default function History() {
   const [editingDateKey, setEditingDateKey] = useState<string | null>(null);
   const [tempDate, setTempDate] = useState<string>('');
   const [newLogDates, setNewLogDates] = useState<Record<string, string>>({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [groundExpanded, setGroundExpanded] = useState(false);
-  const [flightExpanded, setFlightExpanded] = useState(false);
-  const [archivedExpanded, setArchivedExpanded] = useState(false);
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
   const [archivedLessons, setArchivedLessons] = useState<Lesson[]>([]);
@@ -115,6 +111,10 @@ export default function History() {
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [showIacraHelp, setShowIacraHelp] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerType, setPickerType] = useState<'ground' | 'flight'>('flight');
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [pickerArchivedExpanded, setPickerArchivedExpanded] = useState(false);
 
   const getManualDate = (key: string) => {
     const dateKey = key === 'nightXc100' ? 'nightXCDate' : 
@@ -569,6 +569,16 @@ export default function History() {
     }
   }, [selectedLessonId, lessonRating]);
 
+  useEffect(() => {
+    if (pickerOpen) {
+      setPickerSearch('');
+      setPickerArchivedExpanded(false);
+      if (selectedLesson) {
+        setPickerType(selectedLesson.type as 'ground' | 'flight');
+      }
+    }
+  }, [pickerOpen, selectedLesson]);
+
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = (l.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (l.student_name || '').toLowerCase().includes(searchQuery.toLowerCase());
@@ -580,6 +590,7 @@ export default function History() {
   });
 
   const studentLessons = (studentName || activeStudentFilter) ? lessons.filter(l => l.student_name === (studentName || activeStudentFilter)) : [];
+  const studentArchived = (studentName || activeStudentFilter) ? archivedLessons.filter(l => l.student_name === (studentName || activeStudentFilter)) : [];
 
   const groundLessons = filteredLessons.filter(l => l.type === 'ground');
   const flightLessons = filteredLessons.filter(l => l.type === 'flight');
@@ -1038,206 +1049,6 @@ export default function History() {
 
   return (
     <div className="flex h-full w-full bg-[#f8fafc] relative overflow-hidden">
-      {/* Sidebar Toggle Tab */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] w-6 h-20 bg-[#1a3a5c] text-white flex items-center justify-center rounded-r-lg shadow-lg hover:bg-[#2a5a8c] transition-all duration-300"
-      >
-        {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-      </button>
-
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <aside 
-        className={cn(
-          "fixed md:relative top-0 bottom-0 left-0 z-50 bg-[var(--bg-secondary)] border-r border-[#dde3ec] flex flex-col transition-all duration-300 ease-in-out shadow-sm overflow-hidden",
-          sidebarOpen ? "w-[90%] md:w-[300px] translate-x-0" : "w-[90%] md:w-0 -translate-x-full md:translate-x-0"
-        )}
-      >
-        <div className="w-full md:min-w-[300px] h-full flex flex-col">
-          <div className="p-6 border-b border-[#dde3ec] space-y-4">
-            {(studentName || activeStudentFilter) ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-black text-[#1a3a5c] tracking-tight truncate pr-2">
-                    {studentName || activeStudentFilter}
-                  </h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <div className="bg-[#f0fdf4] text-[#166534] text-[10px] font-bold px-2 py-1 rounded-full border border-[#bbf7d0]">
-                    {studentStats?.count} Lessons
-                  </div>
-                  <div className="bg-[#eff6ff] text-[#1e40af] text-[10px] font-bold px-2 py-1 rounded-full border border-[#bfdbfe]">
-                    {studentStats?.hours.toFixed(1)} Hours
-                  </div>
-                  <div className="bg-[#fdf2f8] text-[#9d174d] text-[10px] font-bold px-2 py-1 rounded-full border border-[#fbcfe8]">
-                    {studentStats?.sGrades} Passing Grades
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#1a3a5c] rounded-lg">
-                  <HistoryIcon size={18} className="text-white" />
-                </div>
-                <h1 className="text-lg font-black tracking-tight text-[#1a3a5c] uppercase">Student Progress</h1>
-              </div>
-            )}
-
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search lessons..."
-                className="w-full text-xs border border-[#dde3ec] rounded-xl pl-9 pr-3 py-2.5 bg-[#f4f5f7] focus:outline-none focus:border-[#1a3a5c] focus:bg-white transition-all shadow-inner"
-              />
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {filteredLessons.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="text-4xl mb-4 opacity-10">🔍</div>
-                <p className="text-sm text-[#6b7280] font-medium">No lessons found.</p>
-              </div>
-            ) : (
-              <div className="pb-8">
-                {/* Ground Lessons Section */}
-                <button 
-                  onClick={() => setGroundExpanded(!groundExpanded)}
-                  className="w-full sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-3 border-b border-[#dde3ec] flex justify-between items-center hover:bg-[#f8fafc] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    {groundExpanded ? <ChevronDown size={14} className="text-[#6b7280]" /> : <ChevronRight size={14} className="text-[#6b7280]" />}
-                    <span className="text-[10px] font-black text-[#059669] uppercase tracking-widest">Ground Lessons ({groundLessons.length})</span>
-                  </div>
-                  <div className="flex gap-1.5">
-                    {groundGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{groundGrades.s} 3-4</span>}
-                    {groundGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{groundGrades.n} 1-2</span>}
-                  </div>
-                </button>
-                <AnimatePresence>
-                  {groundExpanded && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden divide-y divide-[#f1f5f9] pl-2"
-                    >
-                      {groundLessons.length === 0 ? (
-                        <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No ground lessons yet.</div>
-                      ) : (
-                        groundLessons.map(l => renderLessonItem(l))
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Flight Lessons Section */}
-                <button 
-                  onClick={() => setFlightExpanded(!flightExpanded)}
-                  className="w-full sticky top-0 bg-white/95 backdrop-blur-sm z-10 px-4 py-3 border-b border-[#dde3ec] border-t border-[#dde3ec] mt-4 flex justify-between items-center hover:bg-[#f8fafc] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    {flightExpanded ? <ChevronDown size={14} className="text-[#6b7280]" /> : <ChevronRight size={14} className="text-[#6b7280]" />}
-                    <span className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Flight Lessons ({flightLessons.length})</span>
-                  </div>
-                  <div className="flex gap-1.5">
-                    {flightGrades.s > 0 && <span className="bg-[#f0fdf4] text-[#166534] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#bbf7d0]">{flightGrades.s} 3-4</span>}
-                    {flightGrades.n > 0 && <span className="bg-[#fef2f2] text-[#991b1b] text-[9px] font-bold px-1.5 py-0.5 rounded border border-[#fecaca]">{flightGrades.n} 1-2</span>}
-                  </div>
-                </button>
-                <AnimatePresence>
-                  {flightExpanded && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden divide-y divide-[#f1f5f9] pl-2"
-                    >
-                      {flightLessons.length === 0 ? (
-                        <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No flight lessons yet.</div>
-                      ) : (
-                        flightLessons.map(l => renderLessonItem(l))
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Archived Lessons Section */}
-                <div className="mt-8 border-t border-[#dde3ec]">
-                  <button 
-                    onClick={() => setArchivedExpanded(!archivedExpanded)}
-                    className="w-full px-4 py-3 flex justify-between items-center hover:bg-[#f8fafc] transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Archive size={14} className="text-[#6b7280]" />
-                      <span className="text-[10px] font-black text-[#6b7280] uppercase tracking-widest">Archived Lessons ({archivedLessons.length})</span>
-                    </div>
-                    <ChevronRight size={14} className={cn("text-[#6b7280] transition-transform", archivedExpanded && "rotate-90")} />
-                  </button>
-                  <AnimatePresence>
-                    {archivedExpanded && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden divide-y divide-[#f1f5f9] bg-[#f8fafc]"
-                      >
-                        {archivedLessons.length === 0 ? (
-                          <div className="p-6 text-center text-[11px] text-[#94a3b8] italic">No archived lessons.</div>
-                        ) : (
-                          archivedLessons.map(l => (
-                            <div key={l.id} className="p-3 pl-6 group">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-medium text-[#64748b]">{l.label}</span>
-                                <div className="flex items-center gap-1 opacity-100 transition-opacity">
-                                  <button
-                                    onClick={() => handleRestoreLesson(l.id)}
-                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    title="Restore lesson"
-                                  >
-                                    <RotateCcw size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => handlePermanentDeleteLesson(l.id, l.label)}
-                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Permanently delete"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="text-[10px] text-[#94a3b8]">
-                                Archived on {l.deleted_at ? formatDate(l.deleted_at) : '—'}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </aside>
-
       {/* Main Content */}
       <main className="flex-1 min-w-0 bg-[var(--bg-primary)] p-3 sm:p-8 overflow-y-auto">
         {!selectedLesson ? (
@@ -1248,16 +1059,30 @@ export default function History() {
             {activeStudentFilter ? (
               <>
                 <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">No lessons have been completed for this student yet</h3>
-                <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed">
+                <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed mb-6">
                   Lessons logged through the Flight Lesson or Ground Lesson pages will appear here.
                 </p>
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1a3a5c] text-white font-bold rounded-full hover:bg-[#2a4a6c] transition-all shadow-md shadow-[#1a3a5c]/20"
+                >
+                  <Calendar size={16} />
+                  <span>Browse Lessons</span>
+                </button>
               </>
             ) : (
               <>
                 <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">Select a lesson</h3>
-                <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed">
-                  Choose a lesson from the sidebar to view detailed performance metrics and student progress.
+                <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed mb-6">
+                  Choose a lesson from the picker above to view detailed performance metrics and student progress.
                 </p>
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#1a3a5c] text-white font-bold rounded-full hover:bg-[#2a4a6c] transition-all shadow-md shadow-[#1a3a5c]/20"
+                >
+                  <Calendar size={16} />
+                  <span>Browse Lessons</span>
+                </button>
               </>
             )}
           </div>
@@ -1289,6 +1114,24 @@ export default function History() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-5 mb-8">
+                  {/* Lesson Picker Button */}
+                  {selectedLesson && (
+                    <button
+                      onClick={() => setPickerOpen(true)}
+                      className="w-full sm:w-fit bg-white text-[#1a3a5c] border border-[#dde3ec] px-5 py-2.5 rounded-full text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center justify-between sm:justify-start gap-4 shadow-sm shrink-0 group order-0 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Calendar size={14} className="text-[#94a3b8] group-hover:text-[#1a3a5c] transition-colors" />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold">{selectedLesson.label}</span>
+                          <span className="text-[#dde3ec] hidden sm:inline">•</span>
+                          <span className="text-[#94a3b8] font-medium">{formatDate(selectedLesson.saved_at)}</span>
+                        </div>
+                      </div>
+                      <ChevronDown size={14} className="text-[#94a3b8] group-hover:text-[#1a3a5c] transition-colors" />
+                    </button>
+                  )}
+
                   {/* Action Buttons Row */}
                   <div className="flex justify-end gap-3 order-1">
                     {activeTab === 'lesson' && selectedLesson && (
@@ -3448,6 +3291,212 @@ export default function History() {
                     Add
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {pickerOpen && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPickerOpen(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
+            >
+              <div className="sticky top-0 bg-white z-10">
+                <div className="p-6 flex justify-between items-center">
+                  <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight">Select a Lesson</h3>
+                  <button onClick={() => setPickerOpen(false)} className="text-[#64748b] hover:text-[#1a3a5c] transition-colors p-1">
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="h-px bg-[#dde3ec]" />
+                
+                <div className="p-4 space-y-4">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b7280]" />
+                    <input
+                      type="text"
+                      value={pickerSearch}
+                      onChange={(e) => setPickerSearch(e.target.value)}
+                      placeholder="Search lessons by name"
+                      className="w-full text-xs border border-[#dde3ec] rounded-xl pl-9 pr-3 py-2.5 bg-[#f4f5f7] focus:outline-none focus:border-[#1a3a5c] focus:bg-white transition-all shadow-inner"
+                    />
+                  </div>
+
+                  <div className="flex bg-[#f8fafc] rounded-xl p-1 gap-1 border border-[#dde3ec]">
+                    <button
+                      onClick={() => setPickerType('ground')}
+                      className={cn(
+                        "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+                        pickerType === 'ground' 
+                          ? "bg-[#1a3a5c] text-white shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c]"
+                      )}
+                    >
+                      Ground
+                    </button>
+                    <button
+                      onClick={() => setPickerType('flight')}
+                      className={cn(
+                        "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+                        pickerType === 'flight' 
+                          ? "bg-[#1a3a5c] text-white shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c]"
+                      )}
+                    >
+                      Flight
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 pb-8">
+                {studentLessons
+                  .filter(l => l.type === pickerType)
+                  .filter(l => (l.label || '').toLowerCase().includes(pickerSearch.toLowerCase()))
+                  .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime())
+                  .map(lesson => (
+                    <button
+                      key={lesson.id}
+                      onClick={() => {
+                        setSelectedLessonId(lesson.id);
+                        setPickerOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left flex items-start gap-3 p-3 rounded-xl border transition-all",
+                        selectedLessonId === lesson.id
+                          ? "border-[#1a3a5c] bg-[#d4e8f5] ring-1 ring-[#1a3a5c]"
+                          : "border-[#dde3ec] bg-white hover:border-[#1a3a5c] hover:bg-[#f8fafc]"
+                      )}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-[#1c2333]">{lesson.label}</span>
+                          {lesson.meta?.rating_code && (
+                            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider", getRatingBadgeColor(lesson.meta.rating_code))}>
+                              {lesson.meta.rating_code.toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-[#6b7280] mt-0.5">
+                          {lesson.saved_at ? new Date(lesson.saved_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—'}
+                          {lesson.student_name ? ` · ${lesson.student_name}` : ''}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          {lesson.meta?.overallGrade && (
+                            <span className={cn(
+                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white",
+                              lesson.meta.overallGrade === 'S' ? "bg-[#2d7a4f]" : "bg-[#c0392b]"
+                            )}>
+                              {lesson.meta.overallGrade}
+                            </span>
+                          )}
+                          {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g as string)).length > 0 && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full">3-4: {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g as string)).length}</span>
+                          )}
+                          {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g as string)).length > 0 && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#fdecea] text-[#c0392b] rounded-full">1-2: {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g as string)).length}</span>
+                          )}
+                          {lesson.meta?.totalFlight && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#d4e8f5] text-[#1a3a5c] rounded-full">{lesson.meta.totalFlight}h</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                {studentLessons.filter(l => l.type === pickerType).length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-sm text-[#94a3b8]">No lessons of this type yet</p>
+                  </div>
+                ) : studentLessons.filter(l => l.type === pickerType && (l.label || '').toLowerCase().includes(pickerSearch.toLowerCase())).length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-sm text-[#94a3b8]">No lessons match your search</p>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="border-t border-[#dde3ec] bg-white">
+                <button 
+                  onClick={() => setPickerArchivedExpanded(!pickerArchivedExpanded)}
+                  className="w-full px-6 py-4 flex justify-between items-center hover:bg-[#f8fafc] transition-colors group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Archive size={14} className="text-[#94a3b8] group-hover:text-[#64748b] transition-colors" />
+                    <span className="text-[11px] font-bold text-[#94a3b8] group-hover:text-[#64748b] uppercase tracking-widest transition-colors">
+                      Show archived lessons ({studentArchived.length})
+                    </span>
+                  </div>
+                  <ChevronRight 
+                    size={14} 
+                    className={cn("text-[#94a3b8] transition-transform", pickerArchivedExpanded && "rotate-90")} 
+                  />
+                </button>
+                <AnimatePresence>
+                  {pickerArchivedExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden border-t border-[#f1f5f9] bg-[#f8fafc] divide-y divide-[#f1f5f9] max-h-[250px] overflow-y-auto"
+                    >
+                      {studentArchived.length === 0 ? (
+                        <div className="p-8 text-center text-xs text-[#94a3b8] italic">No archived lessons</div>
+                      ) : (
+                        studentArchived
+                          .sort((a, b) => new Date(b.deleted_at || 0).getTime() - new Date(a.deleted_at || 0).getTime())
+                          .map(l => (
+                            <div key={l.id} className="group p-4 flex items-center justify-between gap-4">
+                              <button
+                                onClick={() => {
+                                  setSelectedLessonId(l.id);
+                                  setPickerOpen(false);
+                                }}
+                                className="flex-1 text-left min-w-0"
+                              >
+                                <div className="text-sm font-medium text-[#64748b] truncate group-hover:text-[#1a3a5c] transition-colors">{l.label}</div>
+                                <div className="text-[10px] text-[#94a3b8] mt-0.5">
+                                  Archived on {l.deleted_at ? formatDate(l.deleted_at) : '—'}
+                                </div>
+                              </button>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRestoreLesson(l.id);
+                                  }}
+                                  className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                                  title="Restore lesson"
+                                >
+                                  <RotateCcw size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePermanentDeleteLesson(l.id, l.label);
+                                  }}
+                                  className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                  title="Delete permanently"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           </div>
