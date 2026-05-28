@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16' as any,
@@ -98,6 +99,77 @@ export default async function handler(req: any, res: any) {
         }
 
         console.log('Successfully updated subscription for:', userEmail);
+
+        // Send confirmation email to purchaser
+        const resendApiKey = process.env.RESEND_API_KEY;
+        if (!resendApiKey) {
+          console.warn('Missing RESEND_API_KEY environment variable. Skipping confirmation email.');
+        } else if (userEmail) {
+          try {
+            const resend = new Resend(resendApiKey);
+            let recipientName = 'there';
+            const userId = session.metadata?.user_id;
+
+            if (userId) {
+              const { data: profile, error: profileError } = await supabase
+                .from('cfi_profile')
+                .select('full_name')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+              if (!profileError && profile?.full_name) {
+                recipientName = profile.full_name;
+              }
+            }
+
+            const priceText = plan === 'all_annual' ? '$99 per year' : '$9.99 per month';
+            const trialEndVal = subscription.trial_end;
+            const trialDateObj = trialEndVal ? new Date(trialEndVal * 1000) : new Date();
+            const formattedTrialEnd = trialDateObj.toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            });
+
+            const subject = 'Your 61 Tracker free trial has started';
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #101F33; margin: 0; padding: 20px; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px;">
+    <div style="margin-bottom: 24px; border-bottom: 2px solid #e8a020; display: inline-block; padding-bottom: 4px;">
+      <h1 style="color: #101F33; font-size: 20px; font-weight: 800; margin: 0; letter-spacing: -0.01em; text-transform: uppercase;">61 Tracker</h1>
+    </div>
+    <p style="font-size: 16px; margin-bottom: 16px;">Hi ${recipientName},</p>
+    <div style="background-color: #F8FAFC; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+      <p style="margin: 0;">Your 30-day free trial is now active and you have full access to all ratings.</p>
+      <p style="margin: 12px 0 0 0;">The trial ends on <strong>${formattedTrialEnd}</strong>.</p>
+      <p style="margin: 12px 0 0 0;">On that same date, your subscription begins and the first payment of <strong>${priceText}</strong> will be charged automatically to the card on file, with nothing charged before then.</p>
+      <p style="margin: 12px 0 0 0;">You can cancel anytime before that date from your Account page and you will not be charged.</p>
+    </div>
+    <p style="font-size: 16px; margin-top: 32px; font-weight: bold;">Best regards,<br/>The 61 Tracker Team</p>
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
+      <p style="font-size: 12px; color: #64748B; margin: 0; font-style: italic;">Sent via 61 Tracker — The modern toolkit for Part 61 CFIs</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+            await resend.emails.send({
+              from: '61 Tracker <noreply@61tracker.com>',
+              to: [userEmail],
+              subject: subject,
+              html: html,
+            });
+            console.log('Confirmation email successfully sent to:', userEmail);
+          } catch (emailErr) {
+            console.error('Failed to send confirmation email but letting webhook succeed:', emailErr);
+          }
+        }
+
         break;
       }
 
