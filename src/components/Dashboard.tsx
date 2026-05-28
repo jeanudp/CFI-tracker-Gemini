@@ -1058,6 +1058,28 @@ export default function Dashboard() {
     }).filter(Boolean).join(', ');
   }
 
+  const showTrialPill = (() => {
+    if (!userSubscription) return false;
+    if (userSubscription.status !== 'trialing') return false;
+    if (!userSubscription.trial_end) return false;
+    const trialEndDate = new Date(userSubscription.trial_end);
+    if (isNaN(trialEndDate.getTime())) return false;
+    return trialEndDate.getTime() > Date.now();
+  })();
+
+  const trialDaysLeft = (() => {
+    if (!showTrialPill || !userSubscription?.trial_end) return 0;
+    const diffTime = new Date(userSubscription.trial_end).getTime() - Date.now();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  })();
+
+  const trialPriceLabel = userSubscription?.plan === 'all_annual' ? '$99/yr' : '$9.99/mo';
+
+  const trialFormattedDate = userSubscription?.trial_end
+    ? new Date(userSubscription.trial_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '';
+
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -1171,21 +1193,34 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {weatherData && (
-          <div className="hidden lg:flex items-center gap-2 max-w-[40%] px-4 py-1 rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] overflow-hidden">
-            <div 
-              className="w-2 h-2 rounded-full shrink-0" 
-              style={{ 
-                backgroundColor: 
-                  weatherData.fltCat === 'VFR' ? '#16a34a' :
-                  weatherData.fltCat === 'MVFR' ? '#2563eb' :
-                  weatherData.fltCat === 'IFR' ? '#dc2626' :
-                  weatherData.fltCat === 'LIFR' ? '#d946ef' : 'transparent'
-              }} 
-            />
-            <span className="text-[10px] font-mono text-[var(--text-muted)] truncate select-all">
-              {weatherData.raw_text || weatherData.rawOb}
-            </span>
+        {(weatherData || showTrialPill) && (
+          <div className="hidden lg:flex items-center gap-3 max-w-[50%]">
+            {weatherData && (
+              <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] overflow-hidden">
+                <div 
+                  className="w-2 h-2 rounded-full shrink-0" 
+                  style={{ 
+                    backgroundColor: 
+                      weatherData.fltCat === 'VFR' ? '#16a34a' :
+                      weatherData.fltCat === 'MVFR' ? '#2563eb' :
+                      weatherData.fltCat === 'IFR' ? '#dc2626' :
+                      weatherData.fltCat === 'LIFR' ? '#d946ef' : 'transparent'
+                  }} 
+                />
+                <span className="text-[10px] font-mono text-[var(--text-muted)] truncate select-all">
+                  {weatherData.raw_text || weatherData.rawOb}
+                </span>
+              </div>
+            )}
+
+            {showTrialPill && (
+              <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] overflow-hidden shrink-0">
+                <div className="w-2 h-2 rounded-full shrink-0 bg-[#e8a020] animate-pulse" />
+                <span className="text-[10px] font-semibold text-[var(--text-primary)] whitespace-nowrap">
+                  Trial &middot; {trialDaysLeft}d left &middot; then {trialPriceLabel} on {trialFormattedDate}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

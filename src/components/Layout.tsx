@@ -24,31 +24,7 @@ export default function Layout({ children, user }: LayoutProps) {
   const [userOpen, setUserOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
-  const [subscription, setSubscription] = useState<{
-    status: string | null;
-    trial_end: string | null;
-    plan: string | null;
-  } | null>(null);
 
-  useEffect(() => {
-    if (!user?.email) return;
-    const fetchSubscription = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_subscriptions')
-          .select('status, trial_end, plan')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (!error && data) {
-          setSubscription(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch subscription:', err);
-      }
-    };
-    fetchSubscription();
-  }, [user?.email]);
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('dark_mode') === 'true';
@@ -137,27 +113,7 @@ export default function Layout({ children, user }: LayoutProps) {
   const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';
   const shortName = displayName.split(' ')[0];
 
-  const showTrialBanner = (() => {
-    if (path !== '/dashboard') return false;
-    if (!subscription) return false;
-    if (subscription.status !== 'trialing') return false;
-    if (!subscription.trial_end) return false;
-    const trialEndDate = new Date(subscription.trial_end);
-    if (isNaN(trialEndDate.getTime())) return false;
-    return trialEndDate.getTime() > Date.now();
-  })();
 
-  const daysLeft = (() => {
-    if (!showTrialBanner || !subscription?.trial_end) return 0;
-    const diffTime = new Date(subscription.trial_end).getTime() - Date.now();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
-  })();
-
-  const priceLabel = subscription?.plan === 'all_annual' ? '$99/year' : '$9.99/month';
-  const formattedDate = subscription?.trial_end
-    ? new Date(subscription.trial_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : '';
 
   return (
     <div
@@ -334,24 +290,6 @@ export default function Layout({ children, user }: LayoutProps) {
           )}
         </div>
       </header>
-
-      {/* Trial status banner */}
-      {showTrialBanner && (
-        <div 
-          className="sticky top-16 z-40 w-full border-b px-3 sm:px-6 py-2 flex items-center gap-2.5 transition-colors duration-300 text-xs font-semibold"
-          style={{ 
-            backgroundColor: 'var(--bg-secondary)', 
-            borderColor: 'var(--border-color)', 
-            borderLeft: '4px solid #e8a020',
-            color: 'var(--text-primary)'
-          }}
-        >
-          <div className="w-1.5 h-1.5 rounded-full bg-[#e8a020] animate-pulse shrink-0" />
-          <span className="truncate leading-relaxed">
-            Free trial active — {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left. Your {priceLabel} subscription begins {formattedDate}.
-          </span>
-        </div>
-      )}
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
         {children}
