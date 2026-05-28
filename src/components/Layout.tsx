@@ -138,6 +138,7 @@ export default function Layout({ children, user }: LayoutProps) {
   const shortName = displayName.split(' ')[0];
 
   const showTrialBanner = (() => {
+    if (path !== '/dashboard') return false;
     if (!subscription) return false;
     if (subscription.status !== 'trialing') return false;
     if (!subscription.trial_end) return false;
