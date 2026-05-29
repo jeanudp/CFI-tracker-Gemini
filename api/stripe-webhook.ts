@@ -89,6 +89,7 @@ export default async function handler(req: any, res: any) {
               ? new Date(subscription.trial_end * 1000).toISOString()
               : null,
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            has_used_trial: true,
             updated_at: new Date().toISOString(),
           })
           .eq('email', userEmail);
