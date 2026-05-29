@@ -985,32 +985,40 @@ export default function Dashboard() {
   }
 
   function decodeWeatherPhenomena(rawText: string, wxString?: string): string | null {
-    if (wxString) {
-      // Basic check for common codes in wxString if it's just raw codes
-      if (!wxString.includes(' ') && wxString.length <= 8 && wxString.match(/^[+-]?[A-Z]+$/)) {
-        // Fall through to decoder
-      } else {
-        return wxString;
+    let wxCodes: string[] = [];
+
+    // Primary source: parse from raw METAR text
+    if (rawText) {
+      const parts = rawText.split(/\s+/);
+      let visIdx = -1;
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i].match(/^\d+\/?\d*SM$/) || parts[i] === 'M1/4SM' || parts[i] === 'P6SM') {
+          visIdx = i;
+          break;
+        }
+      }
+      if (visIdx !== -1) {
+        for (let i = visIdx + 1; i < parts.length; i++) {
+          const token = parts[i];
+          if (token.match(/^(SCT|FEW|BKN|OVC|VV|SKC|CLR|CAVOK)/) || token.match(/^-?\d{2}\/(-?\d{2})?$/)) break;
+          if (token.match(/^(\+|-|VC)?([A-Z]{2,8})$/)) {
+            wxCodes.push(token);
+          }
+        }
       }
     }
-    
-    if (!rawText) return null;
-    const parts = rawText.split(/\s+/);
-    let visIdx = -1;
-    for(let i=0; i<parts.length; i++) {
-        if (parts[i].match(/^\d+\/?\d*SM$/) || parts[i] === 'M1/4SM' || parts[i] === 'P6SM') {
-            visIdx = i; break;
+
+    // Fallback: if no codes were parsed from raw METAR text, but we have a separate wxString,
+    // split the wxString into individual groups and parse/decode them.
+    if (wxCodes.length === 0 && wxString) {
+      const candidates = wxString.trim().split(/\s+/);
+      for (const token of candidates) {
+        if (token.match(/^(\+|-|VC)?([A-Z]{2,8})$/i)) {
+          wxCodes.push(token.toUpperCase());
         }
+      }
     }
-    if (visIdx === -1) return null;
-    
-    const wxCodes = [];
-    for(let i = visIdx + 1; i < parts.length; i++) {
-        const token = parts[i];
-        if (token.match(/^(SCT|FEW|BKN|OVC|VV|SKC|CLR|CAVOK)/) || token.match(/^-?\d{2}\/(-?\d{2})?$/)) break;
-        if (token.match(/^(\+|-|VC)?([A-Z]{2,8})$/)) wxCodes.push(token);
-    }
-    
+
     if (wxCodes.length === 0) return null;
     
     const intensity: any = { '-': 'Light', '+': 'Heavy', 'VC': 'In Vicinity' };
