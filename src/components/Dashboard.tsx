@@ -1066,6 +1066,191 @@ export default function Dashboard() {
     }).filter(Boolean).join(', ');
   }
 
+  function decodeRemarkLTGTS(rawRemark: string): string {
+    if (!rawRemark) return '';
+    const tokens = rawRemark.trim().split(/\s+/);
+    
+    const tsIdx = tokens.findIndex(t => t.toUpperCase() === 'TS');
+    
+    let lightningTokens: string[] = [];
+    let thunderstormTokens: string[] = [];
+    
+    if (tsIdx !== -1) {
+      lightningTokens = tokens.slice(0, tsIdx);
+      thunderstormTokens = tokens.slice(tsIdx);
+    } else {
+      lightningTokens = tokens;
+      thunderstormTokens = [];
+    }
+    
+    const hasLTG = tokens.some(t => t.toUpperCase().includes('LTG'));
+    if (!hasLTG) {
+      lightningTokens = [];
+    }
+    
+    const freqMap: Record<string, string> = {
+      'OCNL': 'Occasional',
+      'FRQ': 'Frequent',
+      'CONS': 'Continuous',
+      'CONT': 'Continuous'
+    };
+    
+    const qtyMap: Record<string, string> = {
+      'IC': 'in-cloud',
+      'CC': 'cloud-to-cloud',
+      'CG': 'cloud-to-ground',
+      'CA': 'cloud-to-air'
+    };
+    
+    const directionsMap: Record<string, string> = {
+      'N': 'north',
+      'NE': 'northeast',
+      'E': 'east',
+      'SE': 'southeast',
+      'S': 'south',
+      'SW': 'southwest',
+      'W': 'west',
+      'NW': 'northwest'
+    };
+    
+    function joinWithAnd(arr: string[]): string {
+      if (arr.length === 0) return '';
+      if (arr.length === 1) return arr[0];
+      if (arr.length === 2) return `${arr[0]} and ${arr[1]}`;
+      return arr.slice(0, -1).join(', ') + ', and ' + arr[arr.length - 1];
+    }
+    
+    let lightningSentence = '';
+    if (lightningTokens.length > 0) {
+      const decodedLightningParts: string[] = [];
+      let i = 0;
+      while (i < lightningTokens.length) {
+        const token = lightningTokens[i];
+        const upperToken = token.toUpperCase();
+        
+        if (freqMap[upperToken]) {
+          decodedLightningParts.push(freqMap[upperToken]);
+          i++;
+        } else if (upperToken.startsWith('LTG')) {
+          const restLetters = upperToken.substring(3);
+          const decodedTypes: string[] = [];
+          for (let j = 0; j < restLetters.length; j += 2) {
+            const pair = restLetters.substring(j, j + 2);
+            if (qtyMap[pair]) {
+              decodedTypes.push(qtyMap[pair]);
+            }
+          }
+          let ltgStr = 'lightning';
+          if (decodedTypes.length > 0) {
+            ltgStr = joinWithAnd(decodedTypes) + ' lightning';
+          }
+          decodedLightningParts.push(ltgStr);
+          i++;
+        } else if (upperToken === 'OHD') {
+          decodedLightningParts.push('overhead');
+          i++;
+        } else if (upperToken === 'VC') {
+          decodedLightningParts.push('in the vicinity');
+          i++;
+        } else if (upperToken === 'DSNT') {
+          decodedLightningParts.push('distant');
+          i++;
+        } else if (upperToken === 'ALQDS') {
+          decodedLightningParts.push('in all quadrants');
+          i++;
+        } else if (upperToken === 'MOV') {
+          const next = lightningTokens[i + 1];
+          const nextUpper = next?.toUpperCase();
+          if (nextUpper && directionsMap[nextUpper]) {
+            decodedLightningParts.push(`moving ${directionsMap[nextUpper]}`);
+            i += 2;
+          } else {
+            decodedLightningParts.push('moving');
+            i++;
+          }
+        } else if (upperToken.startsWith('MOV') && directionsMap[upperToken.substring(3)]) {
+          decodedLightningParts.push(`moving ${directionsMap[upperToken.substring(3)]}`);
+          i++;
+        } else {
+          decodedLightningParts.push(token);
+          i++;
+        }
+      }
+      lightningSentence = decodedLightningParts.join(' ');
+    }
+    
+    let thunderstormSentence = '';
+    if (thunderstormTokens.length > 0) {
+      let locationStr = '';
+      let movementStr = '';
+      const extraWords: string[] = [];
+      
+      let i = 0;
+      while (i < thunderstormTokens.length) {
+        const token = thunderstormTokens[i];
+        const upperToken = token.toUpperCase();
+        
+        if (upperToken === 'TS') {
+          i++;
+        } else if (upperToken === 'OHD') {
+          locationStr = 'overhead';
+          i++;
+        } else if (upperToken === 'VC') {
+          locationStr = 'in the vicinity';
+          i++;
+        } else if (upperToken === 'DSNT') {
+          locationStr = 'distant';
+          i++;
+        } else if (upperToken === 'ALQDS') {
+          locationStr = 'in all quadrants';
+          i++;
+        } else if (upperToken === 'MOV') {
+          const next = thunderstormTokens[i + 1];
+          const nextUpper = next?.toUpperCase();
+          if (nextUpper && directionsMap[nextUpper]) {
+            movementStr = `moving ${directionsMap[nextUpper]}`;
+            i += 2;
+          } else {
+            movementStr = 'moving';
+            i++;
+          }
+        } else if (upperToken.startsWith('MOV') && directionsMap[upperToken.substring(3)]) {
+          movementStr = `moving ${directionsMap[upperToken.substring(3)]}`;
+          i++;
+        } else {
+          extraWords.push(token);
+          i++;
+        }
+      }
+      
+      let tsSentence = 'thunderstorm';
+      if (locationStr) {
+        tsSentence += ' ' + locationStr;
+      }
+      if (extraWords.length > 0) {
+        tsSentence += ' ' + extraWords.join(' ');
+      }
+      if (movementStr) {
+        if (locationStr || extraWords.length > 0) {
+          tsSentence += ', ' + movementStr;
+        } else {
+          tsSentence += ' ' + movementStr;
+        }
+      }
+      thunderstormSentence = tsSentence;
+    }
+    
+    if (lightningSentence && thunderstormSentence) {
+      return `${lightningSentence}; ${thunderstormSentence}`;
+    } else if (lightningSentence) {
+      return lightningSentence;
+    } else if (thunderstormSentence) {
+      return thunderstormSentence;
+    }
+    
+    return rawRemark;
+  }
+
   const showTrialPill = (() => {
     if (!userSubscription) return false;
     if (userSubscription.status !== 'trialing') return false;
@@ -1464,6 +1649,11 @@ export default function Dashboard() {
                               // Manual fallback for 'AO1' token
                               if (!rmk.description && rmk.raw?.trim() === 'AO1') {
                                 value = "Automated station without precipitation discriminator";
+                              }
+                              
+                              // Manual fallback for LTG or TS remarks
+                              if (!rmk.description && rmk.raw && (rmk.raw.includes('LTG') || rmk.raw.includes('TS'))) {
+                                value = decodeRemarkLTGTS(rmk.raw);
                               }
                               
                               if (!value) return null;
