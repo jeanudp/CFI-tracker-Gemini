@@ -433,36 +433,26 @@ export default function Dashboard() {
       const code = paywallInviteCode.trim().toUpperCase();
       if (!code) throw new Error('Please enter an invite code');
 
-      const { data: codeData, error: codeError } = await supabase
-        .from('invite_codes')
-        .select('*')
-        .eq('code', code)
-        .eq('used', false)
-        .single();
-
-      if (codeError || !codeData) {
-        throw new Error('Invalid or already used invite code');
-      }
-
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not logged in');
 
-      await supabase
-        .from('invite_codes')
-        .update({
-          used: true,
-          used_by: session.user.email,
-          used_at: new Date().toISOString(),
-        })
-        .eq('code', code);
+      const token = session.access_token;
+      if (!token) throw new Error('Missing authentication token');
 
-      await supabase
-        .from('user_subscriptions')
-        .update({
-          plan: 'invite',
-          ratings_unlocked: ['ppl', 'ir', 'cpl', 'cfi', 'cfii', 'mei'],
-        })
-        .eq('user_id', session.user.id);
+      const response = await fetch('/api/redeem-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ code })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Failed to redeem invite code');
+      }
 
       setPaywallInviteSuccess(true);
       setTimeout(() => {
