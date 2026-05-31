@@ -8,6 +8,16 @@ export default async function handler(req: Request, res: Response) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Authorization header is required' });
+  }
+
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  if (!token) {
+    return res.status(401).json({ error: 'Bearer token is required in Authorization header' });
+  }
+
   const { 
     studentName, 
     changeType, 
@@ -15,11 +25,10 @@ export default async function handler(req: Request, res: Response) {
     originalTime, 
     newDate, 
     newTime,
-    userId
   } = req.body;
 
   // Basic validation
-  if (!studentName || !changeType || !originalDate || !originalTime || !userId) {
+  if (!studentName || !changeType || !originalDate || !originalTime) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -66,15 +75,24 @@ export default async function handler(req: Request, res: Response) {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     const resend = new Resend(resendApiKey);
 
-    // 1. Look up student email from students table
+    // Verify token to identify the user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Token verification failed:', authError);
+      return res.status(401).json({ error: 'Invalid or expired authorization token' });
+    }
+
+    // 1. Look up student email from students table (scoping to the caller's own students)
     const { data: student, error: studentError } = await supabase
       .from('students')
       .select('email_address')
       .eq('name', studentName)
+      .eq('user_id', user.id)
       .single();
 
     if (studentError || !student?.email_address) {
-      console.log(`No email on file for student: ${studentName}`);
+      console.log(`No email on file for student: ${studentName} under user ID: ${user.id}`);
       return res.status(200).json({ message: 'No email on file for student' });
     }
 
@@ -84,7 +102,7 @@ export default async function handler(req: Request, res: Response) {
     const { data: cfi, error: cfiError } = await supabase
       .from('cfi_profile')
       .select('full_name')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .single();
 
     if (cfiError) {

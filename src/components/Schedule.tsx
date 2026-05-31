@@ -575,6 +575,14 @@ export default function Schedule() {
 
   const handleNotifyStudents = async () => {
     if (pendingNotifications.length === 0) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      console.error('No active session found, stopping notifications.');
+      return;
+    }
+    const token = session.access_token;
+
     setSendingNotifications(true);
 
     try {
@@ -582,7 +590,10 @@ export default function Schedule() {
         try {
           await fetch('/api/notify-student', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(notification)
           });
         } catch (err) {
