@@ -93,7 +93,7 @@ export default async function handler(req: Request, res: Response) {
 
     if (studentError || !student?.email_address) {
       console.log(`No email on file for student: ${studentName} under user ID: ${user.id}`);
-      return res.status(200).json({ message: 'No email on file for student' });
+      return res.status(200).json({ message: 'No email on file for student', notified: false, reason: 'no_email' });
     }
 
     const studentEmail = student.email_address;
@@ -162,7 +162,7 @@ export default async function handler(req: Request, res: Response) {
     }
 
     console.log(`Notification ${changeVerb} sent to ${studentName} (${studentEmail}). ID: ${resendData?.id}`);
-    return res.status(200).json({ message: 'Success', id: resendData?.id });
+    return res.status(200).json({ message: 'Success', id: resendData?.id, notified: true });
 
   } catch (err: any) {
     console.error('Notification unexpected error:', err);

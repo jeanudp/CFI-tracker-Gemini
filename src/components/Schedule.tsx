@@ -183,6 +183,12 @@ export default function Schedule() {
   const [pendingNotifications, setPendingNotifications] = useState<any[]>([]);
   const [sendingNotifications, setSendingNotifications] = useState(false);
   const [showNotificationSuccess, setShowNotificationSuccess] = useState(false);
+  const [notificationResults, setNotificationResults] = useState<{
+    total: number;
+    notifiedNames: string[];
+    noEmailNames: string[];
+    failedNames: string[];
+  } | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -585,10 +591,14 @@ export default function Schedule() {
 
     setSendingNotifications(true);
 
+    const notified: string[] = [];
+    const noEmail: string[] = [];
+    const failed: string[] = [];
+
     try {
       await Promise.all(pendingNotifications.map(async (notification) => {
         try {
-          await fetch('/api/notify-student', {
+          const response = await fetch('/api/notify-student', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -596,14 +606,40 @@ export default function Schedule() {
             },
             body: JSON.stringify(notification)
           });
+
+          if (!response.ok) {
+            failed.push(notification.studentName);
+            return;
+          }
+
+          const result = await response.json();
+          if (result && result.notified === true) {
+            notified.push(notification.studentName);
+          } else if (result && result.notified === false && result.reason === 'no_email') {
+            noEmail.push(notification.studentName);
+          } else {
+            failed.push(notification.studentName);
+          }
         } catch (err) {
           console.error('Failed to notify student:', notification.studentName, err);
+          failed.push(notification.studentName);
         }
       }));
-      
+
+      const total = pendingNotifications.length;
       setPendingNotifications([]);
-      setShowNotificationSuccess(true);
-      setTimeout(() => setShowNotificationSuccess(false), 3000);
+
+      if (notified.length === total && noEmail.length === 0 && failed.length === 0) {
+        setShowNotificationSuccess(true);
+        setTimeout(() => setShowNotificationSuccess(false), 3000);
+      } else {
+        setNotificationResults({
+          total,
+          notifiedNames: notified,
+          noEmailNames: noEmail,
+          failedNames: failed
+        });
+      }
     } catch (err) {
       console.error('Failed to process notifications:', err);
     } finally {
@@ -2302,6 +2338,96 @@ export default function Schedule() {
               >
                 {maydaySending ? <Loader2 size={13} className="animate-spin" /> : maydaySuccess ? <CheckCircle2 size={13} /> : <Send size={13} />}
                 {maydaySending ? 'Sending...' : maydaySuccess ? 'Sent!' : 'Send to Developer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Results Modal */}
+      {notificationResults && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+          >
+            <div className="px-6 py-4 flex items-center justify-between border-b" style={{ 
+              backgroundColor: 'rgba(232,160,32,0.08)', 
+              borderColor: 'var(--border-color)'
+            }}>
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={18} className="text-[#e8a020]" />
+                <div>
+                  <h3 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>
+                    Notification Status
+                  </h3>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Feedback on student notification delivery</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotificationResults(null)}
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-red-100 transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {notificationResults.noEmailNames.length > 0 && (
+                <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 block">
+                    Skipped — No Email on File
+                  </span>
+                  <p className="text-xs" style={{ color: 'var(--text-primary)' }}>
+                    The following students were not notified because there is no email on their profile:
+                  </p>
+                  <ul className="list-disc pl-5 text-xs text-amber-700 font-semibold space-y-0.5">
+                    {Array.from(new Set(notificationResults.noEmailNames)).map((n, idx) => (
+                      <li key={idx}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {notificationResults.notifiedNames.length > 0 && (
+                <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-600 block">
+                    Successfully Notified
+                  </span>
+                  <p className="text-xs" style={{ color: 'var(--text-primary)' }}>
+                    The following students have been emailed successfully:
+                  </p>
+                  <ul className="list-disc pl-5 text-xs text-green-700 font-semibold space-y-0.5">
+                    {Array.from(new Set(notificationResults.notifiedNames)).map((n, idx) => (
+                      <li key={idx}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {notificationResults.failedNames.length > 0 && (
+                <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10 space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 block">
+                    Failed to Deliver
+                  </span>
+                  <p className="text-xs" style={{ color: 'var(--text-primary)' }}>
+                    There was an error communicating or sending emails for these students:
+                  </p>
+                  <ul className="list-disc pl-5 text-xs text-red-700 font-semibold space-y-0.5">
+                    {Array.from(new Set(notificationResults.failedNames)).map((n, idx) => (
+                      <li key={idx}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <button
+                onClick={() => setNotificationResults(null)}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 mt-2 cursor-pointer"
+                style={{ backgroundColor: 'var(--navy)' }}
+              >
+                Got it
               </button>
             </div>
           </div>
