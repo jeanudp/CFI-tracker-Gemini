@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Request, Response } from 'express';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://nfmzoesbzgqubbeuwetq.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://nfmzoesbzgqubbeuwetq.supabase.co';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req: Request, res: Response) {
@@ -9,10 +9,14 @@ export default async function handler(req: Request, res: Response) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId } = req.body;
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Authorization header is required' });
+  }
 
-  if (!userId) {
-    return res.status(400).json({ error: 'User ID is required' });
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  if (!token) {
+    return res.status(401).json({ error: 'Bearer token is required in Authorization header' });
   }
 
   if (!SUPABASE_SERVICE_ROLE_KEY) {
@@ -28,7 +32,15 @@ export default async function handler(req: Request, res: Response) {
   });
 
   try {
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    // Verify the caller's JWT access token to get authenticated user
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('Token verification failed:', authError);
+      return res.status(401).json({ error: 'Invalid or expired authorization token' });
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
     
     if (error) {
       console.error('Error deleting auth user:', error);

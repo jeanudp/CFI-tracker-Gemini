@@ -128,9 +128,16 @@ export default function Account() {
       await supabase.from('user_subscriptions').delete().eq('user_id', user.id);
 
       // Delete the Auth user account permanently
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not logged in');
+      const token = session.access_token;
+
       const deleteAuthResponse = await fetch('/api/delete-account', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ userId: user.id }),
       });
 
