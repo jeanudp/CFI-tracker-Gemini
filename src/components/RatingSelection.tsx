@@ -95,11 +95,12 @@ export default function RatingSelection() {
 
       const response = await fetch('/api/create-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           priceId,
-          email: session.user.email,
-          userId: session.user.id,
         }),
       });
 

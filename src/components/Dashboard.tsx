@@ -3134,11 +3134,12 @@ export default function Dashboard() {
                             if (!session) return;
                             const response = await fetch('/api/create-checkout', {
                               method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
+                              headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${session.access_token}`
+                              },
                               body: JSON.stringify({
                                 priceId: plan.priceId,
-                                email: session.user.email,
-                                userId: session.user.id,
                               }),
                             });
                             const { url, error } = await response.json();
