@@ -63,9 +63,16 @@ export default function Account() {
     }
     setPortalLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not logged in');
+      const token = session.access_token;
+
       const response = await fetch('/api/create-portal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ customerId: subscription.stripe_customer_id }),
       });
       const { url, error } = await response.json();
