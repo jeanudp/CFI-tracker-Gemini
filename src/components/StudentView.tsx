@@ -204,19 +204,26 @@ export default function StudentView() {
     setRequestError(null);
 
     try {
-      const { error } = await supabase
-        .from('lesson_requests')
-        .insert({
-          user_id: studentInfo?.user_id,
-          student_name: studentInfo?.student_name,
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          action: 'requestLesson',
           requested_date: lessonRequest.date,
           preferred_time: lessonRequest.preferredTime || null,
           lesson_type: lessonRequest.lessonType || null,
           notes: lessonRequest.notes,
-          created_at: new Date().toISOString()
-        });
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to send request. Please try again.");
+      }
+
       setRequestSubmitted(true);
     } catch (err: any) {
       console.error('Error submitting lesson request:', err);
@@ -227,119 +234,142 @@ export default function StudentView() {
   };
 
   const handleStudentExport = async (newOnly: boolean) => {
-    // 1. Fetch already-exported lesson IDs
-    const { data: exportData } = await supabase
-      .from('student_exports')
-      .select('lesson_ids')
-      .eq('token', token);
-    
-    const alreadyExportedIds = (exportData || []).flatMap(d => d.lesson_ids || []);
+    try {
+      // 1. Fetch already-exported lesson IDs
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          action: 'getExports'
+        }),
+      });
 
-    // 2. Filter lessons
-    let listToExport = studentLessons.filter(l => l.type === 'flight');
-    if (newOnly) {
-      listToExport = listToExport.filter(l => !alreadyExportedIds.includes(l.id));
-    }
-
-    if (listToExport.length === 0) {
-      window.alert(newOnly ? "No new lessons to export" : "No lessons to export");
-      return;
-    }
-
-    // 3. Build CSV
-    const headers = [
-      "Date", "Tail Number", "Model", "Total Flight Time", "PIC", "Dual Received", "Solo", "Night", "IMC", 
-      "Simulated Instrument", "Ground Simulator", "Approaches", "Hold", "Landings", "FS Day Landings", 
-      "FS Night Landings", "X-Country", "Night Takeoffs", "Route", "Comments"
-    ];
-
-    const rows = [headers];
-
-    listToExport.forEach(l => {
-      const m = l.meta || {};
-      const row = new Array(headers.length).fill('');
-      
-      // Date conversion: YYYY-MM-DD to M/D/YYYY
-      if (m.date) {
-        const parts = m.date.split('-');
-        if (parts.length === 3) {
-          row[0] = `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
-        }
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to fetch export records.");
       }
 
-      row[1] = m.aircraft || '';
-      row[2] = m.aircraftModel || '';
-      
-      const formatDecimal = (val: any) => {
-        const d = parseFloat(val || 0);
-        return d > 0 ? d.toFixed(1) : '';
-      };
-      
-      const formatInt = (val: any) => {
-        const i = parseInt(val || 0);
-        return i > 0 ? i.toString() : '';
-      };
+      const data = await response.json();
+      const exportRecords = data.exports || [];
+      const alreadyExportedIds = exportRecords.flatMap((d: any) => d.lesson_ids || []);
 
-      row[3] = formatDecimal(m.totalFlight);
-      row[4] = formatDecimal(m.pic);
-      row[5] = formatDecimal(m.dual);
-      row[6] = formatDecimal(m.solo);
-      row[7] = formatDecimal(m.night);
-      row[8] = formatDecimal(m.imc);
-      row[9] = formatDecimal(m.simInst);
-      
-      const groundSim = (parseFloat(m.atd || 0) + parseFloat(m.ftd || 0) + parseFloat(m.ffs || 0));
-      row[10] = groundSim > 0 ? groundSim.toFixed(1) : '';
-      
-      row[11] = formatInt(m.approachCount);
-      row[12] = m.holdPerformed === true ? 'Yes' : '';
-      row[13] = formatInt(m.ldgTotal);
-      row[14] = formatInt(m.ldgDay);
-      row[15] = formatInt(m.ldgNight);
-      
-      const xc = (parseFloat(m.xcDual || 0) + parseFloat(m.xcSolo || 0) + parseFloat(m.xcPic || 0));
-      row[16] = xc > 0 ? xc.toFixed(1) : '';
-      
-      row[17] = formatInt(m.nightTakeoffs);
-      row[18] = m.route || '';
-      row[19] = l.label || '';
+      // 2. Filter lessons
+      let listToExport = studentLessons.filter(l => l.type === 'flight');
+      if (newOnly) {
+        listToExport = listToExport.filter(l => !alreadyExportedIds.includes(l.id));
+      }
 
-      rows.push(row);
-    });
+      if (listToExport.length === 0) {
+        window.alert(newOnly ? "No new lessons to export" : "No lessons to export");
+        return;
+      }
 
-    const csvContent = rows.map(row =>
-      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-    ).join('\n');
+      // 3. Build CSV
+      const headers = [
+        "Date", "Tail Number", "Model", "Total Flight Time", "PIC", "Dual Received", "Solo", "Night", "IMC", 
+        "Simulated Instrument", "Ground Simulator", "Approaches", "Hold", "Landings", "FS Day Landings", 
+        "FS Night Landings", "X-Country", "Night Takeoffs", "Route", "Comments"
+      ];
 
-    const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `MyFlightBook-Student-${dateStr}.csv`;
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+      const rows = [headers];
 
-    setPendingExportLessonIds(listToExport.map(l => l.id));
-    setShowExportConfirm(true);
+      listToExport.forEach(l => {
+        const m = l.meta || {};
+        const row = new Array(headers.length).fill('');
+        
+        // Date conversion: YYYY-MM-DD to M/D/YYYY
+        if (m.date) {
+          const parts = m.date.split('-');
+          if (parts.length === 3) {
+            row[0] = `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
+          }
+        }
+
+        row[1] = m.aircraft || '';
+        row[2] = m.aircraftModel || '';
+        
+        const formatDecimal = (val: any) => {
+          const d = parseFloat(val || 0);
+          return d > 0 ? d.toFixed(1) : '';
+        };
+        
+        const formatInt = (val: any) => {
+          const i = parseInt(val || 0);
+          return i > 0 ? i.toString() : '';
+        };
+
+        row[3] = formatDecimal(m.totalFlight);
+        row[4] = formatDecimal(m.pic);
+        row[5] = formatDecimal(m.dual);
+        row[6] = formatDecimal(m.solo);
+        row[7] = formatDecimal(m.night);
+        row[8] = formatDecimal(m.imc);
+        row[9] = formatDecimal(m.simInst);
+        
+        const groundSim = (parseFloat(m.atd || 0) + parseFloat(m.ftd || 0) + parseFloat(m.ffs || 0));
+        row[10] = groundSim > 0 ? groundSim.toFixed(1) : '';
+        
+        row[11] = formatInt(m.approachCount);
+        row[12] = m.holdPerformed === true ? 'Yes' : '';
+        row[13] = formatInt(m.ldgTotal);
+        row[14] = formatInt(m.ldgDay);
+        row[15] = formatInt(m.ldgNight);
+        
+        const xc = (parseFloat(m.xcDual || 0) + parseFloat(m.xcSolo || 0) + parseFloat(m.xcPic || 0));
+        row[16] = xc > 0 ? xc.toFixed(1) : '';
+        
+        row[17] = formatInt(m.nightTakeoffs);
+        row[18] = m.route || '';
+        row[19] = l.label || '';
+
+        rows.push(row);
+      });
+
+      const csvContent = rows.map(row =>
+        row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `MyFlightBook-Student-${dateStr}.csv`;
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      setPendingExportLessonIds(listToExport.map(l => l.id));
+      setShowExportConfirm(true);
+    } catch (err: any) {
+      console.error('Error exporting lessons:', err);
+      window.alert(err.message || "Failed to export lessons. Please try again.");
+    }
   };
 
   const confirmStudentExport = async () => {
     setExportLoading(true);
     try {
-      const { error } = await supabase
-        .from('student_exports')
-        .insert({
-          token: token,
-          student_name: studentInfo?.student_name,
-          user_id: studentInfo?.user_id,
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          action: 'requestExport',
           lesson_ids: pendingExportLessonIds,
-          lesson_count: pendingExportLessonIds.length
-        });
+        }),
+      });
 
-      if (error) throw error;
-      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to confirm export. Please try again.");
+      }
+
       setShowExportConfirm(false);
       setPendingExportLessonIds([]);
     } catch (err) {

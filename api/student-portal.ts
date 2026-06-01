@@ -8,7 +8,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { token } = req.body;
+  const { token, action } = req.body;
   if (!token) {
     return res.status(400).json({ error: 'Token is required' });
   }
@@ -39,6 +39,50 @@ export default async function handler(req: any, res: any) {
     }
 
     const { student_name: studentName, user_id: userId } = shareToken;
+
+    if (action === 'requestLesson') {
+      const { requested_date, preferred_time, lesson_type, notes } = req.body;
+      const { error } = await supabaseAdmin
+        .from('lesson_requests')
+        .insert({
+          user_id: userId,
+          student_name: studentName,
+          requested_date,
+          preferred_time,
+          lesson_type,
+          notes,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      return res.status(200).json({ success: true });
+    }
+
+    if (action === 'requestExport') {
+      const { lesson_ids } = req.body;
+      const { error } = await supabaseAdmin
+        .from('student_exports')
+        .insert({
+          token,
+          student_name: studentName,
+          user_id: userId,
+          lesson_ids: lesson_ids,
+          lesson_count: Array.isArray(lesson_ids) ? lesson_ids.length : 0
+        });
+
+      if (error) throw error;
+      return res.status(200).json({ success: true });
+    }
+
+    if (action === 'getExports') {
+      const { data, error } = await supabaseAdmin
+        .from('student_exports')
+        .select('lesson_ids')
+        .eq('token', token);
+
+      if (error) throw error;
+      return res.status(200).json({ exports: data || [] });
+    }
 
     // Fetch lessons: all columns where student_name matches and user_id matches and deleted_at is null, ordered by saved_at descending
     const { data: lessons, error: lessonsError } = await supabaseAdmin
