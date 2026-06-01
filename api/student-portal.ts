@@ -69,6 +69,18 @@ export default async function handler(req: any, res: any) {
 
     if (endorsementsError) throw endorsementsError;
 
+    // Fetch student profile record from students table where name matches studentName and user_id matches
+    const { data: student, error: studentError } = await supabaseAdmin
+      .from('students')
+      .select('*')
+      .eq('name', studentName)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (studentError) {
+      console.error('Failed to fetch student profile:', studentError);
+    }
+
     // Fetch scheduled_lessons: all columns where student_name and user_id match and the date is today or later, 
     // ordered by date ascending then start_time ascending, limited to 5
     const todayStr = new Date().toISOString().split('T')[0];
@@ -87,6 +99,8 @@ export default async function handler(req: any, res: any) {
     // Return the response with the exact field names specified
     return res.status(200).json({
       studentName,
+      userId,
+      student: student || null,
       lessons: lessons || [],
       manualHours: manualHours || [],
       endorsements: endorsements || [],

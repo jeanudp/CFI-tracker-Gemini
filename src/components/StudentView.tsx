@@ -152,63 +152,38 @@ export default function StudentView() {
   const validateAndFetch = async () => {
     setLoading(true);
     try {
-      const { data: shareToken, error: tokenError } = await supabase
-        .from('student_share_tokens')
-        .select('student_name, user_id')
-        .eq('token', token)
-        .eq('active', true)
-        .single();
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
 
-      if (tokenError || !shareToken) {
+      if (!response.ok) {
+        setTokenValid(false);
+        return;
+      }
+
+      const data = await response.json();
+      if (!data || !data.studentName) {
         setTokenValid(false);
         return;
       }
 
       setTokenValid(true);
-      setStudentInfo(shareToken);
+      setStudentInfo({
+        student_name: data.studentName,
+        user_id: data.userId,
+      });
 
-      // Fetch student data
-      const { data: lessonsData } = await supabase
-        .from('lessons')
-        .select('*')
-        .eq('student_name', shareToken.student_name)
-        .eq('user_id', shareToken.user_id)
-        .is('deleted_at', null)
-        .order('saved_at', { ascending: false });
+      const lessonsData = data.lessons || [];
+      setLessons(lessonsData);
+      setManualHours(data.manualHours || []);
+      setEndorsements(data.endorsements || []);
+      setScheduledLessons(data.scheduledLessons || []);
 
-      const { data: manualData } = await supabase
-        .from('manual_hours')
-        .select('*')
-        .eq('student_name', shareToken.student_name)
-        .eq('user_id', shareToken.user_id);
-
-      const { data: endorsementsData } = await supabase
-        .from('endorsements')
-        .select('*')
-        .eq('student_name', shareToken.student_name)
-        .eq('user_id', shareToken.user_id);
-
-      setLessons(lessonsData || []);
-      setManualHours(manualData || []);
-      setEndorsements(endorsementsData || []);
-
-      // Fetch upcoming scheduled lessons
-      const todayStr = new Date().toISOString().split('T')[0];
-      console.log('Fetching scheduled lessons for:', { student_name: shareToken.student_name, user_id: shareToken.user_id, today: todayStr });
-      const { data: upcomingData, error: upcomingError } = await supabase
-        .from('scheduled_lessons')
-        .select('*')
-        .eq('student_name', shareToken.student_name)
-        .gte('date', todayStr)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(5);
-
-      console.log('Upcoming lessons data:', upcomingData, 'Error:', upcomingError);
-
-      setScheduledLessons(upcomingData || []);
-
-      if (lessonsData && lessonsData.length > 0) {
+      if (lessonsData.length > 0) {
         setSelectedLessonId(lessonsData[0].id);
       }
     } catch (err) {
@@ -635,7 +610,7 @@ export default function StudentView() {
                 key={tab.id}
                 onClick={() => {
                   if (tab.id === 'analytics') {
-                    navigate(`/student/${encodeURIComponent(studentName || '')}`);
+                    navigate(`/student/${encodeURIComponent(studentName || '')}?token=${encodeURIComponent(token || '')}`);
                   } else {
                     setActiveTab(tab.id as any);
                   }

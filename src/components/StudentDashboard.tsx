@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lesson, Grade, Student } from '../types';
 import { ALL_ACS, RATINGS } from '../constants';
@@ -44,6 +44,8 @@ export default function StudentDashboard() {
   const [student, setStudent] = useState<Student | null>(null);
   const [showMoreStruggles, setShowMoreStruggles] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
 
   useEffect(() => {
     if (!studentName) {
@@ -51,37 +53,76 @@ export default function StudentDashboard() {
       return;
     }
     fetchData();
-  }, [studentName]);
+  }, [studentName, token]);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .ilike('name', studentName.trim())
-        .single();
-      
-      if (studentError && studentError.code !== 'PGRST116') throw studentError;
-      
-      if (studentData) {
-        setStudent(studentData);
-        if (studentData.current_rating) {
-          const rCode = studentData.current_rating;
-          const rData = (RATINGS as any)[rCode] || Object.values(RATINGS)[0];
-          setRating({ ...rData, code: rCode });
-        }
-      }
+      if (token) {
+        const response = await fetch('/api/student-portal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
 
-      const { data: lessonsData, error: lessonsError } = await supabase
-        .from('lessons')
-        .select('*')
-        .ilike('student_name', studentName.trim())
-        .order('saved_at', { ascending: true });
-      
-      if (lessonsError) throw lessonsError;
-      setLessons(lessonsData || []);
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed to fetch student data via portal API (status ${response.status})`);
+        }
+
+        const data = await response.json();
+        if (data.student) {
+          setStudent(data.student);
+          if (data.student.current_rating) {
+            const rCode = data.student.current_rating;
+            const rData = (RATINGS as any)[rCode] || Object.values(RATINGS)[0];
+            setRating({ ...rData, code: rCode });
+          }
+        } else {
+          setStudent(null);
+        }
+
+        // Use the lessons from the API response
+        // Note: The lessons in API are fetched ordered by saved_at descending.
+        // But the original component orders by saved_at ascending, so let's reverse or sort ascending.
+        // Wait, "order('saved_at', { ascending: true })" is what the direct query used. 
+        // Let's make sure that if we set it, we sort lessons ascending or keep them ordered properly.
+        // Re-sorting by saved_at ascending:
+        const apiLessons = data.lessons || [];
+        const sortedApiLessons = [...apiLessons].sort(
+          (a, b) => new Date(a.saved_at || 0).getTime() - new Date(b.saved_at || 0).getTime()
+        );
+        setLessons(sortedApiLessons);
+      } else {
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('*')
+          .ilike('name', studentName.trim())
+          .single();
+        
+        if (studentError && studentError.code !== 'PGRST116') throw studentError;
+        
+        if (studentData) {
+          setStudent(studentData);
+          if (studentData.current_rating) {
+            const rCode = studentData.current_rating;
+            const rData = (RATINGS as any)[rCode] || Object.values(RATINGS)[0];
+            setRating({ ...rData, code: rCode });
+          }
+        }
+
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .ilike('student_name', studentName.trim())
+          .order('saved_at', { ascending: true });
+        
+        if (lessonsError) throw lessonsError;
+        setLessons(lessonsData || []);
+      }
     } catch (err: any) {
       console.error('Fetch error:', err);
       setError(err.message === 'Failed to fetch' 
