@@ -2869,19 +2869,30 @@ export default function History() {
                                   <div className="flex items-center gap-3">
                                     <div className={cn(
                                       "w-10 h-10 rounded-xl flex items-center justify-center",
-                                      preSoloTestResult.passed ? "bg-[#f0fdf4] text-[#2d7a4f]" : "bg-[#fef2f2] text-[#991b1b]"
+                                      !preSoloTestResult.cfi_signed_off
+                                        ? "bg-[#fffbeb] text-[#b45309]"
+                                        : preSoloTestResult.passed ? "bg-[#f0fdf4] text-[#2d7a4f]" : "bg-[#fef2f2] text-[#991b1b]"
                                     )}>
                                       <FileText size={20} />
                                     </div>
                                     <div>
                                       <h3 className="text-sm font-bold text-[#1e293b]">Pre-Solo Knowledge Test Result</h3>
-                                      <div className="flex items-center gap-2 mt-0.5">
+                                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                         <span className={cn(
-                                          "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider",
-                                          preSoloTestResult.passed ? "bg-[#2d7a4f] text-white" : "bg-[#991b1b] text-white"
+                                          "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider text-white",
+                                          !preSoloTestResult.cfi_signed_off 
+                                            ? "bg-[#d97706]" 
+                                            : preSoloTestResult.passed 
+                                              ? "bg-[#2d7a4f]" 
+                                              : "bg-[#991b1b]"
                                         )}>
-                                          {preSoloTestResult.passed ? 'Passed' : 'Failed'}
+                                          {!preSoloTestResult.cfi_signed_off ? 'Pending Review' : (preSoloTestResult.passed ? 'Passed' : 'Failed')}
                                         </span>
+                                        {preSoloTestResult.source === 'student_portal' && (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] dark:border-blue-900/30 dark:bg-blue-950/25 dark:text-blue-400 uppercase tracking-wider">
+                                            Submitted by student
+                                          </span>
+                                        )}
                                         <span className="text-[10px] text-[#64748b] font-medium">
                                           Score: {preSoloTestResult.correct_answers} out of {preSoloTestResult.total_questions} — {preSoloTestResult.score}%
                                         </span>
@@ -2910,7 +2921,13 @@ export default function History() {
                                   </div>
                                   <div>
                                     <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">CFI Signed Off</div>
-                                    <div className="text-[11px] font-bold text-[#1e293b]">{new Date(preSoloTestResult.cfi_signoff_date).toLocaleDateString()}</div>
+                                    <div className="text-[11px] font-bold text-[#1e293b]">
+                                      {preSoloTestResult.cfi_signed_off && preSoloTestResult.cfi_signoff_date ? (
+                                        new Date(preSoloTestResult.cfi_signoff_date).toLocaleDateString()
+                                      ) : (
+                                        <span className="text-[#a1a1aa] font-medium italic">Not yet signed off</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lesson, ManualHours, Endorsement } from '../types';
 import { ALL_ACS, ACS_ELEMENTS, RATINGS } from '../constants';
+import { PRE_SOLO_TEST_QUESTIONS, PRE_SOLO_TEST_CONFIG } from '../constants/preSoloTest';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronRight, 
@@ -105,7 +106,11 @@ export default function StudentView() {
   const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'schedule' | 'this-lesson' | 'cumulative' | 'checkride' | 'analytics'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'this-lesson' | 'cumulative' | 'checkride' | 'analytics' | 'presolo-test'>('schedule');
+  const [testAnswers, setTestAnswers] = useState<Record<number, string>>({});
+  const [testSubmitting, setTestSubmitting] = useState(false);
+  const [testSubmitted, setTestSubmitted] = useState(false);
+  const [testSubmitError, setTestSubmitError] = useState<string | null>(null);
   const [isRequestDatePickerOpen, setIsRequestDatePickerOpen] = useState(false);
   const [requestPickerMonth, setRequestPickerMonth] = useState(new Date());
   const [isRequestTimePickerOpen, setIsRequestTimePickerOpen] = useState(false);
@@ -230,6 +235,56 @@ export default function StudentView() {
       setRequestError(err.message || "Failed to send request. Please try again.");
     } finally {
       setRequestLoading(false);
+    }
+  };
+
+  const handleTestSubmit = async () => {
+    if (Object.keys(testAnswers).length < PRE_SOLO_TEST_QUESTIONS.length) {
+      setTestSubmitError("Please answer all questions before submitting.");
+      return;
+    }
+
+    setTestSubmitting(true);
+    setTestSubmitError(null);
+
+    try {
+      const totalQuestionsCount = PRE_SOLO_TEST_QUESTIONS.length;
+      const correctAnswersCount = PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length;
+      const percentageScore = Math.round((correctAnswersCount / totalQuestionsCount) * 100);
+      const passed = percentageScore >= PRE_SOLO_TEST_CONFIG.passingScore;
+      const incorrectQuestionIds = PRE_SOLO_TEST_QUESTIONS
+        .filter(q => testAnswers[q.id] !== q.correct)
+        .map(q => q.id);
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          action: 'submitTest',
+          answers: testAnswers,
+          percentageScore,
+          passed,
+          totalQuestions: totalQuestionsCount,
+          correctAnswersCount,
+          incorrectQuestionIds,
+          date: new Date().toISOString().split('T')[0]
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to submit test. Please try again.");
+      }
+
+      setTestSubmitted(true);
+    } catch (err: any) {
+      console.error('Error submitting pre-solo test:', err);
+      setTestSubmitError(err.message || "Failed to submit test. Please try again.");
+    } finally {
+      setTestSubmitting(false);
     }
   };
 
@@ -634,6 +689,7 @@ export default function StudentView() {
               { id: 'this-lesson', label: 'Lesson', fullLabel: 'This Lesson', icon: BookOpen },
               { id: 'cumulative', label: 'Stats', fullLabel: 'Cumulative', icon: HistoryIcon },
               { id: 'checkride', label: 'Checkride', fullLabel: 'Checkride', icon: CheckSquare },
+              { id: 'presolo-test', label: 'Test', fullLabel: 'Pre-Solo Test', icon: FileText },
               { id: 'analytics', label: 'Analytics', fullLabel: 'Analytics', icon: BarChart3 }
             ].map(tab => (
               <button
@@ -660,7 +716,7 @@ export default function StudentView() {
           </div>
 
           {/* Lesson Selection Pills */}
-          {activeTab !== 'schedule' && (
+          {activeTab !== 'schedule' && activeTab !== 'presolo-test' && (
             <div className="mb-8 sm:mb-10 sm:px-4 text-left">
               <h3 className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-3 sm:mb-4">Lesson History — Tap to view details</h3>
               <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
@@ -1482,6 +1538,178 @@ export default function StudentView() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'presolo-test' && (
+                <motion.div
+                  key="presolo-test"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-8"
+                >
+                  <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-slate-800 p-5 sm:p-8 shadow-sm space-y-8">
+                    {/* Header and Progress Indicator */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-[#dde3ec] dark:border-slate-800">
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] dark:text-slate-100 flex items-center gap-2">
+                          <FileText className="text-amber-500" size={22} />
+                          {PRE_SOLO_TEST_CONFIG.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+                          This test satisfies the aeronautical knowledge requirement of {PRE_SOLO_TEST_CONFIG.regulation} for student pilots seeking solo privileges. There is no time limit.
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0 w-full md:w-auto bg-[#f8fafc] dark:bg-slate-800/20 p-4 rounded-xl border border-[#dde3ec] dark:border-slate-800">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-[#1a3a5c] dark:text-slate-100 mb-1.5 w-full flex justify-between gap-6">
+                          <span>Progress</span>
+                          <span>{Object.keys(testAnswers).length} / {PRE_SOLO_TEST_QUESTIONS.length} Answered</span>
+                        </div>
+                        <div className="w-full md:w-56 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-green-500 transition-all duration-300"
+                            style={{ width: `${(Object.keys(testAnswers).length / PRE_SOLO_TEST_QUESTIONS.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {testSubmitted ? (
+                      <div className="py-12 sm:py-16 text-center space-y-6 max-w-xl mx-auto">
+                        <div className="w-16 h-16 bg-green-500/10 dark:bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto ring-8 ring-green-500/5">
+                          <CheckCircle2 size={36} />
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">
+                            Pre-Solo Test Submitted!
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+                            Your completed assessment has been sent to your flight instructor for review. They can sign off on your results directly in their dashboard.
+                          </p>
+                        </div>
+                        
+                        <div className="bg-[#f8fafc] dark:bg-slate-800/30 p-6 rounded-2xl border border-[#dde3ec] dark:border-slate-800/80 space-y-3">
+                          <p className="text-xs font-black uppercase tracking-widest text-[#1a3a5c] dark:text-slate-300">
+                            Your Result
+                          </p>
+                          <div className="text-3xl sm:text-4xl font-black text-[#1a3a5c] dark:text-slate-100">
+                            {PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length} / {PRE_SOLO_TEST_QUESTIONS.length}
+                          </div>
+                          <div className="text-sm font-semibold text-gray-600 dark:text-slate-300">
+                            Score: {Math.round((PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length / PRE_SOLO_TEST_QUESTIONS.length) * 100)}%
+                          </div>
+                          <div className="pt-2">
+                            {Math.round((PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length / PRE_SOLO_TEST_QUESTIONS.length) * 100) >= PRE_SOLO_TEST_CONFIG.passingScore ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                <CheckCircle2 size={12} /> Passed (Passing Score: {PRE_SOLO_TEST_CONFIG.passingScore}%)
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                                <AlertTriangle size={12} /> Below Passing Score ({PRE_SOLO_TEST_CONFIG.passingScore}%)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Questions Grouped by Section */}
+                        <div className="space-y-10">
+                          {PRE_SOLO_TEST_CONFIG.sections.map((section) => {
+                            const sectionQuestions = PRE_SOLO_TEST_QUESTIONS.filter(q => q.section === section);
+                            if (sectionQuestions.length === 0) return null;
+                            return (
+                              <div key={section} className="space-y-6">
+                                <div className="border-b border-[#dde3ec] dark:border-slate-800 pb-2">
+                                  <h4 className="text-sm font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                    {section}
+                                  </h4>
+                                </div>
+                                <div className="space-y-6">
+                                  {sectionQuestions.map((q, qIdx) => {
+                                    const selectedOption = testAnswers[q.id];
+                                    return (
+                                      <div key={q.id} className="bg-[#f8fafc] dark:bg-slate-850/30 rounded-2xl border border-[#dde3ec] dark:border-slate-800 p-5 sm:p-6 shadow-sm hover:border-[#1a3a5c]/30 dark:hover:border-slate-700 transition-colors">
+                                        <p className="text-sm font-bold text-[#1e293b] dark:text-slate-100 leading-relaxed mb-4">
+                                          {qIdx + 1}. {q.question}
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          {Object.entries(q.options).map(([key, text]) => {
+                                            const isSelected = selectedOption === key;
+                                            return (
+                                              <button
+                                                key={key}
+                                                onClick={() => setTestAnswers(prev => ({ ...prev, [q.id]: key }))}
+                                                className={cn(
+                                                  "flex items-center text-left p-3.5 rounded-xl border transition-all text-xs font-semibold cursor-pointer select-none",
+                                                  isSelected
+                                                    ? "bg-[#1a3a5c] text-white border-[#1a3a5c] ring-1 ring-[#1a3a5c]"
+                                                    : "bg-white dark:bg-slate-900 border-[#dde3ec] dark:border-slate-800 text-[#334155] dark:text-slate-200 hover:border-[#cbd5e1] dark:hover:border-slate-750"
+                                                )}
+                                              >
+                                                <div className={cn(
+                                                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 mr-3",
+                                                  isSelected
+                                                    ? "border-white bg-white"
+                                                    : "border-[#cbd5e1] dark:border-slate-700 bg-white dark:bg-slate-950"
+                                                )}>
+                                                  {isSelected && (
+                                                    <div className="w-2.5 h-2.5 rounded-full bg-[#1a3a5c]" />
+                                                  )}
+                                                </div>
+                                                <span>
+                                                  {key}. {text}
+                                                </span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Submit Section */}
+                        <div className="pt-8 border-t border-[#dde3ec] dark:border-slate-800 flex flex-col items-center gap-4">
+                          {testSubmitError && (
+                            <div className="text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-1.5 bg-red-50 dark:bg-red-950/20 px-4 py-2 rounded-xl border border-red-100 dark:border-red-950/50">
+                              <AlertCircle size={14} /> {testSubmitError}
+                            </div>
+                          )}
+                          <button
+                            onClick={handleTestSubmit}
+                            disabled={testSubmitting || Object.keys(testAnswers).length !== PRE_SOLO_TEST_QUESTIONS.length}
+                            className={cn(
+                              "px-10 py-4 bg-[#1a3a5c] text-white rounded-2xl font-bold shadow-xl hover:bg-[#2a5a8c] active:scale-[0.98] transition-all flex items-center gap-3",
+                              (testSubmitting || Object.keys(testAnswers).length !== PRE_SOLO_TEST_QUESTIONS.length) && "opacity-50 cursor-not-allowed hover:bg-[#1a3a5c]"
+                            )}
+                          >
+                            {testSubmitting ? (
+                              <>
+                                <Loader2 size={20} className="animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              <>
+                                <CheckSquare size={20} />
+                                Submit Test
+                              </>
+                            )}
+                          </button>
+                          {Object.keys(testAnswers).length !== PRE_SOLO_TEST_QUESTIONS.length && (
+                            <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium">
+                              Please complete all {PRE_SOLO_TEST_QUESTIONS.length} questions to submit.
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}

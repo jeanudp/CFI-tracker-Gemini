@@ -84,6 +84,48 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ exports: data || [] });
     }
 
+    if (action === 'submitTest') {
+      const {
+        answers,
+        percentageScore,
+        score,
+        passed,
+        totalQuestions,
+        total_questions,
+        correctAnswersCount,
+        correct_answers,
+        incorrectQuestionIds,
+        incorrect_question_ids,
+        date
+      } = req.body;
+
+      const finalScore = percentageScore !== undefined ? percentageScore : score;
+      const finalTotalQuestions = totalQuestions !== undefined ? totalQuestions : total_questions;
+      const finalCorrectAnswers = correctAnswersCount !== undefined ? correctAnswersCount : correct_answers;
+      const finalIncorrectQuestionIds = incorrectQuestionIds !== undefined ? incorrectQuestionIds : incorrect_question_ids;
+
+      const { error } = await supabaseAdmin
+        .from('student_tests')
+        .insert({
+          user_id: userId,
+          student_name: studentName,
+          test_type: 'pre_solo',
+          date: date || new Date().toISOString().split('T')[0],
+          score: finalScore,
+          passing_score: 80,
+          passed: passed,
+          total_questions: finalTotalQuestions,
+          correct_answers: finalCorrectAnswers,
+          incorrect_question_ids: finalIncorrectQuestionIds,
+          answers: answers,
+          source: 'student_portal',
+          cfi_signed_off: false
+        });
+
+      if (error) throw error;
+      return res.status(200).json({ success: true });
+    }
+
     // Fetch lessons: all columns where student_name matches and user_id matches and deleted_at is null, ordered by saved_at descending
     const { data: lessons, error: lessonsError } = await supabaseAdmin
       .from('lessons')
