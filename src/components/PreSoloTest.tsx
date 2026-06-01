@@ -17,6 +17,7 @@ export default function PreSoloTest() {
   const [cfiNotes, setCfiNotes] = useState('');
   const [cfiName, setCfiName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savedTestId, setSavedTestId] = useState<string | number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +40,59 @@ export default function PreSoloTest() {
   const percentage = Math.round((score / PRE_SOLO_TEST_QUESTIONS.length) * 100);
   const passed = percentage >= PRE_SOLO_TEST_CONFIG.passingScore;
 
+  const handleSubmitTest = async () => {
+    if (!studentName.trim()) {
+      alert('Please enter the student name.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert('Not logged in. Please sign in to save test results.');
+        return;
+      }
+
+      const incorrectIds = PRE_SOLO_TEST_QUESTIONS
+        .filter(q => answers[q.id] !== q.correct)
+        .map(q => q.id);
+
+      const { data, error } = await supabase
+        .from('student_tests')
+        .insert({
+          user_id: session.user.id,
+          student_name: studentName,
+          test_type: 'pre_solo',
+          date: date,
+          score: percentage,
+          passing_score: 80,
+          passed: percentage >= 80,
+          total_questions: PRE_SOLO_TEST_QUESTIONS.length,
+          correct_answers: score,
+          incorrect_question_ids: incorrectIds,
+          answers: answers,
+          source: 'cfi',
+          cfi_signed_off: false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data && data.id) {
+        setSavedTestId(data.id);
+      }
+
+      setMode('results');
+    } catch (err: any) {
+      console.error('Error saving test:', err);
+      alert('Failed to save test: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSignOff = async () => {
     if (!cfiName.trim()) {
       alert('Please enter your name for the sign off.');
@@ -54,26 +108,42 @@ export default function PreSoloTest() {
         .filter(q => answers[q.id] !== q.correct)
         .map(q => q.id);
 
-      const { error } = await supabase
-        .from('student_tests')
-        .insert({
-          user_id: session.user.id,
-          student_name: studentName,
-          test_type: 'pre_solo',
-          date: date,
-          score: percentage,
-          passing_score: 80,
-          passed: percentage >= 80,
-          total_questions: PRE_SOLO_TEST_QUESTIONS.length,
-          correct_answers: score,
-          incorrect_question_ids: incorrectIds,
-          cfi_review_notes: cfiNotes,
-          cfi_signed_off: true,
-          cfi_signoff_date: new Date().toISOString().split('T')[0],
-          cfi_name: cfiName
-        });
+      if (savedTestId) {
+        const { error } = await supabase
+          .from('student_tests')
+          .update({
+            cfi_review_notes: cfiNotes,
+            cfi_signed_off: true,
+            cfi_signoff_date: new Date().toISOString().split('T')[0],
+            cfi_name: cfiName
+          })
+          .eq('id', savedTestId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('student_tests')
+          .insert({
+            user_id: session.user.id,
+            student_name: studentName,
+            test_type: 'pre_solo',
+            date: date,
+            score: percentage,
+            passing_score: 80,
+            passed: percentage >= 80,
+            total_questions: PRE_SOLO_TEST_QUESTIONS.length,
+            correct_answers: score,
+            incorrect_question_ids: incorrectIds,
+            cfi_review_notes: cfiNotes,
+            cfi_signed_off: true,
+            cfi_signoff_date: new Date().toISOString().split('T')[0],
+            cfi_name: cfiName,
+            answers: answers,
+            source: 'cfi'
+          });
+
+        if (error) throw error;
+      }
 
       alert('Test result signed off successfully!');
       navigate('/history');
@@ -101,7 +171,7 @@ export default function PreSoloTest() {
           <p className="text-sm italic">{PRE_SOLO_TEST_CONFIG.regulation}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-8 mb-10 border-b pb-6">
+        <div className="grid grid-cols-2 gap-8 mb-6 border-b pb-6">
           <div>
             <label className="block text-xs font-bold uppercase mb-1">Student Name</label>
             <div className="border-b border-black h-8 flex items-end pb-1">{studentName}</div>
@@ -112,35 +182,67 @@ export default function PreSoloTest() {
           </div>
         </div>
 
+        <div className="mb-8 p-4 border border-black bg-gray-50 flex justify-between items-center text-sm font-bold uppercase">
+          <div>Score: {score} / {PRE_SOLO_TEST_QUESTIONS.length} ({percentage}%)</div>
+          <div>Result: <span className={passed ? "text-green-700" : "text-red-700"}>{passed ? "Passed" : "Failed"}</span> (Min: 80%)</div>
+        </div>
+
         <div className="space-y-8">
           {PRE_SOLO_TEST_CONFIG.sections.map(section => (
             <div key={section} className="space-y-4">
               <h2 className="text-lg font-bold border-b-2 border-black pb-1">{section}</h2>
-              {PRE_SOLO_TEST_QUESTIONS.filter(q => q.section === section).map((q, idx) => (
-                <div key={q.id} className="space-y-2">
-                  <p className="text-sm font-medium">{idx + 1}. {q.question}</p>
-                  <div className="grid grid-cols-1 gap-1 ml-4">
-                    {Object.entries(q.options).map(([key, text]) => (
-                      <div key={key} className="flex items-center gap-2">
-                        <div className="w-4 h-4 border border-black rounded-full" />
-                        <span className="text-sm">{key}. {text}</span>
+              {PRE_SOLO_TEST_QUESTIONS.filter(q => q.section === section).map((q, idx) => {
+                const studentAnswer = answers[q.id];
+                const isCorrect = studentAnswer === q.correct;
+
+                return (
+                  <div key={q.id} className="space-y-2 avoid-break">
+                    <p className="text-sm font-semibold">{idx + 1}. {q.question}</p>
+                    <div className="grid grid-cols-1 gap-1 ml-4">
+                      {Object.entries(q.options).map(([key, text]) => {
+                        const isSelected = studentAnswer === key;
+                        return (
+                          <div key={key} className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-4 h-4 border border-black rounded-full flex items-center justify-center font-bold text-[10px]",
+                              isSelected ? "bg-black text-white" : ""
+                            )}>
+                              {isSelected && "✓"}
+                            </div>
+                            <span className={cn(
+                              "text-sm",
+                              isSelected ? "font-bold" : ""
+                            )}>
+                              {key}. {text}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {!isCorrect && (
+                      <div className="ml-4 p-2 bg-gray-50 border border-dashed border-gray-400 text-xs text-red-800 space-y-1">
+                        <div><span className="font-bold">Incorrect Selection:</span> {studentAnswer || "None"}</div>
+                        <div><span className="font-bold">Correct Option:</span> {q.correct}</div>
+                        <div><span className="font-bold">Aeronautical Reference:</span> {q.reference}</div>
                       </div>
-                    ))}
+                    )}
+                    <div className="h-6 border-b border-dashed border-gray-300 w-full" />
                   </div>
-                  <div className="h-6 border-b border-dashed border-gray-300 w-full" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
         </div>
 
-        <div className="mt-20 grid grid-cols-2 gap-20">
+        <div className="mt-20 grid grid-cols-2 gap-20 avoid-break">
           <div className="space-y-1">
-            <div className="border-b border-black h-10" />
+            <div className="border-b border-black h-10 flex items-end pb-1 font-bold">{studentName}</div>
             <p className="text-xs font-bold uppercase">Student Signature</p>
           </div>
           <div className="space-y-1">
-            <div className="border-b border-black h-10" />
+            <div className="border-b border-black h-10 flex items-end pb-1 font-bold">
+              {cfiName ? `${cfiName} - ${new Date().toISOString().split('T')[0]}` : ''}
+            </div>
             <p className="text-xs font-bold uppercase">Instructor Signature / Date</p>
           </div>
         </div>
@@ -151,6 +253,7 @@ export default function PreSoloTest() {
             body { background: white !important; }
             .print-only { display: block !important; }
             .max-w-5xl, .max-w-4xl { max-width: 100% !important; margin: 0 !important; }
+            .avoid-break { page-break-inside: avoid; break-inside: avoid; }
           }
         `}} />
       </div>
@@ -332,15 +435,15 @@ export default function PreSoloTest() {
         {mode === 'test' && (
           <div className="mt-12 flex justify-center">
             <button
-              onClick={() => setMode('results')}
-              disabled={!isComplete}
+              onClick={handleSubmitTest}
+              disabled={saving || !isComplete}
               className={cn(
                 "px-10 py-4 rounded-2xl font-bold text-white shadow-xl transition-all flex items-center gap-3",
-                isComplete ? "bg-[#1a3a5c] hover:bg-[#2a5a8c] hover:-translate-y-1 active:translate-y-0" : "bg-[#cbd5e1] cursor-not-allowed"
+                isComplete && !saving ? "bg-[#1a3a5c] hover:bg-[#2a5a8c] hover:-translate-y-1 active:translate-y-0" : "bg-[#cbd5e1] cursor-not-allowed"
               )}
             >
-              <CheckCircle2 size={20} />
-              Submit Test
+              {saving ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
+              {saving ? 'Submitting...' : 'Submit Test'}
             </button>
           </div>
         )}
