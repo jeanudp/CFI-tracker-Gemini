@@ -59,12 +59,25 @@ export default function PreSoloTest() {
 
           setStudentName(data.student_name || '');
           setDate(data.date || new Date().toISOString().split('T')[0]);
-          setAnswers(data.answers || {});
+          const loadedAnswers = data.answers || {};
+          setAnswers(loadedAnswers);
           setCfiNotes(data.cfi_review_notes || '');
           setCfiName(data.cfi_name || '');
           setSavedTestId(data.id);
-          setAlreadySignedOff(!!data.cfi_signed_off);
+          const isSignedOff = !!data.cfi_signed_off;
+          setAlreadySignedOff(isSignedOff);
           setSavedSignoffDate(data.cfi_signoff_date || null);
+          
+          if (isSignedOff) {
+            const initialReviewed: Record<number, boolean> = {};
+            PRE_SOLO_TEST_QUESTIONS.forEach(q => {
+              if (loadedAnswers[q.id] !== q.correct) {
+                initialReviewed[q.id] = true;
+              }
+            });
+            setReviewed(initialReviewed);
+          }
+
           setMode('results');
         } catch (err: any) {
           console.error('Error loading saved test:', err);
@@ -438,43 +451,80 @@ export default function PreSoloTest() {
                             {qIdx + 1}. {q.question}
                           </p>
                           {mode === 'results' && (
-                            isCorrect ? (
-                              <CheckCircle2 size={20} className="text-green-500 shrink-0" />
-                            ) : (
-                              <XCircle size={20} className="text-red-500 shrink-0" />
-                            )
+                            <div className="flex items-center gap-2 shrink-0">
+                              {!isCorrect && reviewed[q.id] && (
+                                <span className="text-[10px] font-bold px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full flex items-center gap-1 uppercase tracking-wider font-sans">
+                                  <Check size={12} /> Reviewed with student
+                                </span>
+                              )}
+                              {isCorrect ? (
+                                <CheckCircle2 size={20} className="text-green-500 shrink-0" />
+                              ) : (
+                                <XCircle size={20} className="text-red-500 shrink-0" />
+                              )}
+                            </div>
                           )}
                         </div>
 
                         <div className="grid grid-cols-1 gap-2">
-                          {Object.entries(q.options).map(([key, text]) => (
-                            <label 
-                              key={key}
-                              className={cn(
-                                "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
-                                mode === 'test' && studentAnswer === key ? "bg-[#f1f5f9] border-[#1a3a5c] ring-1 ring-[#1a3a5c]" : "bg-[#f8fafc] border-[#dde3ec] hover:border-[#cbd5e1]",
-                                mode === 'results' && key === q.correct ? "bg-green-50 border-green-200 ring-1 ring-green-200" : "",
-                                mode === 'results' && studentAnswer === key && !isCorrect ? "bg-red-50 border-red-200 ring-1 ring-red-200" : ""
-                              )}
-                            >
-                              <input 
-                                type="radio" 
-                                name={`q-${q.id}`} 
-                                value={key}
-                                checked={studentAnswer === key}
-                                onChange={() => mode === 'test' && setAnswers(prev => ({ ...prev, [q.id]: key }))}
-                                disabled={mode !== 'test'}
-                                className="hidden"
-                              />
-                              <div className={cn(
-                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                                studentAnswer === key ? "border-[#1a3a5c] bg-[#1a3a5c]" : "border-[#cbd5e1] bg-white"
-                              )}>
-                                {studentAnswer === key && <div className="w-2 h-2 rounded-full bg-white" />}
+                          {Object.entries(q.options).map(([key, text]) => {
+                            const isCfiClickableOption = mode === 'results' && !isCorrect && key === q.correct;
+                            const isCfiReviewed = mode === 'results' && !isCorrect && key === q.correct && reviewed[q.id];
+                            
+                            return (
+                              <div 
+                                key={key}
+                                onClick={() => {
+                                  if (mode === 'test') {
+                                    setAnswers(prev => ({ ...prev, [q.id]: key }));
+                                  } else if (isCfiClickableOption) {
+                                    setReviewed(prev => ({ ...prev, [q.id]: !prev[q.id] }));
+                                  }
+                                }}
+                                className={cn(
+                                  "flex items-center justify-between p-3 rounded-xl border transition-all select-none",
+                                  (mode === 'test' || isCfiClickableOption) ? "cursor-pointer" : "cursor-default",
+                                  mode === 'test' && studentAnswer === key ? "bg-[#f1f5f9] border-[#1a3a5c] ring-1 ring-[#1a3a5c]" : "bg-[#f8fafc] border-[#dde3ec]",
+                                  mode === 'test' && studentAnswer !== key ? "hover:border-[#cbd5e1]" : "",
+                                  mode === 'results' && key === q.correct ? "bg-green-50 border-green-200 ring-1 ring-green-200" : "",
+                                  mode === 'results' && studentAnswer === key && !isCorrect ? "bg-red-50 border-[#fecaca] ring-1 ring-[#fecaca]" : "",
+                                  isCfiReviewed ? "bg-green-100 border-green-500 ring-2 ring-green-500/20 shadow-sm" : "",
+                                  isCfiClickableOption && !isCfiReviewed ? "hover:border-[#22c55e] hover:bg-[#f0fdf4]" : ""
+                                )}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
+                                    (mode === 'test' && studentAnswer === key) || (mode === 'results' && studentAnswer === key)
+                                      ? "border-[#1a3a5c] bg-[#1a3a5c]" 
+                                      : "border-[#cbd5e1] bg-white",
+                                    mode === 'results' && key === q.correct ? "border-green-500 text-green-500" : ""
+                                  )}>
+                                    {((studentAnswer === key && mode === 'test') || (studentAnswer === key && mode === 'results')) && (
+                                      <div className="w-2 h-2 rounded-full bg-white" />
+                                    )}
+                                  </div>
+                                  <span className={cn(
+                                    "text-xs font-medium text-[#334155]",
+                                    isCfiReviewed ? "font-bold text-green-900" : ""
+                                  )}>
+                                    {key}. {text}
+                                  </span>
+                                </div>
+
+                                {isCfiClickableOption && (
+                                  <span className={cn(
+                                    "text-[9px] font-bold px-2 py-0.5 rounded-full transition-all uppercase tracking-wider shrink-0 select-none",
+                                    isCfiReviewed 
+                                      ? "bg-green-600 text-white" 
+                                      : "bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200"
+                                  )}>
+                                    {isCfiReviewed ? "Reviewed" : "Mark Reviewed"}
+                                  </span>
+                                )}
                               </div>
-                              <span className="text-xs font-medium text-[#334155]">{key}. {text}</span>
-                            </label>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         {mode === 'results' && (
@@ -551,24 +601,8 @@ export default function PreSoloTest() {
                 <div className="p-6 space-y-6">
                   <div className="space-y-4">
                     <p className="text-xs text-[#64748b] font-medium">
-                      The instructor must review all incorrect answers with the student and ensure they have the required aeronautical knowledge before solo flight.
+                      The instructor must review all incorrect answers with the student and ensure they have the required aeronautical knowledge before solo flight. Click the correct answer on any incorrect questions above to mark them as reviewed.
                     </p>
-                    
-                    <div className="space-y-3">
-                      {PRE_SOLO_TEST_QUESTIONS.filter(q => answers[q.id] !== q.correct).map(q => (
-                        <label key={q.id} className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-xl border border-[#dde3ec] cursor-pointer hover:bg-[#f1f5f9] transition-colors">
-                          <input 
-                            type="checkbox" 
-                            checked={reviewed[q.id] || false}
-                            onChange={(e) => setReviewed(prev => ({ ...prev, [q.id]: e.target.checked }))}
-                            className="rounded border-[#cbd5e1] text-[#1a3a5c] focus:ring-[#1a3a5c]" 
-                          />
-                          <span className="text-xs font-medium text-[#334155]">
-                            Question {q.id}: Reviewed and discussed with student
-                          </span>
-                        </label>
-                      ))}
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
