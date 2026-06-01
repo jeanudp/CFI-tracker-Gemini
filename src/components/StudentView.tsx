@@ -26,7 +26,8 @@ import {
   Moon,
   Download,
   HelpCircle,
-  AlertTriangle
+  AlertTriangle,
+  RotateCcw
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -1612,6 +1613,22 @@ export default function StudentView() {
                             )}
                           </div>
                         </div>
+
+                        {Math.round((PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length / PRE_SOLO_TEST_QUESTIONS.length) * 100) < PRE_SOLO_TEST_CONFIG.passingScore && (
+                          <div className="pt-4 flex justify-center">
+                            <button
+                              onClick={() => {
+                                setTestAnswers({});
+                                setTestSubmitError(null);
+                                setTestSubmitted(false);
+                              }}
+                              className="px-6 py-3 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-md hover:shadow-lg flex items-center gap-2 border border-transparent hover:border-amber-500/20 cursor-pointer"
+                            >
+                              <RotateCcw size={14} className="text-amber-400" />
+                              <span>Redo Test</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <>
