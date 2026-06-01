@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { PRE_SOLO_TEST_QUESTIONS, PRE_SOLO_TEST_CONFIG } from '../constants/preSoloTest';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,10 +20,50 @@ export default function PreSoloTest() {
   const [savedTestId, setSavedTestId] = useState<string | number | null>(null);
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const reviewParam = searchParams.get('review');
+
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [alreadySignedOff, setAlreadySignedOff] = useState(false);
+  const [savedSignoffDate, setSavedSignoffDate] = useState<string | null>(null);
+
   useEffect(() => {
     const selected = localStorage.getItem('sb_selected_student');
     if (selected) setStudentName(selected);
-  }, []);
+
+    if (reviewParam) {
+      const loadSavedTest = async () => {
+        setReviewLoading(true);
+        try {
+          const { data, error } = await supabase
+            .from('student_tests')
+            .select('*')
+            .eq('id', reviewParam)
+            .single();
+
+          if (error || !data) {
+            throw new Error(error?.message || 'No test data found');
+          }
+
+          setStudentName(data.student_name || '');
+          setDate(data.date || new Date().toISOString().split('T')[0]);
+          setAnswers(data.answers || {});
+          setCfiNotes(data.cfi_review_notes || '');
+          setCfiName(data.cfi_name || '');
+          setSavedTestId(data.id);
+          setAlreadySignedOff(!!data.cfi_signed_off);
+          setSavedSignoffDate(data.cfi_signoff_date || null);
+          setMode('results');
+        } catch (err: any) {
+          console.error('Error loading saved test:', err);
+          alert('The saved test could not be loaded.');
+        } finally {
+          setReviewLoading(false);
+        }
+      };
+      loadSavedTest();
+    }
+  }, [reviewParam]);
 
   const answeredCount = Object.keys(answers).length;
   const isComplete = answeredCount === PRE_SOLO_TEST_QUESTIONS.length;
@@ -163,6 +203,17 @@ export default function PreSoloTest() {
     }, 100);
   };
 
+  if (reviewLoading) {
+    return (
+      <div className="min-h-screen bg-[#eef2f8] flex flex-col items-center justify-center p-4 no-print">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 size={40} className="animate-spin text-[#1a3a5c]" />
+          <p className="text-sm font-bold text-[#1e293b]">Loading saved test...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (mode === 'print') {
     return (
       <div className="p-10 bg-white min-h-screen font-serif">
@@ -241,7 +292,7 @@ export default function PreSoloTest() {
           </div>
           <div className="space-y-1">
             <div className="border-b border-black h-10 flex items-end pb-1 font-bold">
-              {cfiName ? `${cfiName} - ${new Date().toISOString().split('T')[0]}` : ''}
+              {cfiName ? `${cfiName} - ${savedSignoffDate || new Date().toISOString().split('T')[0]}` : ''}
             </div>
             <p className="text-xs font-bold uppercase">Instructor Signature / Date</p>
           </div>
@@ -271,7 +322,9 @@ export default function PreSoloTest() {
             </button>
             <div>
               <h1 className="text-lg font-bold leading-tight">Pre-Solo Knowledge Test</h1>
-              <p className="text-[10px] text-white/60 font-medium uppercase tracking-wider">14 CFR §61.87(b)</p>
+              <p className="text-[10px] text-white/60 font-medium uppercase tracking-wider">
+                {reviewParam ? "Reviewing Saved Test Result" : "14 CFR §61.87(b)"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -311,6 +364,7 @@ export default function PreSoloTest() {
               type="text" 
               value={studentName} 
               onChange={(e) => setStudentName(e.target.value)}
+              readOnly={!!reviewParam}
               className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-2.5 text-sm font-bold text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all"
               placeholder="Enter student name..."
             />
@@ -321,6 +375,7 @@ export default function PreSoloTest() {
               type="date" 
               value={date} 
               onChange={(e) => setDate(e.target.value)}
+              readOnly={!!reviewParam}
               className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-2.5 text-sm font-bold text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all"
             />
           </div>
@@ -450,68 +505,95 @@ export default function PreSoloTest() {
 
         {mode === 'results' && (
           <div className="mt-12 space-y-8">
-            <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-              <div className="bg-[#f8fafc] px-6 py-4 border-b border-[#dde3ec] flex items-center gap-2">
-                <AlertCircle size={18} className="text-[#1a3a5c]" />
-                <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Review and Sign Off</h3>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <p className="text-xs text-[#64748b] font-medium">
-                    The instructor must review all incorrect answers with the student and ensure they have the required aeronautical knowledge before solo flight.
-                  </p>
-                  
-                  <div className="space-y-3">
-                    {PRE_SOLO_TEST_QUESTIONS.filter(q => answers[q.id] !== q.correct).map(q => (
-                      <label key={q.id} className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-xl border border-[#dde3ec] cursor-pointer hover:bg-[#f1f5f9] transition-colors">
-                        <input 
-                          type="checkbox" 
-                          checked={reviewed[q.id] || false}
-                          onChange={(e) => setReviewed(prev => ({ ...prev, [q.id]: e.target.checked }))}
-                          className="rounded border-[#cbd5e1] text-[#1a3a5c] focus:ring-[#1a3a5c]" 
-                        />
-                        <span className="text-xs font-medium text-[#334155]">
-                          Question {q.id}: Reviewed and discussed with student
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+            {alreadySignedOff ? (
+              <div className="bg-white rounded-2xl border border-green-200 shadow-sm overflow-hidden">
+                <div className="bg-green-50 px-6 py-4 border-b border-green-100 flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-green-600" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-green-800">CFI Sign-Off Complete</h3>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Notes</label>
-                    <textarea 
-                      value={cfiNotes}
-                      onChange={(e) => setCfiNotes(e.target.value)}
-                      className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-medium text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all min-h-[100px]"
-                      placeholder="Enter review notes..."
-                    />
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-1">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Name</span>
+                      <p className="text-sm font-bold text-[#1e293b]">{cfiName || "-"}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Sign-off Date</span>
+                      <p className="text-sm font-bold text-[#1e293b]">{savedSignoffDate || "-"}</p>
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Name (Sign Off)</label>
-                    <input 
-                      type="text"
-                      value={cfiName}
-                      onChange={(e) => setCfiName(e.target.value)}
-                      className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-bold text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all"
-                      placeholder="Enter your full name..."
-                    />
+                    <span className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Notes</span>
+                    <div className="bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-medium text-[#1e293b] min-h-[100px] whitespace-pre-wrap">
+                      {cfiNotes || <em className="text-gray-400">No notes provided.</em>}
+                    </div>
                   </div>
                 </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                <div className="bg-[#f8fafc] px-6 py-4 border-b border-[#dde3ec] flex items-center gap-2">
+                  <AlertCircle size={18} className="text-[#1a3a5c]" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a3a5c]">CFI Review and Sign Off</h3>
+                </div>
+                <div className="p-6 space-y-6">
+                  <div className="space-y-4">
+                    <p className="text-xs text-[#64748b] font-medium">
+                      The instructor must review all incorrect answers with the student and ensure they have the required aeronautical knowledge before solo flight.
+                    </p>
+                    
+                    <div className="space-y-3">
+                      {PRE_SOLO_TEST_QUESTIONS.filter(q => answers[q.id] !== q.correct).map(q => (
+                        <label key={q.id} className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-xl border border-[#dde3ec] cursor-pointer hover:bg-[#f1f5f9] transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={reviewed[q.id] || false}
+                            onChange={(e) => setReviewed(prev => ({ ...prev, [q.id]: e.target.checked }))}
+                            className="rounded border-[#cbd5e1] text-[#1a3a5c] focus:ring-[#1a3a5c]" 
+                          />
+                          <span className="text-xs font-medium text-[#334155]">
+                            Question {q.id}: Reviewed and discussed with student
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
 
-                <div className="flex justify-center">
-                  <button
-                    onClick={handleSignOff}
-                    disabled={saving}
-                    className="px-10 py-4 bg-[#1a3a5c] text-white rounded-2xl font-bold shadow-xl hover:bg-[#2a5a8c] transition-all flex items-center gap-3 disabled:opacity-50"
-                  >
-                    {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                    Sign Off and Save Result
-                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Notes</label>
+                      <textarea 
+                        value={cfiNotes}
+                        onChange={(e) => setCfiNotes(e.target.value)}
+                        className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-medium text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all min-h-[100px]"
+                        placeholder="Enter review notes..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Instructor Name (Sign Off)</label>
+                      <input 
+                        type="text"
+                        value={cfiName}
+                        onChange={(e) => setCfiName(e.target.value)}
+                        className="w-full bg-[#f8fafc] border border-[#dde3ec] rounded-xl px-4 py-3 text-sm font-bold text-[#1e293b] focus:ring-2 focus:ring-[#1a3a5c]/20 outline-none transition-all"
+                        placeholder="Enter your full name..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <button
+                      onClick={handleSignOff}
+                      disabled={saving}
+                      className="px-10 py-4 bg-[#1a3a5c] text-white rounded-2xl font-bold shadow-xl hover:bg-[#2a5a8c] transition-all flex items-center gap-3 disabled:opacity-50"
+                    >
+                      {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                      Sign Off and Save Result
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
