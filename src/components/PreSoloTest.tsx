@@ -105,6 +105,11 @@ export default function PreSoloTest() {
   const percentage = Math.round((score / PRE_SOLO_TEST_QUESTIONS.length) * 100);
   const passed = percentage >= PRE_SOLO_TEST_CONFIG.passingScore;
 
+  const incorrectQuestions = PRE_SOLO_TEST_QUESTIONS.filter(q => answers[q.id] !== q.correct);
+  const totalIncorrectCount = incorrectQuestions.length;
+  const reviewedIncorrectCount = incorrectQuestions.filter(q => reviewed[q.id]).length;
+  const allIncorrectReviewed = reviewedIncorrectCount === totalIncorrectCount;
+
   const handleSubmitTest = async () => {
     if (!studentName.trim()) {
       alert('Please enter the student name.');
@@ -627,15 +632,36 @@ export default function PreSoloTest() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center">
-                    <button
-                      onClick={handleSignOff}
-                      disabled={saving}
-                      className="px-10 py-4 bg-[#1a3a5c] text-white rounded-2xl font-bold shadow-xl hover:bg-[#2a5a8c] transition-all flex items-center gap-3 disabled:opacity-50"
-                    >
-                      {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                      Sign Off and Save Result
-                    </button>
+                  <div className="space-y-4 pt-2">
+                    {/* Progress Line */}
+                    <div className="text-center text-xs font-semibold">
+                      {totalIncorrectCount > 0 ? (
+                        allIncorrectReviewed ? (
+                          <div className="text-green-600 flex items-center justify-center gap-1.5">
+                            <Check size={14} className="stroke-[3]" /> All missed answers reviewed. Complete!
+                          </div>
+                        ) : (
+                          <div className="text-amber-600 flex items-center justify-center gap-1.5">
+                            <AlertCircle size={14} /> {reviewedIncorrectCount} of {totalIncorrectCount} missed answers reviewed.
+                          </div>
+                        )
+                      ) : (
+                        <div className="text-green-600 flex items-center justify-center gap-1.5">
+                          <CheckCircle2 size={14} /> Nothing to review — perfect score!
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-center">
+                      <button
+                        onClick={handleSignOff}
+                        disabled={saving || !cfiName.trim() || !allIncorrectReviewed}
+                        className="px-10 py-4 bg-[#1a3a5c] text-white rounded-2xl font-bold shadow-xl hover:bg-[#2a5a8c] transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                        Sign Off and Save Result
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
