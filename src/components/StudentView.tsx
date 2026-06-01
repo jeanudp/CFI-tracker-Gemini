@@ -1550,24 +1550,24 @@ export default function StudentView() {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-8"
                 >
-                  <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-slate-800 p-5 sm:p-8 shadow-sm space-y-8">
+                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm space-y-8">
                     {/* Header and Progress Indicator */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-[#dde3ec] dark:border-slate-800">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-[#dde3ec]">
                       <div>
-                        <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] dark:text-slate-100 flex items-center gap-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] flex items-center gap-2">
                           <FileText className="text-amber-500" size={22} />
                           {PRE_SOLO_TEST_CONFIG.title}
                         </h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+                        <p className="text-xs text-gray-500 mt-1 max-w-xl leading-relaxed">
                           This test satisfies the aeronautical knowledge requirement of {PRE_SOLO_TEST_CONFIG.regulation} for student pilots seeking solo privileges. There is no time limit.
                         </p>
                       </div>
-                      <div className="flex flex-col items-end shrink-0 w-full md:w-auto bg-[#f8fafc] dark:bg-slate-800/20 p-4 rounded-xl border border-[#dde3ec] dark:border-slate-800">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-[#1a3a5c] dark:text-slate-100 mb-1.5 w-full flex justify-between gap-6">
+                      <div className="flex flex-col items-end shrink-0 w-full md:w-auto bg-[#f8fafc] p-4 rounded-xl border border-[#dde3ec]">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-[#1a3a5c] mb-1.5 w-full flex justify-between gap-6">
                           <span>Progress</span>
                           <span>{Object.keys(testAnswers).length} / {PRE_SOLO_TEST_QUESTIONS.length} Answered</span>
                         </div>
-                        <div className="w-full md:w-56 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div className="w-full md:w-56 h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-green-500 transition-all duration-300"
                             style={{ width: `${(Object.keys(testAnswers).length / PRE_SOLO_TEST_QUESTIONS.length) * 100}%` }}
@@ -1578,35 +1578,35 @@ export default function StudentView() {
 
                     {testSubmitted ? (
                       <div className="py-12 sm:py-16 text-center space-y-6 max-w-xl mx-auto">
-                        <div className="w-16 h-16 bg-green-500/10 dark:bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto ring-8 ring-green-500/5">
+                        <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto ring-8 ring-green-500/5">
                           <CheckCircle2 size={36} />
                         </div>
                         <div className="space-y-2">
-                          <h4 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">
+                          <h4 className="text-xl sm:text-2xl font-bold text-gray-900">
                             Pre-Solo Test Submitted!
                           </h4>
-                          <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+                          <p className="text-sm text-gray-500 leading-relaxed">
                             Your completed assessment has been sent to your flight instructor for review. They can sign off on your results directly in their dashboard.
                           </p>
                         </div>
                         
-                        <div className="bg-[#f8fafc] dark:bg-slate-800/30 p-6 rounded-2xl border border-[#dde3ec] dark:border-slate-800/80 space-y-3">
-                          <p className="text-xs font-black uppercase tracking-widest text-[#1a3a5c] dark:text-slate-300">
+                        <div className="bg-[#f8fafc] p-6 rounded-2xl border border-[#dde3ec] space-y-3">
+                          <p className="text-xs font-black uppercase tracking-widest text-[#1a3a5c]">
                             Your Result
                           </p>
-                          <div className="text-3xl sm:text-4xl font-black text-[#1a3a5c] dark:text-slate-100">
+                          <div className="text-3xl sm:text-4xl font-black text-[#1a3a5c]">
                             {PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length} / {PRE_SOLO_TEST_QUESTIONS.length}
                           </div>
-                          <div className="text-sm font-semibold text-gray-600 dark:text-slate-300">
+                          <div className="text-sm font-semibold text-gray-650">
                             Score: {Math.round((PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length / PRE_SOLO_TEST_QUESTIONS.length) * 100)}%
                           </div>
                           <div className="pt-2">
                             {Math.round((PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length / PRE_SOLO_TEST_QUESTIONS.length) * 100) >= PRE_SOLO_TEST_CONFIG.passingScore ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
                                 <CheckCircle2 size={12} /> Passed (Passing Score: {PRE_SOLO_TEST_CONFIG.passingScore}%)
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
                                 <AlertTriangle size={12} /> Below Passing Score ({PRE_SOLO_TEST_CONFIG.passingScore}%)
                               </span>
                             )}
@@ -1622,8 +1622,8 @@ export default function StudentView() {
                             if (sectionQuestions.length === 0) return null;
                             return (
                               <div key={section} className="space-y-6">
-                                <div className="border-b border-[#dde3ec] dark:border-slate-800 pb-2">
-                                  <h4 className="text-sm font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                                <div className="border-b border-[#dde3ec] pb-2">
+                                  <h4 className="text-sm font-black text-amber-600 uppercase tracking-wider">
                                     {section}
                                   </h4>
                                 </div>
@@ -1631,8 +1631,8 @@ export default function StudentView() {
                                   {sectionQuestions.map((q, qIdx) => {
                                     const selectedOption = testAnswers[q.id];
                                     return (
-                                      <div key={q.id} className="bg-[#f8fafc] dark:bg-slate-850/30 rounded-2xl border border-[#dde3ec] dark:border-slate-800 p-5 sm:p-6 shadow-sm hover:border-[#1a3a5c]/30 dark:hover:border-slate-700 transition-colors">
-                                        <p className="text-sm font-bold text-[#1e293b] dark:text-slate-100 leading-relaxed mb-4">
+                                      <div key={q.id} className="bg-[#f8fafc] rounded-2xl border border-[#dde3ec] p-5 sm:p-6 shadow-sm hover:border-[#1a3a5c]/30 transition-colors">
+                                        <p className="text-sm font-bold text-[#1e293b] leading-relaxed mb-4">
                                           {qIdx + 1}. {q.question}
                                         </p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1646,14 +1646,14 @@ export default function StudentView() {
                                                   "flex items-center text-left p-3.5 rounded-xl border transition-all text-xs font-semibold cursor-pointer select-none",
                                                   isSelected
                                                     ? "bg-[#1a3a5c] text-white border-[#1a3a5c] ring-1 ring-[#1a3a5c]"
-                                                    : "bg-white dark:bg-slate-900 border-[#dde3ec] dark:border-slate-800 text-[#334155] dark:text-slate-200 hover:border-[#cbd5e1] dark:hover:border-slate-750"
+                                                    : "bg-white border-[#dde3ec] text-[#334155] hover:border-[#cbd5e1]"
                                                 )}
                                               >
                                                 <div className={cn(
                                                   "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 mr-3",
                                                   isSelected
                                                     ? "border-white bg-white"
-                                                    : "border-[#cbd5e1] dark:border-slate-700 bg-white dark:bg-slate-950"
+                                                    : "border-[#cbd5e1] bg-white"
                                                 )}>
                                                   {isSelected && (
                                                     <div className="w-2.5 h-2.5 rounded-full bg-[#1a3a5c]" />
@@ -1676,9 +1676,9 @@ export default function StudentView() {
                         </div>
 
                         {/* Submit Section */}
-                        <div className="pt-8 border-t border-[#dde3ec] dark:border-slate-800 flex flex-col items-center gap-4">
+                        <div className="pt-8 border-t border-[#dde3ec] flex flex-col items-center gap-4">
                           {testSubmitError && (
-                            <div className="text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-1.5 bg-red-50 dark:bg-red-950/20 px-4 py-2 rounded-xl border border-red-100 dark:border-red-950/50">
+                            <div className="text-red-650 text-xs font-semibold flex items-center gap-1.5 bg-red-50 px-4 py-2 rounded-xl border border-red-100">
                               <AlertCircle size={14} /> {testSubmitError}
                             </div>
                           )}
@@ -1703,7 +1703,7 @@ export default function StudentView() {
                             )}
                           </button>
                           {Object.keys(testAnswers).length !== PRE_SOLO_TEST_QUESTIONS.length && (
-                            <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium">
+                            <p className="text-[11px] text-gray-500 font-medium">
                               Please complete all {PRE_SOLO_TEST_QUESTIONS.length} questions to submit.
                             </p>
                           )}
