@@ -35,14 +35,26 @@ export default function PreSoloTest() {
       const loadSavedTest = async () => {
         setReviewLoading(true);
         try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            setReviewLoading(false);
+            alert('You must be signed in to review a saved test.');
+            return;
+          }
+
           const { data, error } = await supabase
             .from('student_tests')
             .select('*')
             .eq('id', reviewParam)
-            .single();
+            .maybeSingle();
 
-          if (error || !data) {
-            throw new Error(error?.message || 'No test data found');
+          if (error) {
+            throw error;
+          }
+
+          if (!data) {
+            alert('The saved test could not be loaded.');
+            return;
           }
 
           setStudentName(data.student_name || '');
