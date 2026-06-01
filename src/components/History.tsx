@@ -92,7 +92,7 @@ export default function History() {
   const [tempDate, setTempDate] = useState<string>('');
   const [newLogDates, setNewLogDates] = useState<Record<string, string>>({});
   const [checklistExpanded, setChecklistExpanded] = useState(false);
-  const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
+  const [preSoloTestResults, setPreSoloTestResults] = useState<any[]>([]);
   const [archivedLessons, setArchivedLessons] = useState<Lesson[]>([]);
   const [isFlightLogOpen, setIsFlightLogOpen] = useState(true);
   const [isACSCoverageOpen, setIsACSCoverageOpen] = useState(false);
@@ -534,20 +534,18 @@ export default function History() {
 
   useEffect(() => {
     if (selectedLesson?.student_name) {
-      const fetchTestResult = async () => {
+      const fetchTestResults = async () => {
         const { data } = await supabase
           .from('student_tests')
           .select('*')
           .eq('student_name', selectedLesson.student_name)
           .eq('test_type', 'pre_solo')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        setPreSoloTestResult(data);
+          .order('created_at', { ascending: false });
+        setPreSoloTestResults(data || []);
       };
-      fetchTestResult();
+      fetchTestResults();
     } else {
-      setPreSoloTestResult(null);
+      setPreSoloTestResults([]);
     }
   }, [selectedLesson?.student_name]);
   const studentName = selectedLesson?.student_name;
@@ -2862,73 +2860,88 @@ export default function History() {
                               </button>
                             </div>
 
-                            {preSoloTestResult ? (
-                              <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
-                                <div className="p-4 flex items-center justify-between border-b border-[#f1f5f9]">
-                                  <div className="flex items-center gap-3">
-                                    <div className={cn(
-                                      "w-10 h-10 rounded-xl flex items-center justify-center",
-                                      !preSoloTestResult.cfi_signed_off
-                                        ? "bg-[#fffbeb] text-[#b45309]"
-                                        : preSoloTestResult.passed ? "bg-[#f0fdf4] text-[#2d7a4f]" : "bg-[#fef2f2] text-[#991b1b]"
-                                    )}>
-                                      <FileText size={20} />
-                                    </div>
-                                    <div>
-                                      <h3 className="text-sm font-bold text-[#1e293b]">Pre-Solo Knowledge Test Result</h3>
-                                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                        <span className={cn(
-                                          "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider text-white",
-                                          !preSoloTestResult.cfi_signed_off 
-                                            ? "bg-[#d97706]" 
-                                            : preSoloTestResult.passed 
-                                              ? "bg-[#2d7a4f]" 
-                                              : "bg-[#991b1b]"
-                                        )}>
-                                          {!preSoloTestResult.cfi_signed_off ? 'Pending Review' : (preSoloTestResult.passed ? 'Passed' : 'Failed')}
-                                        </span>
-                                        {preSoloTestResult.source === 'student_portal' && (
-                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] dark:border-blue-900/30 dark:bg-blue-950/25 dark:text-blue-400 uppercase tracking-wider">
-                                            Submitted by student
-                                          </span>
-                                        )}
-                                        <span className="text-[10px] text-[#64748b] font-medium">
-                                          Score: {preSoloTestResult.correct_answers} out of {preSoloTestResult.total_questions} — {preSoloTestResult.score}%
-                                        </span>
+                            {preSoloTestResults && preSoloTestResults.length > 0 ? (
+                              <div className="space-y-4 mb-6">
+                                <div className="flex items-center justify-between px-1">
+                                  <span className="text-xs font-black uppercase tracking-wider text-[#1a3a5c]">
+                                    Test Attempts ({preSoloTestResults.length})
+                                  </span>
+                                  <button
+                                    onClick={() => navigate('/presolo-test')}
+                                    className="px-3 py-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Retake Test
+                                  </button>
+                                </div>
+                                {preSoloTestResults.map((result, idx) => {
+                                  const attemptNum = preSoloTestResults.length - idx;
+                                  const isLatest = idx === 0;
+                                  return (
+                                    <div key={result.id} className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden">
+                                      <div className="p-4 flex items-center justify-between border-b border-[#f1f5f9]">
+                                        <div className="flex items-center gap-3">
+                                          <div className={cn(
+                                            "w-10 h-10 rounded-xl flex items-center justify-center",
+                                            !result.cfi_signed_off
+                                              ? "bg-[#fffbeb] text-[#b45309]"
+                                              : result.passed ? "bg-[#f0fdf4] text-[#2d7a4f]" : "bg-[#fef2f2] text-[#991b1b]"
+                                          )}>
+                                            <FileText size={20} />
+                                          </div>
+                                          <div>
+                                            <h3 className="text-sm font-bold text-[#1e293b]">
+                                              Attempt #{attemptNum}{isLatest ? ' (Latest)' : ''}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                              <span className={cn(
+                                                "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider text-white",
+                                                !result.cfi_signed_off 
+                                                  ? "bg-[#d97706]" 
+                                                  : result.passed 
+                                                    ? "bg-[#2d7a4f]" 
+                                                    : "bg-[#991b1b]"
+                                              )}>
+                                                {!result.cfi_signed_off ? 'Pending Review' : (result.passed ? 'Passed' : 'Failed')}
+                                              </span>
+                                              {result.source === 'student_portal' && (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] dark:border-blue-900/30 dark:bg-blue-950/25 dark:text-blue-400 uppercase tracking-wider">
+                                                  Submitted by student
+                                                </span>
+                                              )}
+                                              <span className="text-[10px] text-[#64748b] font-medium">
+                                                Score: {result.correct_answers} out of {result.total_questions} — {result.score}%
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => navigate(`/presolo-test?review=${result.id}`)}
+                                            className="px-3 py-1.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider cursor-pointer"
+                                          >
+                                            Review
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <div className="px-4 py-3 bg-[#f8fafc] grid grid-cols-2 gap-4">
+                                        <div>
+                                          <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">Date Taken</div>
+                                          <div className="text-[11px] font-bold text-[#1e293b]">{new Date(result.date).toLocaleDateString()}</div>
+                                        </div>
+                                        <div>
+                                          <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">CFI Signed Off</div>
+                                          <div className="text-[11px] font-bold text-[#1e293b]">
+                                            {result.cfi_signed_off && result.cfi_signoff_date ? (
+                                              new Date(result.cfi_signoff_date).toLocaleDateString()
+                                            ) : (
+                                              <span className="text-[#a1a1aa] font-medium italic">Not yet signed off</span>
+                                            )}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => navigate(`/presolo-test?review=${preSoloTestResult.id}`)}
-                                      className="px-3 py-1.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
-                                    >
-                                      Review
-                                    </button>
-                                    <button
-                                      onClick={() => navigate('/presolo-test')}
-                                      className="px-3 py-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
-                                    >
-                                      Retake Test
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="px-4 py-3 bg-[#f8fafc] grid grid-cols-2 gap-4">
-                                  <div>
-                                    <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">Date Taken</div>
-                                    <div className="text-[11px] font-bold text-[#1e293b]">{new Date(preSoloTestResult.date).toLocaleDateString()}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[8px] font-bold text-[#94a3b8] uppercase tracking-widest mb-0.5">CFI Signed Off</div>
-                                    <div className="text-[11px] font-bold text-[#1e293b]">
-                                      {preSoloTestResult.cfi_signed_off && preSoloTestResult.cfi_signoff_date ? (
-                                        new Date(preSoloTestResult.cfi_signoff_date).toLocaleDateString()
-                                      ) : (
-                                        <span className="text-[#a1a1aa] font-medium italic">Not yet signed off</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
+                                  );
+                                })}
                               </div>
                             ) : (
                               <div className="mb-6 px-4 py-3 bg-[#f1f5f9] rounded-xl border border-[#dde3ec] border-dashed flex items-center gap-2">
