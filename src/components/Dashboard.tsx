@@ -8,7 +8,7 @@ import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, Check
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
-import { QRCodeSVG } from 'qrcode.react';
+import ShareProgressModal from './ShareProgressModal';
 import { ALL_ACS, RATINGS } from '../constants';
 import NewStudentModal from './NewStudentModal';
 
@@ -181,7 +181,6 @@ export default function Dashboard() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isQuickWeatherOpen, setIsQuickWeatherOpen] = useState(false);
   const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
@@ -3436,99 +3435,10 @@ export default function Dashboard() {
 
       {/* New Student Modal */}
       {/* Share Progress Modal */}
-      <AnimatePresence>
-        {shareModalData && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShareModalData(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-[32px] overflow-hidden shadow-2xl"
-            >
-              <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                    <Share2 size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-[#1a3a5c]">Share Progress</h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{shareModalData.studentName}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShareModalData(null)}
-                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="p-8 text-center">
-                <div className="bg-[#f8fafc] p-6 rounded-3xl inline-block border-2 border-dashed border-gray-100 mb-6">
-                  <QRCodeSVG 
-                    value={shareModalData.url} 
-                    size={220}
-                    level="H"
-                    includeMargin={false}
-                  />
-                </div>
-                
-                <p className="text-sm font-bold text-[#1a3a5c] mb-1">Student Scan QR Code</p>
-                <p className="text-xs text-gray-500 mb-8 px-6">Your student can scan this to view their progress, cumulative hours, and lesson notes.</p>
-
-                <div className="relative flex items-center justify-center mb-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-100" />
-                  </div>
-                  <span className="relative px-4 bg-white text-[10px] font-black uppercase tracking-widest text-gray-400">or</span>
-                </div>
-
-                <button
-                  onClick={async () => {
-                    const shareData = {
-                      title: '61 Tracker — Student View',
-                      text: `View your flight training progress for ${shareModalData.studentName}`,
-                      url: shareModalData.url,
-                    };
-                    
-                    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                      try {
-                        await navigator.share(shareData);
-                      } catch (err) {
-                        console.error('Share failed:', err);
-                      }
-                    } else {
-                      await navigator.clipboard.writeText(shareModalData.url);
-                      setLinkCopied(true);
-                      setTimeout(() => setLinkCopied(false), 2000);
-                    }
-                  }}
-                  className="w-full py-4 bg-[#1a3a5c] text-white font-black rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 cursor-pointer group"
-                >
-                  {linkCopied ? (
-                    <>
-                      <Check size={18} className="text-green-400" />
-                      <span>Copied to Clipboard!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 size={18} className="text-white/50 group-hover:text-white transition-colors" />
-                      <span>Send Progress Link</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ShareProgressModal
+        shareData={shareModalData}
+        onClose={() => setShareModalData(null)}
+      />
 
       <NewStudentModal
         isOpen={isNewStudentOpen}
