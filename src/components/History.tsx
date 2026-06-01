@@ -2888,12 +2888,20 @@ export default function History() {
                                       </div>
                                     </div>
                                   </div>
-                                  <button
-                                    onClick={() => navigate('/presolo-test')}
-                                    className="px-3 py-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
-                                  >
-                                    Retake Test
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => navigate(`/presolo-test?review=${preSoloTestResult.id}`)}
+                                      className="px-3 py-1.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
+                                    >
+                                      Review
+                                    </button>
+                                    <button
+                                      onClick={() => navigate('/presolo-test')}
+                                      className="px-3 py-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] text-[10px] font-bold rounded-lg transition-colors uppercase tracking-wider"
+                                    >
+                                      Retake Test
+                                    </button>
+                                  </div>
                                 </div>
                                 <div className="px-4 py-3 bg-[#f8fafc] grid grid-cols-2 gap-4">
                                   <div>
