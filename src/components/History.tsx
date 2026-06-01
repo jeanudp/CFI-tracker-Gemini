@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
 
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, AlertTriangle } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, AlertTriangle, Copy, Mail, MessageSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import HowToExportModal from './HowToExportModal';
@@ -3639,47 +3639,67 @@ export default function History() {
                 <p className="text-sm font-bold text-[#1a3a5c] mb-1">Student Scan QR Code</p>
                 <p className="text-xs text-gray-500 mb-8 px-6">Your student can scan this to view their progress, cumulative hours, and lesson notes.</p>
 
-                <div className="relative flex items-center justify-center mb-8">
+                <div className="relative flex items-center justify-center mb-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-100" />
                   </div>
-                  <span className="relative px-4 bg-white text-[10px] font-black uppercase tracking-widest text-gray-400">or</span>
+                  <span className="relative px-4 bg-white text-[10px] font-black uppercase tracking-widest text-[#1a3a5c]">or</span>
                 </div>
 
-                <button
-                  onClick={async () => {
-                    const shareData = {
-                      title: '61 Tracker — Student View',
-                      text: `View your flight training progress for ${shareModalData.studentName}`,
-                      url: shareModalData.url,
-                    };
-                    
-                    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                      try {
-                        await navigator.share(shareData);
-                      } catch (err) {
-                        console.error('Share failed:', err);
-                      }
-                    } else {
+                {/* Read-only Link Field with Copy Button */}
+                <div className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    readOnly
+                    value={shareModalData.url}
+                    className="flex-1 min-w-0 bg-[#f8fafc] text-xs font-semibold text-[#1a3a5c] px-3.5 py-3 rounded-xl border border-[#dde3ec] outline-none"
+                  />
+                  <button
+                    onClick={async () => {
                       await navigator.clipboard.writeText(shareModalData.url);
                       setLinkCopied(true);
                       setTimeout(() => setLinkCopied(false), 2000);
-                    }
-                  }}
-                  className="w-full py-4 bg-[#1a3a5c] text-white font-black rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 cursor-pointer group"
-                >
-                  {linkCopied ? (
-                    <>
-                      <Check size={18} className="text-green-400" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 size={18} className="text-white/50 group-hover:text-white transition-colors" />
-                      <span>Send Link</span>
-                    </>
-                  )}
-                </button>
+                    }}
+                    className="px-4 py-3 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    {linkCopied ? (
+                      <>
+                        <Check size={14} className="text-green-400" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Text and Email Sharing Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      const text = `Hey! Here is my flight training progress on 61 Tracker: ${shareModalData.url}`;
+                      window.location.href = `sms:?body=${encodeURIComponent(text)}`;
+                    }}
+                    className="py-3 bg-amber-50 hover:bg-amber-105 hover:bg-opacity-90 text-amber-800 text-xs font-bold rounded-xl border border-amber-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <MessageSquare size={16} className="text-amber-600" />
+                    <span>Text</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const subject = `${shareModalData.studentName}'s 61 Tracker Student Portal Link`;
+                      const body = `Hi,\n\nYou can view my flight training progress and cumulative hours on 61 Tracker here:\n\n${shareModalData.url}`;
+                      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    }}
+                    className="py-3 bg-amber-50 hover:bg-amber-105 hover:bg-opacity-90 text-amber-800 text-xs font-bold rounded-xl border border-amber-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Mail size={16} className="text-amber-600" />
+                    <span>Email</span>
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
