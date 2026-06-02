@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { IR_GROUND_ACS, IR_FLIGHT_ACS } from '../constants/irACS';
-import { AIRCRAFT_MODELS } from '../constants/aircraft';
+import AircraftPicker from './AircraftPicker';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronDown, 
@@ -38,8 +38,13 @@ export default function IPC() {
   const [instructorName, setInstructorName] = useState('');
   const [lessonDate, setLessonDate] = useState(getLocalDateString());
   const [lessonNotes, setLessonNotes] = useState('');
-  const [aircraft, setAircraft] = useState('');
-  const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
+  const [aircraft, setAircraft] = useState({
+    tailNumber: '',
+    model: '',
+    icao: '',
+    aircraftClass: 'ASEL' as 'ASEL' | 'AMEL',
+    complex: false
+  });
   
   const [groundCovered, setGroundCovered] = useState<Record<string, boolean>>({});
   const [flightCovered, setFlightCovered] = useState<Record<string, boolean>>({});
@@ -116,7 +121,13 @@ export default function IPC() {
     setGroundNotes({});
     setFlightNotes({});
     setLessonNotes('');
-    setAircraft('');
+    setAircraft({
+      tailNumber: '',
+      model: '',
+      icao: '',
+      aircraftClass: 'ASEL',
+      complex: false
+    });
     setLessonDate(getLocalDateString());
     setOverallGrade('');
   };
@@ -127,7 +138,7 @@ export default function IPC() {
       return;
     }
 
-    if (overallGrade === 'S' && !aircraft.trim()) {
+    if (overallGrade === 'S' && !aircraft.model.trim()) {
       alert("Aircraft Make & Model is required for satisfactory IPC endorsement.");
       return;
     }
@@ -172,7 +183,11 @@ export default function IPC() {
         notes: lessonNotes,
         overallGrade,
         ipc_endorsed: overallGrade === 'S',
-        aircraft: aircraft
+        aircraft: aircraft.tailNumber,
+        aircraftModel: aircraft.model,
+        aircraftIcao: aircraft.icao,
+        aircraftClass: aircraft.aircraftClass,
+        complex: aircraft.complex
       }
     };
 
@@ -188,6 +203,29 @@ export default function IPC() {
           .eq('user_id', session.user.id);
         
         if (updateError) throw updateError;
+      }
+
+      if (aircraft.tailNumber && aircraft.model) {
+        const { error: aircraftError } = await supabase
+          .from('saved_aircraft')
+          .upsert({
+            user_id: session.user.id,
+            tail_number: aircraft.tailNumber.toUpperCase().trim(),
+            aircraft_model: aircraft.model.trim(),
+            aircraft_icao: aircraft.icao || '',
+            aircraft_class: aircraft.aircraftClass || 'ASEL',
+            complex: aircraft.complex === true,
+            last_used: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            use_count: 1
+          }, {
+            onConflict: 'user_id,tail_number',
+            ignoreDuplicates: false
+          });
+
+        if (aircraftError) {
+          console.error('Failed to save aircraft:', aircraftError);
+        }
       }
 
       navigate('/history');
@@ -250,52 +288,6 @@ export default function IPC() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft (Make & Model)</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={aircraft}
-                onChange={(e) => {
-                  setAircraft(e.target.value);
-                  setShowAircraftDropdown(true);
-                }}
-                onFocus={() => setShowAircraftDropdown(true)}
-                onBlur={() => setTimeout(() => setShowAircraftDropdown(false), 150)}
-                placeholder="e.g. C-172, Cessna"
-                className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all"
-              />
-              {showAircraftDropdown && aircraft.trim() !== '' && (
-                <div className="absolute left-0 right-0 mt-1 bg-white border border-[#dde3ec] rounded-lg shadow-lg z-50 max-h-[240px] overflow-y-auto">
-                  {(() => {
-                    const filtered = AIRCRAFT_MODELS.filter(m => 
-                      m.toLowerCase().includes(aircraft.toLowerCase())
-                    );
-                    if (filtered.length === 0) {
-                      return (
-                        <div className="px-3 py-2 text-xs italic text-[#94a3b8]">
-                          No matching models found
-                        </div>
-                      );
-                    }
-                    return filtered.slice(0, 50).map((model) => (
-                      <button
-                        key={model}
-                        type="button"
-                        onClick={() => {
-                          setAircraft(model);
-                          setShowAircraftDropdown(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-[#1c2333] hover:bg-[#0ea5e9]/10 hover:text-[#0ea5e9] transition-colors cursor-pointer"
-                      >
-                        {model}
-                      </button>
-                    ));
-                  })()}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Date</label>
             <input
               type="date"
@@ -315,6 +307,12 @@ export default function IPC() {
             className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all resize-none"
           />
         </div>
+      </div>
+
+      {/* Aircraft Card */}
+      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3 block">Aircraft</label>
+        <AircraftPicker value={aircraft} onChange={setAircraft} accentColor="#0ea5e9" />
       </div>
 
       {/* Progress Summary Stats */}
