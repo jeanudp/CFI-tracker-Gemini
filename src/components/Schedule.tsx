@@ -309,7 +309,10 @@ export default function Schedule() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const localYearComp = selectedDate.getFullYear();
+      const localMonthComp = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const localDayComp = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${localYearComp}-${localMonthComp}-${localDayComp}`;
 
       // Fetch aircraft, students, and scheduled lessons in parallel
       const [aircraftRes, studentsRes, lessonsRes] = await Promise.all([
@@ -442,7 +445,10 @@ export default function Schedule() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const localYearComp = selectedDate.getFullYear();
+      const localMonthComp = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const localDayComp = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${localYearComp}-${localMonthComp}-${localDayComp}`;
       const payload = {
         user_id: session.user.id,
         student_name: modalData.studentName,
@@ -780,7 +786,10 @@ export default function Schedule() {
     setDragOverHour(null);
 
     const newStartTime = decimalToTime(finalDecimal);
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    const localYearComp = selectedDate.getFullYear();
+    const localMonthComp = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const localDayComp = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${localYearComp}-${localMonthComp}-${localDayComp}`;
 
     if (request) {
       // Check if student already has an overlapping lesson
