@@ -2224,8 +2224,8 @@ export default function History() {
                       <MapPin size={24} />
                     </div>
                     <div>
-                      <h1 className="text-xl font-bold text-white tracking-tight">Endorsement Manager</h1>
-                      <p className="text-xs text-white/70">AC 61-65K Appendix A</p>
+                      <h1 className="text-xl font-bold text-white tracking-tight">Endorsement Guide</h1>
+                      <p className="text-xs text-white/70">New to endorsements? Pick what your student is flying below and see exactly which ones to give — and when. (AC 61-65K)</p>
                     </div>
                   </div>
                 </div>
