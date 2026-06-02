@@ -540,12 +540,14 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                   <p className="text-xs text-[#6b7280] mb-2 leading-relaxed">
                     Select the certificate or rating this student is currently working toward.
                   </p>
-                  <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-xl" style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.1)' }}>
-                    <Lock size={12} style={{ color: 'var(--navy)' }} />
-                    <p className="text-[10px] font-bold" style={{ color: 'var(--navy)' }}>
-                      Private Pilot is free forever. Upgrade to unlock additional ratings.
-                    </p>
-                  </div>
+                  {subscription?.plan === 'free' && (
+                    <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-xl" style={{ backgroundColor: 'rgba(26,58,92,0.05)', border: '1px solid rgba(26,58,92,0.1)' }}>
+                      <Lock size={12} style={{ color: 'var(--navy)' }} />
+                      <p className="text-[10px] font-bold" style={{ color: 'var(--navy)' }}>
+                        Private Pilot is free forever. Upgrade to unlock additional ratings.
+                      </p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {Object.entries(RATINGS).filter(([code]) => !code.includes('_')).map(([code, rating]) => {
                       const isSelected = selectedRating === code || 
