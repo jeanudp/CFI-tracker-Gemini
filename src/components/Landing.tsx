@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun } from 'lucide-react';
+import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun, Check, Share2, ExternalLink } from 'lucide-react';
 import TermsModal from './TermsModal';
 
 export default function Landing() {
@@ -325,6 +325,266 @@ export default function Landing() {
           ))}
         </motion.div>
       </div>
+
+      {/* Feature Showcase Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="w-full flex flex-col items-center px-6 py-20 border-t"
+        style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-primary)' }}
+      >
+        <div className="w-full max-w-4xl">
+          <div className="text-center mb-12">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 block" style={{ color: 'var(--text-muted)' }}>
+              A Closer Look
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black mb-4" style={{ color: 'var(--text-primary)' }}>
+              Everything you need to run training
+            </h2>
+            <p className="text-sm max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
+              A polished, code-driven instructor cockpit that simplifies your workflows and delights your students.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            
+            {/* Card 1: Live Checkride Readiness */}
+            <motion.div
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+              }}
+              whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+            >
+              <div>
+                {/* Miniature Mockup */}
+                <div 
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col justify-center min-h-[140px]"
+                >
+                  {/* Green banner */}
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 border border-green-500/25 rounded-full mb-3 w-fit">
+                    <Check size={12} className="text-[var(--green)]" />
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[var(--green)]">Checkride Ready</span>
+                  </div>
+
+                  {/* Progressive requirements */}
+                  <div className="space-y-2">
+                    {[
+                      { name: 'Total Time', val: '40.0 / 40.0', pct: '100%' },
+                      { name: 'Solo XC', val: '5.0 / 5.0', pct: '100%' },
+                      { name: 'Night Dual', val: '3.0 / 3.0', pct: '100%' }
+                    ].map((row, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                          <span style={{ color: 'var(--text-primary)' }}>{row.name}</span>
+                          <span style={{ color: 'var(--green)' }}>{row.val}</span>
+                        </div>
+                        <div className="h-1 w-full bg-[var(--bg-primary)] rounded-full overflow-hidden">
+                          <div className="h-full bg-[var(--green)] rounded-full" style={{ width: row.pct }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Live Checkride Readiness</h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Every Part 61 requirement tracked automatically from your logged lessons, so you know the moment a student is ready.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 2: Every Rating in One App */}
+            <motion.div
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+              }}
+              whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+            >
+              <div>
+                {/* Miniature Mockup */}
+                <div 
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col justify-center min-h-[140px]"
+                >
+                  <div className="flex flex-wrap gap-2 justify-center items-center">
+                    {[
+                      { code: 'PPL', active: true },
+                      { code: 'IR', active: false },
+                      { code: 'CPL', active: false },
+                      { code: 'CFI', active: false },
+                      { code: 'CFII', active: false },
+                      { code: 'MEI', active: false }
+                    ].map((badge) => (
+                      <div
+                        key={badge.code}
+                        className="px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all"
+                        style={{
+                          backgroundColor: badge.active ? 'var(--navy)' : 'var(--bg-secondary)',
+                          color: badge.active ? 'white' : 'var(--text-muted)',
+                          borderColor: badge.active ? 'var(--navy)' : 'var(--border-color)'
+                        }}
+                      >
+                        {badge.code}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Every Rating in One App</h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  PPL through MEI, each with its own requirements, endorsements, and ACS.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 3: Endorsement Manager */}
+            <motion.div
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+              }}
+              whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+            >
+              <div>
+                {/* Miniature Mockup */}
+                <div 
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col gap-2 justify-center min-h-[140px]"
+                >
+                  {[
+                    { code: 'A.1', text: 'Pre-solo aeronautical knowledge' },
+                    { code: 'A.33', text: 'First solo flight endorsement §61.87(n)' },
+                    { code: 'A.34', text: 'Solo flight additional 90-day period' }
+                  ].map((row, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[8px] font-black px-1.5 py-0.5 rounded font-mono text-white shrink-0" style={{ backgroundColor: 'var(--navy)' }}>
+                          {row.code}
+                        </span>
+                        <span className="text-[9px] truncate max-w-[150px] font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          {row.text}
+                        </span>
+                      </div>
+                      <Check size={12} className="text-[var(--green)] shrink-0" />
+                    </div>
+                  ))}
+                </div>
+
+                <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Endorsement Manager</h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Every AC 61-65K endorsement, organized by phase and tracked per student.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 4: IACRA / 8710 Prep */}
+            <motion.div
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+              }}
+              whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+            >
+              <div>
+                {/* Miniature Mockup */}
+                <div 
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col justify-center gap-2 min-h-[140px]"
+                >
+                  <div className="space-y-1 w-full">
+                    {[
+                      { text: 'Ground & Flight Training Logged', checked: true },
+                      { text: 'CFI Sign-offs & Endorsements', checked: true },
+                      { text: '61.109 Hours Satisfied', checked: true },
+                      { text: 'Pre-Solo Test CFI Grade Recorded', checked: false }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-[9px] font-bold" style={{ color: item.checked ? 'var(--green)' : 'var(--text-muted)' }}>
+                          {item.checked ? '✓' : '○'}
+                        </span>
+                        <span className="text-[9px] font-medium truncate" style={{ color: item.checked ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                          {item.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-1 w-full py-1 text-center text-white text-[9px] font-bold rounded-lg uppercase tracking-wider flex items-center justify-center gap-1" style={{ backgroundColor: 'var(--green)' }}>
+                    <span>Open IACRA Summary</span>
+                    <ExternalLink size={10} />
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>IACRA / 8710 Prep</h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  A readiness checklist that hands off cleanly to the IACRA application.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 5: Student Progress Portal */}
+            <motion.div
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between md:col-span-2 md:max-w-xl md:mx-auto md:w-full"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+              }}
+              whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+            >
+              <div>
+                {/* Miniature Mockup */}
+                <div 
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex items-center justify-center gap-4 min-h-[140px]"
+                >
+                  {/* Decorative QR code matrix */}
+                  <div className="grid grid-cols-6 gap-0.5 bg-[var(--bg-secondary)] p-2 rounded-lg border border-[var(--border-color)]">
+                    {[
+                      1,1,1,0,1,1,
+                      1,0,0,1,0,1,
+                      1,0,1,1,1,0,
+                      0,1,1,0,0,1,
+                      1,0,1,0,1,1,
+                      1,1,0,1,0,1,
+                    ].map((val, idx) => (
+                      <div
+                        key={idx}
+                        className="w-2.5 h-2.5 rounded-[1px]"
+                        style={{
+                          backgroundColor: val === 1 ? 'var(--text-primary)' : 'transparent',
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-[var(--navy)] uppercase tracking-wider">Scan to view progress</span>
+                    <span className="text-[8px] font-medium text-[var(--text-muted)] italic">61tracker.com/s/student-portal</span>
+                    <div className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/25 text-[8px] font-black uppercase text-[var(--amber)] tracking-widest w-fit">
+                      Read Only Link
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Student Progress Portal</h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Share a QR or link so students see their hours, grades, and notes anytime, read-only.
+                </p>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </motion.div>
 
       {/* Supported Ratings Section */}
       <motion.div
