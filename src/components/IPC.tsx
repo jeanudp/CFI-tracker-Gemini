@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { IR_GROUND_ACS, IR_FLIGHT_ACS } from '../constants/irACS';
+import { AIRCRAFT_MODELS } from '../constants/aircraft';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronDown, 
@@ -38,6 +39,7 @@ export default function IPC() {
   const [lessonDate, setLessonDate] = useState(getLocalDateString());
   const [lessonNotes, setLessonNotes] = useState('');
   const [aircraft, setAircraft] = useState('');
+  const [showAircraftDropdown, setShowAircraftDropdown] = useState(false);
   
   const [groundCovered, setGroundCovered] = useState<Record<string, boolean>>({});
   const [flightCovered, setFlightCovered] = useState<Record<string, boolean>>({});
@@ -249,13 +251,49 @@ export default function IPC() {
           </div>
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft (Make & Model)</label>
-            <input
-              type="text"
-              value={aircraft}
-              onChange={(e) => setAircraft(e.target.value)}
-              placeholder="e.g. Cessna 172"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={aircraft}
+                onChange={(e) => {
+                  setAircraft(e.target.value);
+                  setShowAircraftDropdown(true);
+                }}
+                onFocus={() => setShowAircraftDropdown(true)}
+                onBlur={() => setTimeout(() => setShowAircraftDropdown(false), 150)}
+                placeholder="e.g. C-172, Cessna"
+                className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all"
+              />
+              {showAircraftDropdown && aircraft.trim() !== '' && (
+                <div className="absolute left-0 right-0 mt-1 bg-white border border-[#dde3ec] rounded-lg shadow-lg z-50 max-h-[240px] overflow-y-auto">
+                  {(() => {
+                    const filtered = AIRCRAFT_MODELS.filter(m => 
+                      m.toLowerCase().includes(aircraft.toLowerCase())
+                    );
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="px-3 py-2 text-xs italic text-[#94a3b8]">
+                          No matching models found
+                        </div>
+                      );
+                    }
+                    return filtered.slice(0, 50).map((model) => (
+                      <button
+                        key={model}
+                        type="button"
+                        onClick={() => {
+                          setAircraft(model);
+                          setShowAircraftDropdown(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs text-[#1c2333] hover:bg-[#7c3aed]/10 hover:text-[#7c3aed] transition-colors cursor-pointer"
+                      >
+                        {model}
+                      </button>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Date</label>
