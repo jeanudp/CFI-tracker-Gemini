@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { parseMetar } from "metar-taf-parser";
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -270,10 +270,6 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetchUpcomingLessons();
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem('dark_mode', darkMode.toString());
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -467,7 +463,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchUpcomingLessons = async () => {
+  const fetchUpcomingLessons = useCallback(async () => {
     setUpcomingLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -491,7 +487,7 @@ export default function Dashboard() {
     } finally {
       setUpcomingLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const fetchDayLessons = async () => {
@@ -613,7 +609,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchLessonRequests = async () => {
+  const fetchLessonRequests = useCallback(async () => {
     setLessonRequestsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -630,7 +626,35 @@ export default function Dashboard() {
     } finally {
       setLessonRequestsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUpcomingLessons();
+  }, [fetchUpcomingLessons]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      fetchUpcomingLessons();
+      fetchLessonRequests();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleRefresh();
+      }
+    };
+
+    window.addEventListener('focus', handleRefresh);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const intervalId = setInterval(handleRefresh, 60000);
+
+    return () => {
+      window.removeEventListener('focus', handleRefresh);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(intervalId);
+    };
+  }, [fetchUpcomingLessons, fetchLessonRequests]);
 
   const fetchData = async () => {
     setLoading(true);
