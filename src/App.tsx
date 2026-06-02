@@ -10,6 +10,7 @@ import LessonType from './components/LessonType';
 import RatingSelection from './components/RatingSelection';
 import GroundLesson from './components/GroundLesson';
 import FlightLesson from './components/FlightLesson';
+import FlightReview from './components/FlightReview';
 import History from './components/History';
 import StudentDashboard from './components/StudentDashboard';
 import StudentView from './components/StudentView';
@@ -248,6 +249,20 @@ export default function App() {
               <Layout user={session.user}>
                 <PageTransition>
                   <FlightLesson />
+                </PageTransition>
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route
+          path="/flight-review"
+          element={
+            session ? (
+              <Layout user={session.user}>
+                <PageTransition>
+                  <FlightReview />
                 </PageTransition>
               </Layout>
             ) : (

@@ -63,6 +63,7 @@ export interface LessonMeta {
   amelPic?: string;
   complex?: boolean;
   overallGrade?: string;
+  bfr_endorsed?: boolean;
   lessonType?: string;
   studentActedAsSafetyPilot?: boolean;
   safetyPilotPic?: string;
@@ -73,7 +74,7 @@ export interface Lesson {
   id: string;
   user_id: string;
   student_name: string;
-  type: 'ground' | 'flight';
+  type: 'ground' | 'flight' | 'flight_review';
   lesson_num: number;
   label: string;
   instructor: string;

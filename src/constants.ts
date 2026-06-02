@@ -1207,3 +1207,407 @@ export const ALL_GROUND_ACS: Record<string, ACSArea[]> = {
   mei_addon: MEI_ADDON_GROUND_ACS,
   mei_initial: MEI_ADDON_GROUND_ACS
 };
+
+export const BFR_GROUND_AREAS: ACSArea[] = [
+  {
+    area: "I. Part 91 Review",
+    tasks: [
+      {
+        name: "Review of §91 Subpart B — General Operating & Flight Rules",
+        code: "BFR.G.I.A",
+        references: "14 CFR Part 91; AC 61-98E",
+        objective: "Review applicable Part 91 operating rules relevant to the pilot's operations.",
+        stds: []
+      },
+      {
+        name: "FAA English Language Standard (AELS)",
+        code: "BFR.G.I.B",
+        references: "14 CFR §61.56; AC 61-98E",
+        objective: "Verify pilot meets the FAA English language standard.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "II. Pilot",
+    tasks: [
+      {
+        name: "Recent Flight Experience Requirements (§61.57)",
+        code: "BFR.G.II.A",
+        references: "14 CFR §61.57; AC 61-98E",
+        objective: "Review currency requirements and recency of experience for acting as PIC.",
+        stds: []
+      },
+      {
+        name: "Pilot Authority & Responsibility",
+        code: "BFR.G.II.B",
+        references: "14 CFR §91.3; AC 61-98E",
+        objective: "Review PIC authority, responsibility, and decision-making obligations.",
+        stds: []
+      },
+      {
+        name: "Preflight Action Requirements",
+        code: "BFR.G.II.C",
+        references: "14 CFR §91.103; AC 61-98E",
+        objective: "Review required preflight action including weather, NOTAMs, and performance.",
+        stds: []
+      },
+      {
+        name: "Fitness for Flight — Alcohol, Drugs & Medical",
+        code: "BFR.G.II.D",
+        references: "14 CFR §91.17; AC 61-98E",
+        objective: "Review regulatory limits on alcohol and drugs and the pilot's fitness obligations.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "III. Aircraft",
+    tasks: [
+      {
+        name: "Airworthiness Requirements (ARROW Documents)",
+        code: "BFR.G.III.A",
+        references: "14 CFR §§91.9, 91.203; AC 61-98E",
+        objective: "Review airworthiness certificate, registration, operating limitations, weight and balance, and equipment list.",
+        stds: []
+      },
+      {
+        name: "Required Instruments & Equipment",
+        code: "BFR.G.III.B",
+        references: "14 CFR §91.205; AC 61-98E",
+        objective: "Review VFR and IFR equipment requirements and inoperative equipment procedures.",
+        stds: []
+      },
+      {
+        name: "Maintenance & Inspection Requirements",
+        code: "BFR.G.III.C",
+        references: "14 CFR §§91.409–91.417; AC 61-98E",
+        objective: "Review required inspections, airworthiness directives, and maintenance recordkeeping.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "IV. Environment",
+    tasks: [
+      {
+        name: "Airport Markings, Signs & Traffic Patterns",
+        code: "BFR.G.IV.A",
+        references: "AIM; AC 61-98E",
+        objective: "Review airport surface markings, signs, lighting, and standard traffic pattern procedures.",
+        stds: []
+      },
+      {
+        name: "Airspace Types & Weather Minimums",
+        code: "BFR.G.IV.B",
+        references: "14 CFR Part 71; AIM; AC 61-98E",
+        objective: "Review airspace classifications, entry requirements, and applicable VFR weather minimums.",
+        stds: []
+      },
+      {
+        name: "ATC Procedures & Radio Communications",
+        code: "BFR.G.IV.C",
+        references: "AIM; AC 61-98E",
+        objective: "Review standard ATC phraseology, frequency usage, and lost communications procedures.",
+        stds: []
+      },
+      {
+        name: "Weather Services & Go/No-Go Decision-Making",
+        code: "BFR.G.IV.D",
+        references: "AC 00-6; AC 00-45; AC 61-98E",
+        objective: "Review available weather products and the pilot's weather decision-making process.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "V. External Pressures",
+    tasks: [
+      {
+        name: "Personal Minimums",
+        code: "BFR.G.V.A",
+        references: "FAA-H-8083-2; AC 61-98E",
+        objective: "Review the concept of personal minimums and how to establish and apply them.",
+        stds: []
+      },
+      {
+        name: "Risk Management — 3-P Model (Perceive / Process / Perform)",
+        code: "BFR.G.V.B",
+        references: "FAA-H-8083-2; AC 61-98E",
+        objective: "Review the 3-P risk management model and its application to flight decisions.",
+        stds: []
+      },
+      {
+        name: "PAVE Checklist",
+        code: "BFR.G.V.C",
+        references: "FAA-H-8083-2; AC 61-98E",
+        objective: "Review the PAVE checklist: Pilot, Aircraft, enVironment, External pressures.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "VI. Cross-Country Planning & Weather",
+    tasks: [
+      {
+        name: "Cross-Country Flight Plan Review",
+        code: "BFR.G.VI.A",
+        references: "14 CFR §91.103; FAA-H-8083-25; AC 61-98E",
+        objective: "Review a pre-assigned cross-country flight plan including route, altitudes, fuel, and performance.",
+        stds: []
+      },
+      {
+        name: "Weather Analysis & Decision-Making",
+        code: "BFR.G.VI.B",
+        references: "AC 00-6; AC 00-45; AC 61-98E",
+        objective: "Analyze weather for the planned cross-country and evaluate the go/no-go decision.",
+        stds: []
+      },
+      {
+        name: "Diversion Planning",
+        code: "BFR.G.VI.C",
+        references: "FAA-H-8083-25; AC 61-98E",
+        objective: "Review diversion procedures including alternate selection, fuel considerations, and ATC coordination.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "VII. GA Security",
+    tasks: [
+      {
+        name: "TFRs & NOTAMs",
+        code: "BFR.G.VII.A",
+        references: "14 CFR §91.137; AIM; AC 61-98E",
+        objective: "Review Temporary Flight Restriction awareness and NOTAM interpretation.",
+        stds: []
+      },
+      {
+        name: "Aircraft & Airport Security",
+        code: "BFR.G.VII.B",
+        references: "49 CFR Part 1550; AIM; AC 61-98E",
+        objective: "Review general aviation security responsibilities including aircraft security and suspicious activity reporting.",
+        stds: []
+      }
+    ]
+  }
+];
+
+export const BFR_FLIGHT_AREAS: ACSArea[] = [
+  {
+    area: "I. Preflight & Departure",
+    tasks: [
+      {
+        name: "Preflight Inspection & Cockpit Management",
+        code: "BFR.F.I.A",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Assess pilot's preflight inspection thoroughness and cockpit organization.",
+        stds: []
+      },
+      {
+        name: "Engine Start, Taxi & Runup",
+        code: "BFR.F.I.B",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Observe engine start procedure, taxi technique, and before-takeoff runup.",
+        stds: []
+      },
+      {
+        name: "Airport Operations & Radio Communications",
+        code: "BFR.F.I.C",
+        references: "AIM; FAA-H-8083-3; AC 61-98E",
+        objective: "Evaluate airport surface operations, radio communications, and situational awareness.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "II. Takeoffs & Landings",
+    tasks: [
+      {
+        name: "Normal Takeoff & Climb",
+        code: "BFR.F.II.A",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E §4.3.5.4",
+        objective: "Evaluate takeoff technique, directional control, and climb performance.",
+        stds: []
+      },
+      {
+        name: "Stabilized Approach & Landing",
+        code: "BFR.F.II.B",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E §4.3.5.4",
+        objective: "Evaluate approach stabilization criteria and landing technique.",
+        stds: []
+      },
+      {
+        name: "Crosswind Takeoff & Landing",
+        code: "BFR.F.II.C",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate crosswind technique during takeoff and landing.",
+        stds: []
+      },
+      {
+        name: "Short-Field / Soft-Field Operations",
+        code: "BFR.F.II.D",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate performance takeoff and landing techniques as applicable.",
+        stds: []
+      },
+      {
+        name: "Go-Around / Rejected Landing",
+        code: "BFR.F.II.E",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate go-around decision-making and execution.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "III. Performance Maneuvers",
+    tasks: [
+      {
+        name: "Steep Turns",
+        code: "BFR.F.III.A",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate steep turn technique, coordination, and altitude control.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "IV. Navigation",
+    tasks: [
+      {
+        name: "Pilotage & Dead Reckoning",
+        code: "BFR.F.IV.A",
+        references: "FAA-H-8083-25; Navigation Charts; AC 61-98E",
+        objective: "Evaluate the pilot's ability to navigate using visual references and dead reckoning techniques.",
+        stds: []
+      },
+      {
+        name: "Navigation Systems Usage",
+        code: "BFR.F.IV.B",
+        references: "FAA-H-8083-3; FAA-H-8083-25; AC 61-98E",
+        objective: "Evaluate appropriate use of navigation systems including GPS and automation.",
+        stds: []
+      },
+      {
+        name: "Diversion",
+        code: "BFR.F.IV.C",
+        references: "FAA-H-8083-25; Navigation Charts; AC 61-98E",
+        objective: "Evaluate the pilot's ability to divert to an alternate airport and manage fuel and time.",
+        stds: []
+      },
+      {
+        name: "Lost Procedures",
+        code: "BFR.F.IV.D",
+        references: "FAA-H-8083-25; AIM; AC 61-98E",
+        objective: "Evaluate the pilot's response to becoming lost including ATC coordination.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "V. Slow Flight & Stalls",
+    tasks: [
+      {
+        name: "Maneuvering During Slow Flight",
+        code: "BFR.F.V.A",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E §4.3.5.4",
+        objective: "Evaluate aircraft control at minimum controllable airspeed.",
+        stds: []
+      },
+      {
+        name: "Stall Recognition & Recovery",
+        code: "BFR.F.V.B",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E §4.3.5.4",
+        objective: "Evaluate stall recognition at first indication and recovery technique.",
+        stds: []
+      },
+      {
+        name: "Spin Awareness & Avoidance",
+        code: "BFR.F.V.C",
+        references: "FAA-H-8083-3; AC 61-67; AC 61-98E §4.3.5.4",
+        objective: "Evaluate spin awareness and understanding of avoidance and recovery.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "VI. Basic Instrument Maneuvers",
+    tasks: [
+      {
+        name: "Straight-and-Level Flight (Sole Reference to Instruments)",
+        code: "BFR.F.VI.A",
+        references: "FAA-H-8083-15; AC 61-98E §4.3.5.4",
+        objective: "Evaluate aircraft control using instruments only, without outside visual reference.",
+        stds: []
+      },
+      {
+        name: "Turns to Headings",
+        code: "BFR.F.VI.B",
+        references: "FAA-H-8083-15; AC 61-98E §4.3.5.4",
+        objective: "Evaluate standard-rate turns to assigned headings by sole reference to instruments.",
+        stds: []
+      },
+      {
+        name: "Recovery from Unusual Attitudes",
+        code: "BFR.F.VI.C",
+        references: "FAA-H-8083-15; AC 61-98E §4.3.5.4",
+        objective: "Evaluate correct recognition and recovery from unusual flight attitudes by sole reference to instruments.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "VII. Emergency Operations",
+    tasks: [
+      {
+        name: "Emergency Approach & Landing",
+        code: "BFR.F.VII.A",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate simulated engine failure response and emergency landing site selection.",
+        stds: []
+      },
+      {
+        name: "Systems & Equipment Malfunctions",
+        code: "BFR.F.VII.B",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate response to simulated system or equipment failures.",
+        stds: []
+      },
+      {
+        name: "Automation Failure Response",
+        code: "BFR.F.VII.C",
+        references: "FAA-H-8083-3; POH/AFM; AC 61-98E",
+        objective: "Evaluate pilot's ability to manage an automation or avionics failure.",
+        stds: []
+      }
+    ]
+  },
+  {
+    area: "VIII. Aeronautical Decision-Making",
+    tasks: [
+      {
+        name: "ADM & Risk Management",
+        code: "BFR.F.VIII.A",
+        references: "FAA-H-8083-2; AC 61-98E",
+        objective: "Evaluate aeronautical decision-making quality and risk management throughout the flight.",
+        stds: []
+      },
+      {
+        name: "Single-Pilot Resource Management (SRM)",
+        code: "BFR.F.VIII.B",
+        references: "FAA-H-8083-2; AC 61-98E",
+        objective: "Evaluate effective use of all available resources including automation and ATC.",
+        stds: []
+      },
+      {
+        name: "Postflight Debrief & Personal Minimums Review",
+        code: "BFR.F.VIII.C",
+        references: "AC 61-98E",
+        objective: "Conduct postflight debrief and review or establish personal minimums going forward.",
+        stds: []
+      }
+    ]
+  }
+];
+
