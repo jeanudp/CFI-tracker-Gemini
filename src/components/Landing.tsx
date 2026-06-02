@@ -498,24 +498,31 @@ export default function Landing() {
               <div>
                 {/* Miniature Mockup */}
                 <div 
-                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col justify-center gap-2 min-h-[140px]"
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-3 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col justify-center gap-2 min-h-[140px]"
                 >
-                  <div className="space-y-1 w-full">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[var(--text-primary)]">FAA 8710 — Hours</span>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/25 text-[var(--green)] uppercase tracking-wide">Auto-filled</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[8px] sm:text-[9px] border-b border-t py-1.5" style={{ borderColor: 'var(--border-color)' }}>
                     {[
-                      { text: 'Ground & Flight Training Logged', checked: true },
-                      { text: 'CFI Sign-offs & Endorsements', checked: true },
-                      { text: '61.109 Hours Satisfied', checked: true },
-                      { text: 'Pre-Solo Test CFI Grade Recorded', checked: false }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold" style={{ color: item.checked ? 'var(--green)' : 'var(--text-muted)' }}>
-                          {item.checked ? '✓' : '○'}
-                        </span>
-                        <span className="text-[9px] font-medium truncate" style={{ color: item.checked ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                          {item.text}
-                        </span>
+                      { label: 'Total Time', val: '58.4' },
+                      { label: 'PIC', val: '32.1' },
+                      { label: 'Dual Received', val: '41.2' },
+                      { label: 'Cross-Country', val: '12.6' },
+                      { label: 'Night', val: '5.3' },
+                      { label: 'Simulated Instrument', val: '8.0' }
+                    ].map((row, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-0.5">
+                        <span style={{ color: 'var(--text-secondary)' }} className="truncate max-w-[85px]">{row.label}</span>
+                        <span style={{ color: 'var(--text-primary)' }} className="font-mono font-bold tracking-tight">{row.val}</span>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="text-[8px] text-center" style={{ color: 'var(--text-muted)' }}>
+                    Totaled automatically from logged lessons.
                   </div>
 
                   <div className="mt-1 w-full py-1 text-center text-white text-[9px] font-bold rounded-lg uppercase tracking-wider flex items-center justify-center gap-1" style={{ backgroundColor: 'var(--green)' }}>
@@ -526,7 +533,7 @@ export default function Landing() {
 
                 <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>IACRA / 8710 Prep</h3>
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  A readiness checklist that hands off cleanly to the IACRA application.
+                  Your logged hours flow straight into the IACRA 8710 — totals tallied automatically, ready to submit.
                 </p>
               </div>
             </motion.div>

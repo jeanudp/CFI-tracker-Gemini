@@ -480,7 +480,7 @@ export default function Dashboard() {
         .gte('date', today)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true })
-        .limit(5);
+        .limit(50);
       setUpcomingLessons(data || []);
     } catch (err: any) {
       console.error('Error fetching upcoming lessons:', err);
@@ -2029,53 +2029,75 @@ export default function Dashboard() {
               </div>
             </button>
 
-            <div className={upcomingLessons.length > 0 ? "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4" : "space-y-4"}>
-              {upcomingLessons.length > 0 ? (
-                (() => {
-                  const grouped = upcomingLessons.reduce((groups: any[], lesson: any) => {
-                    const date = lesson.date;
-                    const existingGroup = groups.find(g => g.date === date);
-                    if (existingGroup) {
-                      existingGroup.lessons.push(lesson);
-                    } else {
-                      groups.push({ date, lessons: [lesson] });
-                    }
-                    return groups;
-                  }, []);
+            <div>
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
 
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const tomorrow = new Date(today);
-                  tomorrow.setDate(tomorrow.getDate() + 1);
+                const parseLocalDate = (dateStr: string) => {
+                  const parts = dateStr.split('-');
+                  if (parts.length !== 3) return new Date(dateStr);
+                  return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                };
 
-                  return grouped.map((group) => {
-                    const dateObj = new Date(group.date);
-                    dateObj.setHours(0, 0, 0, 0);
-                    let dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-                    if (dateObj.getTime() === today.getTime()) dateLabel = "Today";
-                    else if (dateObj.getTime() === tomorrow.getTime()) dateLabel = "Tomorrow";
+                // Split upcomingLessons into Today and Next nearest day:
+                const todayLessons = upcomingLessons.filter(lesson => {
+                  const lDate = parseLocalDate(lesson.date);
+                  return lDate.getTime() === today.getTime();
+                });
 
-                    return (
-                      <div key={group.date}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-bold" style={{ color: 'var(--text-primary)' }}>{dateLabel}</span>
-                          <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{group.lessons.length} {group.lessons.length === 1 ? 'lesson' : 'lessons'}</span>
-                        </div>
-                        <div className="h-px w-full mb-1" style={{ backgroundColor: 'var(--border-color)' }} />
+                const futureLessons = upcomingLessons.filter(lesson => {
+                  const lDate = parseLocalDate(lesson.date);
+                  return lDate.getTime() > today.getTime();
+                });
+
+                // Find the next nearest day that has lessons:
+                let nextDayStr: string | null = null;
+                let nextDayLabel = "Upcoming Lessons";
+                const uniqueDates = Array.from(new Set<string>(futureLessons.map((l: any) => l.date))).sort();
+                if (uniqueDates.length > 0) {
+                  nextDayStr = uniqueDates[0];
+                  const nextDateObj = parseLocalDate(nextDayStr);
+                  if (nextDateObj.getTime() === tomorrow.getTime()) {
+                    nextDayLabel = "Tomorrow";
+                  } else {
+                    nextDayLabel = nextDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                  }
+                }
+
+                const nextDayLessons = nextDayStr ? futureLessons.filter(l => l.date === nextDayStr) : [];
+
+                const ratingAccents: Record<string, string> = {
+                  ppl: '#1a3a5c',
+                  ir: '#7c3aed',
+                  cpl: '#2d7a4f',
+                  cpl_amel: '#38a169',
+                  cfi: '#e67e22',
+                  cfii: '#16a34a',
+                  mei: '#c0392b',
+                  mei_addon: '#e85d4a',
+                  mei_initial: '#8b1a0f',
+                };
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    {/* Left Column: Today */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Today</span>
+                        <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                          {todayLessons.length} {todayLessons.length === 1 ? 'lesson' : 'lessons'}
+                        </span>
+                      </div>
+                      <div className="h-px w-full mb-2" style={{ backgroundColor: 'var(--border-color)' }} />
+                      
+                      {todayLessons.length > 0 ? (
                         <div className="space-y-px">
-                          {group.lessons.map((lesson: any) => {
+                          {todayLessons.map((lesson: any) => {
                             const student = students.find(s => s.name === lesson.student_name);
-                            const ratingAccents: Record<string, string> = {
-                              ppl: '#1a3a5c',
-                              ir: '#7c3aed',
-                              cpl: '#2d7a4f',
-                              cpl_amel: '#38a169',
-                              cfi: '#e67e22',
-                              cfii: '#16a34a',
-                              mei: '#c0392b',
-                              mei_addon: '#e85d4a',
-                              mei_initial: '#8b1a0f',
-                            };
                             const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
                             
                             return (
@@ -2098,15 +2120,60 @@ export default function Dashboard() {
                             );
                           })}
                         </div>
+                      ) : (
+                        <div className="py-4 text-center px-2 bg-[var(--bg-tertiary)]/30 rounded-xl border border-dashed" style={{ borderColor: 'var(--border-color)' }}>
+                          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No lessons today</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Column: Next day */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>{nextDayLabel}</span>
+                        {nextDayStr && (
+                          <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                            {nextDayLessons.length} {nextDayLessons.length === 1 ? 'lesson' : 'lessons'}
+                          </span>
+                        )}
                       </div>
-                    );
-                  });
-                })()
-              ) : (
-                <div className="py-8 text-center px-4 md:col-span-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No upcoming lessons</p>
-                </div>
-              )}
+                      <div className="h-px w-full mb-2" style={{ backgroundColor: 'var(--border-color)' }} />
+                      
+                      {nextDayLessons.length > 0 ? (
+                        <div className="space-y-px">
+                          {nextDayLessons.map((lesson: any) => {
+                            const student = students.find(s => s.name === lesson.student_name);
+                            const accent = student ? (ratingAccents[student.current_rating] || '#2563eb') : '#2563eb';
+                            
+                            return (
+                              <div key={lesson.id} className="flex items-center gap-3 py-1 px-2 rounded-lg transition-colors hover:bg-[var(--bg-tertiary)] group">
+                                <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: accent }} />
+                                <div className="flex items-center min-w-0">
+                                  <span className="text-[13px] font-bold w-12 mr-3 shrink-0 tabular-nums" style={{ color: 'var(--text-primary)' }}>{lesson.start_time?.substring(0, 5)}</span>
+                                  <span className="text-[13px] font-semibold truncate w-36 shrink-0 mr-2" style={{ color: 'var(--text-primary)' }}>{lesson.student_name}</span>
+                                  <div className="shrink-0">
+                                    {lesson.tail_number === 'GROUND' ? (
+                                      <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>Ground</span>
+                                    ) : lesson.tail_number ? (
+                                      <span className="text-[9px] font-black uppercase tracking-tight text-white px-1.5 py-0.5 rounded-sm" style={{ backgroundColor: 'var(--navy)' }}>
+                                        {lesson.tail_number}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="py-4 text-center px-2 bg-[var(--bg-tertiary)]/30 rounded-xl border border-dashed" style={{ borderColor: 'var(--border-color)' }}>
+                          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>No upcoming lessons</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             {upcomingLessons.length > 0 && (
               <div className="mt-4 pt-2 border-t" style={{ borderColor: 'var(--border-color)' }}>
