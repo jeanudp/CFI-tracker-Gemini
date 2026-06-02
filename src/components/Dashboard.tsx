@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, ShieldCheck, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
@@ -841,19 +841,6 @@ export default function Dashboard() {
     }));
     localStorage.setItem('faa_student_info', JSON.stringify({ student: selectedStudent.name }));
     navigate('/lesson-type');
-  };
-
-  const handleStartBFR = () => {
-    if (!selectedStudent) return;
-
-    localStorage.removeItem('faa_ground_grades');
-    localStorage.removeItem('faa_ground_notes');
-    localStorage.removeItem('faa_flight_grades');
-    localStorage.removeItem('faa_flight_notes');
-    localStorage.removeItem('current_lesson_id');
-    localStorage.setItem('sb_selected_student', selectedStudent.name);
-    localStorage.setItem('faa_student_info', JSON.stringify({ student: selectedStudent.name }));
-    navigate('/flight-review');
   };
 
   const handleDeleteStudent = async (studentId: string, studentName: string) => {
@@ -2893,15 +2880,6 @@ export default function Dashboard() {
                 >
                   <Plane size={18} />
                   Log a Lesson →
-                </button>
-                <button
-                  onClick={handleStartBFR}
-                  className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs hover:-translate-y-0.5 hover:shadow-md"
-                  style={{ backgroundColor: 'rgba(232,160,32,0.05)', color: '#e8a020', borderColor: 'rgba(232,160,32,0.3)' }}
-                >
-                  <ShieldCheck size={18} />
-                  <span className="hidden sm:inline">Flight Review</span>
-                  <span className="sm:hidden">BFR</span>
                 </button>
                 <Link
                   to={`/iacra/${encodeURIComponent(selectedStudent.name)}`}

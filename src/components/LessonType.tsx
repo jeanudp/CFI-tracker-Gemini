@@ -76,7 +76,7 @@ export default function LessonType() {
         <p className="text-sm text-[#6b7280]">Choose the type of lesson for this session</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl mb-10">
         <motion.div
           whileHover={{ y: -3 }}
           onClick={() => handleSelectType('ground')}
@@ -114,26 +114,25 @@ export default function LessonType() {
             Areas II–{acsData.length > 0 ? (acsData.length === 2 ? 'II' : String.fromCharCode(73 + flightAreas - 1)) : 'XII'} · {flightTasks} tasks
           </div>
         </motion.div>
-
-        <motion.div
-          whileHover={{ y: -3 }}
-          onClick={() => handleSelectType('bfr')}
-          className="bg-white rounded-2xl border-2 border-[#dde3ec] shadow-lg p-5 sm:p-8 text-center cursor-pointer hover:border-[#e8a020] hover:shadow-xl transition-all flex flex-col items-center gap-4"
-        >
-          <div className="w-16 h-16 rounded-2xl bg-[#fef3d4] text-[#e8a020] flex items-center justify-center text-3xl">
-            <ShieldCheck size={30} />
-          </div>
-          <div>
-            <div className="text-xl font-bold text-[#1c2333] mb-1">Flight Review</div>
-            <p className="text-xs text-[#6b7280] leading-relaxed">
-              BFR — §61.56 ground and flight review for existing certificated pilots, independent of current rating
-            </p>
-          </div>
-          <div className="text-[10px] font-mono text-[#6b7280] bg-[#f4f5f7] px-3 py-1 rounded-full uppercase tracking-wider">
-            §61.56 — Rating Independent
-          </div>
-        </motion.div>
       </div>
+
+      {/* Flight Review (BFR) Secondary Option Row */}
+      <motion.div
+        whileHover={{ y: -1 }}
+        onClick={() => handleSelectType('bfr')}
+        className="w-full max-w-2xl mb-10 p-3 bg-white border border-[#dde3ec] hover:border-[#e8a020]/40 hover:bg-[#fff9eb]/20 rounded-xl flex items-center justify-between cursor-pointer transition-all gap-3"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[#fef3d4] text-[#e8a020] flex items-center justify-center shrink-0">
+            <ShieldCheck size={18} />
+          </div>
+          <div className="text-left">
+            <h3 className="text-xs font-bold text-[#1c2333]">Flight Review (§61.56 BFR)</h3>
+            <p className="text-[10px] text-[#6b7280] font-medium leading-normal">Rating independent — not required for active training</p>
+          </div>
+        </div>
+        <ChevronRight size={14} className="text-[#94a3b8]" />
+      </motion.div>
 
       <Link to="/dashboard" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
         ← Back to Home
