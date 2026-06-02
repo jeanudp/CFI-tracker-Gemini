@@ -91,6 +91,22 @@ const ALL_ENDORSEMENTS: Record<string, EndorsementDef[]> = {
     { key: 'A.2', title: 'Review of deficiencies identified on knowledge test', ref: '14 CFR § 61.39(a)(6)(iii)', template: 'I certify that {First name, MI, Last name} has demonstrated satisfactory knowledge of the subject areas in which they were deficient on the {applicable} airman knowledge test.', group: 'Practical Test' },
     { key: 'A.47', title: 'Flight instructor ground and flight proficiency / practical test', ref: '14 CFR § 61.183(g)', template: 'I certify that {First name, MI, Last name} has received the required ground and flight training of 14 CFR § 61.187. I have determined they are prepared for the {name of} flight instructor practical test.', group: 'Practical Test' },
   ],
+  flight_review: [
+    {
+      key: "A.69",
+      title: "Completion of a flight review",
+      ref: "14 CFR § 61.56(a) and (c)",
+      template: "I certify that {First name, MI, Last name}, {grade of pilot certificate}, {certificate number}, has satisfactorily completed a flight review of 14 CFR § 61.56(a) on {date}."
+    }
+  ],
+  ipc: [
+    {
+      key: "A.71",
+      title: "Completion of an instrument proficiency check (IPC)",
+      ref: "14 CFR § 61.57(d)",
+      template: "I certify that {First name, MI, Last name}, {grade of pilot certificate}, {certificate number}, has satisfactorily completed the instrument proficiency check of 14 CFR § 61.57(d) in a {make and model} aircraft on {date}."
+    }
+  ],
 };
 
 const RATING_LABELS: Record<string, string> = {
@@ -101,6 +117,8 @@ const RATING_LABELS: Record<string, string> = {
   cfii: 'CFII',
   mei: 'MEI',
   cpl_amel: 'CPL AMEL Add-On',
+  flight_review: "Flight Review (§61.56)",
+  ipc: "Instrument Proficiency Check (§61.57)",
 };
 
 function parseTemplate(template: string): { type: 'text' | 'field'; value: string }[] {
