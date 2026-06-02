@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import EndorsementPrinter from './EndorsementPrinter';
+import AircraftPicker from './AircraftPicker';
 
 export default function FlightReview() {
   const navigate = useNavigate();
@@ -36,6 +37,13 @@ export default function FlightReview() {
   const [instructorName, setInstructorName] = useState('');
   const [lessonDate, setLessonDate] = useState(getLocalDateString());
   const [lessonNotes, setLessonNotes] = useState('');
+  const [aircraft, setAircraft] = useState({
+    tailNumber: '',
+    model: '',
+    icao: '',
+    aircraftClass: 'ASEL' as 'ASEL' | 'AMEL',
+    complex: false
+  });
   
   const [groundCovered, setGroundCovered] = useState<Record<string, boolean>>({});
   const [flightCovered, setFlightCovered] = useState<Record<string, boolean>>({});
@@ -112,6 +120,13 @@ export default function FlightReview() {
     setGroundNotes({});
     setFlightNotes({});
     setLessonNotes('');
+    setAircraft({
+      tailNumber: '',
+      model: '',
+      icao: '',
+      aircraftClass: 'ASEL',
+      complex: false
+    });
     setLessonDate(getLocalDateString());
     setOverallGrade('');
   };
@@ -161,7 +176,12 @@ export default function FlightReview() {
         date: lessonDate,
         notes: lessonNotes,
         overallGrade,
-        bfr_endorsed: overallGrade === 'S'
+        bfr_endorsed: overallGrade === 'S',
+        aircraft: aircraft.tailNumber,
+        aircraftModel: aircraft.model,
+        aircraftIcao: aircraft.icao,
+        aircraftClass: aircraft.aircraftClass,
+        complex: aircraft.complex
       }
     };
 
@@ -177,6 +197,29 @@ export default function FlightReview() {
           .eq('user_id', session.user.id);
         
         if (updateError) throw updateError;
+      }
+
+      if (aircraft.tailNumber && aircraft.model) {
+        const { error: aircraftError } = await supabase
+          .from('saved_aircraft')
+          .upsert({
+            user_id: session.user.id,
+            tail_number: aircraft.tailNumber.toUpperCase().trim(),
+            aircraft_model: aircraft.model.trim(),
+            aircraft_icao: aircraft.icao || '',
+            aircraft_class: aircraft.aircraftClass || 'ASEL',
+            complex: aircraft.complex === true,
+            last_used: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            use_count: 1
+          }, {
+            onConflict: 'user_id,tail_number',
+            ignoreDuplicates: false
+          });
+
+        if (aircraftError) {
+          console.error('Failed to save aircraft:', aircraftError);
+        }
       }
 
       navigate('/history');
@@ -245,6 +288,10 @@ export default function FlightReview() {
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />
           </div>
+        </div>
+        <div className="border-t border-[#dde3ec] my-4 pt-4 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft</label>
+          <AircraftPicker value={aircraft} onChange={setAircraft} accentColor="#2a5a8c" />
         </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Review Notes</label>
