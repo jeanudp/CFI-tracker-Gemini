@@ -167,9 +167,9 @@ export default function LessonType() {
                 <button
                   type="button"
                   onClick={() => navigate('/ipc')}
-                  className="w-full p-4 bg-white border border-[#dde3ec] hover:border-[#7c3aed] hover:bg-[#fbfaff] rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all gap-2"
+                  className="w-full p-4 bg-white border border-[#dde3ec] hover:border-[#0ea5e9] hover:bg-[#fbfaff] rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all gap-2"
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#f3effd] text-[#7c3aed] flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#f3effd] text-[#0ea5e9] flex items-center justify-center shrink-0">
                     <Compass size={16} />
                   </div>
                   <div>

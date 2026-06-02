@@ -210,7 +210,7 @@ export default function IPC() {
             <span className="text-[#1a3a5c]">IPC (§61.57)</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#7c3aed] rounded-lg flex items-center justify-center text-white text-xl font-bold">
+            <div className="w-10 h-10 bg-[#0ea5e9] rounded-lg flex items-center justify-center text-white text-xl font-bold">
               <Compass size={22} />
             </div>
             <div>
@@ -246,7 +246,7 @@ export default function IPC() {
               value={instructorName}
               onChange={(e) => setInstructorName(e.target.value)}
               placeholder="Instructor name"
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all"
+              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all"
             />
           </div>
           <div className="space-y-1.5">
@@ -262,7 +262,7 @@ export default function IPC() {
                 onFocus={() => setShowAircraftDropdown(true)}
                 onBlur={() => setTimeout(() => setShowAircraftDropdown(false), 150)}
                 placeholder="e.g. C-172, Cessna"
-                className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all"
+                className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all"
               />
               {showAircraftDropdown && aircraft.trim() !== '' && (
                 <div className="absolute left-0 right-0 mt-1 bg-white border border-[#dde3ec] rounded-lg shadow-lg z-50 max-h-[240px] overflow-y-auto">
@@ -285,7 +285,7 @@ export default function IPC() {
                           setAircraft(model);
                           setShowAircraftDropdown(false);
                         }}
-                        className="w-full px-3 py-2 text-left text-xs text-[#1c2333] hover:bg-[#7c3aed]/10 hover:text-[#7c3aed] transition-colors cursor-pointer"
+                        className="w-full px-3 py-2 text-left text-xs text-[#1c2333] hover:bg-[#0ea5e9]/10 hover:text-[#0ea5e9] transition-colors cursor-pointer"
                       >
                         {model}
                       </button>
@@ -301,7 +301,7 @@ export default function IPC() {
               type="date"
               value={lessonDate}
               onChange={(e) => setLessonDate(e.target.value)}
-              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all"
+              className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all"
             />
           </div>
         </div>
@@ -312,7 +312,7 @@ export default function IPC() {
             onChange={(e) => setLessonNotes(e.target.value)}
             placeholder="General instrument proficiency check notes..."
             rows={2}
-            className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#7c3aed] transition-all resize-none"
+            className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all resize-none"
           />
         </div>
       </div>
@@ -333,7 +333,7 @@ export default function IPC() {
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
         <button
           onClick={() => setGroundExpanded(prev => !prev)}
-          className="w-full bg-[#7c3aed] text-white px-5 py-4 font-bold flex justify-between items-center hover:bg-[#7c3aed]/95 transition-colors text-left"
+          className="w-full bg-[#0ea5e9] text-white px-5 py-4 font-bold flex justify-between items-center hover:bg-[#0ea5e9]/95 transition-colors text-left"
         >
           <div className="flex items-center gap-3">
             <BookOpen size={20} className="text-white" />
@@ -365,7 +365,7 @@ export default function IPC() {
                 {IR_GROUND_ACS.map((area) => {
                   return (
                     <React.Fragment key={area.area}>
-                      <div className="bg-[#7c3aed] text-white px-4 py-2.5 text-[11px] font-bold flex justify-between items-center">
+                      <div className="bg-[#0ea5e9] text-white px-4 py-2.5 text-[11px] font-bold flex justify-between items-center">
                         <span className="tracking-wide">{area.area}</span>
                         <span className="opacity-60 font-medium text-[10px]">{area.tasks.length} tasks</span>
                       </div>
@@ -381,7 +381,7 @@ export default function IPC() {
                             <div className="p-4">
                               <div
                                 onClick={() => toggleTaskExpand(task.code)}
-                                className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#7c3aed]"
+                                className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#0ea5e9]"
                               >
                                 <span>{task.name}</span>
                                 <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
@@ -390,7 +390,7 @@ export default function IPC() {
                                 <motion.div
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
-                                  className="mt-3 p-3 bg-[#f8fafc] rounded-lg border-l-4 border-[#7c3aed] space-y-1.5 text-[11px]"
+                                  className="mt-3 p-3 bg-[#f8fafc] rounded-lg border-l-4 border-[#0ea5e9] space-y-1.5 text-[11px]"
                                 >
                                   <div>
                                     <span className="font-bold text-[#475569]">References: </span>
@@ -412,7 +412,7 @@ export default function IPC() {
                                   "w-8 h-8 rounded-md border flex items-center justify-center transition-all active:scale-95",
                                   isCovered
                                     ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm"
-                                    : "bg-[#f4f5f7] border-[#dde3ec] text-[#94a3b8] hover:border-[#7c3aed] bg-white"
+                                    : "bg-[#f4f5f7] border-[#dde3ec] text-[#94a3b8] hover:border-[#0ea5e9] bg-white"
                                 )}
                               >
                                 {isCovered ? <CheckCircle2 size={16} /> : <Circle size={16} />}
@@ -427,7 +427,7 @@ export default function IPC() {
                                 placeholder="Notes..."
                                 rows={isNoteExpanded ? undefined : 1}
                                 className={cn(
-                                  "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#7c3aed] focus:bg-[#f3effd] transition-all resize-none",
+                                  "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#0ea5e9] focus:bg-[#e0f2fe] transition-all resize-none",
                                   isNoteExpanded ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
                                 )}
                                 onInput={(e) => {
@@ -449,7 +449,7 @@ export default function IPC() {
                               )}
                               <button
                                 onClick={() => toggleNoteExpand(task.code)}
-                                className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#7c3aed] transition-colors"
+                                className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#0ea5e9] transition-colors"
                                 title={isNoteExpanded ? "Collapse Notes" : "Expand Notes"}
                               >
                                 {isNoteExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -471,7 +471,7 @@ export default function IPC() {
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-md overflow-hidden mb-6">
         <button
           onClick={() => setFlightExpanded(prev => !prev)}
-          className="w-full bg-[#7c3aed] text-white px-5 py-4 font-bold flex justify-between items-center hover:bg-[#7c3aed]/95 transition-colors text-left"
+          className="w-full bg-[#0ea5e9] text-white px-5 py-4 font-bold flex justify-between items-center hover:bg-[#0ea5e9]/95 transition-colors text-left"
         >
           <div className="flex items-center gap-3">
             <Plane size={20} className="text-white" />
@@ -503,7 +503,7 @@ export default function IPC() {
                 {IR_FLIGHT_ACS.map((area) => {
                   return (
                     <React.Fragment key={area.area}>
-                      <div className="bg-[#7c3aed] text-white px-4 py-2.5 text-[11px] font-bold flex justify-between items-center">
+                      <div className="bg-[#0ea5e9] text-white px-4 py-2.5 text-[11px] font-bold flex justify-between items-center">
                         <span className="tracking-wide">{area.area}</span>
                         <span className="opacity-60 font-medium text-[10px]">{area.tasks.length} tasks</span>
                       </div>
@@ -519,7 +519,7 @@ export default function IPC() {
                             <div className="p-4">
                               <div
                                 onClick={() => toggleTaskExpand(task.code)}
-                                className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#7c3aed]"
+                                className="text-[13px] font-medium text-[#1c2333] cursor-pointer flex items-center gap-2 hover:text-[#0ea5e9]"
                               >
                                 <span>{task.name}</span>
                                 <ChevronDown size={14} className={cn("text-[#6b7280] transition-transform", isExpanded && "rotate-180")} />
@@ -528,7 +528,7 @@ export default function IPC() {
                                 <motion.div
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
-                                  className="mt-3 p-3 bg-[#f8fafc] rounded-lg border-l-4 border-[#7c3aed] space-y-1.5 text-[11px]"
+                                  className="mt-3 p-3 bg-[#f8fafc] rounded-lg border-l-4 border-[#0ea5e9] space-y-1.5 text-[11px]"
                                 >
                                   <div>
                                     <span className="font-bold text-[#475569]">References: </span>
@@ -550,7 +550,7 @@ export default function IPC() {
                                   "w-8 h-8 rounded-md border flex items-center justify-center transition-all active:scale-95",
                                   isCovered
                                     ? "bg-[#2d7a4f] border-[#2d7a4f] text-white shadow-sm"
-                                    : "bg-[#f4f5f7] border-[#dde3ec] text-[#94a3b8] hover:border-[#7c3aed] bg-white"
+                                    : "bg-[#f4f5f7] border-[#dde3ec] text-[#94a3b8] hover:border-[#0ea5e9] bg-white"
                                 )}
                               >
                                 {isCovered ? <CheckCircle2 size={16} /> : <Circle size={16} />}
@@ -565,7 +565,7 @@ export default function IPC() {
                                 placeholder="Notes..."
                                 rows={isNoteExpanded ? undefined : 1}
                                 className={cn(
-                                  "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#7c3aed] focus:bg-[#f3effd] transition-all resize-none",
+                                  "w-full text-xs border border-transparent rounded-md px-2 py-1.5 bg-transparent focus:outline-none focus:border-[#0ea5e9] focus:bg-[#e0f2fe] transition-all resize-none",
                                   isNoteExpanded ? "h-auto min-h-[32px]" : "h-[32px] overflow-hidden"
                                 )}
                                 onInput={(e) => {
@@ -587,7 +587,7 @@ export default function IPC() {
                               )}
                               <button
                                 onClick={() => toggleNoteExpand(task.code)}
-                                className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#7c3aed] transition-colors"
+                                className="absolute right-0 top-1.5 w-[44px] h-[44px] flex items-center justify-center text-[#6b7280] hover:text-[#0ea5e9] transition-colors"
                                 title={isNoteExpanded ? "Collapse Notes" : "Expand Notes"}
                               >
                                 {isNoteExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -648,7 +648,7 @@ export default function IPC() {
         {overallGrade === 'S' && (
           <button
             onClick={() => setShowEndorsement(true)}
-            className="px-6 py-2.5 rounded-xl bg-[#7c3aed] text-white font-bold text-sm shadow-md shadow-[#7c3aed]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#7c3aed]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2 cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-[#0ea5e9] text-white font-bold text-sm shadow-md shadow-[#0ea5e9]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#0ea5e9]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2 cursor-pointer"
           >
             <Printer size={18} />
             Print Endorsement
