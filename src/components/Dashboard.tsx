@@ -472,7 +472,11 @@ export default function Dashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const today = new Date().toISOString().split('T')[0];
+      
+      const localYear = new Date().getFullYear();
+      const localMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+      const localDay = String(new Date().getDate()).padStart(2, '0');
+      const today = `${localYear}-${localMonth}-${localDay}`;
 
       const { data } = await supabase.from('scheduled_lessons')
         .select('*')
@@ -2031,28 +2035,27 @@ export default function Dashboard() {
 
             <div>
               {(() => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
+                const localYear = new Date().getFullYear();
+                const localMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+                const localDay = String(new Date().getDate()).padStart(2, '0');
+                const todayStr = `${localYear}-${localMonth}-${localDay}`;
                 
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-
                 const parseLocalDate = (dateStr: string) => {
                   const parts = dateStr.split('-');
                   if (parts.length !== 3) return new Date(dateStr);
                   return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
                 };
 
-                // Split upcomingLessons into Today and Next nearest day:
-                const todayLessons = upcomingLessons.filter(lesson => {
-                  const lDate = parseLocalDate(lesson.date);
-                  return lDate.getTime() === today.getTime();
-                });
+                const todayMidnight = new Date(localYear, new Date().getMonth(), parseInt(localDay, 10));
+                const tomorrowMidnight = new Date(todayMidnight);
+                tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
 
-                const futureLessons = upcomingLessons.filter(lesson => {
-                  const lDate = parseLocalDate(lesson.date);
-                  return lDate.getTime() > today.getTime();
-                });
+                // Split upcomingLessons into Today and Next nearest day:
+                // Direct string comparison for Today as requested:
+                const todayLessons = upcomingLessons.filter(lesson => lesson.date === todayStr);
+
+                // Next-day column: pick the earliest lessons whose date string is greater than today's local date string.
+                const futureLessons = upcomingLessons.filter(lesson => lesson.date > todayStr);
 
                 // Find the next nearest day that has lessons:
                 let nextDayStr: string | null = null;
@@ -2061,7 +2064,7 @@ export default function Dashboard() {
                 if (uniqueDates.length > 0) {
                   nextDayStr = uniqueDates[0];
                   const nextDateObj = parseLocalDate(nextDayStr);
-                  if (nextDateObj.getTime() === tomorrow.getTime()) {
+                  if (nextDateObj.getTime() === tomorrowMidnight.getTime()) {
                     nextDayLabel = "Tomorrow";
                   } else {
                     nextDayLabel = nextDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
