@@ -74,7 +74,7 @@ export interface Lesson {
   id: string;
   user_id: string;
   student_name: string;
-  type: 'ground' | 'flight' | 'flight_review';
+  type: 'ground' | 'flight' | 'flight_review' | 'ipc';
   lesson_num: number;
   label: string;
   instructor: string;

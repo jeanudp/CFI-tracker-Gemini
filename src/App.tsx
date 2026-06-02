@@ -11,6 +11,7 @@ import RatingSelection from './components/RatingSelection';
 import GroundLesson from './components/GroundLesson';
 import FlightLesson from './components/FlightLesson';
 import FlightReview from './components/FlightReview';
+import IPC from './components/IPC';
 import History from './components/History';
 import StudentDashboard from './components/StudentDashboard';
 import StudentView from './components/StudentView';
@@ -263,6 +264,20 @@ export default function App() {
               <Layout user={session.user}>
                 <PageTransition>
                   <FlightReview />
+                </PageTransition>
+              </Layout>
+            ) : (
+              <Navigate to="/auth" />
+            )
+          }
+        />
+        <Route
+          path="/ipc"
+          element={
+            session ? (
+              <Layout user={session.user}>
+                <PageTransition>
+                  <IPC />
                 </PageTransition>
               </Layout>
             ) : (

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { BookOpen, Plane, ChevronRight, ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { BookOpen, Plane, ChevronRight, ShieldCheck, Compass, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ALL_ACS } from '../constants';
 
 export default function LessonType() {
   const [studentName, setStudentName] = useState('');
   const [rating, setRating] = useState<any>(null);
+  const [reviewExpanded, setReviewExpanded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,10 +32,9 @@ export default function LessonType() {
     setRating(savedRating);
   }, [navigate]);
 
-  const handleSelectType = (type: 'ground' | 'flight' | 'bfr') => {
+  const handleSelectType = (type: 'ground' | 'flight') => {
     if (type === 'ground') navigate('/ground');
     else if (type === 'flight') navigate('/flight');
-    else if (type === 'bfr') navigate('/flight-review');
   };
 
   const acsData = rating ? (ALL_ACS as any)[rating.code] || [] : [];
@@ -116,23 +116,73 @@ export default function LessonType() {
         </motion.div>
       </div>
 
-      {/* Flight Review (BFR) Secondary Option Row */}
-      <motion.div
-        whileHover={{ y: -1 }}
-        onClick={() => handleSelectType('bfr')}
-        className="w-full max-w-2xl mb-10 p-3 bg-white border border-[#dde3ec] hover:border-[#e8a020]/40 hover:bg-[#fff9eb]/20 rounded-xl flex items-center justify-between cursor-pointer transition-all gap-3"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#fef3d4] text-[#e8a020] flex items-center justify-center shrink-0">
-            <ShieldCheck size={18} />
+      {/* Flight Review (BFR / IPC) Collapsible Options */}
+      <div className="w-full max-w-2xl mb-10">
+        <button
+          type="button"
+          onClick={() => setReviewExpanded(!reviewExpanded)}
+          className="w-full p-3 bg-white border border-[#dde3ec] hover:border-[#e8a020]/40 hover:bg-[#fff9eb]/20 rounded-xl flex items-center justify-between cursor-pointer transition-all gap-3 text-left focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#fef3d4] text-[#e8a020] flex items-center justify-center shrink-0">
+              <ShieldCheck size={18} />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-[#1c2333]">Flight Review</h3>
+              <p className="text-[10px] text-[#6b7280] font-medium leading-normal">§61.56 BFR / §61.57 IPC</p>
+            </div>
           </div>
-          <div className="text-left">
-            <h3 className="text-xs font-bold text-[#1c2333]">Flight Review (§61.56 BFR)</h3>
-            <p className="text-[10px] text-[#6b7280] font-medium leading-normal">Rating independent — not required for active training</p>
-          </div>
-        </div>
-        <ChevronRight size={14} className="text-[#94a3b8]" />
-      </motion.div>
+          {reviewExpanded ? (
+            <ChevronUp size={14} className="text-[#94a3b8]" />
+          ) : (
+            <ChevronDown size={14} className="text-[#94a3b8]" />
+          )}
+        </button>
+
+        <AnimatePresence initial={false}>
+          {reviewExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/flight-review')}
+                  className="w-full p-4 bg-white border border-[#dde3ec] hover:border-[#e8a020] hover:bg-[#fffdf9] rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all gap-2"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#fef3d4] text-[#e8a020] flex items-center justify-center shrink-0">
+                    <ShieldCheck size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-[#1c2333]">BFR</h4>
+                    <p className="text-[10px] text-[#6b7280] font-medium leading-normal">§61.56 Flight Review</p>
+                    <p className="text-[9px] text-[#94a3b8] mt-1 font-normal">Any certificated pilot</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/ipc')}
+                  className="w-full p-4 bg-white border border-[#dde3ec] hover:border-[#7c3aed] hover:bg-[#fbfaff] rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all gap-2"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#f3effd] text-[#7c3aed] flex items-center justify-center shrink-0">
+                    <Compass size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-[#1c2333]">IPC</h4>
+                    <p className="text-[10px] text-[#6b7280] font-medium leading-normal">§61.57 Instrument Check</p>
+                    <p className="text-[9px] text-[#94a3b8] mt-1 font-normal">Instrument-rated pilots</p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <Link to="/dashboard" className="text-sm text-[#6b7280] hover:text-[#1c2333] transition-colors flex items-center gap-1.5">
         ← Back to Home
