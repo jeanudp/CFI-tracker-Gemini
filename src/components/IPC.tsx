@@ -14,9 +14,11 @@ import {
   Plane, 
   CheckCircle2, 
   Circle,
-  Compass
+  Compass,
+  Printer
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import EndorsementPrinter from './EndorsementPrinter';
 
 export default function IPC() {
   const navigate = useNavigate();
@@ -47,6 +49,7 @@ export default function IPC() {
   const [flightExpanded, setFlightExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [overallGrade, setOverallGrade] = useState<'' | 'S' | 'N'>('');
+  const [showEndorsement, setShowEndorsement] = useState(false);
 
   // Accordion task expansion states
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
@@ -604,6 +607,15 @@ export default function IPC() {
         >
           Clear Page
         </button>
+        {overallGrade === 'S' && (
+          <button
+            onClick={() => setShowEndorsement(true)}
+            className="px-6 py-2.5 rounded-xl bg-[#7c3aed] text-white font-bold text-sm shadow-md shadow-[#7c3aed]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#7c3aed]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2 cursor-pointer"
+          >
+            <Printer size={18} />
+            Print Endorsement
+          </button>
+        )}
         <button
           onClick={handleSave}
           disabled={saving || !overallGrade}
@@ -613,6 +625,13 @@ export default function IPC() {
           Save IPC
         </button>
       </div>
+
+      {showEndorsement && (
+        <EndorsementPrinter
+          ratingCode="ipc"
+          onClose={() => setShowEndorsement(false)}
+        />
+      )}
     </div>
   );
 }

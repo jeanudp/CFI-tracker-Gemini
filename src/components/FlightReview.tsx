@@ -13,9 +13,11 @@ import {
   BookOpen, 
   Plane, 
   CheckCircle2, 
-  Circle 
+  Circle,
+  Printer
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import EndorsementPrinter from './EndorsementPrinter';
 
 export default function FlightReview() {
   const navigate = useNavigate();
@@ -45,6 +47,7 @@ export default function FlightReview() {
   const [flightExpanded, setFlightExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [overallGrade, setOverallGrade] = useState<'' | 'S' | 'N'>('');
+  const [showEndorsement, setShowEndorsement] = useState(false);
 
   // Accordion task expansion states
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
@@ -583,6 +586,15 @@ export default function FlightReview() {
         >
           Clear Page
         </button>
+        {overallGrade === 'S' && (
+          <button
+            onClick={() => setShowEndorsement(true)}
+            className="px-6 py-2.5 rounded-xl bg-[#e8a020] text-white font-bold text-sm shadow-md shadow-[#e8a020]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#e8a020]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2 cursor-pointer"
+          >
+            <Printer size={18} />
+            Print Endorsement
+          </button>
+        )}
         <button
           onClick={handleSave}
           disabled={saving || !overallGrade}
@@ -592,6 +604,13 @@ export default function FlightReview() {
           Save Review
         </button>
       </div>
+
+      {showEndorsement && (
+        <EndorsementPrinter
+          ratingCode="flight_review"
+          onClose={() => setShowEndorsement(false)}
+        />
+      )}
     </div>
   );
 }
