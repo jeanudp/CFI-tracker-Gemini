@@ -111,7 +111,7 @@ export default function History() {
   const [exportLoading, setExportLoading] = useState(false);
   const [showIacraHelp, setShowIacraHelp] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerType, setPickerType] = useState<'ground' | 'flight'>('flight');
+  const [pickerType, setPickerType] = useState<'ground' | 'flight' | 'bfr_ipc'>('flight');
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerArchivedExpanded, setPickerArchivedExpanded] = useState(false);
 
@@ -3424,73 +3424,119 @@ export default function History() {
                     >
                       Flight
                     </button>
+                    <button
+                      onClick={() => setPickerType('bfr_ipc')}
+                      className={cn(
+                        "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+                        pickerType === 'bfr_ipc' 
+                          ? "bg-[#1a3a5c] text-white shadow-sm" 
+                          : "text-[#64748b] hover:text-[#1a3a5c]"
+                      )}
+                    >
+                      BFR / IPC
+                    </button>
                   </div>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-2 pb-8">
-                {studentLessons
-                  .filter(l => l.type === pickerType)
-                  .filter(l => (l.label || '').toLowerCase().includes(pickerSearch.toLowerCase()))
-                  .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime())
-                  .map(lesson => (
-                    <button
-                      key={lesson.id}
-                      onClick={() => {
-                        setSelectedLessonId(lesson.id);
-                        setPickerOpen(false);
-                      }}
-                      className={cn(
-                        "w-full text-left flex items-start gap-3 p-3 rounded-xl border transition-all",
-                        selectedLessonId === lesson.id
-                          ? "border-[#1a3a5c] bg-[#d4e8f5] ring-1 ring-[#1a3a5c]"
-                          : "border-[#dde3ec] bg-white hover:border-[#1a3a5c] hover:bg-[#f8fafc]"
-                      )}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-[#1c2333]">{lesson.label}</span>
-                          {lesson.meta?.rating_code && (
-                            <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider", getRatingBadgeColor(lesson.meta.rating_code))}>
-                              {lesson.meta.rating_code.toUpperCase()}
-                            </span>
-                          )}
+                {(() => {
+                  const matchesPickerType = (l: any) => {
+                    if (pickerType === 'ground') return l.type === 'ground';
+                    if (pickerType === 'flight') return l.type === 'flight';
+                    if (pickerType === 'bfr_ipc') return l.type === 'flight_review' || l.type === 'ipc';
+                    return false;
+                  };
+
+                  const filtered = studentLessons
+                    .filter(matchesPickerType)
+                    .filter(l => (l.label || '').toLowerCase().includes(pickerSearch.toLowerCase()))
+                    .sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+
+                  const noLessonsOfType = studentLessons.filter(matchesPickerType).length === 0;
+                  const noLessonsOfSearch = studentLessons.filter(l => matchesPickerType(l) && (l.label || '').toLowerCase().includes(pickerSearch.toLowerCase())).length === 0;
+
+                  return (
+                    <>
+                      {filtered.map(lesson => (
+                        <div 
+                          key={lesson.id}
+                          className="flex items-center gap-2 group w-full"
+                        >
+                          <button
+                            onClick={() => {
+                              setSelectedLessonId(lesson.id);
+                              setPickerOpen(false);
+                            }}
+                            className={cn(
+                              "flex-1 text-left flex items-start gap-3 p-3 rounded-xl border transition-all",
+                              selectedLessonId === lesson.id
+                                ? "border-[#1a3a5c] bg-[#d4e8f5] ring-1 ring-[#1a3a5c]"
+                                : "border-[#dde3ec] bg-white hover:border-[#1a3a5c] hover:bg-[#f8fafc]"
+                            )}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-bold text-[#1c2333]">{lesson.label}</span>
+                                {lesson.meta?.rating_code && (
+                                  <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider", getRatingBadgeColor(lesson.meta.rating_code))}>
+                                    {lesson.meta.rating_code.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-[#6b7280] mt-0.5">
+                                {lesson.saved_at ? new Date(lesson.saved_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—'}
+                                {lesson.student_name ? ` · ${lesson.student_name}` : ''}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                {lesson.meta?.overallGrade && (
+                                  <span className={cn(
+                                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white",
+                                    lesson.meta.overallGrade === 'S' ? "bg-[#2d7a4f]" : "bg-[#c0392b]"
+                                  )}>
+                                    {lesson.meta.overallGrade}
+                                  </span>
+                                )}
+                                {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g as string)).length > 0 && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full">3-4: {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g as string)).length}</span>
+                                )}
+                                {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g as string)).length > 0 && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#fdecea] text-[#c0392b] rounded-full">1-2: {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g as string)).length}</span>
+                                )}
+                                {lesson.meta?.totalFlight && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#d4e8f5] text-[#1a3a5c] rounded-full">{lesson.meta.totalFlight}h</span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleDeleteLesson(e, lesson.id, lesson.label);
+                            }}
+                            className="shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-100 cursor-pointer"
+                            title="Archive lesson"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
-                        <div className="text-[11px] text-[#6b7280] mt-0.5">
-                          {lesson.saved_at ? new Date(lesson.saved_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—'}
-                          {lesson.student_name ? ` · ${lesson.student_name}` : ''}
+                      ))}
+                      {noLessonsOfType ? (
+                        <div className="py-12 text-center">
+                          <p className="text-sm text-[#94a3b8]">
+                            {pickerType === 'bfr_ipc' ? "No BFR or IPC lessons yet" : "No lessons of this type yet"}
+                          </p>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                          {lesson.meta?.overallGrade && (
-                            <span className={cn(
-                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white",
-                              lesson.meta.overallGrade === 'S' ? "bg-[#2d7a4f]" : "bg-[#c0392b]"
-                            )}>
-                              {lesson.meta.overallGrade}
-                            </span>
-                          )}
-                          {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g as string)).length > 0 && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#e4f5ec] text-[#2d7a4f] rounded-full">3-4: {Object.values(lesson.grades || {}).filter(g => ['S', '3', '4'].includes(g as string)).length}</span>
-                          )}
-                          {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g as string)).length > 0 && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#fdecea] text-[#c0392b] rounded-full">1-2: {Object.values(lesson.grades || {}).filter(g => ['N', '1', '2'].includes(g as string)).length}</span>
-                          )}
-                          {lesson.meta?.totalFlight && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[#d4e8f5] text-[#1a3a5c] rounded-full">{lesson.meta.totalFlight}h</span>
-                          )}
+                      ) : noLessonsOfSearch ? (
+                        <div className="py-12 text-center">
+                          <p className="text-sm text-[#94a3b8]">No lessons match your search</p>
                         </div>
-                      </div>
-                    </button>
-                  ))}
-                {studentLessons.filter(l => l.type === pickerType).length === 0 ? (
-                  <div className="py-12 text-center">
-                    <p className="text-sm text-[#94a3b8]">No lessons of this type yet</p>
-                  </div>
-                ) : studentLessons.filter(l => l.type === pickerType && (l.label || '').toLowerCase().includes(pickerSearch.toLowerCase())).length === 0 ? (
-                  <div className="py-12 text-center">
-                    <p className="text-sm text-[#94a3b8]">No lessons match your search</p>
-                  </div>
-                ) : null}
+                      ) : null}
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="border-t border-[#dde3ec] bg-white">
