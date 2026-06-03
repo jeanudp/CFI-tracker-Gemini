@@ -241,7 +241,7 @@ export default function App() {
 
   return (
     <>
-      {session && showOnboarding && accountType === 'instructor' && (
+      {session && showOnboarding && accountType === 'instructor' && !localStorage.getItem('pending_student_claim') && (
         <OnboardingModal 
           user={session.user} 
           onComplete={() => setShowOnboarding(false)} 
