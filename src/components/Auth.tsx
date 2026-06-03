@@ -27,10 +27,32 @@ export default function Auth() {
   }, [darkMode]);
 
   useEffect(() => {
+    const isVerified = searchParams.get('verified') === '1';
+    if (isVerified) return;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate('/dashboard');
     });
-  }, [navigate]);
+  }, [navigate, searchParams]);
+
+  useEffect(() => {
+    const isVerified = searchParams.get('verified') === '1';
+    if (isVerified) {
+      setIsLogin(true);
+      setLoading(true);
+      const handleVerification = async () => {
+        try {
+          await supabase.auth.signOut();
+          setSuccess('Your email is confirmed! Please sign in to access your account.');
+        } catch (err: any) {
+          console.error('Error signing out:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      handleVerification();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const claim = searchParams.get('claim');
@@ -80,9 +102,10 @@ export default function Auth() {
         }
       } else {
         const pendingClaim = localStorage.getItem('pending_student_claim');
+        const redirectUrl = `${window.location.origin}/auth?verified=1`;
         const signUpDataOptions = pendingClaim
-          ? { data: { full_name: fullName, account_type: 'student' } }
-          : { data: { full_name: fullName } };
+          ? { data: { full_name: fullName, account_type: 'student' }, emailRedirectTo: redirectUrl }
+          : { data: { full_name: fullName }, emailRedirectTo: redirectUrl };
 
         // Create the account
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({

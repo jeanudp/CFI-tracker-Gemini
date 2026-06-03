@@ -127,6 +127,8 @@ export default function StudentView() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [linkedProfiles, setLinkedProfiles] = useState<any[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<{ cfi_user_id: string; student_name: string } | null>(null);
+  const [profilePendingRemoval, setProfilePendingRemoval] = useState<{ cfi_user_id: string; student_name: string; cfi_name?: string } | null>(null);
+  const [removalLoading, setRemovalLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -278,6 +280,50 @@ export default function StudentView() {
   const handleSelectProfile = async (profile: { cfi_user_id: string; student_name: string }) => {
     setSelectedProfile(profile);
     await validateAndFetch(profile);
+  };
+
+  const handleUnlinkInstructor = async (profile: { cfi_user_id: string; student_name: string }) => {
+    setRemovalLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to unlink an instructor");
+      }
+
+      const response = await fetch('/api/unlink-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          cfi_user_id: profile.cfi_user_id,
+          student_name: profile.student_name,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to unlink instructor");
+      }
+
+      setProfilePendingRemoval(null);
+
+      const isCurrent = selectedProfile && 
+        selectedProfile.cfi_user_id === profile.cfi_user_id && 
+        selectedProfile.student_name === profile.student_name;
+
+      if (isCurrent) {
+        setSelectedProfile(null);
+        await validateAndFetch(undefined);
+      } else {
+        await validateAndFetch(selectedProfile || undefined);
+      }
+    } catch (err: any) {
+      console.error('Error unlinking instructor:', err);
+    } finally {
+      setRemovalLoading(false);
+    }
   };
 
   const handleClaimInstructor = async (e: React.FormEvent) => {
@@ -1019,20 +1065,84 @@ export default function StudentView() {
                     selectedProfile.student_name === p.student_name;
                   const label = p.cfi_name || p.student_name || 'Unnamed Instructor';
                   return (
-                    <button
+                    <div
                       key={`${p.cfi_user_id}-${p.student_name}`}
-                      onClick={() => handleSelectProfile(p)}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
-                        isActive 
-                          ? 'bg-[#1a3a5c] border-[#1a3a5c] text-white shadow-sm'
-                          : 'bg-[#f8fafc] border-[#dde3ec] text-[#1a3a5c] hover:bg-white'
-                      }`}
+                      className="relative flex items-center shrink-0"
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400 animate-pulse' : 'bg-[#dde3ec]'}`}></span>
-                      {label}
-                    </button>
+                      <button
+                        onClick={() => handleSelectProfile(p)}
+                        className={`pl-4 pr-10 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer ${
+                          isActive 
+                            ? 'bg-[#1a3a5c] border-[#1a3a5c] text-white shadow-sm'
+                            : 'bg-[#f8fafc] border-[#dde3ec] text-[#1a3a5c] hover:bg-white'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400 animate-pulse' : 'bg-[#dde3ec]'}`}></span>
+                        {label}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setProfilePendingRemoval(p);
+                        }}
+                        className={`absolute right-2 p-1.5 rounded-lg transition-all hover:bg-black/10 cursor-pointer ${
+                          isActive ? 'text-white/70 hover:text-white' : 'text-[#94a3b8] hover:text-red-500'
+                        }`}
+                        title="Remove instructor link"
+                      >
+                        <XCircle size={14} />
+                      </button>
+                    </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Unlink Instructor Confirmation Modal */}
+          {profilePendingRemoval && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-slate-900/40">
+              <div className="bg-white rounded-2xl border border-[#dde3ec] max-w-sm w-full p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 text-left">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-3 bg-red-50 rounded-xl text-red-600 shrink-0">
+                    <AlertCircle size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#1a3a5c] mb-1">Unlink Instructor</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Are you sure you want to remove your link to CFI{' '}
+                      <strong className="text-[#1a3a5c]">
+                        {profilePendingRemoval.cfi_name || profilePendingRemoval.student_name || 'this instructor'}
+                      </strong>?
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setProfilePendingRemoval(null)}
+                    disabled={removalLoading}
+                    className="px-4 py-2 border border-[#dde3ec] hover:bg-[#f8fafc] text-[#1a3a5c] text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleUnlinkInstructor(profilePendingRemoval)}
+                    disabled={removalLoading}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm shadow-red-600/10"
+                  >
+                    {removalLoading ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        Removing...
+                      </>
+                    ) : (
+                      'Remove'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
