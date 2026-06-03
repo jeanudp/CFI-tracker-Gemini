@@ -273,6 +273,250 @@ export default function Admin() {
           ))}
         </div>
 
+        {/* Analytics Section */}
+        <div className="space-y-6">
+          <div className="pt-4 border-t flex flex-col gap-0.5" style={{ borderColor: 'var(--border-color)' }}>
+            <h2 className="text-lg font-black" style={{ color: 'var(--navy)' }}>Analytics</h2>
+            <p className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--text-muted)' }}>Platform usage, metrics, and educational compliance statistics</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Subsection 1 — User Engagement */}
+            <div
+              className="rounded-2xl border p-6 flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
+              }}
+            >
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'var(--text-primary)' }}>User Engagement</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Active Users (30d)', value: users.filter(u => allLessons.some(l => l.user_id === u.user_id && new Date(l.saved_at) >= thirtyDaysAgo)).length, color: '#1a3a5c' },
+                    { label: 'Dormant Users', value: users.filter(u => !allLessons.some(l => l.user_id === u.user_id && new Date(l.saved_at) >= thirtyDaysAgo)).length, color: '#e8a020' },
+                    { label: 'Never Logged', value: users.filter(u => !allLessons.some(l => l.user_id === u.user_id)).length, color: '#9ca3af' },
+                    { label: 'Avg Lessons / Active User', value: (() => {
+                      const activeUsersCount = users.filter(u => allLessons.some(l => l.user_id === u.user_id && new Date(l.saved_at) >= thirtyDaysAgo)).length;
+                      return activeUsersCount > 0 ? (totalLessons / activeUsersCount).toFixed(1) : "0.0";
+                    })(), color: '#2d7a4f' },
+                  ].map(engagementStat => (
+                    <div key={engagementStat.label} className="p-3 rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+                      <span className="text-[9px] font-bold uppercase tracking-widest block mb-1 truncate" style={{ color: 'var(--text-muted)' }}>{engagementStat.label}</span>
+                      <div className="text-xl font-black" style={{ color: engagementStat.color }}>{engagementStat.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Subsection 2 — Lesson Type Breakdown */}
+            <div
+              className="rounded-2xl border p-6 flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
+              }}
+            >
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'var(--text-primary)' }}>Lesson Type Breakdown</h3>
+                {(() => {
+                  const countFlight = allLessons.filter(l => l.type === 'flight').length;
+                  const countGround = allLessons.filter(l => l.type === 'ground').length;
+                  const countFlightReview = allLessons.filter(l => l.type === 'flight_review').length;
+                  const countIPC = allLessons.filter(l => l.type === 'ipc').length;
+                  const countOther = allLessons.filter(l => !['flight', 'ground', 'flight_review', 'ipc'].includes(l.type)).length;
+
+                  const totalAllLessons = allLessons.length;
+                  const getPct = (cnt: number) => {
+                    if (totalAllLessons === 0) return "0.0%";
+                    return `${((cnt / totalAllLessons) * 100).toFixed(1)}%`;
+                  };
+
+                  const flightPctNum = totalAllLessons > 0 ? (countFlight / totalAllLessons) * 100 : 0;
+                  const groundPctNum = totalAllLessons > 0 ? (countGround / totalAllLessons) * 100 : 0;
+                  const bfrPctNum = totalAllLessons > 0 ? (countFlightReview / totalAllLessons) * 100 : 0;
+                  const ipcPctNum = totalAllLessons > 0 ? (countIPC / totalAllLessons) * 100 : 0;
+                  const otherPctNum = totalAllLessons > 0 ? (countOther / totalAllLessons) * 100 : 0;
+
+                  return (
+                    <>
+                      <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden flex mb-4">
+                        <div style={{ width: `${flightPctNum}%`, backgroundColor: '#1a3a5c' }} title={`Flight: ${countFlight}`} />
+                        <div style={{ width: `${groundPctNum}%`, backgroundColor: '#e8a020' }} title={`Ground: ${countGround}`} />
+                        <div style={{ width: `${bfrPctNum}%`, backgroundColor: '#7c3aed' }} title={`BFR: ${countFlightReview}`} />
+                        <div style={{ width: `${ipcPctNum}%`, backgroundColor: '#2d7a4f' }} title={`IPC: ${countIPC}`} />
+                        <div style={{ width: `${otherPctNum}%`, backgroundColor: '#9ca3af' }} title={`Other: ${countOther}`} />
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: 'Flight', count: countFlight, color: '#1a3a5c' },
+                          { label: 'Ground', count: countGround, color: '#e8a020' },
+                          { label: 'BFR', count: countFlightReview, color: '#7c3aed' },
+                          { label: 'IPC', count: countIPC, color: '#2d7a4f' },
+                          { label: 'Other', count: countOther, color: '#9ca3af' },
+                        ].map(item => (
+                          <div key={item.label} className="flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-sm" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                            <span className="text-[10px] font-bold" style={{ color: 'var(--text-primary)' }}>{item.label}</span>
+                            <span className="text-[10px] font-mono shrink-0" style={{ color: 'var(--text-muted)' }}>
+                              {item.count} ({getPct(item.count)})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Subsection 3 — Training Focus (Top Ratings) */}
+            <div
+              className="rounded-2xl border p-6 flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
+              }}
+            >
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'var(--text-primary)' }}>Most Trained Ratings</h3>
+                {(() => {
+                  const ratingCounts: Record<string, number> = {};
+                  allLessons.forEach(l => {
+                    const code = l.meta?.rating_code;
+                    if (code) {
+                      ratingCounts[code] = (ratingCounts[code] || 0) + 1;
+                    }
+                  });
+                  const sortedRatings = Object.entries(ratingCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 6);
+
+                  if (sortedRatings.length === 0) {
+                    return <div className="text-xs py-3 text-center" style={{ color: 'var(--text-muted)' }}>No training focus data found.</div>;
+                  }
+
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {sortedRatings.map(([code, count]) => (
+                        <div key={code} className="p-3 rounded-xl border flex flex-col justify-between" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+                          <span className="text-[9px] font-bold uppercase tracking-widest truncate" style={{ color: 'var(--text-muted)' }}>{code}</span>
+                          <span className="text-sm font-black mt-1" style={{ color: 'var(--navy)' }}>{count} {count === 1 ? 'lesson' : 'lessons'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Subsection 4 — Feature Adoption */}
+            <div
+              className="rounded-2xl border p-6 flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
+              }}
+            >
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'var(--text-primary)' }}>Feature Adoption</h3>
+                {(() => {
+                  const gradedLessonsCount = allLessons.filter(l => l.meta?.overallGrade === 'S' || l.meta?.overallGrade === 'N').length;
+                  const gradedPct = totalLessons > 0 ? (gradedLessonsCount / totalLessons) * 100 : 0;
+
+                  const flightTimeLessonsCount = allLessons.filter(l => {
+                    const flight = parseFloat(l.meta?.totalFlight || '0');
+                    return !isNaN(flight) && flight > 0;
+                  }).length;
+                  const flightTimePct = totalLessons > 0 ? (flightTimeLessonsCount / totalLessons) * 100 : 0;
+
+                  const notesLessonsCount = allLessons.filter(l => typeof l.meta?.notes === 'string' && l.meta.notes.trim() !== '').length;
+                  const notesPct = totalLessons > 0 ? (notesLessonsCount / totalLessons) * 100 : 0;
+
+                  const acsLessonsCount = allLessons.filter(l => l.grades && typeof l.grades === 'object' && Object.keys(l.grades).length > 0).length;
+                  const acsPct = totalLessons > 0 ? (acsLessonsCount / totalLessons) * 100 : 0;
+
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        { label: 'Lessons Graded', pct: gradedPct, count: gradedLessonsCount },
+                        { label: 'Flight Time Logged', pct: flightTimePct, count: flightTimeLessonsCount },
+                        { label: 'Notes Written', pct: notesPct, count: notesLessonsCount },
+                        { label: 'ACS Tasks Used', pct: acsPct, count: acsLessonsCount },
+                      ].map(item => (
+                        <div key={item.label} className="p-3 rounded-xl border flex flex-col justify-center" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+                          <span className="text-[9px] font-bold uppercase tracking-widest block mb-1 truncate" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                          <div className="text-sm font-black truncate" style={{ color: 'var(--navy)' }}>
+                            {item.pct.toFixed(1)}%
+                            <span className="text-[10px] font-normal" style={{ color: 'var(--text-muted)' }}> — {item.count} {item.count === 1 ? 'lesson' : 'lessons'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Subsection 5 — Grade Health */}
+            <div
+              className="rounded-2xl border p-6 flex flex-col justify-between md:col-span-2"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 16px rgba(26,58,92,0.08)',
+              }}
+            >
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'var(--text-primary)' }}>Grade Health</h3>
+                {(() => {
+                  const gradedList = allLessons.filter(l => l.meta?.overallGrade === 'S' || l.meta?.overallGrade === 'N');
+                  const totalGraded = gradedList.length;
+                  const countS = gradedList.filter(l => l.meta?.overallGrade === 'S').length;
+                  const countN = gradedList.filter(l => l.meta?.overallGrade === 'N').length;
+
+                  const pctS = totalGraded > 0 ? (countS / totalGraded) * 100 : 0;
+                  const pctN = totalGraded > 0 ? (countN / totalGraded) * 100 : 0;
+
+                  return (
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Satisfactory Card (Green) */}
+                      <div className="p-4 rounded-xl border flex flex-col justify-between shadow-sm" style={{ borderColor: '#2d7a4f', backgroundColor: 'rgba(45,122,79,0.05)' }}>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 text-[#2d7a4f]">Satisfactory (S)</span>
+                          <div className="text-3xl font-black text-[#2d7a4f]">{pctS.toFixed(1)}%</div>
+                        </div>
+                        <div className="text-xs font-bold mt-2 text-[#2d7a4f] opacity-80">
+                          {countS} {countS === 1 ? 'lesson' : 'lessons'}
+                        </div>
+                      </div>
+
+                      {/* Needs Improvement Card (Red) */}
+                      <div className="p-4 rounded-xl border flex flex-col justify-between shadow-sm" style={{ borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.05)' }}>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest block mb-1 text-[#ef4444]">Needs Improvement (N)</span>
+                          <div className="text-3xl font-black text-[#ef4444]">{pctN.toFixed(1)}%</div>
+                        </div>
+                        <div className="text-xs font-bold mt-2 text-[#ef4444] opacity-80">
+                          {countN} {countN === 1 ? 'lesson' : 'lessons'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         {/* Invite Codes */}
         <div
           className="rounded-2xl border overflow-hidden"
