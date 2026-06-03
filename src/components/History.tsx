@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import EndorsementAdvisor from './EndorsementAdvisor';
 
-import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, AlertTriangle } from 'lucide-react';
+import { Search, Trash2, ChevronRight, ChevronLeft, ChevronDown, Filter, Calendar, Clock, MapPin, CheckCircle2, XCircle, AlertCircle, Plus, X, Loader2, BookOpen, Edit, History as HistoryIcon, CheckSquare, Square, BarChart3, Sparkles, Pencil, Check, ClipboardList, FileText, HelpCircle, Download, Info, RotateCcw, Archive, Share2, AlertTriangle, Play } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ShareProgressModal from './ShareProgressModal';
 import HowToExportModal from './HowToExportModal';
@@ -531,6 +531,9 @@ export default function History() {
   };
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
+  const isDraft = selectedLesson
+    ? (selectedLesson.type === 'flight_review' || selectedLesson.type === 'ipc') && selectedLesson.meta?.progress === 'ground'
+    : false;
 
   useEffect(() => {
     if (selectedLesson?.student_name) {
@@ -957,7 +960,16 @@ export default function History() {
     localStorage.setItem('sb_selected_student', lesson.student_name);
     const rating = { code: lesson.meta?.rating_code || 'ppl', label: lesson.meta?.rating_label || 'Private Pilot ASEL' };
     localStorage.setItem('selected_rating', JSON.stringify(rating));
-    navigate(lesson.type === 'ground' ? '/ground' : '/flight');
+    
+    if (lesson.type === 'flight_review') {
+      navigate(`/flight-review?id=${lesson.id}`);
+    } else if (lesson.type === 'ipc') {
+      navigate(`/ipc?id=${lesson.id}`);
+    } else if (lesson.type === 'ground') {
+      navigate('/ground');
+    } else {
+      navigate('/flight');
+    }
   };
 
   const handleShareFromHistory = async () => {
@@ -1141,14 +1153,25 @@ export default function History() {
                         <span className="hidden sm:inline">Share</span>
                       </button>
                     )}
-                    <button
-                      onClick={() => handleEditLesson(selectedLesson)}
-                      title="Edit Lesson"
-                      className="bg-white text-[#1a3a5c] border border-[#dde3ec] w-[44px] h-[44px] sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
-                    >
-                      <Edit size={14} className="shrink-0" />
-                      <span className="hidden sm:inline">Edit Lesson</span>
-                    </button>
+                    {isDraft ? (
+                      <button
+                        onClick={() => handleEditLesson(selectedLesson)}
+                        title="Resume"
+                        className="bg-[#e8a020] text-white border border-transparent w-[44px] h-[44px] sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-[#d08c18] transition-all flex items-center justify-center gap-2 shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <Play size={14} className="shrink-0 fill-current" />
+                        <span className="hidden sm:inline">Resume</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleEditLesson(selectedLesson)}
+                        title="Edit Lesson"
+                        className="bg-white text-[#1a3a5c] border border-[#dde3ec] w-[44px] h-[44px] sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-[#f8fafc] transition-all flex items-center justify-center gap-2 shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <Edit size={14} className="shrink-0" />
+                        <span className="hidden sm:inline">Edit Lesson</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Tabs Row */}
@@ -1214,7 +1237,14 @@ export default function History() {
             {activeTab === 'lesson' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-[#1c2333] w-full sm:w-auto leading-tight">{selectedLesson.label}</h1>
+                  <h1 className="text-2xl font-bold text-[#1c2333] w-full sm:w-auto leading-tight flex items-center gap-2 flex-wrap">
+                    <span>{selectedLesson.label}</span>
+                    {isDraft && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                        In Progress
+                      </span>
+                    )}
+                  </h1>
                   <div className="flex items-center gap-1 bg-white border border-[#dde3ec] rounded-lg px-2 py-1 shadow-sm shrink-0">
                     <button 
                       onClick={handlePrev}

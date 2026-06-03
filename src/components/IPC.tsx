@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { IR_GROUND_ACS, IR_FLIGHT_ACS } from '../constants/irACS';
 import AircraftPicker from './AircraftPicker';
@@ -23,6 +23,8 @@ import EndorsementPrinter from './EndorsementPrinter';
 
 export default function IPC() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const draftId = searchParams.get('id');
 
   // Local date formatting (using local timezone components as requested)
   const getLocalDateString = () => {
@@ -46,6 +48,9 @@ export default function IPC() {
     complex: false
   });
   
+  const [lessonId, setLessonId] = useState<string | null>(null);
+  const [loadingDraft, setLoadingDraft] = useState(false);
+  
   const [groundCovered, setGroundCovered] = useState<Record<string, boolean>>({});
   const [flightCovered, setFlightCovered] = useState<Record<string, boolean>>({});
   
@@ -63,20 +68,102 @@ export default function IPC() {
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const savedStudent = localStorage.getItem('sb_selected_student') || '';
-    if (!savedStudent) {
-      navigate('/dashboard');
-      return;
-    }
-    setStudentName(savedStudent);
+    async function initPage() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const defaultCfi = session
+        ? (session.user.user_metadata?.full_name || session.user.email || '')
+        : '';
 
-    // Get CFI instructor name
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setInstructorName(session.user.user_metadata?.full_name || session.user.email || '');
+      if (!draftId) {
+        // No draft ID in URL
+        const savedStudent = localStorage.getItem('sb_selected_student') || '';
+        if (!savedStudent) {
+          navigate('/dashboard');
+          return;
+        }
+        setStudentName(savedStudent);
+        setInstructorName(defaultCfi);
+      } else {
+        // Resuming a draft
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
+        
+        try {
+          setLoadingDraft(true);
+          const { data: row, error } = await supabase
+            .from('lessons')
+            .select('*')
+            .eq('id', draftId)
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (error) throw error;
+          if (!row) throw new Error('Lesson not found');
+
+          setLessonId(draftId);
+          setStudentName(row.student_name || '');
+          setInstructorName(row.instructor || defaultCfi);
+
+          const meta = row.meta || {};
+          setLessonDate(meta.date || getLocalDateString());
+          setLessonNotes(meta.notes || '');
+          setOverallGrade(meta.overallGrade || '');
+
+          setAircraft({
+            tailNumber: meta.aircraft || '',
+            model: meta.aircraftModel || '',
+            icao: meta.aircraftIcao || '',
+            aircraftClass: meta.aircraftClass || 'ASEL',
+            complex: meta.complex === true
+          });
+
+          const grades = row.grades || {};
+          const notesObj = row.notes || {};
+
+          // Rebuild groundCovered & groundNotes
+          const newGroundCovered: Record<string, boolean> = {};
+          const newGroundNotes: Record<string, string> = {};
+          IR_GROUND_ACS.forEach(area => {
+            area.tasks.forEach(task => {
+              if (grades[task.code] === '3') {
+                newGroundCovered[task.code] = true;
+              }
+              if (notesObj[task.code]) {
+                newGroundNotes[task.code] = notesObj[task.code];
+              }
+            });
+          });
+          setGroundCovered(newGroundCovered);
+          setGroundNotes(newGroundNotes);
+
+          // Rebuild flightCovered & flightNotes
+          const newFlightCovered: Record<string, boolean> = {};
+          const newFlightNotes: Record<string, string> = {};
+          IR_FLIGHT_ACS.forEach(area => {
+            area.tasks.forEach(task => {
+              if (grades[task.code] === '3') {
+                newFlightCovered[task.code] = true;
+              }
+              if (notesObj[task.code]) {
+                newFlightNotes[task.code] = notesObj[task.code];
+              }
+            });
+          });
+          setFlightCovered(newFlightCovered);
+          setFlightNotes(newFlightNotes);
+
+        } catch (err: any) {
+          alert(err.message || 'Error loading draft.');
+        } finally {
+          setLoadingDraft(false);
+        }
       }
-    });
-  }, [navigate]);
+    }
+
+    initPage();
+  }, [draftId, navigate]);
 
   // Helpers to calculate stats for combined count boxes
   const totalGroundTasks = IR_GROUND_ACS.reduce((acc, area) => acc + area.tasks.length, 0);
@@ -130,72 +217,111 @@ export default function IPC() {
     });
     setLessonDate(getLocalDateString());
     setOverallGrade('');
+    setLessonId(null);
   };
 
-  const handleSave = async () => {
-    if (!overallGrade) {
-      alert("Please select an overall assessment before saving.");
-      return;
-    }
+  const saveLesson = async (isGroundDraft: boolean) => {
+    if (!isGroundDraft) {
+      if (!overallGrade) {
+        alert("Please select an overall assessment before saving.");
+        return;
+      }
 
-    if (overallGrade === 'S' && !aircraft.model.trim()) {
-      alert("Aircraft Make & Model is required for satisfactory IPC endorsement.");
-      return;
+      if (overallGrade === 'S' && !aircraft.model.trim()) {
+        alert("Aircraft Make & Model is required for satisfactory IPC endorsement.");
+        return;
+      }
     }
 
     setSaving(true);
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      alert("Session expired");
-      navigate('/auth');
-      setSaving(false);
-      return;
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Session expired");
+        navigate('/auth');
+        return;
+      }
 
-    // Build grades object: '3' if covered, '' if not covered
-    const grades: Record<string, string> = {};
-    IR_GROUND_ACS.forEach(area => {
-      area.tasks.forEach(task => {
-        grades[task.code] = groundCovered[task.code] ? '3' : '';
+      // Build grades object: '3' if covered, '' if not covered
+      const grades: Record<string, string> = {};
+      IR_GROUND_ACS.forEach(area => {
+        area.tasks.forEach(task => {
+          grades[task.code] = groundCovered[task.code] ? '3' : '';
+        });
       });
-    });
-    IR_FLIGHT_ACS.forEach(area => {
-      area.tasks.forEach(task => {
-        grades[task.code] = flightCovered[task.code] ? '3' : '';
+      IR_FLIGHT_ACS.forEach(area => {
+        area.tasks.forEach(task => {
+          grades[task.code] = flightCovered[task.code] ? '3' : '';
+        });
       });
-    });
 
-    // Build unified notes object
-    const notes = { ...groundNotes, ...flightNotes };
+      // Build unified notes object
+      const notes = { ...groundNotes, ...flightNotes };
 
-    const lessonData = {
-      user_id: session.user.id,
-      student_name: studentName,
-      type: 'ipc',
-      instructor: instructorName,
-      lesson_num: 1,
-      label: 'IPC (§61.57)',
-      grades,
-      notes,
-      meta: {
+      const progress = isGroundDraft ? 'ground' : 'complete';
+      const ipc_endorsed = isGroundDraft ? false : (overallGrade === 'S');
+
+      const meta = {
         date: lessonDate,
         notes: lessonNotes,
-        overallGrade,
-        ipc_endorsed: overallGrade === 'S',
+        overallGrade: isGroundDraft ? (overallGrade || '') : overallGrade,
+        ipc_endorsed,
         aircraft: aircraft.tailNumber,
         aircraftModel: aircraft.model,
         aircraftIcao: aircraft.icao,
         aircraftClass: aircraft.aircraftClass,
-        complex: aircraft.complex
+        complex: aircraft.complex,
+        progress
+      };
+
+      const lessonData = {
+        user_id: session.user.id,
+        student_name: studentName,
+        type: 'ipc',
+        instructor: instructorName,
+        lesson_num: 1,
+        label: 'IPC (§61.57)',
+        grades,
+        notes,
+        meta
+      };
+
+      let currentId = lessonId;
+
+      if (currentId) {
+        // UPDATE existing row
+        const { error: updateError } = await supabase
+          .from('lessons')
+          .update({
+            student_name: studentName,
+            instructor: instructorName,
+            grades,
+            notes,
+            meta
+          })
+          .eq('id', currentId)
+          .eq('user_id', session.user.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // INSERT a new row
+        const { data: insertedRows, error: insertError } = await supabase
+          .from('lessons')
+          .insert(lessonData)
+          .select('id');
+
+        if (insertError) throw insertError;
+        
+        if (insertedRows && insertedRows.length > 0) {
+          currentId = insertedRows[0].id;
+          if (isGroundDraft) {
+            setLessonId(currentId);
+          }
+        }
       }
-    };
 
-    try {
-      const { error: insertError } = await supabase.from('lessons').insert(lessonData);
-      if (insertError) throw insertError;
-
-      if (overallGrade === 'S') {
+      if (!isGroundDraft && overallGrade === 'S') {
         const { error: updateError } = await supabase
           .from('students')
           .update({ last_ipc_date: lessonDate })
@@ -236,6 +362,18 @@ export default function IPC() {
     }
   };
 
+  const handleSaveGround = () => saveLesson(true);
+  const handleSave = () => saveLesson(false);
+
+  if (loadingDraft) {
+    return (
+      <div className="min-h-screen bg-[#fafbfd] flex flex-col items-center justify-center p-8">
+        <Loader2 size={40} className="text-[#1a3a5c] animate-spin mb-4" />
+        <p className="text-sm font-medium text-[#6b7280]">Loading instrument proficiency check draft...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Page Header */}
@@ -264,6 +402,14 @@ export default function IPC() {
           </Link>
         </div>
       </div>
+
+      {/* Resume banner */}
+      {lessonId && (
+        <div id="resume-banner" className="bg-sky-50 border border-sky-200 rounded-xl p-4 mb-6 text-sky-800 text-xs sm:text-sm font-medium flex items-center gap-3 shadow-sm">
+          <Compass className="text-sky-600 shrink-0" size={18} />
+          <span>Resuming an in-progress IPC — complete the flight activities below and finalize.</span>
+        </div>
+      )}
 
       {/* Info Card */}
       <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
@@ -297,6 +443,10 @@ export default function IPC() {
             />
           </div>
         </div>
+        <div className="border-t border-[#dde3ec] my-4 pt-4 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Aircraft</label>
+          <AircraftPicker value={aircraft} onChange={setAircraft} accentColor="#0ea5e9" />
+        </div>
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Review Notes</label>
           <textarea
@@ -307,12 +457,6 @@ export default function IPC() {
             className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#0ea5e9] transition-all resize-none"
           />
         </div>
-      </div>
-
-      {/* Aircraft Card */}
-      <div className="bg-white rounded-2xl border border-[#dde3ec] shadow-sm p-6 mb-6">
-        <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] mb-3 block">Aircraft</label>
-        <AircraftPicker value={aircraft} onChange={setAircraft} accentColor="#0ea5e9" />
       </div>
 
       {/* Progress Summary Stats */}
@@ -636,12 +780,20 @@ export default function IPC() {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 flex-wrap">
         <button
           onClick={handleClear}
           className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#6b7280] font-medium text-sm hover:bg-[#f4f5f7] transition-all cursor-pointer"
         >
           Clear Page
+        </button>
+        <button
+          onClick={handleSaveGround}
+          disabled={saving}
+          className="px-5 py-2.5 rounded-xl border border-[#dde3ec] bg-white text-[#1c2333] hover:bg-[#f4f5f7] font-medium text-sm transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+        >
+          {saving ? <Loader2 size={18} className="animate-spin" /> : <BookOpen size={18} />}
+          Save Ground & Finish Later
         </button>
         {overallGrade === 'S' && (
           <button
@@ -658,7 +810,7 @@ export default function IPC() {
           className="px-8 py-2.5 rounded-xl bg-[#1a3a5c] text-white font-bold text-sm shadow-md shadow-[#1a3a5c]/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#1a3a5c]/30 active:translate-y-0 active:shadow-sm transition-all duration-150 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          Save IPC
+          Complete IPC
         </button>
       </div>
 
