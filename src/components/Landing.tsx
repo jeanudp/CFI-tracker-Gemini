@@ -538,7 +538,69 @@ export default function Landing() {
               </div>
             </motion.div>
 
-            {/* Card 5: Student Progress Portal */}
+            {/* Card 5: Flight Scheduler */}
+            <motion.div
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderColor: 'var(--border-color)',
+                boxShadow: '0 4px 12px rgba(26,58,92,0.04)',
+              }}
+              whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
+            >
+              <div>
+                {/* Miniature Mockup */}
+                <div 
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-3 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col gap-2 justify-center min-h-[140px]"
+                >
+                  {/* Row 1 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold font-mono tracking-wider shrink-0 w-[48px] text-right" style={{ color: 'var(--text-muted)' }}>
+                      8:00 AM
+                    </span>
+                    <div className="flex-1 rounded-lg px-2 py-1 text-[9px] font-bold text-white shadow-sm" style={{ backgroundColor: '#1a3a5c' }}>
+                      Ground — PPL Lesson 4
+                    </div>
+                  </div>
+
+                  {/* Row 2 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold font-mono tracking-wider shrink-0 w-[48px] text-right" style={{ color: 'var(--text-muted)' }}>
+                      9:00 AM
+                    </span>
+                    <div className="flex-1 rounded-lg px-2 py-1 text-[9px] font-bold text-white shadow-sm" style={{ backgroundColor: '#2d7a4f' }}>
+                      Flight — Private · 1.5h
+                    </div>
+                  </div>
+
+                  {/* Row 3 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold font-mono tracking-wider shrink-0 w-[48px] text-right" style={{ color: 'var(--text-muted)' }}>
+                      10:30 AM
+                    </span>
+                    <div className="flex-1 rounded-lg px-2 py-1 text-[9px] font-bold text-[#1a3a5c] shadow-sm" style={{ backgroundColor: '#e8a020' }}>
+                      Ground — IR Lesson 2
+                    </div>
+                  </div>
+
+                  {/* Row 4 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold font-mono tracking-wider shrink-0 w-[48px] text-right" style={{ color: 'var(--text-muted)' }}>
+                      12:00 PM
+                    </span>
+                    <div className="flex-1 rounded-lg px-2 py-2 text-[9px] font-bold border border-dashed" style={{ borderColor: 'var(--border-color)', minHeight: '22px' }}>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Flight Scheduler</h3>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Drag-and-drop scheduling with 10-minute snapping. Book ground and flight sessions side by side and see the day at a glance.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Card 6: Student Progress Portal */}
             <motion.div
               className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between md:col-span-2 md:max-w-xl md:mx-auto md:w-full"
               style={{
@@ -623,6 +685,8 @@ export default function Landing() {
               { code: 'CFI', name: 'Certificated Flight Instructor', desc: 'FOI, spin training, and §61.183 practical test prep.' },
               { code: 'CFII', name: 'Flight Instructor — Instrument', desc: 'Instrument instructor with §61.187(b)(7) endorsements.' },
               { code: 'MEI', name: 'Multi-Engine Instructor', desc: 'Initial and Add-On paths with full multiengine ACS.' },
+              { code: 'BFR', name: 'Flight Review', desc: '§61.56 biennial flight review with ground and flight phases, draft-and-resume, and a printable A.69 endorsement.', isCurrency: true },
+              { code: 'IPC', name: 'Instrument Proficiency Check', desc: '§61.57 IPC using IR ACS tasks, sky-blue accent, and a printable A.71 endorsement on completion.', isCurrency: true },
             ].map((rating) => (
               <motion.div
                 key={rating.code}
@@ -635,11 +699,23 @@ export default function Landing() {
                 whileHover={{ y: -5, boxShadow: '0 12px 24px rgba(26,58,92,0.1)' }}
               >
                 <div className="mb-3">
-                  <CheckCircle2 size={18} style={{ color: 'var(--green)' }} />
+                  <CheckCircle2 size={18} style={{ color: rating.isCurrency ? '#e8a020' : 'var(--green)' }} />
                 </div>
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>
                   {rating.code}
                 </p>
+                {rating.isCurrency && (
+                  <div
+                    className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest mb-2 w-fit border"
+                    style={{
+                      backgroundColor: 'rgba(232,160,32,0.1)',
+                      borderColor: 'rgba(232,160,32,0.25)',
+                      color: '#e8a020',
+                    }}
+                  >
+                    Currency / Add-On
+                  </div>
+                )}
                 <h4 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
                   {rating.name}
                 </h4>
