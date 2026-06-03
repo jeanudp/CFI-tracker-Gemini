@@ -485,6 +485,12 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                           className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc]"
                         />
                       </div>
+                      <div className="mt-1.5 p-2.5 bg-[#f0f5fc] border border-[#d2def2] rounded-xl flex items-start gap-2.5 text-left text-[11px] text-[#1e40af] leading-normal font-medium">
+                        <AlertCircle size={14} className="text-[#2563eb] shrink-0 mt-0.5" />
+                        <p>
+                          If this student already has their own 61 Tracker account, entering the same email address they use to log in will automatically connect them to this student record. They'll see all of this CFI's lessons and progress as soon as they sign in, with no share link needed.
+                        </p>
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">

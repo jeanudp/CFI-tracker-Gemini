@@ -2368,6 +2368,14 @@ export default function Dashboard() {
                             style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                           />
                         </div>
+                        {key === 'email_address' && (
+                          <div className="mt-1.5 p-2.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl flex items-start gap-2 text-left text-[11px] leading-normal font-medium text-blue-800 dark:text-blue-300">
+                            <Info size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                            <p>
+                              If this student already has their own 61 Tracker account, entering the same email they log in with will automatically connect them to this student record. They'll see all of this CFI's lessons and progress when they sign in, with no share link needed.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))}
 
