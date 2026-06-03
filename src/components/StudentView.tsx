@@ -119,6 +119,11 @@ export default function StudentView() {
   const [hasNoProfileLinked, setHasNoProfileLinked] = useState(false);
   const [requiresAccount, setRequiresAccount] = useState(false);
   const [requiresAccountStudentName, setRequiresAccountStudentName] = useState('');
+  const [instructorCode, setInstructorCode] = useState('');
+  const [claimingLoading, setClaimingLoading] = useState(false);
+  const [claimingError, setClaimingError] = useState<string | null>(null);
+  const [claimingSuccess, setClaimingSuccess] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -240,6 +245,58 @@ export default function StudentView() {
       setTokenValid(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClaimInstructor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!instructorCode.trim()) {
+      setClaimingError("Please enter a code or link");
+      return;
+    }
+
+    setClaimingLoading(true);
+    setClaimingError(null);
+    setClaimingSuccess(null);
+
+    try {
+      const trimmed = instructorCode.trim();
+      const codeToClaim = trimmed.includes('/view/')
+        ? trimmed.split('/view/')[1].split(/[?#/]/)[0]
+        : trimmed;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to claim an instructor profile");
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'claim',
+          token: codeToClaim,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "That code is invalid or expired — check with your instructor");
+      }
+
+      setClaimingSuccess("Instructor profile linked successfully!");
+      setInstructorCode('');
+      setShowAddForm(false);
+      
+      await validateAndFetch();
+    } catch (err: any) {
+      console.error('Error claiming instructor:', err);
+      setClaimingError(err.message || "That code is invalid or expired — check with your instructor");
+    } finally {
+      setClaimingLoading(false);
     }
   };
 
@@ -685,6 +742,45 @@ export default function StudentView() {
             >
               Go to Dashboard
             </button>
+
+            <div className="mt-8 pt-6 border-t border-[#dde3ec] text-left">
+              <h3 className="text-sm font-bold text-[#1c2333] mb-1">
+                Link an Instructor
+              </h3>
+              <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
+                Have an invite code or share link from your CFI? Paste it below to link your training profile instantly.
+              </p>
+              <form onSubmit={handleClaimInstructor} className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={instructorCode}
+                    onChange={(e) => setInstructorCode(e.target.value)}
+                    placeholder="Paste link or code here..."
+                    className="flex-1 text-xs rounded-xl px-4 py-3 border border-[#dde3ec] bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] text-[#1c2333] font-medium"
+                    disabled={claimingLoading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={claimingLoading}
+                    className="px-5 py-3 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {claimingLoading ? "Linking..." : "Link Profile"}
+                  </button>
+                </div>
+                {claimingError && (
+                  <p className="text-xs text-red-600 font-bold mt-1">
+                    {claimingError}
+                  </p>
+                )}
+                {claimingSuccess && (
+                  <p className="text-xs text-green-600 font-bold mt-1">
+                    {claimingSuccess}
+                  </p>
+                )}
+              </form>
+            </div>
           </div>
         </main>
       </div>
@@ -796,6 +892,74 @@ export default function StudentView() {
 
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+          {/* Add an instructor button & form near the top, only in authenticated mode */}
+          {!token && (
+            <div className="mb-6">
+              {!showAddForm ? (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    + Add an Instructor
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm text-left max-w-md ml-auto">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
+                      Link an Instructor
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowAddForm(false);
+                        setClaimingError(null);
+                        setClaimingSuccess(null);
+                        setInstructorCode('');
+                      }}
+                      className="text-gray-400 hover:text-gray-600 text-xs font-bold cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
+                    Paste the invite code or share link sent by your instructor to link your training profile.
+                  </p>
+                  <form onSubmit={handleClaimInstructor} className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        value={instructorCode}
+                        onChange={(e) => setInstructorCode(e.target.value)}
+                        placeholder="Paste share link or code here..."
+                        className="flex-1 text-xs rounded-xl px-4 py-3 border border-[#dde3ec] bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] text-[#1c2333]"
+                        disabled={claimingLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={claimingLoading}
+                        className="px-4 py-3 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 cursor-pointer whitespace-nowrap"
+                      >
+                        {claimingLoading ? "Adding..." : "Add"}
+                      </button>
+                    </div>
+                    {claimingError && (
+                      <p className="text-xs text-red-600 font-bold mt-1">
+                        {claimingError}
+                      </p>
+                    )}
+                    {claimingSuccess && (
+                      <p className="text-xs text-green-600 font-bold mt-1">
+                        {claimingSuccess}
+                      </p>
+                    )}
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Student Profile & Quick Stats */}
           <div className="mb-6 sm:mb-8">
             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
