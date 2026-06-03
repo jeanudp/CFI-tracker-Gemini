@@ -177,8 +177,8 @@ export default function StudentView() {
       } else {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          setTokenValid(false);
-          setLoading(false);
+          await supabase.auth.signOut();
+          window.location.href = '/auth';
           return;
         }
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -191,6 +191,11 @@ export default function StudentView() {
       });
 
       if (!response.ok) {
+        if (!token) {
+          await supabase.auth.signOut();
+          window.location.href = '/auth';
+          return;
+        }
         setTokenValid(false);
         return;
       }
@@ -872,6 +877,18 @@ export default function StudentView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {!token && (
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = '/auth';
+                }}
+                className="px-3 py-1.5 rounded-xl border border-white/20 hover:bg-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all flex items-center justify-center cursor-pointer"
+                title="Sign Out"
+              >
+                Sign Out
+              </button>
+            )}
             <button
               onClick={toggleDarkMode}
               className="p-1.5 sm:p-2 rounded-full border border-white/20 hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer"
