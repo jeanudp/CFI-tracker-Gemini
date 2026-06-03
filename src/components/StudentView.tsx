@@ -116,6 +116,7 @@ export default function StudentView() {
   const [requestPickerMonth, setRequestPickerMonth] = useState(new Date());
   const [isRequestTimePickerOpen, setIsRequestTimePickerOpen] = useState(false);
   const requestTimePickerRef = useRef<HTMLDivElement>(null);
+  const [hasNoProfileLinked, setHasNoProfileLinked] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -140,9 +141,7 @@ export default function StudentView() {
   const studentLessons = studentName ? lessons.filter(l => l.student_name === studentName) : [];
 
   useEffect(() => {
-    if (token) {
-      validateAndFetch();
-    }
+    validateAndFetch();
   }, [token]);
 
   useEffect(() => {
@@ -157,13 +156,29 @@ export default function StudentView() {
 
   const validateAndFetch = async () => {
     setLoading(true);
+    setHasNoProfileLinked(false);
     try {
+      let body: any = {};
+      let headers: any = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        body.token = token;
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setTokenValid(false);
+          setLoading(false);
+          return;
+        }
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/student-portal', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
+        headers,
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -172,6 +187,18 @@ export default function StudentView() {
       }
 
       const data = await response.json();
+
+      if (!token && (!data || !data.studentName)) {
+        setTokenValid(true);
+        setHasNoProfileLinked(true);
+        setStudentInfo(null);
+        setLessons([]);
+        setManualHours([]);
+        setEndorsements([]);
+        setScheduledLessons([]);
+        return;
+      }
+
       if (!data || !data.studentName) {
         setTokenValid(false);
         return;
@@ -598,6 +625,45 @@ export default function StudentView() {
     );
   }
 
+  if (hasNoProfileLinked) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+        {/* Read-Only Header */}
+        <header className="bg-[#1a3a5c] text-white py-4 px-6 sticky top-0 z-50 shadow-lg">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Plane className="text-amber-400" size={28} />
+              <div>
+                <h1 className="text-lg font-black tracking-tighter">61 TRACKER</h1>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest">Aviation Logistics</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-xl p-10 w-full max-w-[450px] text-center">
+            <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-6 mx-auto">
+              <AlertCircle size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-[#1c2333] mb-3">No Training Profile</h2>
+            <p className="text-gray-500 mb-8 leading-relaxed">
+              No training profile is linked to your account yet — ask your CFI for your share link.
+            </p>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-6">
@@ -656,22 +722,24 @@ export default function StudentView() {
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
           {/* CTA Banner inviting own account registration */}
-          <div className="mb-6 bg-amber-50/70 border border-amber-200 rounded-[1.5rem] p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm text-left">
-            <div>
-              <h3 className="text-sm sm:text-base font-black text-[#1a3a5c] tracking-tight">
-                This is your training progress
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">
-                Create a free student account to save it and check in anytime.
-              </p>
+          {token && (
+            <div className="mb-6 bg-amber-50/70 border border-amber-200 rounded-[1.5rem] p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm text-left">
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-[#1a3a5c] tracking-tight">
+                  This is your training progress
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  Create a free student account to save it and check in anytime.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
+                className="w-full sm:w-auto px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-amber-500/20 text-center cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Create Student Account
+              </button>
             </div>
-            <button
-              onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
-              className="w-full sm:w-auto px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-amber-500/20 text-center cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Create Student Account
-            </button>
-          </div>
+          )}
 
           {/* Student Profile & Quick Stats */}
           <div className="mb-6 sm:mb-8">
@@ -710,7 +778,11 @@ export default function StudentView() {
               { id: 'checkride', label: 'Checkride', fullLabel: 'Checkride', icon: CheckSquare },
               { id: 'presolo-test', label: 'Test', fullLabel: 'Pre-Solo Test', icon: FileText },
               { id: 'analytics', label: 'Analytics', fullLabel: 'Analytics', icon: BarChart3 }
-            ].map(tab => (
+            ].filter(tab => {
+              if (tab.id === 'analytics') return !!token;
+              if (tab.id === 'presolo-test') return !!token;
+              return true;
+            }).map(tab => (
               <button
                 key={tab.id}
                 onClick={() => {
@@ -852,12 +924,17 @@ export default function StudentView() {
                     ) : (
                       <div className="py-12 bg-[#f8fafc] rounded-2xl border border-dashed border-[#dde3ec] text-center mb-10">
                         <Calendar size={32} className="mx-auto text-[#94a3b8] mb-3 opacity-20" />
-                        <p className="text-xs font-bold text-[#64748b]">No upcoming lessons scheduled — use the form below to request one.</p>
+                        <p className="text-xs font-bold text-[#64748b]">
+                          {token 
+                            ? "No upcoming lessons scheduled — use the form below to request one."
+                            : "No upcoming lessons scheduled."}
+                        </p>
                       </div>
                     )}
 
-                    <div className="pt-8 border-t border-[#dde3ec]">
-                      <div className="flex items-center justify-between mb-6">
+                    {token && (
+                      <div className="pt-8 border-t border-[#dde3ec]">
+                        <div className="flex items-center justify-between mb-6">
                         <h3 className="text-sm font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
                           <Calendar size={16} />
                           Request a Lesson
@@ -1135,6 +1212,7 @@ export default function StudentView() {
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1282,7 +1360,9 @@ export default function StudentView() {
                   {/* Hours Summary Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     <div className="md:col-span-3 bg-white p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] shadow-sm">
-                       <div className="flex justify-end gap-2 mb-6">
+                       {token && (
+                         <>
+                           <div className="flex justify-end gap-2 mb-6">
                          <button
                            onClick={() => handleStudentExport(true)}
                            className="bg-[#fef3c7] hover:bg-[#fef3c7]/80 text-[#d97706] border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
@@ -1332,6 +1412,8 @@ export default function StudentView() {
                            </div>
                          </div>
                        )}
+                       </>
+                      )}
                        <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
                          <Clock className="text-amber-500" size={20} />
                          <span className="sm:inline hidden">Total Cumulative Training Time</span>
