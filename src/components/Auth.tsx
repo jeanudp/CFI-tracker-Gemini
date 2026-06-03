@@ -14,6 +14,7 @@ export default function Auth() {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
+  const [role, setRole] = useState<'cfi' | 'student'>('cfi');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function Auth() {
           } catch (err) {
             console.error('Error claiming student token:', err);
           }
-          navigate(`/view/${tokenToClaim}`);
+          window.location.href = '/my-progress';
         } else {
           navigate('/dashboard');
         }
@@ -297,23 +298,114 @@ export default function Auth() {
               </div>
             )}
 
-            <form onSubmit={handleAuth} className="space-y-4">
-              {!isLogin && (
+            {!isLogin && searchParams.get('claim') && (
+              <div className="mb-5 p-3.5 rounded-xl border text-xs text-left" style={{ backgroundColor: 'rgba(232, 160, 32, 0.05)', borderColor: 'rgba(232, 160, 32, 0.2)', color: 'var(--text-primary)' }}>
+                <span className="font-bold text-[#e8a020] block mb-0.5">CFI Invite Verified</span>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  You are creating a private student account linked to your instructor's invite.
+                </p>
+              </div>
+            )}
+
+            {!isLogin && !searchParams.get('claim') && (
+              <div className="mb-5 space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest block text-left" style={{ color: 'var(--text-muted)' }}>
+                  Are you a CFI or a student?
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRole('cfi')}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+                    style={{
+                      backgroundColor: role === 'cfi' ? 'var(--navy)' : 'var(--bg-tertiary)',
+                      borderColor: role === 'cfi' ? 'var(--navy)' : 'var(--border-color)',
+                      color: role === 'cfi' ? '#ffffff' : 'var(--text-primary)',
+                    }}
+                  >
+                    CFI (Instructor)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('student')}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+                    style={{
+                      backgroundColor: role === 'student' ? 'var(--navy)' : 'var(--bg-tertiary)',
+                      borderColor: role === 'student' ? 'var(--navy)' : 'var(--border-color)',
+                      color: role === 'student' ? '#ffffff' : 'var(--text-primary)',
+                    }}
+                  >
+                    Student
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!isLogin && !searchParams.get('claim') && role === 'student' ? (
+              <div className="space-y-5 text-left mb-2">
+                <div className="p-4 rounded-xl border text-xs leading-relaxed" style={{ backgroundColor: 'rgba(232, 160, 32, 0.05)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}>
+                  <span className="font-bold text-[#e8a020] block mb-1">CFI Invite Link Required</span>
+                  <p style={{ color: 'var(--text-secondary)' }}>
+                    Student progress tracking accounts can only be created via the unique share link sent directly to you by your CFI (instructor).
+                  </p>
+                  <p className="font-bold mt-2" style={{ color: 'var(--text-secondary)' }}>
+                    Please ask your instructor to share your training progress link with you.
+                  </p>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(true)}
+                  className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg text-xs cursor-pointer"
+                  style={{ backgroundColor: 'var(--navy)' }}
+                >
+                  Already have a student account? Sign In →
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleAuth} className="space-y-4">
+                {!isLogin && (
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="John Smith CFI"
+                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <label
-                    className="text-[10px] font-bold uppercase tracking-widest block"
+                    className="text-[10px] font-bold uppercase tracking-widest block text-left"
                     style={{ color: 'var(--text-muted)' }}
                   >
-                    Full Name
+                    Email
                   </label>
                   <div className="relative">
-                    <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
                     <input
-                      type="text"
+                      type="email"
                       required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="John Smith CFI"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
                       className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
                       style={{
                         backgroundColor: 'var(--bg-tertiary)',
@@ -323,67 +415,42 @@ export default function Auth() {
                     />
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-1.5">
-                <label
-                  className="text-[10px] font-bold uppercase tracking-widest block"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                    style={{
-                      backgroundColor: 'var(--bg-tertiary)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
+                <div className="space-y-1.5">
+                  <label
+                    className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
+                      className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                      style={{
+                        backgroundColor: 'var(--bg-tertiary)',
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--text-primary)'
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <label
-                  className="text-[10px] font-bold uppercase tracking-widest block"
-                  style={{ color: 'var(--text-muted)' }}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
+                  style={{ backgroundColor: 'var(--navy)' }}
                 >
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
-                    className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                    style={{
-                      backgroundColor: 'var(--bg-tertiary)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
-                style={{ backgroundColor: 'var(--navy)' }}
-              >
-                {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
-              </button>
-            </form>
+                  {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
+                </button>
+              </form>
+            )}
 
             <p
               className="text-center text-[10px] mt-6"
