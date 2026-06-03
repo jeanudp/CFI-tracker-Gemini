@@ -676,11 +676,11 @@ export default function Landing() {
               Built for every fixed-wing rating
             </h2>
             <p className="text-sm max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
-              7 ratings supported today. More on the way.
+              9 ratings supported today. More on the way.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             {[
               { code: 'PPL', name: 'Private Pilot', desc: 'Pre-solo through checkride with full §61.109 hour tracking.' },
               { code: 'IR', name: 'Instrument Rating', desc: 'Approaches, holds, and intercept tracking with §61.65 currency.' },
@@ -694,7 +694,7 @@ export default function Landing() {
             ].map((rating) => (
               <motion.div
                 key={rating.code}
-                className="rounded-2xl p-5 text-left transition-all border"
+                className="rounded-2xl p-5 text-left transition-all border h-full"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',
                   borderColor: 'var(--border-color)',
@@ -937,7 +937,7 @@ export default function Landing() {
                 'Everything in All Ratings',
                 'Locked in at $8.25/month effective',
                 'No monthly billing surprises',
-                'Full year of all 7 ratings',
+                'Full year of all 9 ratings',
                 'First month still free',
                 'Cancel anytime — access until year ends',
               ].map(f => (
