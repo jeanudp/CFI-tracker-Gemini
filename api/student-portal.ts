@@ -164,7 +164,23 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      linkedProfiles = links;
+      const cfiUserIds = Array.from(new Set(links.map((link: any) => link.cfi_user_id)));
+      const { data: cfiProfiles, error: profilesError } = await supabaseAdmin
+        .from('cfi_profile')
+        .select('user_id, full_name')
+        .in('user_id', cfiUserIds);
+
+      const profileMap: Record<string, string> = {};
+      if (!profilesError && cfiProfiles) {
+        cfiProfiles.forEach((prof: any) => {
+          profileMap[prof.user_id] = prof.full_name || '';
+        });
+      }
+
+      linkedProfiles = links.map((link: any) => ({
+        ...link,
+        cfi_name: profileMap[link.cfi_user_id] || ''
+      }));
 
       // Choose the target profile
       const reqCfiUserId = req.body.cfi_user_id;
