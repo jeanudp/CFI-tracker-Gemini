@@ -30,11 +30,103 @@ import Contact from './pages/Contact';
 import HowToExport from './pages/HowToExport';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
+function FullScreenLoading() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <style>
+        {`
+          @keyframes pulse-scale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+          }
+          .animate-pulse-logo {
+            animation: pulse-scale 3s ease-in-out infinite;
+          }
+        `}
+      </style>
+      <div className="flex items-center gap-5 scale-150">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="relative animate-pulse-logo">
+            <span
+              className="block font-black leading-none select-none"
+              style={{
+                fontSize: '42px',
+                color: 'var(--navy)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '-1.5px',
+                lineHeight: 1,
+              }}
+            >
+              61
+            </span>
+            <div
+              className="absolute rounded-full"
+              style={{ bottom: '-4px', left: 0, width: '100%', height: '4px', backgroundColor: '#e8a020' }}
+            />
+          </div>
+          
+          <div style={{ width: '2px', height: '36px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
+          
+          <div className="flex flex-col justify-center gap-0.5">
+            <span
+              className="font-black uppercase leading-none"
+              style={{ fontSize: '16px', color: 'var(--navy)', letterSpacing: '2px' }}
+            >
+              TRACKER
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StudentHomeRoute({ session, accountType }: { session: any, accountType: 'not-yet-determined' | 'instructor' | 'student' }) {
+  if (!session) {
+    return <Navigate to="/auth" />;
+  }
+  if (accountType === 'not-yet-determined') {
+    return <FullScreenLoading />;
+  }
+  if (accountType === 'instructor') {
+    return <Navigate to="/dashboard" />;
+  }
+  return <StudentView />;
+}
+
+function CfiRouteGuard({ session, accountType, children }: { session: any, accountType: 'not-yet-determined' | 'instructor' | 'student', children: React.ReactNode }) {
+  if (!session) {
+    return <Navigate to="/auth" />;
+  }
+  if (accountType === 'not-yet-determined') {
+    return <FullScreenLoading />;
+  }
+  if (accountType === 'student') {
+    return <Navigate to="/my-progress" />;
+  }
+  return <>{children}</>;
+}
+
+function AuthRedirect({ session, accountType }: { session: any, accountType: 'not-yet-determined' | 'instructor' | 'student' }) {
+  if (!session) {
+    return <Auth />;
+  }
+  if (accountType === 'not-yet-determined') {
+    return <FullScreenLoading />;
+  }
+  if (accountType === 'student') {
+    return <Navigate to="/my-progress" />;
+  }
+  return <Navigate to="/dashboard" />;
+}
+
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState(false);
+  const [accountType, setAccountType] = useState<'not-yet-determined' | 'instructor' | 'student'>('not-yet-determined');
   const location = useLocation();
 
   const checkConnection = async () => {
@@ -64,6 +156,24 @@ export default function App() {
             .maybeSingle();
           
           setShowOnboarding(!profile);
+
+          try {
+            const { data: sub, error } = await supabase
+              .from('user_subscriptions')
+              .select('account_type')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+
+            if (error || !sub || !sub.account_type) {
+              setAccountType('instructor');
+            } else {
+              setAccountType(sub.account_type === 'student' ? 'student' : 'instructor');
+            }
+          } catch (err) {
+            setAccountType('instructor');
+          }
+        } else {
+          setAccountType('not-yet-determined');
         }
         
         await checkConnection();
@@ -77,63 +187,43 @@ export default function App() {
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (session) {
+        try {
+          const { data: profile } = await supabase
+            .from('cfi_profile')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          setShowOnboarding(!profile);
+
+          const { data: sub, error } = await supabase
+            .from('user_subscriptions')
+            .select('account_type')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          if (error || !sub || !sub.account_type) {
+            setAccountType('instructor');
+          } else {
+            setAccountType(sub.account_type === 'student' ? 'student' : 'instructor');
+          }
+        } catch (err) {
+          setAccountType('instructor');
+        }
+      } else {
+        setAccountType('not-yet-determined');
+        setShowOnboarding(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <style>
-          {`
-            @keyframes pulse-scale {
-              0%, 100% { transform: scale(1); }
-              50% { transform: scale(1.08); }
-            }
-            .animate-pulse-logo {
-              animation: pulse-scale 3s ease-in-out infinite;
-            }
-          `}
-        </style>
-        <div className="flex items-center gap-5 scale-150">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="relative animate-pulse-logo">
-              <span
-                className="block font-black leading-none select-none"
-                style={{
-                  fontSize: '42px',
-                  color: 'var(--navy)',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  letterSpacing: '-1.5px',
-                  lineHeight: 1,
-                }}
-              >
-                61
-              </span>
-              <div
-                className="absolute rounded-full"
-                style={{ bottom: '-4px', left: 0, width: '100%', height: '4px', backgroundColor: '#e8a020' }}
-              />
-            </div>
-            
-            <div style={{ width: '2px', height: '36px', backgroundColor: '#e8a020', opacity: 0.3, borderRadius: '1px', flexShrink: 0 }} />
-            
-            <div className="flex flex-col justify-center gap-0.5">
-              <span
-                className="font-black uppercase leading-none"
-                style={{ fontSize: '16px', color: 'var(--navy)', letterSpacing: '2px' }}
-              >
-                TRACKER
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <FullScreenLoading />;
   }
 
   if (connectionError) {
@@ -166,7 +256,7 @@ export default function App() {
 
   return (
     <>
-      {session && showOnboarding && (
+      {session && showOnboarding && accountType === 'instructor' && (
         <OnboardingModal 
           user={session.user} 
           onComplete={() => setShowOnboarding(false)} 
@@ -176,7 +266,7 @@ export default function App() {
         <Routes location={location}>
         <Route 
           path="/auth" 
-          element={!session ? <Auth /> : <Navigate to="/dashboard" />} 
+          element={<AuthRedirect session={session} accountType={accountType} />} 
         />
         <Route
           path="/"
@@ -189,181 +279,160 @@ export default function App() {
         <Route path="/view/:token" element={<StudentView />} />
         <Route path="/howto-export" element={<HowToExport />} />
 
+        <Route 
+          path="/my-progress" 
+          element={<StudentHomeRoute session={session} accountType={accountType} />} 
+        />
+
         <Route
           path="/dashboard"
           element={
-            session ? (
+            <CfiRouteGuard session={session} accountType={accountType}>
               <PageTransition>
                 <Dashboard />
               </PageTransition>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/rating"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <RatingSelection />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/lesson-type"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <LessonType />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/ground"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <GroundLesson />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/flight"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <FlightLesson />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/flight-review"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <FlightReview />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/ipc"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <IPC />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/history"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <History />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route path="/student/:studentName" element={<StudentDashboard />} />
         <Route
           path="/iacra/:studentName"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <IACRASummary />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/presolo-test"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <PreSoloTest />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/cfi-hours"
           element={
-            session ? (
-              <Layout user={session.user}>
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
                 <PageTransition>
                   <CFIHours />
                 </PageTransition>
               </Layout>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/schedule"
           element={
-            session ? (
+            <CfiRouteGuard session={session} accountType={accountType}>
               <PageTransition>
                 <Schedule />
               </PageTransition>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route
           path="/admin"
           element={
-            session ? (
+            <CfiRouteGuard session={session} accountType={accountType}>
               <PageTransition>
                 <Admin />
               </PageTransition>
-            ) : (
-              <Navigate to="/auth" />
-            )
+            </CfiRouteGuard>
           }
         />
         <Route path="/account" element={<Account />} />
