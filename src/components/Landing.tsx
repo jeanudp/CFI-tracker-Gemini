@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun, Check, Share2, ExternalLink } from 'lucide-react';
+import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun, Check, Share2, ExternalLink, Lock } from 'lucide-react';
 import TermsModal from './TermsModal';
 
 export default function Landing() {
@@ -602,7 +602,7 @@ export default function Landing() {
 
             {/* Card 6: Student Progress Portal */}
             <motion.div
-              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between md:col-span-2 md:max-w-xl md:mx-auto md:w-full"
+              className="rounded-2xl p-6 text-left transition-all border flex flex-col justify-between"
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 borderColor: 'var(--border-color)',
@@ -613,34 +613,38 @@ export default function Landing() {
               <div>
                 {/* Miniature Mockup */}
                 <div 
-                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-4 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex items-center justify-center gap-4 min-h-[140px]"
+                  className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-xl p-3 mb-4 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col gap-2 justify-between min-h-[140px]"
                 >
-                  {/* Decorative QR code matrix */}
-                  <div className="grid grid-cols-6 gap-0.5 bg-[var(--bg-secondary)] p-2 rounded-lg border border-[var(--border-color)]">
-                    {[
-                      1,1,1,0,1,1,
-                      1,0,0,1,0,1,
-                      1,0,1,1,1,0,
-                      0,1,1,0,0,1,
-                      1,0,1,0,1,1,
-                      1,1,0,1,0,1,
-                    ].map((val, idx) => (
-                      <div
-                        key={idx}
-                        className="w-2.5 h-2.5 rounded-[1px]"
-                        style={{
-                          backgroundColor: val === 1 ? 'var(--text-primary)' : 'transparent',
-                        }}
-                      />
-                    ))}
+                  <div className="flex flex-col gap-0.5 align-start text-left">
+                    <div className="w-fit px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border" style={{ backgroundColor: 'rgba(232,160,32,0.12)', borderColor: 'rgba(232,160,32,0.25)', color: '#e8a020' }}>
+                      Read Only · Student View
+                    </div>
+                    <div className="text-[11px] font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
+                      Alex Johnson
+                    </div>
+                    <div className="text-[8px]" style={{ color: 'var(--text-muted)' }}>
+                      Last updated today
+                    </div>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-[var(--navy)] uppercase tracking-wider">Scan to view progress</span>
-                    <span className="text-[8px] font-medium text-[var(--text-muted)] italic">61tracker.com/s/student-portal</span>
-                    <div className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/25 text-[8px] font-black uppercase text-[var(--amber)] tracking-widest w-fit">
-                      Read Only Link
+                  <div className="flex flex-col border border-[var(--border-color)] rounded-lg overflow-hidden bg-[var(--bg-secondary)] text-[9px]">
+                    <div className="flex justify-between items-center px-2 py-1 border-b border-[var(--border-color)]">
+                      <span style={{ color: 'var(--text-secondary)' }}>Total Hours</span>
+                      <span className="font-mono font-bold text-[#1a3a5c]">42.3h</span>
                     </div>
+                    <div className="flex justify-between items-center px-2 py-1 border-b border-[var(--border-color)]">
+                      <span style={{ color: 'var(--text-secondary)' }}>Lessons Completed</span>
+                      <span className="font-mono font-bold text-[#1a3a5c]">14</span>
+                    </div>
+                    <div className="flex justify-between items-center px-2 py-1">
+                      <span style={{ color: 'var(--text-secondary)' }}>ACS Tasks Passed</span>
+                      <span className="font-mono font-bold text-[#2d7a4f]">38</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-1.5 py-1 rounded border border-[var(--border-color)] mt-0.5" style={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                    <Lock size={9} style={{ color: 'var(--text-muted)' }} />
+                    <span className="text-[9px] font-medium" style={{ color: 'var(--text-muted)' }}>Shared via secure link</span>
                   </div>
                 </div>
 
