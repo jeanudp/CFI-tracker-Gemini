@@ -727,6 +727,34 @@ export default function Dashboard() {
         s.id === selectedStudent.id ? { ...s, ...editForm } : s
       ));
       setSelectedStudent(prev => prev ? { ...prev, ...editForm } : null);
+
+      if (editForm.email_address && editForm.email_address.trim()) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const linkRes = await fetch('/api/link-student', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                email: editForm.email_address.trim(),
+                name: (editForm.name && editForm.name.trim()) || selectedStudent.name.trim(),
+              }),
+            });
+            if (linkRes.ok) {
+              const linkData = await linkRes.json();
+              if (linkData.linked) {
+                setUndoSuccess("Student's 61 Tracker account linked successfully!");
+              }
+            }
+          }
+        } catch (linkErr) {
+          console.error('Error auto-linking student during edit:', linkErr);
+        }
+      }
+
       setIsEditingInfo(false);
     } catch (err: any) {
       alert(err.message);
