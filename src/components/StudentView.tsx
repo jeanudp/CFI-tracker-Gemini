@@ -117,6 +117,8 @@ export default function StudentView() {
   const [isRequestTimePickerOpen, setIsRequestTimePickerOpen] = useState(false);
   const requestTimePickerRef = useRef<HTMLDivElement>(null);
   const [hasNoProfileLinked, setHasNoProfileLinked] = useState(false);
+  const [requiresAccount, setRequiresAccount] = useState(false);
+  const [requiresAccountStudentName, setRequiresAccountStudentName] = useState('');
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -157,6 +159,8 @@ export default function StudentView() {
   const validateAndFetch = async () => {
     setLoading(true);
     setHasNoProfileLinked(false);
+    setRequiresAccount(false);
+    setRequiresAccountStudentName('');
     try {
       let body: any = {};
       let headers: any = {
@@ -187,6 +191,18 @@ export default function StudentView() {
       }
 
       const data = await response.json();
+
+      if (data && data.requiresAccount) {
+        setTokenValid(true);
+        setRequiresAccount(true);
+        setRequiresAccountStudentName(data.studentName || '');
+        setStudentInfo(null);
+        setLessons([]);
+        setManualHours([]);
+        setEndorsements([]);
+        setScheduledLessons([]);
+        return;
+      }
 
       if (!token && (!data || !data.studentName)) {
         setTokenValid(true);
@@ -664,6 +680,54 @@ export default function StudentView() {
     );
   }
 
+  if (requiresAccount) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+        {/* Read-Only Header */}
+        <header className="bg-[#1a3a5c] text-white py-4 px-6 sticky top-0 z-50 shadow-lg">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Plane className="text-amber-400" size={28} />
+              <div>
+                <h1 className="text-lg font-black tracking-tighter">61 TRACKER</h1>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest">Aviation Logistics</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-xl p-10 w-full max-w-[450px] text-center">
+            <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-6 mx-auto">
+              <AlertCircle size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-[#1c2333] mb-3">Account Required</h2>
+            <p className="text-[#1a3a5c] font-semibold text-sm mb-4">
+              {requiresAccountStudentName}'s training progress has been shared with you
+            </p>
+            <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+              Create a free student account to view and interact with your training data.
+            </p>
+            <button
+              onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
+              className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer mb-4"
+            >
+              Create Student Account
+            </button>
+            <button
+              onClick={() => navigate(`/auth?mode=signin&claim=${encodeURIComponent(token || '')}`)}
+              className="text-[#1a3a5c] hover:underline text-sm font-semibold transition-all cursor-pointer inline-block"
+            >
+              Already have an account? Sign in
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-6">
@@ -721,26 +785,6 @@ export default function StudentView() {
 
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-          {/* CTA Banner inviting own account registration */}
-          {token && (
-            <div className="mb-6 bg-amber-50/70 border border-amber-200 rounded-[1.5rem] p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm text-left">
-              <div>
-                <h3 className="text-sm sm:text-base font-black text-[#1a3a5c] tracking-tight">
-                  This is your training progress
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 font-medium">
-                  Create a free student account to save it and check in anytime.
-                </p>
-              </div>
-              <button
-                onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
-                className="w-full sm:w-auto px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-amber-500/20 text-center cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Create Student Account
-              </button>
-            </div>
-          )}
-
           {/* Student Profile & Quick Stats */}
           <div className="mb-6 sm:mb-8">
             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
