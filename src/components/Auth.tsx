@@ -31,6 +31,13 @@ export default function Auth() {
     });
   }, [navigate]);
 
+  useEffect(() => {
+    const claim = searchParams.get('claim');
+    if (claim) {
+      localStorage.setItem('pending_student_claim', claim);
+    }
+  }, [searchParams]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -39,15 +46,48 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate('/dashboard');
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+
+        const tokenToClaim = localStorage.getItem('pending_student_claim');
+        if (tokenToClaim && signInData?.session) {
+          try {
+            const response = await fetch('/api/student-portal', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${signInData.session.access_token}`
+              },
+              body: JSON.stringify({
+                token: tokenToClaim,
+                action: 'claim'
+              })
+            });
+
+            if (response.ok) {
+              localStorage.removeItem('pending_student_claim');
+            } else {
+              const errorText = await response.text();
+              console.error('Claim request failed:', errorText);
+            }
+          } catch (err) {
+            console.error('Error claiming student token:', err);
+          }
+          navigate(`/view/${tokenToClaim}`);
+        } else {
+          navigate('/dashboard');
+        }
       } else {
+        const pendingClaim = localStorage.getItem('pending_student_claim');
+        const signUpDataOptions = pendingClaim
+          ? { data: { full_name: fullName, account_type: 'student' } }
+          : { data: { full_name: fullName } };
+
         // Create the account
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: signUpDataOptions,
         });
         if (signUpError) throw signUpError;
 
@@ -66,7 +106,11 @@ export default function Auth() {
             });
         }
 
-        setSuccess('Account created! Please check your email to confirm your account, then sign in. If you have an invite code, you can enter it after logging in.');
+        if (pendingClaim) {
+          setSuccess('Account created! Please check your email to confirm your account, then sign in to access your training progress.');
+        } else {
+          setSuccess('Account created! Please check your email to confirm your account, then sign in. If you have an invite code, you can enter it after logging in.');
+        }
         setIsLogin(true);
       }
     } catch (err: any) {
