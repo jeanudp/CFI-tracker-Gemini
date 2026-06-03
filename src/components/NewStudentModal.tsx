@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { RATINGS } from '../constants';
-import { X, User, Phone, Mail, Calendar, FileText, Heart, ChevronRight, Check, Loader2, Plane, Cloud, Gauge, ClipboardList, Compass, Navigation, AlertCircle, Lock, Share2, Copy } from 'lucide-react';
+import { X, User, Phone, Mail, Calendar, FileText, Heart, ChevronRight, Check, Loader2, Plane, Cloud, Gauge, ClipboardList, Compass, Navigation, AlertCircle, Lock, Share2, Copy, Info } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NewStudentModalProps {
@@ -238,6 +238,83 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [linkStatus, setLinkStatus] = useState<'not_attempted' | 'linked' | 'no_account_found'>('not_attempted');
 
+  // Check email connectivity states
+  const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'verified' | 'not-found'>('idle');
+  const [copiedFromCheck, setCopiedFromCheck] = useState(false);
+
+  useEffect(() => {
+    setCheckStatus('idle');
+  }, [name, emailAddress]);
+
+  const handleCheckEmail = async () => {
+    if (!name.trim() || !emailAddress.trim()) return;
+    setCheckStatus('checking');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setCheckStatus('idle');
+        return;
+      }
+      const linkRes = await fetch('/api/link-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: emailAddress.trim(),
+          name: name.trim(),
+        }),
+      });
+      if (linkRes.ok) {
+        const linkData = await linkRes.json();
+        if (linkData.linked) {
+          setCheckStatus('verified');
+        } else {
+          setCheckStatus('not-found');
+        }
+      } else {
+        setCheckStatus('not-found');
+      }
+    } catch (err) {
+      console.error('Error checking email:', err);
+      setCheckStatus('not-found');
+    }
+  };
+
+  const handleCopyCheckShareLink = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const { data: existingToken } = await supabase
+        .from('student_share_tokens')
+        .select('token')
+        .eq('student_name', name.trim())
+        .eq('user_id', session.user.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      let token = existingToken?.token;
+      if (!token) {
+        const { data: newToken, error: insertError } = await supabase
+          .from('student_share_tokens')
+          .insert({ student_name: name.trim(), user_id: session.user.id, active: true })
+          .select('token')
+          .single();
+        if (insertError) throw insertError;
+        token = newToken.token;
+      }
+      
+      const shareUrl = `${window.location.origin}/view/${token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedFromCheck(true);
+      setTimeout(() => setCopiedFromCheck(false), 2000);
+    } catch (err) {
+      console.error('Error copying share link from check:', err);
+    }
+  };
+
   const resetForm = () => {
     setStep(0);
     setName('');
@@ -255,6 +332,8 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     setIncludePrior(false);
     setError(null);
     setLinkStatus('not_attempted');
+    setCheckStatus('idle');
+    setCopiedFromCheck(false);
   };
 
   const handleClose = () => {
@@ -475,22 +554,79 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
 
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Email</label>
-                      <div className="relative">
-                        <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-                        <input
-                          type="email"
-                          value={emailAddress}
-                          onChange={e => setEmailAddress(e.target.value)}
-                          placeholder="student@email.com"
-                          className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc]"
-                        />
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                          <input
+                            type="email"
+                            value={emailAddress}
+                            onChange={e => setEmailAddress(e.target.value)}
+                            placeholder="student@email.com"
+                            className="w-full text-sm border border-[#dde3ec] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#1a3a5c] transition-all bg-[#f8fafc]"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!name.trim() || !emailAddress.trim() || checkStatus === 'checking'}
+                          onClick={handleCheckEmail}
+                          className="px-4 text-xs font-bold bg-[#1a3a5c] hover:bg-[#132d4a] text-white rounded-xl disabled:bg-[#f3f4f6] disabled:text-[#9ca3af] disabled:border-[#e5e7eb] border transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                        >
+                          {checkStatus === 'checking' ? (
+                            <>
+                              <Loader2 size={13} className="animate-spin" />
+                              <span>Checking...</span>
+                            </>
+                          ) : (
+                            <span>Check</span>
+                          )}
+                        </button>
                       </div>
-                      <div className="mt-1.5 p-2.5 bg-red-50 border border-red-100 rounded-xl flex items-start gap-2.5 text-left text-[11px] text-[#c0392b] leading-normal font-medium">
-                        <AlertCircle size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
-                        <p>
-                          Add the student's email so they can see their progress. If they already have a 61 Tracker account, this connects them automatically — no share link needed.
-                        </p>
-                      </div>
+
+                      {checkStatus === 'idle' && (
+                        <div className="mt-1.5 p-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl flex items-start gap-2.5 text-left text-[11px] text-[#64748b] leading-normal font-medium">
+                          <Info size={14} className="text-[#64748b] shrink-0 mt-0.5" />
+                          <p>
+                            Add the student's email so they can see their progress. Tap the "Check" button to verify their account.
+                          </p>
+                        </div>
+                      )}
+
+                      {checkStatus === 'verified' && (
+                        <div className="mt-1.5 p-2.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl flex items-start gap-2.5 text-left text-[11px] text-[#15803d] leading-normal font-medium">
+                          <Check size={14} className="text-[#16a34a] shrink-0 mt-0.5" />
+                          <p>
+                            Verified — this student's existing account is now connected. They'll see this CFI's progress when they sign in.
+                          </p>
+                        </div>
+                      )}
+
+                      {checkStatus === 'not-found' && (
+                        <div className="mt-1.5 p-2.5 bg-red-50 border border-red-100 rounded-xl flex flex-col gap-2 text-left text-[11px] text-[#c0392b] leading-normal font-medium">
+                          <div className="flex items-start gap-2.5">
+                            <AlertCircle size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
+                            <p>
+                              No 61 Tracker account found for this email. Share the progress link so they can create one.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleCopyCheckShareLink}
+                            className="mt-1 self-start flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 hover:bg-red-50/50 text-[#c0392b] text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                          >
+                            {copiedFromCheck ? (
+                              <>
+                                <Check size={11} className="text-green-600" />
+                                <span className="text-green-600">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={11} className="text-[#c0392b]" />
+                                <span>Copy Share Link</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-1.5">

@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
@@ -181,6 +181,87 @@ export default function Dashboard() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isQuickWeatherOpen, setIsQuickWeatherOpen] = useState(false);
   const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
+
+  // Check email connectivity states for edit mode
+  const [editCheckStatus, setEditCheckStatus] = useState<'idle' | 'checking' | 'verified' | 'not-found'>('idle');
+  const [editCopiedFromCheck, setEditCopiedFromCheck] = useState(false);
+
+  useEffect(() => {
+    setEditCheckStatus('idle');
+  }, [editForm?.email_address, editForm?.name, selectedStudent, isEditingInfo]);
+
+  const handleDashboardCheckEmail = async () => {
+    const targetEmail = editForm.email_address;
+    const targetName = editForm.name || selectedStudent?.name;
+    if (!targetEmail?.trim() || !targetName?.trim()) return;
+    setEditCheckStatus('checking');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setEditCheckStatus('idle');
+        return;
+      }
+      const linkRes = await fetch('/api/link-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: targetEmail.trim(),
+          name: targetName.trim(),
+        }),
+      });
+      if (linkRes.ok) {
+        const linkData = await linkRes.json();
+        if (linkData.linked) {
+          setEditCheckStatus('verified');
+        } else {
+          setEditCheckStatus('not-found');
+        }
+      } else {
+        setEditCheckStatus('not-found');
+      }
+    } catch (err) {
+      console.error('Error checking email in dashboard:', err);
+      setEditCheckStatus('not-found');
+    }
+  };
+
+  const handleDashboardCheckCopy = async () => {
+    const targetName = editForm.name || selectedStudent?.name;
+    if (!targetName?.trim()) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const { data: existingToken } = await supabase
+        .from('student_share_tokens')
+        .select('token')
+        .eq('student_name', targetName.trim())
+        .eq('user_id', session.user.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      let token = existingToken?.token;
+      if (!token) {
+        const { data: newToken, error: insertError } = await supabase
+          .from('student_share_tokens')
+          .insert({ student_name: targetName.trim(), user_id: session.user.id, active: true })
+          .select('token')
+          .single();
+        if (insertError) throw insertError;
+        token = newToken.token;
+      }
+      
+      const shareUrl = `${window.location.origin}/view/${token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setEditCopiedFromCheck(true);
+      setTimeout(() => setEditCopiedFromCheck(false), 2000);
+    } catch (err) {
+      console.error('Error copying share link from dashboard check:', err);
+    }
+  };
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
@@ -2357,23 +2438,86 @@ export default function Dashboard() {
                     ].map(({ key, label, icon: Icon, type, placeholder }) => (
                       <div key={key} className="space-y-1">
                         <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
-                        <div className="relative">
-                          <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                          <input
-                            type={type}
-                            value={editForm[key] || ''}
-                            onChange={e => setEditForm((prev: any) => ({ ...prev, [key]: e.target.value }))}
-                            placeholder={placeholder}
-                            className="w-full text-sm rounded-xl pl-9 pr-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all"
-                            style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                          />
+                        <div className={key === 'email_address' ? "flex gap-2" : "relative"}>
+                          <div className="relative flex-1">
+                            <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                            <input
+                              type={type}
+                              value={editForm[key] || ''}
+                              onChange={e => setEditForm((prev: any) => ({ ...prev, [key]: e.target.value }))}
+                              placeholder={placeholder}
+                              className="w-full text-sm rounded-xl pl-9 pr-4 py-2.5 border focus:outline-none focus:border-[#1a3a5c] transition-all"
+                              style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                            />
+                          </div>
+                          {key === 'email_address' && (
+                            <button
+                              type="button"
+                              disabled={
+                                !editForm.email_address?.trim() ||
+                                !(editForm.name?.trim() || selectedStudent?.name?.trim()) ||
+                                editCheckStatus === 'checking'
+                              }
+                              onClick={handleDashboardCheckEmail}
+                              className="px-4 text-xs font-bold bg-[#1a3a5c] hover:bg-[#132d4a] text-white rounded-xl disabled:bg-[#f3f4f6] disabled:text-[#9ca3af] disabled:border-[#e5e7eb] border transition-all flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                              style={
+                                (!editForm.email_address?.trim() || !(editForm.name?.trim() || selectedStudent?.name?.trim()) || editCheckStatus === 'checking')
+                                  ? { backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }
+                                  : undefined
+                              }
+                            >
+                              {editCheckStatus === 'checking' ? (
+                                <>
+                                  <Loader2 size={13} className="animate-spin" />
+                                  <span>Checking...</span>
+                                </>
+                              ) : (
+                                <span>Check</span>
+                              )}
+                            </button>
+                          )}
                         </div>
-                        {key === 'email_address' && (
+                        {key === 'email_address' && editCheckStatus === 'idle' && (
                           <div className="mt-1.5 p-2.5 bg-red-50/50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/40 rounded-xl flex items-start gap-2 text-left text-[11px] leading-normal font-medium">
                             <Info size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
                             <p style={{ color: '#c0392b' }}>
                               Has a 61 Tracker account? Enter their login email to auto-connect them — they'll see this CFI's progress instantly, no share link needed.
                             </p>
+                          </div>
+                        )}
+                        {key === 'email_address' && editCheckStatus === 'verified' && (
+                          <div className="mt-1.5 p-2.5 bg-[#f0fdf4] dark:bg-green-950/20 border border-[#bbf7d0] dark:border-green-900/40 rounded-xl flex items-start gap-2 text-left text-[11px] leading-normal font-medium animate-fadeIn">
+                            <Check size={14} className="text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                            <p className="text-green-800 dark:text-green-300">
+                              Verified — this student's existing account is connected.
+                            </p>
+                          </div>
+                        )}
+                        {key === 'email_address' && editCheckStatus === 'not-found' && (
+                          <div className="mt-1.5 p-2.5 bg-red-50/50 dark:bg-red-950/20 border border-[#fca5a5] dark:border-red-900/40 rounded-xl flex flex-col gap-2 text-left text-[11px] leading-normal font-medium animate-fadeIn">
+                            <div className="flex items-start gap-2">
+                              <Info size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
+                              <p style={{ color: '#c0392b' }}>
+                                No 61 Tracker account found for this email. Share the progress link so they can create one.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleDashboardCheckCopy}
+                              className="self-start flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-900/50 hover:bg-red-50/50 text-[#c0392b] dark:text-red-400 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                            >
+                              {editCopiedFromCheck ? (
+                                <>
+                                  <Check size={11} className="text-green-600 animate-fadeIn" />
+                                  <span className="text-green-600">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={11} className="text-[#c0392b] dark:text-red-400" />
+                                  <span>Copy Share Link</span>
+                                </>
+                              )}
+                            </button>
                           </div>
                         )}
                       </div>
