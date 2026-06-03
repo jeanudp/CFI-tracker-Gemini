@@ -2369,10 +2369,10 @@ export default function Dashboard() {
                           />
                         </div>
                         {key === 'email_address' && (
-                          <div className="mt-1.5 p-2.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl flex items-start gap-2 text-left text-[11px] leading-normal font-medium">
-                            <Info size={14} className="text-blue-500 shrink-0 mt-0.5" />
-                            <p style={{ color: 'var(--text-primary)' }}>
-                              If this student already has their own 61 Tracker account, entering the same email they log in with will automatically connect them to this student record. They'll see all of this CFI's lessons and progress when they sign in, with no share link needed.
+                          <div className="mt-1.5 p-2.5 bg-red-50/50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/40 rounded-xl flex items-start gap-2 text-left text-[11px] leading-normal font-medium">
+                            <Info size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
+                            <p style={{ color: '#c0392b' }}>
+                              Has a 61 Tracker account? Enter their login email to auto-connect them — they'll see this CFI's progress instantly, no share link needed.
                             </p>
                           </div>
                         )}
@@ -2422,19 +2422,29 @@ export default function Dashboard() {
                       { icon: Calendar, label: 'Date of Birth', value: (selectedStudent as any).dob ? formatDate((selectedStudent as any).dob) : null },
                       { icon: FileText, label: 'Student Cert Number', value: (selectedStudent as any).student_cert_number },
                     ].map(({ icon: Icon, label, value }) => (
-                      <div key={label} className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-                          <Icon size={14} style={{ color: 'var(--navy-light)' }} />
+                      <React.Fragment key={label}>
+                        <div className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                            <Icon size={14} style={{ color: 'var(--navy-light)' }} />
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                            {value ? (
+                              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
+                            ) : (
+                              <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</p>
-                          {value ? (
-                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{value}</p>
-                          ) : (
-                            <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Not on file</p>
-                          )}
-                        </div>
-                      </div>
+                        {label === 'Email' && !value && (
+                          <div className="mt-1.5 mb-2.5 p-2.5 bg-red-50/50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/40 rounded-xl flex items-start gap-2.5 text-left text-[11px] leading-normal font-medium">
+                            <Info size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
+                            <p style={{ color: '#c0392b' }}>
+                              Has a 61 Tracker account? Enter their login email to auto-connect them — they'll see this CFI's progress instantly, no share link needed.
+                            </p>
+                          </div>
+                        )}
+                      </React.Fragment>
                     ))}
 
                     <div className="flex items-center gap-3 py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
