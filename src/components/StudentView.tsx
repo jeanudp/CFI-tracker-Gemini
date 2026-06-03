@@ -655,6 +655,24 @@ export default function StudentView() {
 
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+          {/* CTA Banner inviting own account registration */}
+          <div className="mb-6 bg-amber-50/70 border border-amber-200 rounded-[1.5rem] p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm text-left">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-[#1a3a5c] tracking-tight">
+                This is your training progress
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">
+                Create a free student account to save it and check in anytime.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
+              className="w-full sm:w-auto px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-amber-500/20 text-center cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Create Student Account
+            </button>
+          </div>
+
           {/* Student Profile & Quick Stats */}
           <div className="mb-6 sm:mb-8">
             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
