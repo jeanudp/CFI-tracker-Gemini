@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Lesson, Grade, Student } from '../types';
 import { ALL_ACS, RATINGS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, TrendingUp, Target, Clock, AlertTriangle, CheckCircle2, Calendar, BookOpen, ChevronRight, Info, ArrowUp, ArrowDown, Minus, Trophy, Star, CheckCircle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Target, Clock, AlertTriangle, CheckCircle2, Calendar, BookOpen, ChevronRight, Info, ArrowUp, ArrowDown, Minus, Trophy, Star, CheckCircle, AlertCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const gradeDescriptions: Record<string, string> = {
@@ -43,6 +43,7 @@ export default function StudentDashboard() {
   const [rating, setRating] = useState<any>({ ...Object.values(RATINGS)[0], code: Object.keys(RATINGS)[0] });
   const [student, setStudent] = useState<Student | null>(null);
   const [showMoreStruggles, setShowMoreStruggles] = useState(false);
+  const [requiresAccount, setRequiresAccount] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -58,6 +59,7 @@ export default function StudentDashboard() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+    setRequiresAccount(false);
     try {
       if (token) {
         const response = await fetch('/api/student-portal', {
@@ -74,6 +76,13 @@ export default function StudentDashboard() {
         }
 
         const data = await response.json();
+        if (data && data.requiresAccount) {
+          setRequiresAccount(true);
+          setStudent(null);
+          setLessons([]);
+          return;
+        }
+
         if (data.student) {
           setStudent(data.student);
           if (data.student.current_rating) {
@@ -134,6 +143,36 @@ export default function StudentDashboard() {
   };
 
   if (loading) return <div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a3a5c]"></div></div>;
+  if (requiresAccount) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-6">
+        <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-xl p-10 w-full max-w-[450px] text-center">
+          <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-6 mx-auto">
+            <AlertCircle size={40} />
+          </div>
+          <h2 className="text-2xl font-bold text-[#1c2333] mb-3">Account Required</h2>
+          <p className="text-[#1a3a5c] font-semibold text-sm mb-4">
+            {studentName}'s training analytics have been shared with you
+          </p>
+          <p className="text-gray-500 mb-8 text-sm leading-relaxed font-medium">
+            Create a free student account or sign in to view and interact with your training analytics.
+          </p>
+          <button
+            onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
+            className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer mb-4"
+          >
+            Create Student Account
+          </button>
+          <button
+            onClick={() => navigate(`/auth?mode=signin&claim=${encodeURIComponent(token || '')}`)}
+            className="text-[#1a3a5c] hover:underline text-sm font-bold transition-all cursor-pointer inline-block"
+          >
+            Already have an account? Sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
