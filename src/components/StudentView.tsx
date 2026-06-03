@@ -27,7 +27,8 @@ import {
   Download,
   HelpCircle,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -124,6 +125,8 @@ export default function StudentView() {
   const [claimingError, setClaimingError] = useState<string | null>(null);
   const [claimingSuccess, setClaimingSuccess] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [linkedProfiles, setLinkedProfiles] = useState<any[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<{ cfi_user_id: string; student_name: string } | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -161,7 +164,7 @@ export default function StudentView() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const validateAndFetch = async () => {
+  const validateAndFetch = async (profileToUse?: { cfi_user_id: string; student_name: string }) => {
     setLoading(true);
     setHasNoProfileLinked(false);
     setRequiresAccount(false);
@@ -182,6 +185,12 @@ export default function StudentView() {
           return;
         }
         headers['Authorization'] = `Bearer ${session.access_token}`;
+        
+        const activeProfile = profileToUse || selectedProfile;
+        if (activeProfile) {
+          body.cfi_user_id = activeProfile.cfi_user_id;
+          body.student_name = activeProfile.student_name;
+        }
       }
 
       const response = await fetch('/api/student-portal', {
@@ -236,6 +245,19 @@ export default function StudentView() {
         user_id: data.userId,
       });
 
+      if (!token && data.linkedProfiles) {
+        setLinkedProfiles(data.linkedProfiles);
+      } else {
+        setLinkedProfiles([]);
+      }
+
+      if (!token && data.userId && data.studentName) {
+        setSelectedProfile({
+          cfi_user_id: data.userId,
+          student_name: data.studentName,
+        });
+      }
+
       const lessonsData = data.lessons || [];
       setLessons(lessonsData);
       setManualHours(data.manualHours || []);
@@ -251,6 +273,11 @@ export default function StudentView() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSelectProfile = async (profile: { cfi_user_id: string; student_name: string }) => {
+    setSelectedProfile(profile);
+    await validateAndFetch(profile);
   };
 
   const handleClaimInstructor = async (e: React.FormEvent) => {
@@ -295,6 +322,7 @@ export default function StudentView() {
       setClaimingSuccess("Instructor profile linked successfully!");
       setInstructorCode('');
       setShowAddForm(false);
+      setSelectedProfile(null);
       
       await validateAndFetch();
     } catch (err: any) {
@@ -974,6 +1002,38 @@ export default function StudentView() {
                   </form>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Instructor Switcher control, only when more than one profile is linked in authenticated mode */}
+          {!token && linkedProfiles && linkedProfiles.length > 1 && (
+            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] p-4 shadow-sm text-left">
+              <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Users size={14} className="text-[#1a3a5c]" />
+                Switch Training Profile
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {linkedProfiles.map((p: any) => {
+                  const isActive = selectedProfile && 
+                    selectedProfile.cfi_user_id === p.cfi_user_id && 
+                    selectedProfile.student_name === p.student_name;
+                  const label = p.cfi_name || p.student_name || 'Unnamed Instructor';
+                  return (
+                    <button
+                      key={`${p.cfi_user_id}-${p.student_name}`}
+                      onClick={() => handleSelectProfile(p)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
+                        isActive 
+                          ? 'bg-[#1a3a5c] border-[#1a3a5c] text-white shadow-sm'
+                          : 'bg-[#f8fafc] border-[#dde3ec] text-[#1a3a5c] hover:bg-white'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400 animate-pulse' : 'bg-[#dde3ec]'}`}></span>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
