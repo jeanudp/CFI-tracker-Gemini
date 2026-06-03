@@ -147,35 +147,6 @@ export default function App() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
-        
-        if (session) {
-          const { data: profile } = await supabase
-            .from('cfi_profile')
-            .select('id')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          setShowOnboarding(!profile);
-
-          try {
-            const { data: sub, error } = await supabase
-              .from('user_subscriptions')
-              .select('account_type')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-
-            if (error || !sub || !sub.account_type) {
-              setAccountType('instructor');
-            } else {
-              setAccountType(sub.account_type === 'student' ? 'student' : 'instructor');
-            }
-          } catch (err) {
-            setAccountType('instructor');
-          }
-        } else {
-          setAccountType('not-yet-determined');
-        }
-        
         await checkConnection();
       } catch (err) {
         console.error('Supabase init error:', err);
@@ -187,14 +158,28 @@ export default function App() {
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) {
+      if (!session) {
+        setAccountType('not-yet-determined');
+        setShowOnboarding(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (userId) {
+      setAccountType('not-yet-determined');
+      
+      const fetchUserData = async () => {
         try {
           const { data: profile } = await supabase
             .from('cfi_profile')
             .select('id')
-            .eq('user_id', session.user.id)
+            .eq('user_id', userId)
             .maybeSingle();
           
           setShowOnboarding(!profile);
@@ -202,7 +187,7 @@ export default function App() {
           const { data: sub, error } = await supabase
             .from('user_subscriptions')
             .select('account_type')
-            .eq('user_id', session.user.id)
+            .eq('user_id', userId)
             .maybeSingle();
 
           if (error || !sub || !sub.account_type) {
@@ -213,14 +198,14 @@ export default function App() {
         } catch (err) {
           setAccountType('instructor');
         }
-      } else {
-        setAccountType('not-yet-determined');
-        setShowOnboarding(false);
-      }
-    });
+      };
 
-    return () => subscription.unsubscribe();
-  }, []);
+      fetchUserData();
+    } else {
+      setAccountType('not-yet-determined');
+      setShowOnboarding(false);
+    }
+  }, [session?.user?.id]);
 
   if (loading) {
     return <FullScreenLoading />;
