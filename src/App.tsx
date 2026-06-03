@@ -112,6 +112,9 @@ function AuthRedirect({ session, accountType }: { session: any, accountType: 'no
   if (!session) {
     return <Auth />;
   }
+  if (localStorage.getItem('pending_student_claim')) {
+    return <FullScreenLoading />;
+  }
   if (accountType === 'not-yet-determined') {
     return <FullScreenLoading />;
   }

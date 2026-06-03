@@ -253,19 +253,30 @@ export default function StudentView() {
     setRequestError(null);
 
     try {
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      const body: any = {
+        action: 'requestLesson',
+        requested_date: lessonRequest.date,
+        preferred_time: lessonRequest.preferredTime || null,
+        lesson_type: lessonRequest.lessonType || null,
+        notes: lessonRequest.notes,
+      };
+
+      if (token) {
+        body.token = token;
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+      }
+
       const response = await fetch('/api/student-portal', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          action: 'requestLesson',
-          requested_date: lessonRequest.date,
-          preferred_time: lessonRequest.preferredTime || null,
-          lesson_type: lessonRequest.lessonType || null,
-          notes: lessonRequest.notes,
-        }),
+        headers,
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -969,14 +980,14 @@ export default function StudentView() {
                       <div className="py-12 bg-[#f8fafc] rounded-2xl border border-dashed border-[#dde3ec] text-center mb-10">
                         <Calendar size={32} className="mx-auto text-[#94a3b8] mb-3 opacity-20" />
                         <p className="text-xs font-bold text-[#64748b]">
-                          {token 
+                          {(token || studentInfo)
                             ? "No upcoming lessons scheduled — use the form below to request one."
                             : "No upcoming lessons scheduled."}
                         </p>
                       </div>
                     )}
 
-                    {token && (
+                    {(token || studentInfo) && (
                       <div className="pt-8 border-t border-[#dde3ec]">
                         <div className="flex items-center justify-between mb-6">
                         <h3 className="text-sm font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
