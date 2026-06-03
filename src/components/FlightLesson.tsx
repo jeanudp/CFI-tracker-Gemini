@@ -552,17 +552,28 @@ export default function FlightLesson() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && !editLesson) {
-        const fullName = session.user.user_metadata?.full_name;
-        if (fullName && typeof fullName === 'string' && fullName.trim() !== '') {
-          setInstructorName(fullName);
-        } else {
-          const savedInstructor = localStorage.getItem('cfi_instructor_name');
-          if (savedInstructor && savedInstructor.trim() !== '') {
-            setInstructorName(savedInstructor);
-          } else {
-            setInstructorName('');
-          }
-        }
+        supabase.from('lessons')
+          .select('instructor')
+          .eq('user_id', session.user.id)
+          .order('saved_at', { ascending: false })
+          .limit(1)
+          .then(({ data }) => {
+            if (data && data.length > 0 && typeof data[0].instructor === 'string' && data[0].instructor.trim() !== '') {
+              setInstructorName(data[0].instructor);
+            } else {
+              const fullName = session.user.user_metadata?.full_name;
+              if (fullName && typeof fullName === 'string' && fullName.trim() !== '') {
+                setInstructorName(fullName);
+              } else {
+                const savedInstructor = localStorage.getItem('cfi_instructor_name');
+                if (savedInstructor && savedInstructor.trim() !== '') {
+                  setInstructorName(savedInstructor);
+                } else {
+                  setInstructorName('');
+                }
+              }
+            }
+          });
       }
     });
   }, [navigate]);
