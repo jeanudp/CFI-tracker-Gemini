@@ -552,7 +552,17 @@ export default function FlightLesson() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && !editLesson) {
-        setInstructorName(session.user.user_metadata?.full_name || session.user.email || '');
+        const fullName = session.user.user_metadata?.full_name;
+        if (fullName && typeof fullName === 'string' && fullName.trim() !== '') {
+          setInstructorName(fullName);
+        } else {
+          const savedInstructor = localStorage.getItem('cfi_instructor_name');
+          if (savedInstructor && savedInstructor.trim() !== '') {
+            setInstructorName(savedInstructor);
+          } else {
+            setInstructorName('');
+          }
+        }
       }
     });
   }, [navigate]);
@@ -1352,7 +1362,11 @@ export default function FlightLesson() {
                     <input
                       type="text"
                       value={instructorName}
-                      onChange={(e) => setInstructorName(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInstructorName(val);
+                        localStorage.setItem('cfi_instructor_name', val);
+                      }}
                       placeholder="Instructor name"
                       className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
                     />
