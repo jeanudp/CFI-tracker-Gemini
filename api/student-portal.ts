@@ -104,6 +104,7 @@ export default async function handler(req: any, res: any) {
     let studentName = '';
     let userId = '';
     let linkedProfiles: any[] = [];
+    let isAuthorized = false;
 
     if (token) {
       // Fetch share details
@@ -129,6 +130,15 @@ export default async function handler(req: any, res: any) {
           .eq('student_user_id', sessionUserId);
         if (!linksError && links) {
           linkedProfiles = links;
+
+          const match = links.some(
+            (link: any) =>
+              link.cfi_user_id === userId &&
+              link.student_name === studentName
+          );
+          if (match) {
+            isAuthorized = true;
+          }
         }
       }
     } else {
@@ -174,10 +184,14 @@ export default async function handler(req: any, res: any) {
 
       studentName = targetLink.student_name;
       userId = targetLink.cfi_user_id;
+      isAuthorized = true;
     }
 
     // Process actions that use studentName and userId
     if (action === 'requestLesson') {
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Login and active link are required to request a lesson.' });
+      }
       const { requested_date, preferred_time, lesson_type, notes } = req.body;
       const { error } = await supabaseAdmin
         .from('lesson_requests')
@@ -196,6 +210,9 @@ export default async function handler(req: any, res: any) {
     }
 
     if (action === 'requestExport') {
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Login is required to request an export.' });
+      }
       const { lesson_ids } = req.body;
       const { error } = await supabaseAdmin
         .from('student_exports')
@@ -212,6 +229,9 @@ export default async function handler(req: any, res: any) {
     }
 
     if (action === 'getExports') {
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Login is required to retrieve exports.' });
+      }
       const { data, error } = await supabaseAdmin
         .from('student_exports')
         .select('lesson_ids')
@@ -222,6 +242,9 @@ export default async function handler(req: any, res: any) {
     }
 
     if (action === 'submitTest') {
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Login is required to submit a test.' });
+      }
       const {
         answers,
         percentageScore,
@@ -261,6 +284,18 @@ export default async function handler(req: any, res: any) {
 
       if (error) throw error;
       return res.status(200).json({ success: true });
+    }
+
+    if (!isAuthorized) {
+      return res.status(200).json({
+        studentName,
+        requiresAccount: true,
+        lessons: [],
+        manualHours: [],
+        endorsements: [],
+        student: null,
+        scheduledLessons: []
+      });
     }
 
     // Fetch lessons: all columns where student_name matches and user_id matches and deleted_at is null, ordered by saved_at descending
