@@ -236,6 +236,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
   const [includePrior, setIncludePrior] = useState(false);
   const [createdStudent, setCreatedStudent] = useState<any>(null);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [linkStatus, setLinkStatus] = useState<'not_attempted' | 'linked' | 'no_account_found'>('not_attempted');
 
   const resetForm = () => {
     setStep(0);
@@ -253,6 +254,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
     setPriorHours({});
     setIncludePrior(false);
     setError(null);
+    setLinkStatus('not_attempted');
   };
 
   const handleClose = () => {
@@ -330,6 +332,38 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
         if (priorEntries.length > 0) {
           await supabase.from('manual_hours').insert(priorEntries);
         }
+      }
+
+      // Check if email was entered for auto-linking
+      if (emailAddress && emailAddress.trim()) {
+        try {
+          const res = await fetch('/api/link-student', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              email: emailAddress.trim(),
+              name: name.trim(),
+            }),
+          });
+          if (res.ok) {
+            const resData = await res.json();
+            if (resData.linked) {
+              setLinkStatus('linked');
+            } else {
+              setLinkStatus('no_account_found');
+            }
+          } else {
+            setLinkStatus('no_account_found');
+          }
+        } catch (linkErr) {
+          console.error("Auto-link failed:", linkErr);
+          setLinkStatus('no_account_found');
+        }
+      } else {
+        setLinkStatus('no_account_found');
       }
 
       setCreatedStudent(student);
@@ -889,67 +923,143 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                     <Check size={40} />
                   </motion.div>
                   
-                  <h3 className="text-2xl font-bold text-[#1a3a5c] mb-2">{createdStudent.name} Added!</h3>
-                  <p className="text-gray-500 mb-8 max-w-[320px] mx-auto text-sm leading-relaxed">
-                    Student added successfully! Share their progress link with them so they can track their training.
-                  </p>
+                  {linkStatus === 'linked' ? (
+                    <>
+                      <h3 className="text-2xl font-bold text-[#1a3a5c] mb-2">{createdStudent.name} Connected!</h3>
+                      <p className="text-gray-500 mb-8 max-w-[340px] mx-auto text-sm leading-relaxed">
+                        Account connected! Their existing account was successfully linked, and they will see this CFI's record automatically on their dashboard.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-2xl font-bold text-[#1a3a5c] mb-2">{createdStudent.name} Added!</h3>
+                      <p className="text-gray-500 mb-8 max-w-[320px] mx-auto text-sm leading-relaxed">
+                        Student added successfully! Share their progress link with them so they can track their training.
+                      </p>
+                    </>
+                  )}
 
                   <div className="w-full space-y-3 max-w-[320px]">
-                    <button
-                      onClick={async () => {
-                        if (!createdStudent) return;
-                        setSaving(true);
-                        try {
-                          const { data: { session } } = await supabase.auth.getSession();
-                          if (!session) return;
-                          const { data: existingToken } = await supabase
-                            .from('student_share_tokens')
-                            .select('token')
-                            .eq('student_name', createdStudent.name)
-                            .eq('user_id', session.user.id)
-                            .eq('active', true)
-                            .maybeSingle();
-                          let token = existingToken?.token;
-                          if (!token) {
-                            const { data: newToken, error: insertError } = await supabase
-                              .from('student_share_tokens')
-                              .insert({ student_name: createdStudent.name, user_id: session.user.id, active: true })
-                              .select('token')
-                              .single();
-                            if (insertError) throw insertError;
-                            token = newToken.token;
-                          }
-                          const shareUrl = `${window.location.origin}/view/${token}`;
-                          await navigator.clipboard.writeText(shareUrl);
-                          setShareLinkCopied(true);
-                          setTimeout(() => setShareLinkCopied(false), 2000);
-                        } catch (err: any) {
-                          setError(err.message);
-                        } finally {
-                          setSaving(false);
-                        }
-                      }}
-                      className="w-full flex items-center justify-center gap-3 bg-[#f8fafc] border-2 border-[#dde3ec] text-[#1a3a5c] font-black py-4 rounded-2xl hover:border-[#1a3a5c] transition-all cursor-pointer group"
-                    >
-                      {shareLinkCopied ? (
-                        <>
-                          <Check size={20} className="text-green-500" />
-                          <span className="text-green-500">Link Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={20} className="text-[#94a3b8] group-hover:text-[#1a3a5c]" />
-                          <span>Copy Progress Link</span>
-                        </>
-                      )}
-                    </button>
-                    
-                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3 text-left">
-                      <Share2 size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-amber-900 leading-normal">
-                        Your student can view their syllabus progress, cumulative hours, and lesson notes without needing a login.
-                      </p>
-                    </div>
+                    {linkStatus === 'linked' ? (
+                      <>
+                        <div className="p-4 bg-green-50 rounded-2xl border border-green-100 flex items-start gap-3 text-left mb-4">
+                          <Check size={16} className="text-green-600 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-green-900 leading-normal">
+                            No manual link or invitation is required. They can sign in to view their active syllabus and Flight hours.
+                          </p>
+                        </div>
+                        
+                        <div className="pt-2 border-t border-[#f0f4f8] w-full">
+                          <p className="text-[10px] uppercase font-bold text-[#9ca3af] tracking-wider mb-2 text-center">Alternative Access Link</p>
+                          <button
+                            onClick={async () => {
+                              if (!createdStudent) return;
+                              setSaving(true);
+                              try {
+                                const { data: { session } } = await supabase.auth.getSession();
+                                if (!session) return;
+                                const { data: existingToken } = await supabase
+                                  .from('student_share_tokens')
+                                  .select('token')
+                                  .eq('student_name', createdStudent.name)
+                                  .eq('user_id', session.user.id)
+                                  .eq('active', true)
+                                  .maybeSingle();
+                                let token = existingToken?.token;
+                                if (!token) {
+                                  const { data: newToken, error: insertError } = await supabase
+                                    .from('student_share_tokens')
+                                    .insert({ student_name: createdStudent.name, user_id: session.user.id, active: true })
+                                    .select('token')
+                                    .single();
+                                  if (insertError) throw insertError;
+                                  token = newToken.token;
+                                }
+                                const shareUrl = `${window.location.origin}/view/${token}`;
+                                await navigator.clipboard.writeText(shareUrl);
+                                setShareLinkCopied(true);
+                                setTimeout(() => setShareLinkCopied(false), 2000);
+                              } catch (err: any) {
+                                setError(err.message);
+                              } finally {
+                                setSaving(false);
+                              }
+                            }}
+                            className="w-full flex items-center justify-center gap-2 bg-[#f8fafc] hover:bg-white border border-[#dde3ec] text-[#4b5563] text-xs font-bold py-2.5 rounded-xl transition-all cursor-pointer"
+                          >
+                            {shareLinkCopied ? (
+                              <>
+                                <Check size={14} className="text-green-500" />
+                                <span className="text-green-500">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={14} className="text-[#94a3b8]" />
+                                <span>Copy Alternative Access Link</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={async () => {
+                            if (!createdStudent) return;
+                            setSaving(true);
+                            try {
+                              const { data: { session } } = await supabase.auth.getSession();
+                              if (!session) return;
+                              const { data: existingToken } = await supabase
+                                .from('student_share_tokens')
+                                .select('token')
+                                .eq('student_name', createdStudent.name)
+                                .eq('user_id', session.user.id)
+                                .eq('active', true)
+                                .maybeSingle();
+                              let token = existingToken?.token;
+                              if (!token) {
+                                const { data: newToken, error: insertError } = await supabase
+                                  .from('student_share_tokens')
+                                  .insert({ student_name: createdStudent.name, user_id: session.user.id, active: true })
+                                  .select('token')
+                                  .single();
+                                if (insertError) throw insertError;
+                                token = newToken.token;
+                              }
+                              const shareUrl = `${window.location.origin}/view/${token}`;
+                              await navigator.clipboard.writeText(shareUrl);
+                              setShareLinkCopied(true);
+                              setTimeout(() => setShareLinkCopied(false), 2000);
+                            } catch (err: any) {
+                              setError(err.message);
+                            } finally {
+                              setSaving(false);
+                            }
+                          }}
+                          className="w-full flex items-center justify-center gap-3 bg-[#f8fafc] border-2 border-[#dde3ec] text-[#1a3a5c] font-black py-4 rounded-2xl hover:border-[#1a3a5c] transition-all cursor-pointer group"
+                        >
+                          {shareLinkCopied ? (
+                            <>
+                              <Check size={20} className="text-green-500" />
+                              <span className="text-green-500">Link Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={20} className="text-[#94a3b8] group-hover:text-[#1a3a5c]" />
+                              <span>Copy Progress Link</span>
+                            </>
+                          )}
+                        </button>
+                        
+                        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3 text-left">
+                          <Share2 size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-amber-900 leading-normal">
+                            Your student can view their syllabus progress, cumulative hours, and lesson notes without needing a login.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
