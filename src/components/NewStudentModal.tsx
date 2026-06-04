@@ -553,7 +553,15 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Email</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Email</label>
+                        {checkStatus === 'verified' && (
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-[10px] font-bold" style={{ color: '#2d7a4f', borderColor: '#bbf7d0' }}>
+                            <Check size={10} style={{ color: '#2d7a4f' }} className="shrink-0" />
+                            <span>Account connected</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
@@ -591,20 +599,11 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                         </div>
                       )}
 
-                      {checkStatus === 'verified' && (
-                        <div className="mt-1.5 p-2.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl flex items-start gap-2.5 text-left text-[11px] text-[#15803d] leading-normal font-medium">
-                          <Check size={14} className="text-[#16a34a] shrink-0 mt-0.5" />
-                          <p>
-                            Verified — this student's existing account is now connected. They'll see this CFI's progress when they sign in.
-                          </p>
-                        </div>
-                      )}
-
                       {checkStatus === 'not-found' && (
-                        <div className="mt-1.5 p-2.5 bg-red-50 border border-red-100 rounded-xl flex flex-col gap-2 text-left text-[11px] text-[#c0392b] leading-normal font-medium">
+                        <div className="mt-1.5 p-2.5 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-2 text-left text-[11px] font-medium" style={{ borderColor: '#fca5a5' }}>
                           <div className="flex items-start gap-2.5">
-                            <AlertCircle size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
-                            <p>
+                            <AlertCircle size={14} className="shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
+                            <p style={{ color: '#c0392b' }}>
                               No 61 Tracker account found for this email. Share the progress link so they can create one.
                             </p>
                           </div>
@@ -612,6 +611,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                             type="button"
                             onClick={handleCopyCheckShareLink}
                             className="mt-1 self-start flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 hover:bg-red-50/50 text-[#c0392b] text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                            style={{ color: '#c0392b', borderColor: '#fca5a5' }}
                           >
                             {copiedFromCheck ? (
                               <>
@@ -620,7 +620,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
                               </>
                             ) : (
                               <>
-                                <Copy size={11} className="text-[#c0392b]" />
+                                <Copy size={11} style={{ color: '#c0392b' }} />
                                 <span>Copy Share Link</span>
                               </>
                             )}

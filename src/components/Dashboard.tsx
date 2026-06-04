@@ -2437,7 +2437,15 @@ export default function Dashboard() {
                       { key: 'last_flight_review_date', label: 'Last Flight Review Date', icon: Calendar, type: 'date', placeholder: '' },
                     ].map(({ key, label, icon: Icon, type, placeholder }) => (
                       <div key={key} className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
+                        <div className={key === 'email_address' ? "flex items-center justify-between" : ""}>
+                          <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{label}</label>
+                          {key === 'email_address' && editCheckStatus === 'verified' && (
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-950/20 border text-[10px] font-bold" style={{ color: '#2d7a4f', borderColor: '#bbf7d0' }}>
+                              <Check size={10} style={{ color: '#2d7a4f' }} className="shrink-0" />
+                              <span>Account connected</span>
+                            </div>
+                          )}
+                        </div>
                         <div className={key === 'email_address' ? "flex gap-2" : "relative"}>
                           <div className="relative flex-1">
                             <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
@@ -2485,18 +2493,10 @@ export default function Dashboard() {
                             </p>
                           </div>
                         )}
-                        {key === 'email_address' && editCheckStatus === 'verified' && (
-                          <div className="mt-1.5 p-2.5 bg-[#f0fdf4] dark:bg-green-950/20 border border-[#bbf7d0] dark:border-green-900/40 rounded-xl flex items-start gap-2 text-left text-[11px] leading-normal font-medium animate-fadeIn">
-                            <Check size={14} className="text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-                            <p className="text-green-800 dark:text-green-300">
-                              Verified — this student's existing account is connected.
-                            </p>
-                          </div>
-                        )}
                         {key === 'email_address' && editCheckStatus === 'not-found' && (
-                          <div className="mt-1.5 p-2.5 bg-red-50/50 dark:bg-red-950/20 border border-[#fca5a5] dark:border-red-900/40 rounded-xl flex flex-col gap-2 text-left text-[11px] leading-normal font-medium animate-fadeIn">
+                          <div className="mt-1.5 p-2.5 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl flex flex-col gap-2 text-left text-[11px] leading-normal font-medium animate-fadeIn" style={{ borderColor: '#fca5a5' }}>
                             <div className="flex items-start gap-2">
-                              <Info size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
+                              <Info size={14} className="shrink-0 mt-0.5" style={{ color: '#c0392b' }} />
                               <p style={{ color: '#c0392b' }}>
                                 No 61 Tracker account found for this email. Share the progress link so they can create one.
                               </p>
@@ -2504,16 +2504,17 @@ export default function Dashboard() {
                             <button
                               type="button"
                               onClick={handleDashboardCheckCopy}
-                              className="self-start flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-900/50 hover:bg-red-50/50 text-[#c0392b] dark:text-red-400 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                              className="self-start flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-zinc-800 border rounded-lg transition-all cursor-pointer text-[10px] font-bold"
+                              style={{ color: '#c0392b', borderColor: '#fca5a5' }}
                             >
                               {editCopiedFromCheck ? (
                                 <>
-                                  <Check size={11} className="text-green-600 animate-fadeIn" />
-                                  <span className="text-green-600">Copied!</span>
+                                  <Check size={11} style={{ color: '#2d7a4f' }} className="animate-fadeIn" />
+                                  <span style={{ color: '#2d7a4f' }} className="animate-fadeIn">Copied!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Copy size={11} className="text-[#c0392b] dark:text-red-400" />
+                                  <Copy size={11} style={{ color: '#c0392b' }} />
                                   <span>Copy Share Link</span>
                                 </>
                               )}
