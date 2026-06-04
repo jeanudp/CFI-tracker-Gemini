@@ -218,6 +218,28 @@ export default function Dashboard() {
         const linkData = await linkRes.json();
         if (linkData.linked) {
           setEditCheckStatus('verified');
+          if (linkData.profile) {
+            const profile = linkData.profile;
+            setEditForm((prev: any) => {
+              const updated = { ...prev };
+              if (profile.phone !== undefined && profile.phone !== null && String(profile.phone).trim() !== '') {
+                updated.phone = profile.phone;
+              }
+              if (profile.dob !== undefined && profile.dob !== null && String(profile.dob).trim() !== '') {
+                updated.dob = profile.dob;
+              }
+              if (profile.medical_class !== undefined && profile.medical_class !== null && String(profile.medical_class).trim() !== '') {
+                updated.medical_class = profile.medical_class;
+              }
+              if (profile.medical_exam_date !== undefined && profile.medical_exam_date !== null && String(profile.medical_exam_date).trim() !== '') {
+                updated.medical_exam_date = profile.medical_exam_date;
+              }
+              if (profile.student_cert_number !== undefined && profile.student_cert_number !== null && String(profile.student_cert_number).trim() !== '') {
+                updated.student_cert_number = profile.student_cert_number;
+              }
+              return updated;
+            });
+          }
         } else {
           setEditCheckStatus('not-found');
         }

@@ -131,9 +131,20 @@ export default async function handler(req: Request, res: Response) {
       }
     }
 
+    const { data: studentProfile, error: profileError } = await supabaseAdmin
+      .from('student_profiles')
+      .select('*')
+      .eq('student_user_id', matchedUserId)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching student profile during link:', profileError);
+    }
+
     return res.status(200).json({
       linked: true,
-      message: 'Student linked successfully'
+      message: 'Student linked successfully',
+      profile: studentProfile || null
     });
 
   } catch (err: any) {
