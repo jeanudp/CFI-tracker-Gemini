@@ -264,6 +264,109 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    if (action === 'approveProposal') {
+      if (!sessionUserId) {
+        return res.status(401).json({ error: 'Unauthorized: Valid session required' });
+      }
+
+      const { proposal_id } = req.body;
+      if (!proposal_id) {
+        return res.status(400).json({ error: 'proposal_id is required' });
+      }
+
+      const { data: proposal, error: findError } = await supabaseAdmin
+        .from('student_profile_proposals')
+        .select('*')
+        .eq('id', proposal_id)
+        .maybeSingle();
+
+      if (findError) {
+        console.error('Error fetching proposal:', findError);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (!proposal) {
+        return res.status(404).json({ error: 'Proposal not found' });
+      }
+
+      if (proposal.cfi_user_id !== sessionUserId) {
+        return res.status(403).json({ error: 'Forbidden: Only the addressed instructor may approve this proposal' });
+      }
+
+      if (proposal.status !== 'pending') {
+        return res.status(200).json({
+          success: true,
+          proposal_id,
+          appliedFields: {},
+          updatedRecordsCount: 0
+        });
+      }
+
+      const updateObject: any = {};
+      if (proposal.phone !== undefined && proposal.phone !== null && String(proposal.phone).trim() !== '') {
+        updateObject.phone = proposal.phone;
+      }
+      if (proposal.dob !== undefined && proposal.dob !== null && String(proposal.dob).trim() !== '') {
+        updateObject.dob = proposal.dob;
+      }
+      if (proposal.medical_class !== undefined && proposal.medical_class !== null && String(proposal.medical_class).trim() !== '') {
+        updateObject.medical_class = proposal.medical_class;
+      }
+      if (proposal.medical_exam_date !== undefined && proposal.medical_exam_date !== null && String(proposal.medical_exam_date).trim() !== '') {
+        updateObject.medical_exam_date = proposal.medical_exam_date;
+      }
+      if (proposal.student_cert_number !== undefined && proposal.student_cert_number !== null && String(proposal.student_cert_number).trim() !== '') {
+        updateObject.student_cert_number = proposal.student_cert_number;
+      }
+
+      const { data: links, error: linksError } = await supabaseAdmin
+        .from('student_links')
+        .select('cfi_user_id, student_name')
+        .eq('student_user_id', proposal.student_user_id);
+
+      if (linksError) {
+        console.error('Error fetching student links for proposal approval:', linksError);
+        return res.status(500).json({ error: 'Failed to look up student links' });
+      }
+
+      let updateCount = 0;
+      if (links && links.length > 0 && Object.keys(updateObject).length > 0) {
+        for (const link of links) {
+          const { error: updateError } = await supabaseAdmin
+            .from('students')
+            .update(updateObject)
+            .eq('user_id', link.cfi_user_id)
+            .eq('name', link.student_name);
+
+          if (updateError) {
+            console.error(`Error updating student record for CFI ${link.cfi_user_id} and student ${link.student_name}:`, updateError);
+          } else {
+            updateCount++;
+          }
+        }
+      }
+
+      const { error: proposalUpdateError } = await supabaseAdmin
+        .from('student_profile_proposals')
+        .update({
+          status: 'approved',
+          resolved_at: new Date().toISOString()
+        })
+        .eq('id', proposal_id);
+
+      if (proposalUpdateError) {
+        console.error('Error updating proposal status to approved:', proposalUpdateError);
+        return res.status(500).json({ error: 'Failed to update proposal status' });
+      }
+
+      return res.status(200).json({
+        success: true,
+        proposal_id,
+        appliedFields: updateObject,
+        updatedRecordsCount: updateCount
+      });
+    }
+
     // Determine target CFI/student profile based on token vs. authenticated session
     let studentName = '';
     let userId = '';
