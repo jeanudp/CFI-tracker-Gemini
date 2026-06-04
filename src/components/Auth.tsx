@@ -98,8 +98,8 @@ export default function Auth() {
           }
           window.location.href = '/my-progress';
         } else {
-          const pendingStudentSignup = localStorage.getItem('pending_student_signup');
-          if (pendingStudentSignup && signInData?.session) {
+          const userMetadata = signInData?.user?.user_metadata || signInData?.session?.user?.user_metadata;
+          if (userMetadata?.account_type === 'student' && signInData?.session) {
             try {
               const response = await fetch('/api/set-student-account', {
                 method: 'POST',
@@ -115,7 +115,6 @@ export default function Auth() {
             } catch (err) {
               console.error('Error setting student account:', err);
             }
-            localStorage.removeItem('pending_student_signup');
             window.location.href = '/my-progress';
           } else {
             navigate('/dashboard');
@@ -128,10 +127,6 @@ export default function Auth() {
         const signUpDataOptions = isStudentSignup
           ? { data: { full_name: fullName, account_type: 'student' }, emailRedirectTo: redirectUrl }
           : { data: { full_name: fullName }, emailRedirectTo: redirectUrl };
-
-        if (role === 'student' && !pendingClaim) {
-          localStorage.setItem('pending_student_signup', 'true');
-        }
 
         // Create the account
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
