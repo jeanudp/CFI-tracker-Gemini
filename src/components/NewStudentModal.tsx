@@ -270,6 +270,24 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
         const linkData = await linkRes.json();
         if (linkData.linked) {
           setCheckStatus('verified');
+          if (linkData.profile) {
+            const profile = linkData.profile;
+            if (profile.phone !== undefined && profile.phone !== null && String(profile.phone).trim() !== '') {
+              setPhone(profile.phone);
+            }
+            if (profile.dob !== undefined && profile.dob !== null && String(profile.dob).trim() !== '') {
+              setDob(profile.dob);
+            }
+            if (profile.medical_class !== undefined && profile.medical_class !== null && String(profile.medical_class).trim() !== '') {
+              setMedicalClass(profile.medical_class);
+            }
+            if (profile.medical_exam_date !== undefined && profile.medical_exam_date !== null && String(profile.medical_exam_date).trim() !== '') {
+              setMedicalExamDate(profile.medical_exam_date);
+            }
+            if (profile.student_cert_number !== undefined && profile.student_cert_number !== null && String(profile.student_cert_number).trim() !== '') {
+              setStudentCertNumber(profile.student_cert_number);
+            }
+          }
         } else {
           setCheckStatus('not-found');
         }

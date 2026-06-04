@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy, MessageSquare } from 'lucide-react';
+import { Plus, Bell, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy, MessageSquare } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
@@ -151,6 +151,7 @@ export default function Dashboard() {
   const [endorsements, setEndorsements] = useState<any[]>([]);
   const [preSoloTestResult, setPreSoloTestResult] = useState<any>(null);
   const [isNewStudentOpen, setIsNewStudentOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isArchivedModalOpen, setIsArchivedModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -1551,6 +1552,65 @@ export default function Dashboard() {
     ? new Date(userSubscription.trial_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : '';
 
+  const unreadNotesCount = studentNotes.filter((note: any) => !note.read).length;
+  const pendingProposalsCount = profileProposals.filter((p: any) => p.status === 'pending').length;
+  const lessonRequestsCount = lessonRequests.length;
+  const totalNotifCount = unreadNotesCount + pendingProposalsCount + lessonRequestsCount;
+
+  const getNotifications = () => {
+    const list: any[] = [];
+
+    studentNotes.forEach((note: any) => {
+      if (!note.read) {
+        list.push({
+          id: `note-${note.id}`,
+          type: 'note',
+          student_name: note.student_name,
+          summary: note.note,
+          created_at: note.created_at,
+          rawItem: note,
+        });
+      }
+    });
+
+    profileProposals.forEach((p: any) => {
+      if (p.status === 'pending') {
+        list.push({
+          id: `proposal-${p.id}`,
+          type: 'proposal',
+          student_name: p.student_name,
+          summary: 'Requested a profile update',
+          created_at: p.created_at,
+          rawItem: p,
+        });
+      }
+    });
+
+    lessonRequests.forEach((r: any) => {
+      list.push({
+        id: `request-${r.id}`,
+        type: 'request',
+        student_name: r.student_name,
+        summary: `${formatDate(r.requested_date)}${r.preferred_time ? ` at ${r.preferred_time.substring(0, 5)}` : ''}`,
+        created_at: r.created_at,
+        rawItem: r,
+      });
+    });
+
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  };
+
+  const formatShortTimestamp = (timestamp: string) => {
+    if (!timestamp) return '';
+    const d = new Date(timestamp);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const truncateText = (text: string, len: number) => {
+    if (!text) return '';
+    if (text.length <= len) return text;
+    return text.substring(0, len) + '...';
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -1703,6 +1763,21 @@ export default function Dashboard() {
             </div>
           )}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md relative"
+              style={{ 
+                background: 'var(--navy)'
+              }}
+              title="Notifications"
+            >
+              <Bell size={15} color="white" />
+              {totalNotifCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center leading-none border border-[var(--navy)]">
+                  {totalNotifCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setMaydayOpen(true)}
               className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -2182,13 +2257,6 @@ export default function Dashboard() {
                 mei_initial: '#8b1a0f',
               };
               const accent = ratingAccents[student.current_rating] || '#2563eb';
-              const hasUnreadNotes = studentNotes.some(
-                note => note.student_name === student.name && !note.read
-              );
-              const hasPendingProposal = profileProposals.some(
-                prop => prop.student_name === student.name && prop.status === 'pending'
-              );
-              const showDot = hasUnreadNotes || hasPendingProposal;
 
               return (
                 <motion.div
@@ -2205,12 +2273,6 @@ export default function Dashboard() {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  {showDot && (
-                    <div 
-                      className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#c0392b] animate-pulse z-10" 
-                      title="Unread message or pending profile change from student" 
-                    />
-                  )}
                   <div className="px-3 py-3 flex items-center gap-2.5">
                     {/* Initials avatar */}
                     <div
@@ -2319,11 +2381,6 @@ export default function Dashboard() {
               <div className="flex items-center gap-2">
                 <Calendar size={16} style={{ color: 'var(--navy)' }} />
                 <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Upcoming Lessons</span>
-                {lessonRequests.length > 0 && (
-                  <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[16px] h-4">
-                    {lessonRequests.length}
-                  </span>
-                )}
               </div>
               <div className="flex items-center gap-2">
                 {upcomingLoading && <Loader2 size={12} className="animate-spin text-[var(--text-muted)]" />}
@@ -3861,6 +3918,83 @@ export default function Dashboard() {
                   <LogOut size={14} />
                   Sign Out
                 </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isNotifOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[99]"
+              onClick={() => setIsNotifOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="fixed top-16 right-4 sm:right-16 w-80 md:w-96 rounded-2xl border overflow-hidden z-[100]"
+              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 8px 32px rgba(26,58,92,0.15)' }}
+            >
+              <div className="px-4 py-3 border-b flex items-center justify-between" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', position: 'relative', zIndex: 1 }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Notifications</p>
+                {totalNotifCount > 0 && (
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white flex items-center justify-center min-w-[16px] h-4">
+                    {totalNotifCount}
+                  </span>
+                )}
+              </div>
+              <div className="max-h-[360px] overflow-y-auto divide-y" style={{ borderColor: 'var(--border-color)' }}>
+                {getNotifications().length === 0 ? (
+                  <div className="px-4 py-8 text-center flex flex-col items-center justify-center gap-2">
+                    <Bell size={20} className="text-[var(--text-muted)] opacity-40 animate-pulse" />
+                    <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>You're all caught up</p>
+                  </div>
+                ) : (
+                  getNotifications().map((notif) => (
+                    <button
+                      key={notif.id}
+                      onClick={() => {
+                        setIsNotifOpen(false);
+                        if (notif.type === 'request') {
+                          setReviewingRequest(notif.rawItem);
+                        } else {
+                          const st = students.find((s: any) => s.name === notif.student_name);
+                          if (st) {
+                            setSelectedStudent(st);
+                            setIsInfoOpen(true);
+                          }
+                        }
+                      }}
+                      className="w-full px-4 py-3.5 flex items-start gap-3.5 text-left transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
+                    >
+                      <div className="mt-0.5 p-1.5 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: 'var(--navy)' }}>
+                        {notif.type === 'note' && <MessageSquare size={13} />}
+                        {notif.type === 'proposal' && <User size={13} />}
+                        {notif.type === 'request' && <Calendar size={13} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-1.5">
+                          <p className="text-xs font-black truncate" style={{ color: 'var(--text-primary)' }}>
+                            {notif.student_name}
+                          </p>
+                          <span className="text-[9px] whitespace-nowrap shrink-0" style={{ color: 'var(--text-muted)' }}>
+                            {formatShortTimestamp(notif.created_at)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium leading-relaxed mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                          {notif.type === 'note' ? truncateText(notif.summary, 60) : notif.summary}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
             </motion.div>
           </>
