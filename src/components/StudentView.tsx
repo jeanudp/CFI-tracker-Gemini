@@ -151,6 +151,9 @@ export default function StudentView() {
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
   const studentName = studentInfo?.student_name;
   const studentLessons = studentName ? lessons.filter(l => l.student_name === studentName) : [];
+  const activeInstructorName = !token && selectedProfile && linkedProfiles?.find(
+    (p: any) => p.cfi_user_id === selectedProfile.cfi_user_id && p.student_name === selectedProfile.student_name
+  )?.cfi_name;
 
   useEffect(() => {
     validateAndFetch();
@@ -406,6 +409,10 @@ export default function StudentView() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        if (selectedProfile) {
+          body.cfi_user_id = selectedProfile.cfi_user_id;
+          body.student_name = selectedProfile.student_name;
         }
       }
 
@@ -1152,7 +1159,11 @@ export default function StudentView() {
             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                 <div>
-                  <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Training Progress</h2>
+                  {!token && activeInstructorName ? (
+                    <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">Training with {activeInstructorName}</h2>
+                  ) : (
+                    <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Training Progress</h2>
+                  )}
                   <p className="text-[10px] sm:text-sm text-[#64748b] mt-1 font-medium italic">Shared via 61 Tracker · Read-only access</p>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
