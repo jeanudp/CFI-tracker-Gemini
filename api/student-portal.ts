@@ -124,6 +124,58 @@ export default async function handler(req: any, res: any) {
         return res.status(500).json({ error: 'Failed to update profile' });
       }
 
+      // Propose changes to the selected instructor if provided and linked
+      const { cfi_user_id, student_name } = req.body;
+      if (cfi_user_id && student_name) {
+        try {
+          const { data: link, error: linkError } = await supabaseAdmin
+            .from('student_links')
+            .select('id')
+            .eq('student_user_id', sessionUserId)
+            .eq('cfi_user_id', cfi_user_id)
+            .eq('student_name', student_name)
+            .maybeSingle();
+
+          if (!linkError && link) {
+            // Delete old pending proposals for the same student, CFI, and status pending
+            const { error: deleteError } = await supabaseAdmin
+              .from('student_profile_proposals')
+              .delete()
+              .eq('student_user_id', sessionUserId)
+              .eq('cfi_user_id', cfi_user_id)
+              .eq('student_name', student_name)
+              .eq('status', 'pending');
+
+            if (deleteError) {
+              console.error('Error deleting old pending proposals:', deleteError);
+            }
+
+            // Insert new proposal
+            const { error: insertProposalError } = await supabaseAdmin
+              .from('student_profile_proposals')
+              .insert({
+                student_user_id: sessionUserId,
+                cfi_user_id: cfi_user_id,
+                student_name: student_name,
+                full_name: full_name || null,
+                phone: phone || null,
+                dob: dob || null,
+                medical_class: medical_class || null,
+                medical_exam_date: medical_exam_date || null,
+                student_cert_number: student_cert_number || null,
+                status: 'pending',
+                created_at: new Date().toISOString()
+              });
+
+            if (insertProposalError) {
+              console.error('Error inserting pending profile proposal:', insertProposalError);
+            }
+          }
+        } catch (proposalErr) {
+          console.error('Error in student profile proposal workflow:', proposalErr);
+        }
+      }
+
       return res.status(200).json({ success: true });
     }
 
@@ -131,45 +183,85 @@ export default async function handler(req: any, res: any) {
       if (!sessionUserId) {
         return res.status(401).json({ error: 'Unauthorized: Valid session required' });
       }
-      const { note } = req.body;
+      const { note, cfi_user_id, student_name } = req.body;
       if (!note || typeof note !== 'string' || !note.trim()) {
         return res.status(400).json({ error: 'Note text is required' });
       }
 
-      const { data: links, error: linksError } = await supabaseAdmin
-        .from('student_links')
-        .select('cfi_user_id, student_name')
-        .eq('student_user_id', sessionUserId);
+      if (cfi_user_id && student_name) {
+        // Send a note only to the selected instructor
+        const { data: link, error: linkError } = await supabaseAdmin
+          .from('student_links')
+          .select('id')
+          .eq('student_user_id', sessionUserId)
+          .eq('cfi_user_id', cfi_user_id)
+          .eq('student_name', student_name)
+          .maybeSingle();
 
-      if (linksError) {
-        console.error('Error fetching student links for note submit:', linksError);
-        return res.status(500).json({ error: 'Database error' });
+        if (linkError) {
+          console.error('Error verifying student link for note submit:', linkError);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!link) {
+          return res.status(400).json({ error: 'The selected instructor link could not be verified.' });
+        }
+
+        const { error: insertError } = await supabaseAdmin
+          .from('student_notes')
+          .insert({
+            student_user_id: sessionUserId,
+            cfi_user_id,
+            student_name,
+            note: note.trim(),
+            read: false,
+            resolved: false,
+            created_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error inserting student note:', insertError);
+          return res.status(500).json({ error: 'Failed to submit note' });
+        }
+
+        return res.status(200).json({ success: true, notifiedCount: 1 });
+      } else {
+        // Fallback to existing behavior
+        const { data: links, error: linksError } = await supabaseAdmin
+          .from('student_links')
+          .select('cfi_user_id, student_name')
+          .eq('student_user_id', sessionUserId);
+
+        if (linksError) {
+          console.error('Error fetching student links for note submit:', linksError);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!links || links.length === 0) {
+          return res.status(400).json({ error: 'You are not linked to any instructor yet.' });
+        }
+
+        const notesToInsert = links.map((link: any) => ({
+          student_user_id: sessionUserId,
+          cfi_user_id: link.cfi_user_id,
+          student_name: link.student_name,
+          note: note.trim(),
+          read: false,
+          resolved: false,
+          created_at: new Date().toISOString()
+        }));
+
+        const { error: insertError } = await supabaseAdmin
+          .from('student_notes')
+          .insert(notesToInsert);
+
+        if (insertError) {
+          console.error('Error inserting student notes:', insertError);
+          return res.status(500).json({ error: 'Failed to submit note' });
+        }
+
+        return res.status(200).json({ success: true, notifiedCount: links.length });
       }
-
-      if (!links || links.length === 0) {
-        return res.status(400).json({ error: 'You are not linked to any instructor yet.' });
-      }
-
-      const notesToInsert = links.map((link: any) => ({
-        student_user_id: sessionUserId,
-        cfi_user_id: link.cfi_user_id,
-        student_name: link.student_name,
-        note: note.trim(),
-        read: false,
-        resolved: false,
-        created_at: new Date().toISOString()
-      }));
-
-      const { error: insertError } = await supabaseAdmin
-        .from('student_notes')
-        .insert(notesToInsert);
-
-      if (insertError) {
-        console.error('Error inserting student notes:', insertError);
-        return res.status(500).json({ error: 'Failed to submit note' });
-      }
-
-      return res.status(200).json({ success: true, notifiedCount: links.length });
     }
 
     // Determine target CFI/student profile based on token vs. authenticated session
