@@ -840,32 +840,27 @@ export default function Dashboard() {
         updateData.student_cert_number = proposal.student_cert_number;
       }
 
-      const { error: studentUpdateError } = await supabase
-        .from('students')
-        .update(updateData)
-        .eq('id', selectedStudent.id);
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'approveProposal',
+          proposal_id: proposal.id,
+        }),
+      });
 
-      if (studentUpdateError) {
-        throw new Error(studentUpdateError.message || "Failed to update student profile");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to approve proposal on server');
       }
 
       setStudents(prev =>
         prev.map(s => (s.id === selectedStudent.id ? { ...s, ...updateData } : s))
       );
       setSelectedStudent(prev => prev ? { ...prev, ...updateData } : null);
-
-      const resolvedAt = new Date().toISOString();
-      const { error: proposalUpdateError } = await supabase
-        .from('student_profile_proposals')
-        .update({
-          status: 'approved',
-          resolved_at: resolvedAt
-        })
-        .eq('id', proposal.id);
-
-      if (proposalUpdateError) {
-        console.error('Error updating proposal status:', proposalUpdateError);
-      }
 
       setProfileProposals(prev => prev.filter(p => p.id !== proposal.id));
 
