@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy, MessageSquare } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
@@ -139,6 +139,7 @@ const CurrencyRow = ({ title, reference, isCurrent, isNotApplicable, classBadge,
 
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentNotes, setStudentNotes] = useState<any[]>([]);
   const [archivedStudents, setArchivedStudents] = useState<Student[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -737,6 +738,45 @@ export default function Dashboard() {
     };
   }, [fetchUpcomingLessons, fetchLessonRequests]);
 
+  useEffect(() => {
+    if (isInfoOpen && selectedStudent) {
+      const studentName = selectedStudent.name;
+      const unreadNotesExist = studentNotes.some(
+        note => note.student_name === studentName && !note.read
+      );
+      if (!unreadNotesExist) return;
+
+      const markNotesAsRead = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const { error } = await supabase
+              .from('student_notes')
+              .update({ read: true })
+              .eq('student_name', studentName)
+              .eq('cfi_user_id', session.user.id)
+              .eq('read', false);
+
+            if (error) {
+              console.error('Error marking notes as read in Supabase:', error);
+            } else {
+              setStudentNotes(prev =>
+                prev.map(note =>
+                  note.student_name === studentName && note.cfi_user_id === session.user.id
+                    ? { ...note, read: true }
+                    : note
+                )
+              );
+            }
+          }
+        } catch (err) {
+          console.error('Error marking notes as read:', err);
+        }
+      };
+      markNotesAsRead();
+    }
+  }, [isInfoOpen, selectedStudent?.id]);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -744,18 +784,20 @@ export default function Dashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes] = await Promise.all([
+      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, studentNotesRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', session.user.id).is('deleted_at', null).order('name'),
         supabase.from('students').select('*').eq('user_id', session.user.id).not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
         supabase.from('lessons').select('*'),
         supabase.from('manual_hours').select('*'),
         supabase.from('endorsements').select('*'),
+        supabase.from('student_notes').select('*').eq('cfi_user_id', session.user.id).order('created_at', { ascending: false }),
       ]);
       setStudents(studentsRes.data || []);
       setArchivedStudents(archivedRes.data || []);
       setLessons(lessonsRes.data || []);
       setManualHours(manualRes.data || []);
       setEndorsements(endorsementsRes.data || []);
+      setStudentNotes(studentNotesRes.data || []);
       
       await Promise.all([
         fetchUpcomingLessons(),
@@ -2030,6 +2072,9 @@ export default function Dashboard() {
                 mei_initial: '#8b1a0f',
               };
               const accent = ratingAccents[student.current_rating] || '#2563eb';
+              const hasUnreadNotes = studentNotes.some(
+                note => note.student_name === student.name && !note.read
+              );
 
               return (
                 <motion.div
@@ -2046,6 +2091,12 @@ export default function Dashboard() {
                     transition: 'all 0.2s ease',
                   }}
                 >
+                  {hasUnreadNotes && (
+                    <div 
+                      className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#c0392b] animate-pulse z-10" 
+                      title="Unread message from student" 
+                    />
+                  )}
                   <div className="px-3 py-3 flex items-center gap-2.5">
                     {/* Initials avatar */}
                     <div
@@ -2674,6 +2725,48 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
+
+                    {(() => {
+                      const studentMessages = studentNotes.filter(
+                        n => n.student_name === selectedStudent.name
+                      );
+                      return (
+                        <div className="py-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: 'var(--navy-light)' }}>
+                            <MessageSquare size={11} className="shrink-0" />
+                            Messages from Student
+                          </p>
+                          {studentMessages.length === 0 ? (
+                            <p className="text-xs italic pl-1 mb-1" style={{ color: 'var(--text-muted)' }}>No messages from this student</p>
+                          ) : (
+                            <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1 mb-1">
+                              {studentMessages.map((msg) => (
+                                <div 
+                                  key={msg.id} 
+                                  className="p-2.5 rounded-xl border text-left"
+                                  style={{ 
+                                    backgroundColor: !msg.read ? 'rgba(192, 57, 43, 0.05)' : 'var(--bg-tertiary)',
+                                    borderColor: !msg.read ? 'rgba(192, 57, 43, 0.2)' : 'var(--border-color)'
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <span className="text-[9px] font-bold" style={{ color: !msg.read ? '#c0392b' : 'var(--text-muted)' }}>
+                                      {!msg.read ? '● Unread' : 'Received'}
+                                    </span>
+                                    <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                                      {new Date(msg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs font-medium leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                                    {msg.note}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                       <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>

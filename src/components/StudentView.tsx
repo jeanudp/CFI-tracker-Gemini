@@ -28,7 +28,9 @@ import {
   HelpCircle,
   AlertTriangle,
   RotateCcw,
-  Users
+  Users,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -129,12 +131,53 @@ export default function StudentView() {
   const [selectedProfile, setSelectedProfile] = useState<{ cfi_user_id: string; student_name: string } | null>(null);
   const [profilePendingRemoval, setProfilePendingRemoval] = useState<{ cfi_user_id: string; student_name: string; cfi_name?: string } | null>(null);
   const [removalLoading, setRemovalLoading] = useState(false);
+  const [studentProfile, setStudentProfile] = useState<any>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileEditing, setIsProfileEditing] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [noteSending, setNoteSending] = useState(false);
+  const [noteSentSuccess, setNoteSentSuccess] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const [notifiedCount, setNotifiedCount] = useState<number | null>(null);
+  const [profileForm, setProfileForm] = useState({
+    full_name: '',
+    phone: '',
+    dob: '',
+    medical_class: '',
+    medical_exam_date: '',
+    student_cert_number: '',
+  });
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
     }
     return false;
   });
+
+  useEffect(() => {
+    if (studentProfile) {
+      setProfileForm({
+        full_name: studentProfile.full_name || '',
+        phone: studentProfile.phone || '',
+        dob: studentProfile.dob || '',
+        medical_class: studentProfile.medical_class || '',
+        medical_exam_date: studentProfile.medical_exam_date || '',
+        student_cert_number: studentProfile.student_cert_number || '',
+      });
+    } else {
+      setProfileForm({
+        full_name: '',
+        phone: '',
+        dob: '',
+        medical_class: '',
+        medical_exam_date: '',
+        student_cert_number: '',
+      });
+    }
+  }, [studentProfile]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -150,6 +193,7 @@ export default function StudentView() {
 
   const selectedLesson = lessons.find(l => l.id === selectedLessonId);
   const studentName = studentInfo?.student_name;
+  const studentProfileName = !token && studentProfile && studentProfile.full_name && studentProfile.full_name.trim();
   const studentLessons = studentName ? lessons.filter(l => l.student_name === studentName) : [];
   const activeInstructorName = !token && selectedProfile && linkedProfiles?.find(
     (p: any) => p.cfi_user_id === selectedProfile.cfi_user_id && p.student_name === selectedProfile.student_name
@@ -215,6 +259,12 @@ export default function StudentView() {
       }
 
       const data = await response.json();
+
+      if (!token && data) {
+        setStudentProfile(data.studentProfile || null);
+      } else {
+        setStudentProfile(null);
+      }
 
       if (data && data.requiresAccount) {
         setTokenValid(true);
@@ -379,6 +429,115 @@ export default function StudentView() {
       setClaimingError(err.message || "That code is invalid or expired — check with your instructor");
     } finally {
       setClaimingLoading(false);
+    }
+  };
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileSaveError(null);
+    setProfileSaveSuccess(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to update your profile");
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'updateProfile',
+          full_name: profileForm.full_name,
+          phone: profileForm.phone,
+          dob: profileForm.dob ? profileForm.dob : null,
+          medical_class: profileForm.medical_class,
+          medical_exam_date: profileForm.medical_exam_date ? profileForm.medical_exam_date : null,
+          student_cert_number: profileForm.student_cert_number,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update profile");
+      }
+
+      const updatedProfile = {
+        ...studentProfile,
+        student_user_id: session.user.id,
+        full_name: profileForm.full_name,
+        phone: profileForm.phone,
+        dob: profileForm.dob,
+        medical_class: profileForm.medical_class,
+        medical_exam_date: profileForm.medical_exam_date,
+        student_cert_number: profileForm.student_cert_number,
+        updated_at: new Date().toISOString()
+      };
+      setStudentProfile(updatedProfile);
+      setProfileSaveSuccess(true);
+      setIsProfileEditing(false);
+
+      setTimeout(() => {
+        setProfileSaveSuccess(false);
+      }, 3000);
+
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setProfileSaveError(err.message || 'Failed to save profile');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handleSendNote = async () => {
+    if (!noteText.trim()) return;
+    setNoteSending(true);
+    setNoteError(null);
+    setNoteSentSuccess(false);
+    setNotifiedCount(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to send a note.");
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'submitNote',
+          note: noteText,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send note");
+      }
+
+      setNoteText('');
+      setNoteSentSuccess(true);
+      setNotifiedCount(data.notifiedCount || null);
+
+      setTimeout(() => {
+        setNoteSentSuccess(false);
+        setNotifiedCount(null);
+      }, 5000);
+
+    } catch (err: any) {
+      console.error('Error sending note:', err);
+      setNoteError(err.message || 'Failed to send note');
+    } finally {
+      setNoteSending(false);
     }
   };
 
@@ -1154,12 +1313,290 @@ export default function StudentView() {
             </div>
           )}
 
+          {/* My Profile Section (authenticated mode only) */}
+          {!token && (
+            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileOpen(!isProfileOpen);
+                  setProfileSaveError(null);
+                  setProfileSaveSuccess(false);
+                }}
+                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-all cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Users size={18} className="text-[#1a3a5c] dark:text-blue-400" />
+                  <div>
+                    <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
+                      My Profile
+                    </h3>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
+                      Manage your contact, medical, and certificate details
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {studentProfile && (
+                    <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                      On File
+                    </span>
+                  )}
+                  <ChevronRight 
+                    size={18} 
+                    className={`transform transition-transform text-gray-400 ${isProfileOpen ? 'rotate-90' : ''}`} 
+                  />
+                </div>
+              </button>
+
+              {isProfileOpen && (
+                <div className="p-4 sm:p-5 border-t border-[#dde3ec] dark:border-[#2a4a6e] bg-slate-50/30 dark:bg-slate-900/10 space-y-4">
+                  {!isProfileEditing ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.full_name || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.phone || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.dob || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_class || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.student_cert_number || '—'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
+                        <span className="text-[11px] text-gray-400 dark:text-gray-400 italic">Last updated: {studentProfile?.updated_at ? new Date(studentProfile.updated_at).toLocaleString() : 'Never'}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileEditing(true);
+                            setProfileSaveSuccess(false);
+                            setProfileSaveError(null);
+                          }}
+                          className="px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm"
+                        >
+                          Edit Profile
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleProfileSave} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</label>
+                          <input
+                            type="text"
+                            value={profileForm.full_name}
+                            onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+                            placeholder="John Doe"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</label>
+                          <input
+                            type="tel"
+                            value={profileForm.phone}
+                            onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                            placeholder="(555) 555-5555"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</label>
+                          <input
+                            type="date"
+                            value={profileForm.dob}
+                            onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</label>
+                          <input
+                            type="text"
+                            value={profileForm.medical_class}
+                            onChange={(e) => setProfileForm({ ...profileForm, medical_class: e.target.value })}
+                            placeholder="First Class"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</label>
+                          <input
+                            type="date"
+                            value={profileForm.medical_exam_date}
+                            onChange={(e) => setProfileForm({ ...profileForm, medical_exam_date: e.target.value })}
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</label>
+                          <input
+                            type="text"
+                            value={profileForm.student_cert_number}
+                            onChange={(e) => setProfileForm({ ...profileForm, student_cert_number: e.target.value })}
+                            placeholder="A1234567"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                      </div>
+
+                      {profileSaveError && (
+                        <p className="text-xs text-red-600 font-bold mt-1">
+                          {profileSaveError}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileEditing(false);
+                            setProfileSaveError(null);
+                            if (studentProfile) {
+                              setProfileForm({
+                                full_name: studentProfile.full_name || '',
+                                phone: studentProfile.phone || '',
+                                dob: studentProfile.dob || '',
+                                medical_class: studentProfile.medical_class || '',
+                                medical_exam_date: studentProfile.medical_exam_date || '',
+                                student_cert_number: studentProfile.student_cert_number || '',
+                              });
+                            }
+                          }}
+                          className="px-4 py-2 border border-[#dde3ec] hover:bg-slate-100 text-[#1a3a5c] dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={profileSaving}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                        >
+                          {profileSaving ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" />
+                              Saving...
+                            </>
+                          ) : 'Save Changes'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {profileSaveSuccess && (
+                    <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Changes saved successfully!</span>
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-[11px] leading-relaxed text-blue-700 dark:text-blue-300">
+                    <p>
+                      <strong>Note:</strong> This is your self-owned profile, separate from each instructor's local student record. If details on your CFI's lesson records are incorrect, please contact your instructor directly.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Message Your Instructor Section (authenticated mode only) */}
+          {!token && (
+            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left p-4 sm:p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <MessageSquare size={18} className="text-[#1a3a5c] dark:text-blue-400" />
+                <div>
+                  <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
+                    Message Your Instructor
+                  </h3>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
+                    Send a note to all of your linked flight instructors
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Need to request a correction to your records? Or have a question about recent entries? Type your message here..."
+                  rows={3}
+                  className="w-full text-xs rounded-xl px-4 py-3 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+                  disabled={noteSending}
+                />
+
+                {noteError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 font-bold">
+                    {noteError}
+                  </p>
+                )}
+
+                {noteSentSuccess && (
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      {notifiedCount && notifiedCount > 1 
+                        ? `Message successfully sent to your ${notifiedCount} instructors!` 
+                        : 'Message successfully sent to your instructor!'}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSendNote}
+                    disabled={noteSending || !noteText.trim()}
+                    className="px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  >
+                    {noteSending ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={12} />
+                        <span>Send Message</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Student Profile & Quick Stats */}
           <div className="mb-6 sm:mb-8">
             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                 <div>
-                  {!token && activeInstructorName ? (
+                  {!token && studentProfileName ? (
+                    <>
+                      <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentProfileName}</h2>
+                      <p className="text-xs sm:text-sm text-[#64748b] mt-1 font-medium">
+                        {activeInstructorName ? `Training with ${activeInstructorName}` : 'My Training Progress'}
+                      </p>
+                    </>
+                  ) : !token && activeInstructorName ? (
                     <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">Training with {activeInstructorName}</h2>
                   ) : (
                     <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Training Progress</h2>
