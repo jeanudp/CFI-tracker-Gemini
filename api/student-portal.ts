@@ -100,10 +100,83 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ success: true });
     }
 
+    if (action === 'updateProfile') {
+      if (!sessionUserId) {
+        return res.status(401).json({ error: 'Unauthorized: Valid session required' });
+      }
+      const { full_name, phone, dob, medical_class, medical_exam_date, student_cert_number } = req.body;
+
+      const { error: upsertError } = await supabaseAdmin
+        .from('student_profiles')
+        .upsert({
+          student_user_id: sessionUserId,
+          full_name: full_name || null,
+          phone: phone || null,
+          dob: dob || null,
+          medical_class: medical_class || null,
+          medical_exam_date: medical_exam_date || null,
+          student_cert_number: student_cert_number || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'student_user_id' });
+
+      if (upsertError) {
+        console.error('Error upserting student profile:', upsertError);
+        return res.status(500).json({ error: 'Failed to update profile' });
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
+    if (action === 'submitNote') {
+      if (!sessionUserId) {
+        return res.status(401).json({ error: 'Unauthorized: Valid session required' });
+      }
+      const { note } = req.body;
+      if (!note || typeof note !== 'string' || !note.trim()) {
+        return res.status(400).json({ error: 'Note text is required' });
+      }
+
+      const { data: links, error: linksError } = await supabaseAdmin
+        .from('student_links')
+        .select('cfi_user_id, student_name')
+        .eq('student_user_id', sessionUserId);
+
+      if (linksError) {
+        console.error('Error fetching student links for note submit:', linksError);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (!links || links.length === 0) {
+        return res.status(400).json({ error: 'You are not linked to any instructor yet.' });
+      }
+
+      const notesToInsert = links.map((link: any) => ({
+        student_user_id: sessionUserId,
+        cfi_user_id: link.cfi_user_id,
+        student_name: link.student_name,
+        note: note.trim(),
+        read: false,
+        resolved: false,
+        created_at: new Date().toISOString()
+      }));
+
+      const { error: insertError } = await supabaseAdmin
+        .from('student_notes')
+        .insert(notesToInsert);
+
+      if (insertError) {
+        console.error('Error inserting student notes:', insertError);
+        return res.status(500).json({ error: 'Failed to submit note' });
+      }
+
+      return res.status(200).json({ success: true, notifiedCount: links.length });
+    }
+
     // Determine target CFI/student profile based on token vs. authenticated session
     let studentName = '';
     let userId = '';
     let linkedProfiles: any[] = [];
+    let studentProfile: any = null;
     let isAuthorized = false;
 
     if (token) {
@@ -152,6 +225,17 @@ export default async function handler(req: any, res: any) {
       if (linksError) throw linksError;
 
       if (!links || links.length === 0) {
+        let emptyStudentProfile: any = null;
+        if (sessionUserId) {
+          const { data: prof, error: profError } = await supabaseAdmin
+            .from('student_profiles')
+            .select('*')
+            .eq('student_user_id', sessionUserId)
+            .maybeSingle();
+          if (!profError && prof) {
+            emptyStudentProfile = prof;
+          }
+        }
         return res.status(200).json({
           studentName: '',
           userId: '',
@@ -160,7 +244,8 @@ export default async function handler(req: any, res: any) {
           manualHours: [],
           endorsements: [],
           scheduledLessons: [],
-          linkedProfiles: []
+          linkedProfiles: [],
+          studentProfile: emptyStudentProfile
         });
       }
 
@@ -181,6 +266,18 @@ export default async function handler(req: any, res: any) {
         ...link,
         cfi_name: profileMap[link.cfi_user_id] || ''
       }));
+
+      // Look up student's own profile
+      if (sessionUserId) {
+        const { data: prof, error: profError } = await supabaseAdmin
+          .from('student_profiles')
+          .select('*')
+          .eq('student_user_id', sessionUserId)
+          .maybeSingle();
+        if (!profError && prof) {
+          studentProfile = prof;
+        }
+      }
 
       // Choose the target profile
       const reqCfiUserId = req.body.cfi_user_id;
@@ -383,6 +480,10 @@ export default async function handler(req: any, res: any) {
 
     if (linkedProfiles && linkedProfiles.length > 0) {
       responseData.linkedProfiles = linkedProfiles;
+    }
+
+    if (!token && sessionUserId) {
+      responseData.studentProfile = studentProfile || null;
     }
 
     return res.status(200).json(responseData);
