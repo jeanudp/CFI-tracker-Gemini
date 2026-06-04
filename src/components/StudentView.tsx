@@ -458,6 +458,10 @@ export default function StudentView() {
           medical_class: profileForm.medical_class,
           medical_exam_date: profileForm.medical_exam_date ? profileForm.medical_exam_date : null,
           student_cert_number: profileForm.student_cert_number,
+          ...(selectedProfile ? {
+            cfi_user_id: selectedProfile.cfi_user_id,
+            student_name: selectedProfile.student_name,
+          } : {}),
         }),
       });
 
@@ -515,6 +519,10 @@ export default function StudentView() {
         body: JSON.stringify({
           action: 'submitNote',
           note: noteText,
+          ...(selectedProfile ? {
+            cfi_user_id: selectedProfile.cfi_user_id,
+            student_name: selectedProfile.student_name,
+          } : {}),
         }),
       });
 
@@ -1429,13 +1437,18 @@ export default function StudentView() {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</label>
-                          <input
-                            type="text"
+                          <select
                             value={profileForm.medical_class}
                             onChange={(e) => setProfileForm({ ...profileForm, medical_class: e.target.value })}
-                            placeholder="First Class"
                             className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
-                          />
+                          >
+                            <option value="">Select class</option>
+                            <option value="First Class">First Class</option>
+                            <option value="Second Class">Second Class</option>
+                            <option value="Third Class">Third Class</option>
+                            <option value="BasicMed">BasicMed</option>
+                            <option value="Sport Pilot">Sport Pilot (Driver License)</option>
+                          </select>
                         </div>
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</label>
@@ -1510,7 +1523,7 @@ export default function StudentView() {
 
                   <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-[11px] leading-relaxed text-blue-700 dark:text-blue-300">
                     <p>
-                      <strong>Note:</strong> This is your self-owned profile, separate from each instructor's local student record. If details on your CFI's lesson records are incorrect, please contact your instructor directly.
+                      <strong>Note:</strong> Saving will send these details to your currently selected instructor for approval. The instructor's records will update only once they approve the changes.
                     </p>
                   </div>
                 </div>
@@ -1528,7 +1541,7 @@ export default function StudentView() {
                     Message Your Instructor
                   </h3>
                   <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
-                    Send a note to all of your linked flight instructors
+                    Send a note to the instructor whom you currently have selected
                   </p>
                 </div>
               </div>
@@ -1552,11 +1565,7 @@ export default function StudentView() {
                 {noteSentSuccess && (
                   <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
                     <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
-                    <span>
-                      {notifiedCount && notifiedCount > 1 
-                        ? `Message successfully sent to your ${notifiedCount} instructors!` 
-                        : 'Message successfully sent to your instructor!'}
-                    </span>
+                    <span>Message successfully sent to your instructor!</span>
                   </div>
                 )}
 
