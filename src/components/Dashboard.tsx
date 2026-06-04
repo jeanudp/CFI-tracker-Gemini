@@ -140,6 +140,7 @@ const CurrencyRow = ({ title, reference, isCurrent, isNotApplicable, classBadge,
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([]);
   const [studentNotes, setStudentNotes] = useState<any[]>([]);
+  const [profileProposals, setProfileProposals] = useState<any[]>([]);
   const [archivedStudents, setArchivedStudents] = useState<Student[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -784,13 +785,14 @@ export default function Dashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, studentNotesRes] = await Promise.all([
+      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, studentNotesRes, profileProposalsRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', session.user.id).is('deleted_at', null).order('name'),
         supabase.from('students').select('*').eq('user_id', session.user.id).not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
         supabase.from('lessons').select('*'),
         supabase.from('manual_hours').select('*'),
         supabase.from('endorsements').select('*'),
         supabase.from('student_notes').select('*').eq('cfi_user_id', session.user.id).order('created_at', { ascending: false }),
+        supabase.from('student_profile_proposals').select('*').eq('cfi_user_id', session.user.id).eq('status', 'pending').order('created_at', { ascending: false }),
       ]);
       setStudents(studentsRes.data || []);
       setArchivedStudents(archivedRes.data || []);
@@ -798,6 +800,7 @@ export default function Dashboard() {
       setManualHours(manualRes.data || []);
       setEndorsements(endorsementsRes.data || []);
       setStudentNotes(studentNotesRes.data || []);
+      setProfileProposals(profileProposalsRes.data || []);
       
       await Promise.all([
         fetchUpcomingLessons(),
@@ -807,6 +810,89 @@ export default function Dashboard() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveProposal = async (proposal: any) => {
+    try {
+      if (!selectedStudent) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("You must be logged in to resolve proposals.");
+        return;
+      }
+
+      const updateData: any = {};
+      
+      if (proposal.phone && proposal.phone.trim()) {
+        updateData.phone = proposal.phone;
+      }
+      if (proposal.dob) {
+        updateData.dob = proposal.dob;
+      }
+      if (proposal.medical_class && proposal.medical_class.trim()) {
+        updateData.medical_class = proposal.medical_class;
+      }
+      if (proposal.medical_exam_date) {
+        updateData.medical_exam_date = proposal.medical_exam_date;
+      }
+      if (proposal.student_cert_number && proposal.student_cert_number.trim()) {
+        updateData.student_cert_number = proposal.student_cert_number;
+      }
+
+      const { error: studentUpdateError } = await supabase
+        .from('students')
+        .update(updateData)
+        .eq('id', selectedStudent.id);
+
+      if (studentUpdateError) {
+        throw new Error(studentUpdateError.message || "Failed to update student profile");
+      }
+
+      setStudents(prev =>
+        prev.map(s => (s.id === selectedStudent.id ? { ...s, ...updateData } : s))
+      );
+      setSelectedStudent(prev => prev ? { ...prev, ...updateData } : null);
+
+      const resolvedAt = new Date().toISOString();
+      const { error: proposalUpdateError } = await supabase
+        .from('student_profile_proposals')
+        .update({
+          status: 'approved',
+          resolved_at: resolvedAt
+        })
+        .eq('id', proposal.id);
+
+      if (proposalUpdateError) {
+        console.error('Error updating proposal status:', proposalUpdateError);
+      }
+
+      setProfileProposals(prev => prev.filter(p => p.id !== proposal.id));
+
+    } catch (err: any) {
+      console.error('Error approving proposal:', err);
+      alert(err.message || 'Failed to approve proposal.');
+    }
+  };
+
+  const handleRejectProposal = async (proposal: any) => {
+    try {
+      const resolvedAt = new Date().toISOString();
+      const { error: proposalUpdateError } = await supabase
+        .from('student_profile_proposals')
+        .update({
+          status: 'rejected',
+          resolved_at: resolvedAt
+        })
+        .eq('id', proposal.id);
+
+      if (proposalUpdateError) {
+        console.error('Error rejecting proposal in Supabase:', proposalUpdateError);
+      }
+
+      setProfileProposals(prev => prev.filter(p => p.id !== proposal.id));
+    } catch (err: any) {
+      console.error('Error rejecting proposal:', err);
     }
   };
 
@@ -2075,6 +2161,10 @@ export default function Dashboard() {
               const hasUnreadNotes = studentNotes.some(
                 note => note.student_name === student.name && !note.read
               );
+              const hasPendingProposal = profileProposals.some(
+                prop => prop.student_name === student.name && prop.status === 'pending'
+              );
+              const showDot = hasUnreadNotes || hasPendingProposal;
 
               return (
                 <motion.div
@@ -2091,10 +2181,10 @@ export default function Dashboard() {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  {hasUnreadNotes && (
+                  {showDot && (
                     <div 
                       className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#c0392b] animate-pulse z-10" 
-                      title="Unread message from student" 
+                      title="Unread message or pending profile change from student" 
                     />
                   )}
                   <div className="px-3 py-3 flex items-center gap-2.5">
@@ -2764,6 +2854,97 @@ export default function Dashboard() {
                               ))}
                             </div>
                           )}
+                        </div>
+                      );
+                    })()}
+
+                    {(() => {
+                      const pendingProp = profileProposals
+                        .filter(p => p.student_name === selectedStudent.name && p.status === 'pending')
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+                      if (!pendingProp) return null;
+
+                      const elements: React.ReactNode[] = [];
+                      if (pendingProp.phone && pendingProp.phone.trim()) {
+                        elements.push(
+                          <div key="phone">
+                            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Phone Number:</span>
+                            <p className="font-semibold text-xs mt-0.5" style={{ color: 'var(--text-primary)' }}>{pendingProp.phone}</p>
+                          </div>
+                        );
+                      }
+                      if (pendingProp.dob) {
+                        elements.push(
+                          <div key="dob">
+                            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Date of Birth:</span>
+                            <p className="font-semibold text-xs mt-0.5" style={{ color: 'var(--text-primary)' }}>{formatDate(pendingProp.dob)}</p>
+                          </div>
+                        );
+                      }
+                      if (pendingProp.medical_class && pendingProp.medical_class.trim()) {
+                        elements.push(
+                          <div key="medical_class">
+                            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Medical Class:</span>
+                            <p className="font-semibold text-xs mt-0.5" style={{ color: 'var(--text-primary)' }}>{pendingProp.medical_class}</p>
+                          </div>
+                        );
+                      }
+                      if (pendingProp.medical_exam_date) {
+                        elements.push(
+                          <div key="medical_exam_date">
+                            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Medical Exam Date:</span>
+                            <p className="font-semibold text-xs mt-0.5" style={{ color: 'var(--text-primary)' }}>{formatDate(pendingProp.medical_exam_date)}</p>
+                          </div>
+                        );
+                      }
+                      if (pendingProp.student_cert_number && pendingProp.student_cert_number.trim()) {
+                        elements.push(
+                          <div key="student_cert_number">
+                            <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Student Certificate #:</span>
+                            <p className="font-semibold text-xs mt-0.5" style={{ color: 'var(--text-primary)' }}>{pendingProp.student_cert_number}</p>
+                          </div>
+                        );
+                      }
+
+                      if (elements.length === 0) return null;
+
+                      return (
+                        <div className="py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                          <p className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: 'var(--navy-light)' }}>
+                            <User size={11} className="shrink-0" />
+                            Requested Profile Update
+                          </p>
+                          <div className="p-3 rounded-xl border border-dashed text-left space-y-2.5 mb-1" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-tertiary)' }}>
+                            <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
+                              The student has proposed updates to their on-file contact or medical details.
+                            </p>
+                            <div className="grid grid-cols-2 gap-3 pb-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                              {elements}
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleApproveProposal(pendingProp)}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-bold text-white text-center cursor-pointer transition-colors shadow-sm hover:opacity-90"
+                                style={{ backgroundColor: '#2d7a4f' }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectProposal(pendingProp)}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-bold text-center border cursor-pointer transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                                style={{ 
+                                  borderColor: 'var(--border-color)', 
+                                  color: 'var(--text-secondary)', 
+                                  backgroundColor: 'transparent' 
+                                }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })()}
