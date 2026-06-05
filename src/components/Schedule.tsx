@@ -809,6 +809,13 @@ export default function Schedule() {
         return;
       }
 
+      // Check if the time slot itself is already taken
+      const hasTimeConflict = checkConflict(newStartTime, 2);
+      if (hasTimeConflict === 'overlap') {
+        alert("This time slot is already booked. Please pick an open slot.");
+        return;
+      }
+
       // Handle request drop
       try {
         const { data: { session } } = await supabase.auth.getSession();
