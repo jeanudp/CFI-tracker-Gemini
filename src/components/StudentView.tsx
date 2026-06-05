@@ -213,6 +213,21 @@ export default function StudentView() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const hasSetInitialProfileState = useRef(false);
+
+  useEffect(() => {
+    if (!loading && hasNoProfileLinked && !hasSetInitialProfileState.current) {
+      if (!studentProfile) {
+        setIsProfileOpen(true);
+        setIsProfileEditing(true);
+      } else {
+        setIsProfileOpen(false);
+        setIsProfileEditing(false);
+      }
+      hasSetInitialProfileState.current = true;
+    }
+  }, [loading, hasNoProfileLinked, studentProfile]);
+
   const validateAndFetch = async (profileToUse?: { cfi_user_id: string; student_name: string }) => {
     setLoading(true);
     setHasNoProfileLinked(false);
@@ -964,7 +979,7 @@ export default function StudentView() {
 
   if (hasNoProfileLinked) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex flex-col">
+      <div className="min-h-screen bg-[#f1f5f9] dark:bg-[#0b1329] flex flex-col">
         {/* Read-Only Header */}
         <header className="bg-[#1a3a5c] text-white py-4 px-6 sticky top-0 z-50 shadow-lg">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -977,30 +992,248 @@ export default function StudentView() {
                 </div>
               </div>
             </div>
+            {!token && (
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = '/auth';
+                }}
+                className="px-3 py-1.5 rounded-xl border border-white/20 hover:bg-white/10 text-xs font-bold uppercase tracking-wider text-white transition-all flex items-center justify-center cursor-pointer"
+                title="Sign Out"
+              >
+                Sign Out
+              </button>
+            )}
           </div>
         </header>
 
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl border border-[#dde3ec] shadow-xl p-10 w-full max-w-[450px] text-center">
-            <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-6 mx-auto">
-              <AlertCircle size={40} />
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-6">
+            
+            {/* Welcome empty-state */}
+            <div className="text-left py-4">
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2333] dark:text-slate-105 tracking-tight">
+                Your training dashboard
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-2xl leading-relaxed">
+                Your training dashboard is empty for now. Your progress and logbook entries will fill in automatically once you link an instructor or an instructor adds you by email. In the meantime, feel free to enter your personal details below.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-[#1c2333] mb-3">No Training Profile</h2>
-            <p className="text-gray-500 mb-8 leading-relaxed">
-              No training profile is linked to your account yet — ask your CFI for your share link.
-            </p>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer"
-            >
-              Go to Dashboard
-            </button>
 
-            <div className="mt-8 pt-6 border-t border-[#dde3ec] text-left">
-              <h3 className="text-sm font-bold text-[#1c2333] mb-1">
+            {/* My Profile Section */}
+            <div className="bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsProfileOpen(!isProfileOpen);
+                  setProfileSaveError(null);
+                  setProfileSaveSuccess(false);
+                }}
+                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-all cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Users size={18} className="text-[#1a3a5c] dark:text-blue-400" />
+                  <div>
+                    <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
+                      My Profile
+                    </h3>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
+                      Manage your contact, medical, and certificate details
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {studentProfile && (
+                    <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                      On File
+                    </span>
+                  )}
+                  <ChevronRight 
+                    size={18} 
+                    className={`transform transition-transform text-gray-400 ${isProfileOpen ? 'rotate-90' : ''}`} 
+                  />
+                </div>
+              </button>
+
+              {isProfileOpen && (
+                <div className="p-4 sm:p-5 border-t border-[#dde3ec] dark:border-[#2a4a6e] bg-slate-50/30 dark:bg-slate-900/10 space-y-4">
+                  {!isProfileEditing ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.full_name || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.phone || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.dob || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_class || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.student_cert_number || '—'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
+                        <span className="text-[11px] text-gray-400 dark:text-gray-400 italic">Last updated: {studentProfile?.updated_at ? new Date(studentProfile.updated_at).toLocaleString() : 'Never'}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileEditing(true);
+                            setProfileSaveSuccess(false);
+                            setProfileSaveError(null);
+                          }}
+                          className="px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm"
+                        >
+                          Edit Profile
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleProfileSave} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</label>
+                          <input
+                            type="text"
+                            value={profileForm.full_name}
+                            onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+                            placeholder="John Doe"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</label>
+                          <input
+                            type="tel"
+                            value={profileForm.phone}
+                            onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                            placeholder="(555) 555-5555"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</label>
+                          <input
+                            type="date"
+                            value={profileForm.dob}
+                            onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</label>
+                          <select
+                            value={profileForm.medical_class}
+                            onChange={(e) => setProfileForm({ ...profileForm, medical_class: e.target.value })}
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          >
+                            <option value="">Select class</option>
+                            <option value="First Class">First Class</option>
+                            <option value="Second Class">Second Class</option>
+                            <option value="Third Class">Third Class</option>
+                            <option value="BasicMed">BasicMed</option>
+                            <option value="Sport Pilot">Sport Pilot (Driver License)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</label>
+                          <input
+                            type="date"
+                            value={profileForm.medical_exam_date}
+                            onChange={(e) => setProfileForm({ ...profileForm, medical_exam_date: e.target.value })}
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</label>
+                          <input
+                            type="text"
+                            value={profileForm.student_cert_number}
+                            onChange={(e) => setProfileForm({ ...profileForm, student_cert_number: e.target.value })}
+                            placeholder="A1234567"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                          />
+                        </div>
+                      </div>
+
+                      {profileSaveError && (
+                        <p className="text-xs text-red-600 font-bold mt-1">
+                          {profileSaveError}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileEditing(false);
+                            setProfileSaveError(null);
+                            if (studentProfile) {
+                              setProfileForm({
+                                full_name: studentProfile.full_name || '',
+                                phone: studentProfile.phone || '',
+                                dob: studentProfile.dob || '',
+                                medical_class: studentProfile.medical_class || '',
+                                medical_exam_date: studentProfile.medical_exam_date || '',
+                                student_cert_number: studentProfile.student_cert_number || '',
+                              });
+                            }
+                          }}
+                          className="px-4 py-2 border border-[#dde3ec] hover:bg-slate-100 text-[#1a3a5c] dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={profileSaving}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                        >
+                          {profileSaving ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" />
+                              Saving...
+                            </>
+                          ) : 'Save Changes'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {profileSaveSuccess && (
+                    <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Changes saved successfully!</span>
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-[11px] leading-relaxed text-blue-700 dark:text-blue-300">
+                    <p>
+                      <strong>Note:</strong> Your details are saved to your own profile now. Once you link an instructor or an instructor adds you by email, those details will get pulled in automatically.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Link an Instructor form */}
+            <div className="bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm p-5 sm:p-6 text-left">
+              <h1 className="text-sm font-bold text-[#1c2333] dark:text-slate-200 mb-1">
                 Link an Instructor
-              </h3>
-              <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 font-medium leading-relaxed">
                 Have an invite code or share link from your CFI? Paste it below to link your training profile instantly.
               </p>
               <form onSubmit={handleClaimInstructor} className="space-y-3">
@@ -1011,13 +1244,13 @@ export default function StudentView() {
                     value={instructorCode}
                     onChange={(e) => setInstructorCode(e.target.value)}
                     placeholder="Paste link or code here..."
-                    className="flex-1 text-xs rounded-xl px-4 py-3 border border-[#dde3ec] bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] text-[#1c2333] font-medium"
+                    className="flex-1 text-xs rounded-xl px-4 py-3 border border-[#dde3ec] dark:border-[#2a4a6e] bg-gray-50 dark:bg-[#0f1e2e] focus:bg-white dark:focus:bg-[#0f1e2e] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] text-[#1c2333] dark:text-slate-100 font-medium"
                     disabled={claimingLoading}
                   />
                   <button
                     type="submit"
                     disabled={claimingLoading}
-                    className="px-5 py-3 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
+                    className="px-5 py-3 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 cursor-pointer whitespace-nowrap hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {claimingLoading ? "Linking..." : "Link Profile"}
                   </button>
@@ -1034,6 +1267,7 @@ export default function StudentView() {
                 )}
               </form>
             </div>
+
           </div>
         </main>
       </div>
