@@ -30,7 +30,8 @@ import {
   RotateCcw,
   Users,
   MessageSquare,
-  Send
+  Send,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -119,6 +120,8 @@ export default function StudentView() {
   const [requestPickerMonth, setRequestPickerMonth] = useState(new Date());
   const [isRequestTimePickerOpen, setIsRequestTimePickerOpen] = useState(false);
   const requestTimePickerRef = useRef<HTMLDivElement>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [hasNoProfileLinked, setHasNoProfileLinked] = useState(false);
   const [requiresAccount, setRequiresAccount] = useState(false);
   const [requiresAccountStudentName, setRequiresAccountStudentName] = useState('');
@@ -207,6 +210,9 @@ export default function StudentView() {
     const handleClickOutside = (event: MouseEvent) => {
       if (requestTimePickerRef.current && !requestTimePickerRef.current.contains(event.target as Node)) {
         setIsRequestTimePickerOpen(false);
+      }
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1461,50 +1467,73 @@ export default function StudentView() {
 
           {/* Instructor Switcher control, only when more than one profile is linked in authenticated mode */}
           {!token && linkedProfiles && linkedProfiles.length > 1 && (
-            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] p-4 shadow-sm text-left">
+            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] p-4 sm:p-5 shadow-sm text-left animate-fadeIn">
               <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Users size={14} className="text-[#1a3a5c]" />
                 Switch Training Profile
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {linkedProfiles.map((p: any) => {
-                  const isActive = selectedProfile && 
-                    selectedProfile.cfi_user_id === p.cfi_user_id && 
-                    selectedProfile.student_name === p.student_name;
-                  const label = p.cfi_name || p.student_name || 'Unnamed Instructor';
-                  return (
-                    <div
-                      key={`${p.cfi_user_id}-${p.student_name}`}
-                      className="relative flex items-center shrink-0"
-                    >
-                      <button
-                        onClick={() => handleSelectProfile(p)}
-                        className={`pl-4 pr-10 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer ${
-                          isActive 
-                            ? 'bg-[#1a3a5c] border-[#1a3a5c] text-white shadow-sm'
-                            : 'bg-[#f8fafc] border-[#dde3ec] text-[#1a3a5c] hover:bg-white'
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400 animate-pulse' : 'bg-[#dde3ec]'}`}></span>
-                        {label}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          setProfilePendingRemoval(p);
-                        }}
-                        className={`absolute right-2 p-1.5 rounded-lg transition-all hover:bg-black/10 cursor-pointer ${
-                          isActive ? 'text-white/70 hover:text-white' : 'text-[#94a3b8] hover:text-red-500'
-                        }`}
-                        title="Remove instructor link"
-                      >
-                        <XCircle size={14} />
-                      </button>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-[#f8fafc] border border-[#dde3ec] hover:border-[#cbd5e1] hover:bg-white text-[#1a3a5c] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm text-left"
+                >
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+                    <span className="truncate">{activeInstructorName || 'Select Instructor'}</span>
+                  </div>
+                  <ChevronDown size={14} className="text-[#1a3a5c] ml-1 shrink-0" />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute left-0 mt-1.5 w-full bg-white border border-[#dde3ec] rounded-2xl shadow-lg z-30 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="max-h-60 overflow-y-auto">
+                      {linkedProfiles.map((p: any) => {
+                        const isActive = selectedProfile && 
+                          selectedProfile.cfi_user_id === p.cfi_user_id && 
+                          selectedProfile.student_name === p.student_name;
+                        const label = p.cfi_name || p.student_name || 'Unnamed Instructor';
+                        return (
+                          <div
+                            key={`${p.cfi_user_id}-${p.student_name}`}
+                            onClick={() => {
+                              handleSelectProfile(p);
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`group flex items-center justify-between px-4 py-2.5 text-xs cursor-pointer transition-colors ${
+                              isActive 
+                                ? 'bg-[#f0f4f8] font-bold text-[#1a3a5c]' 
+                                : 'hover:bg-slate-50 text-gray-700 hover:text-[#1a3a5c]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 overflow-hidden mr-2">
+                              {isActive ? (
+                                <Check size={14} className="text-emerald-600 shrink-0" />
+                              ) : (
+                                <div className="w-3.5 h-3.5 shrink-0" />
+                              )}
+                              <span className="truncate">{label}</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                setProfilePendingRemoval(p);
+                                setIsDropdownOpen(false);
+                              }}
+                              className="p-1 rounded-lg hover:bg-red-50 hover:text-red-600 text-[#94a3b8] cursor-pointer transition-colors shrink-0"
+                              title="Remove instructor link"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1555,9 +1584,9 @@ export default function StudentView() {
             </div>
           )}
 
-          {/* My Profile Section (authenticated mode only) */}
+          {/* My My Profile Section (authenticated mode only) */}
           {!token && (
-            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left">
+            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden text-left">
               <button
                 type="button"
                 onClick={() => {
@@ -1565,22 +1594,22 @@ export default function StudentView() {
                   setProfileSaveError(null);
                   setProfileSaveSuccess(false);
                 }}
-                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-all cursor-pointer text-left"
+                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50/50 transition-all cursor-pointer text-left"
               >
                 <div className="flex items-center gap-3">
-                  <Users size={18} className="text-[#1a3a5c] dark:text-blue-400" />
+                  <Users size={18} className="text-[#1a3a5c]" />
                   <div>
-                    <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
+                    <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
                       My Profile
                     </h3>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
+                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">
                       Manage your contact, medical, and certificate details
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {studentProfile && (
-                    <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
                       On File
                     </span>
                   )}
@@ -1592,38 +1621,38 @@ export default function StudentView() {
               </button>
 
               {isProfileOpen && (
-                <div className="p-4 sm:p-5 border-t border-[#dde3ec] dark:border-[#2a4a6e] bg-slate-50/30 dark:bg-slate-900/10 space-y-4">
+                <div className="p-4 sm:p-5 border-t border-[#dde3ec] bg-slate-50/30 space-y-4">
                   {!isProfileEditing ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.full_name || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Full Name</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.full_name || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.phone || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Phone Number</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.phone || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.dob || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Date of Birth</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.dob || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_class || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Class</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.medical_class || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Exam Date</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.medical_exam_date || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.student_cert_number || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Certificate #</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.student_cert_number || '—'}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
-                        <span className="text-[11px] text-gray-400 dark:text-gray-400 italic">Last updated: {studentProfile?.updated_at ? new Date(studentProfile.updated_at).toLocaleString() : 'Never'}</span>
+                      <div className="flex items-center justify-between pt-2 border-t border-[#dde3ec]/60">
+                        <span className="text-[11px] text-gray-400 italic">Last updated: {studentProfile?.updated_at ? new Date(studentProfile.updated_at).toLocaleString() : 'Never'}</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -1641,40 +1670,40 @@ export default function StudentView() {
                     <form onSubmit={handleProfileSave} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Full Name</label>
                           <input
                             type="text"
                             value={profileForm.full_name}
                             onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
                             placeholder="John Doe"
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Phone Number</label>
                           <input
                             type="tel"
                             value={profileForm.phone}
                             onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                             placeholder="(555) 555-5555"
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Date of Birth</label>
                           <input
                             type="date"
                             value={profileForm.dob}
                             onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Class</label>
                           <select
                             value={profileForm.medical_class}
                             onChange={(e) => setProfileForm({ ...profileForm, medical_class: e.target.value })}
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           >
                             <option value="">Select class</option>
                             <option value="First Class">First Class</option>
@@ -1685,22 +1714,22 @@ export default function StudentView() {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Exam Date</label>
                           <input
                             type="date"
                             value={profileForm.medical_exam_date}
                             onChange={(e) => setProfileForm({ ...profileForm, medical_exam_date: e.target.value })}
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Certificate #</label>
                           <input
                             type="text"
                             value={profileForm.student_cert_number}
                             onChange={(e) => setProfileForm({ ...profileForm, student_cert_number: e.target.value })}
                             placeholder="A1234567"
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                       </div>
@@ -1711,7 +1740,7 @@ export default function StudentView() {
                         </p>
                       )}
 
-                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
+                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#dde3ec]/60">
                         <button
                           type="button"
                           onClick={() => {
@@ -1728,7 +1757,7 @@ export default function StudentView() {
                               });
                             }
                           }}
-                          className="px-4 py-2 border border-[#dde3ec] hover:bg-slate-100 text-[#1a3a5c] dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                          className="px-4 py-2 border border-[#dde3ec] hover:bg-slate-100 text-[#1a3a5c] text-xs font-bold rounded-xl transition-all cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -1749,13 +1778,13 @@ export default function StudentView() {
                   )}
 
                   {profileSaveSuccess && (
-                    <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <div className="mt-2 text-xs text-emerald-600 font-bold flex items-center gap-1.5 animate-fadeIn">
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Changes saved successfully!</span>
                     </div>
                   )}
 
-                  <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-[11px] leading-relaxed text-blue-700 dark:text-blue-300">
+                  <div className="mt-4 p-3 bg-blue-50/50 border border-blue-100 rounded-xl text-[11px] leading-relaxed text-blue-700">
                     <p>
                       <strong>Note:</strong> Saving will send these details to your currently selected instructor for approval. The instructor's records will update only once they approve the changes.
                     </p>
@@ -1767,14 +1796,14 @@ export default function StudentView() {
 
           {/* Message Your Instructor Section (authenticated mode only) */}
           {!token && (
-            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left p-4 sm:p-5">
+            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden text-left p-4 sm:p-5">
               <div className="flex items-center gap-3 mb-3">
-                <MessageSquare size={18} className="text-[#1a3a5c] dark:text-blue-400" />
+                <MessageSquare size={18} className="text-[#1a3a5c]" />
                 <div>
-                  <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
+                  <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
                     Message Your Instructor
                   </h3>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
+                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">
                     Send a note to the instructor whom you currently have selected
                   </p>
                 </div>
@@ -1786,19 +1815,19 @@ export default function StudentView() {
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="Need to request a correction to your records? Or have a question about recent entries? Type your message here..."
                   rows={3}
-                  className="w-full text-xs rounded-xl px-4 py-3 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+                  className="w-full text-xs rounded-xl px-4 py-3 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] placeholder-gray-400 resize-none"
                   disabled={noteSending}
                 />
 
                 {noteError && (
-                  <p className="text-xs text-red-600 dark:text-red-400 font-bold">
+                  <p className="text-xs text-red-600 font-bold">
                     {noteError}
                   </p>
                 )}
 
                 {noteSentSuccess && (
-                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
-                    <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
+                  <div className="text-xs text-emerald-600 font-bold flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCircle2 size={14} className="text-emerald-600" />
                     <span>Message successfully sent to your instructor!</span>
                   </div>
                 )}
@@ -1808,7 +1837,7 @@ export default function StudentView() {
                     type="button"
                     onClick={handleSendNote}
                     disabled={noteSending || !noteText.trim()}
-                    className="px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    className="px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                   >
                     {noteSending ? (
                       <>
