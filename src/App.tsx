@@ -198,7 +198,23 @@ export default function App() {
             .maybeSingle();
 
           if (error || !sub || !sub.account_type) {
-            setAccountType('instructor');
+            const userMetadata = session?.user?.user_metadata;
+            if (userMetadata?.account_type === 'student' && session?.access_token) {
+              try {
+                await fetch('/api/set-student-account', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                  }
+                });
+              } catch (err) {
+                console.error('Error setting student account from metadata:', err);
+              }
+              setAccountType('student');
+            } else {
+              setAccountType('instructor');
+            }
           } else {
             setAccountType(sub.account_type === 'student' ? 'student' : 'instructor');
           }
