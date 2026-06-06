@@ -411,6 +411,26 @@ export default function Schedule() {
     return null;
   };
 
+  const checkSchoolmateConflict = (startTime: string, duration: number, tailNumber: string) => {
+    if (!tailNumber || tailNumber === 'GROUND') return null;
+
+    const start = timeToDecimal(startTime);
+    const end = start + duration;
+
+    for (const block of schoolmatesBusy) {
+      if (block.tail_number !== tailNumber) continue;
+
+      const bStart = timeToDecimal(block.start_time);
+      const bEnd = bStart + Number(block.duration_hours || 0);
+
+      if (start < bEnd && end > bStart) {
+        return block;
+      }
+    }
+
+    return null;
+  };
+
   const findNextAvailableSlot = (requestedStartTime: string, duration: number, ignoreId?: string) => {
     let [hours, mins] = requestedStartTime.split(':').map(Number);
     let currentMinutes = hours * 60 + mins;
@@ -452,6 +472,14 @@ export default function Schedule() {
         setFormError('This time slot conflicts with an existing lesson.');
       }
       return;
+    }
+
+    if (modalData.lessonType === 'Flight' || modalData.lessonType === 'Sim') {
+      const schoolmateConflict = checkSchoolmateConflict(modalData.startTime, modalData.duration, effectiveTail);
+      if (schoolmateConflict) {
+        setFormError(`That airplane is already booked by ${schoolmateConflict.cfi_name || 'another instructor'} at this time. Pick another time or aircraft.`);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -833,6 +861,14 @@ export default function Schedule() {
         return;
       }
 
+      if (tailNumber !== 'GROUND') {
+        const schoolmateConflict = checkSchoolmateConflict(newStartTime, 2, tailNumber);
+        if (schoolmateConflict) {
+          alert(`That airplane is already booked by ${schoolmateConflict.cfi_name || 'another instructor'} at this time.`);
+          return;
+        }
+      }
+
       // Handle request drop
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -883,6 +919,14 @@ export default function Schedule() {
       l.tail_number === tailNumber
     );
     if (isSamePosition) return;
+
+    if (tailNumber !== 'GROUND') {
+      const schoolmateConflict = checkSchoolmateConflict(newStartTime, lesson.duration_hours || 0, tailNumber);
+      if (schoolmateConflict) {
+        alert(`That airplane is already booked by ${schoolmateConflict.cfi_name || 'another instructor'} at this time.`);
+        return;
+      }
+    }
 
     const conflict = checkConflict(newStartTime, lesson.duration_hours, lesson.id);
     if (conflict === 'overlap') {
