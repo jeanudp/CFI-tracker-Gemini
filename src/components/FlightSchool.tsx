@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,6 +19,11 @@ import {
   Plane
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { AIRCRAFT_MODELS } from '../constants/aircraft';
+
+const normalizeString = (str: string) => {
+  return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+};
 
 interface OrgMember {
   user_id: string;
@@ -68,9 +73,23 @@ export default function FlightSchool() {
   const [addingInProgress, setAddingInProgress] = useState(false);
   const [removingTail, setRemovingTail] = useState<string | null>(null);
   const [fleetError, setFleetError] = useState<string | null>(null);
+  const [showModelSuggestions, setShowModelSuggestions] = useState(false);
+  const modelSearchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadFlightSchoolData();
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (modelSearchContainerRef.current && !modelSearchContainerRef.current.contains(e.target as Node)) {
+        setShowModelSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
   }, []);
 
   const loadFlightSchoolData = async () => {
@@ -785,7 +804,7 @@ export default function FlightSchool() {
                       className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] uppercase font-mono"
                     />
                   </div>
-                  <div className="w-full sm:w-1/2 space-y-1.5 text-left">
+                  <div ref={modelSearchContainerRef} className="w-full sm:w-1/2 space-y-1.5 text-left relative">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                       Aircraft Model
                     </label>
@@ -793,10 +812,44 @@ export default function FlightSchool() {
                       type="text"
                       required
                       value={newModel}
-                      onChange={(e) => setNewModel(e.target.value)}
+                      onChange={(e) => {
+                        setNewModel(e.target.value);
+                        setShowModelSuggestions(true);
+                      }}
+                      onFocus={() => setShowModelSuggestions(true)}
                       placeholder="e.g. Cessna 172S"
-                      className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)]"
+                      className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] text-left"
                     />
+                    {showModelSuggestions && newModel.trim() !== '' && (() => {
+                      const normalizedQuery = normalizeString(newModel);
+                      const filteredModels = AIRCRAFT_MODELS.filter(model =>
+                        normalizeString(model).includes(normalizedQuery)
+                      ).slice(0, 50);
+
+                      return (
+                        <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-lg z-50 divide-y divide-[var(--border-color)]">
+                          {filteredModels.length === 0 ? (
+                            <div className="p-3 text-xs text-[var(--text-muted)] italic">
+                              No matching models found
+                            </div>
+                          ) : (
+                            filteredModels.map((model) => (
+                              <button
+                                key={model}
+                                type="button"
+                                onClick={() => {
+                                  setNewModel(model);
+                                  setShowModelSuggestions(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+                              >
+                                {model}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <button
                     type="submit"
