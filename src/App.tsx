@@ -18,6 +18,7 @@ import StudentView from './components/StudentView';
 import IACRASummary from './components/IACRASummary';
 import PreSoloTest from './components/PreSoloTest';
 import CFIHours from './components/CFIHours';
+import FlightSchool from './components/FlightSchool';
 import Schedule from './components/Schedule';
 import Landing from './components/Landing';
 import Admin from './components/Admin';
@@ -418,6 +419,18 @@ export default function App() {
               <Layout user={session?.user}>
                 <PageTransition>
                   <CFIHours />
+                </PageTransition>
+              </Layout>
+            </CfiRouteGuard>
+          }
+        />
+        <Route
+          path="/flight-school"
+          element={
+            <CfiRouteGuard session={session} accountType={accountType}>
+              <Layout user={session?.user}>
+                <PageTransition>
+                  <FlightSchool />
                 </PageTransition>
               </Layout>
             </CfiRouteGuard>

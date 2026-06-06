@@ -1,0 +1,640 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Users,
+  Shield,
+  ShieldAlert,
+  Loader2,
+  Copy,
+  Check,
+  RefreshCw,
+  Trash2,
+  UserMinus,
+  Plus,
+  ArrowRight,
+  LogOut,
+  Sparkles
+} from 'lucide-react';
+import { cn } from '../lib/utils';
+
+interface OrgMember {
+  user_id: string;
+  full_name: string;
+  role: 'owner' | 'manager' | 'member';
+  joined_at: string;
+}
+
+interface Organization {
+  id: string;
+  name: string;
+  join_code: string;
+  created_at?: string;
+}
+
+export default function FlightSchool() {
+  const navigate = useNavigate();
+  
+  // App-level loading and session state
+  const [loading, setLoading] = useState(true);
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [members, setMembers] = useState<OrgMember[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<'owner' | 'manager' | 'member'>('member');
+
+  // Input states
+  const [createName, setCreateName] = useState('');
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+
+  // UI operation states
+  const [copied, setCopied] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [rotateLoading, setRotateLoading] = useState(false);
+  const [memberActionLoading, setMemberActionLoading] = useState<string | null>(null); // holds user_id while processing
+
+  // Error and Success inline messages
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [memberError, setMemberError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadFlightSchoolData();
+  }, []);
+
+  const loadFlightSchoolData = async () => {
+    setLoading(true);
+    setGlobalError(null);
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      
+      if (!session) {
+        // Safe redirect to auth if not authenticated
+        navigate('/auth');
+        return;
+      }
+      setSessionUser(session.user);
+
+      // Plain select of all columns from organizations
+      const { data: orgs, error: orgsError } = await supabase
+        .from('organizations')
+        .select('*');
+
+      if (orgsError) throw orgsError;
+
+      if (orgs && orgs.length > 0) {
+        const school = orgs[0] as Organization;
+        setOrganization(school);
+        
+        // Fetch organization members
+        await fetchMembers(school.id, session.user.id);
+      } else {
+        setOrganization(null);
+        setMembers([]);
+      }
+    } catch (err: any) {
+      setGlobalError(err.message || 'Error loading Flight School information.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMembers = async (orgId: string, currentUserId: string) => {
+    try {
+      const { data: membersList, error: membersError } = await supabase.rpc('get_org_members', {
+        p_org_id: orgId
+      });
+
+      if (membersError) throw membersError;
+
+      if (membersList) {
+        const typedMembers = membersList as OrgMember[];
+        setMembers(typedMembers);
+        
+        // Determine current user's role
+        const match = typedMembers.find((m) => m.user_id === currentUserId);
+        if (match) {
+          setCurrentUserRole(match.role);
+        } else {
+          setCurrentUserRole('member');
+        }
+      }
+    } catch (err: any) {
+      setMemberError(err.message || 'Failed to fetch school members list.');
+    }
+  };
+
+  const handleCreateSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createName.trim() || createLoading) return;
+    
+    setCreateLoading(true);
+    setCreateError(null);
+    try {
+      const { data, error } = await supabase.rpc('create_organization', {
+        p_name: createName.trim()
+      });
+
+      if (error) throw error;
+
+      // Reload page data to transition to the management view
+      setCreateName('');
+      await loadFlightSchoolData();
+    } catch (err: any) {
+      setCreateError(err.message || 'Failed to create flight school.');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleJoinSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formattedCode = joinCodeInput.trim().toUpperCase();
+    if (!formattedCode || joinLoading) return;
+
+    setJoinLoading(true);
+    setJoinError(null);
+    try {
+      const { data, error } = await supabase.rpc('join_organization', {
+        p_code: formattedCode
+      });
+
+      if (error) {
+        // If error message contains "Invalid join code", show inline indicator as requested
+        if (error.message?.toLowerCase().includes('invalid join code')) {
+          setJoinError('Invalid join code. Please double-check and try again.');
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      setJoinCodeInput('');
+      await loadFlightSchoolData();
+    } catch (err: any) {
+      setJoinError(err.message || 'Failed to join flight school.');
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
+  const handleRotateJoinCode = async () => {
+    if (!organization || rotateLoading) return;
+    
+    setRotateLoading(true);
+    setGlobalError(null);
+    try {
+      const { data: newCode, error } = await supabase.rpc('rotate_join_code', {
+        p_org_id: organization.id
+      });
+
+      if (error) throw error;
+
+      if (newCode) {
+        setOrganization(prev => prev ? { ...prev, join_code: newCode } : null);
+      }
+    } catch (err: any) {
+      setGlobalError(err.message || 'Failed to update join code.');
+    } finally {
+      setRotateLoading(false);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (!organization) return;
+    navigator.clipboard.writeText(organization.join_code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSetMemberRole = async (targetUserId: string, newRole: 'manager' | 'member') => {
+    if (!organization || memberActionLoading) return;
+
+    setMemberActionLoading(targetUserId);
+    setMemberError(null);
+    try {
+      const { error } = await supabase.rpc('set_member_role', {
+        p_org_id: organization.id,
+        p_user_id: targetUserId,
+        p_role: newRole
+      });
+
+      if (error) throw error;
+
+      // Refresh members list
+      await fetchMembers(organization.id, sessionUser.id);
+    } catch (err: any) {
+      setMemberError(err.message || `Failed to change member role to ${newRole}.`);
+    } finally {
+      setMemberActionLoading(null);
+    }
+  };
+
+  const handleRemoveMember = async (targetUserId: string) => {
+    if (!organization || memberActionLoading) return;
+
+    const isSelf = targetUserId === sessionUser?.id;
+    const confirmMessage = isSelf 
+      ? 'Are you sure you want to leave this flight school?' 
+      : 'Are you sure you want to remove this member from the flight school?';
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setMemberActionLoading(targetUserId);
+    setMemberError(null);
+    try {
+      const { error } = await supabase.rpc('remove_member', {
+        p_org_id: organization.id,
+        p_user_id: targetUserId
+      });
+
+      if (error) throw error;
+
+      if (isSelf) {
+        // Returns the user to the initial view by resetting state
+        setOrganization(null);
+        setMembers([]);
+        setCurrentUserRole('member');
+      } else {
+        // Refresh members list for others
+        await fetchMembers(organization.id, sessionUser.id);
+      }
+    } catch (err: any) {
+      setMemberError(err.message || 'Failed to remove member.');
+    } finally {
+      setMemberActionLoading(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 min-h-[300px]">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--navy)' }} />
+        <p className="mt-4 text-xs font-semibold text-[var(--text-secondary)]">
+          Checking flight school status...
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6">
+      {/* Title Header */}
+      <div className="mb-8 text-left">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          Flight School
+        </h1>
+        <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+          Collaborate, manage permissions, and align flight instruction records across active CFIs.
+        </p>
+      </div>
+
+      {/* Global Error Notice */}
+      {globalError && (
+        <div className="mb-6 p-4 rounded-xl flex items-start gap-3 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 text-red-700 dark:text-red-400">
+          <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="text-xs font-semibold text-left">
+            <span className="font-bold">Error:</span> {globalError}
+          </div>
+        </div>
+      )}
+
+      {/* Not in a School UI */}
+      {!organization ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Create a School Card */}
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-left flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-blue-50 dark:bg-[#1e3050]">
+                <Plus className="w-5 h-5" style={{ color: 'var(--navy)' }} />
+              </div>
+              <h3 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                Create a Flight School
+              </h3>
+              <p className="text-xs mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Establish a new private group. You will become the primary Owner, granting you power to assign managers and rotate invite codes.
+              </p>
+            </div>
+            
+            <form onSubmit={handleCreateSchool} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  School Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  placeholder="e.g. Skyline Aviation Academy"
+                  className="w-full text-xs rounded-xl px-4 py-2.5 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)]"
+                />
+              </div>
+
+              {createError && (
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1">
+                  {createError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={!createName.trim() || createLoading}
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                style={{ backgroundColor: 'var(--navy)' }}
+              >
+                {createLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating School...
+                  </>
+                ) : (
+                  <>
+                    Create School
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Join a School Card */}
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-left flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-emerald-50 dark:bg-emerald-950/20">
+                <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                Join a Flight School
+              </h3>
+              <p className="text-xs mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Already have a flight school established by another instructor? Paste their active join code here to synchronize your CFI rosters.
+              </p>
+            </div>
+
+            <form onSubmit={handleJoinSchool} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  Invite Join Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={joinCodeInput}
+                  onChange={(e) => setJoinCodeInput(e.target.value)}
+                  placeholder="e.g. SCH-XXXX-XXXX"
+                  className="w-full text-xs rounded-xl px-4 py-2.5 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-emerald-500 uppercase font-mono tracking-wider"
+                />
+              </div>
+
+              {joinError && (
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1">
+                  {joinError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={!joinCodeInput.trim() || joinLoading}
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                style={{ backgroundColor: 'var(--green)' }}
+              >
+                {joinLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Joining...
+                  </>
+                ) : (
+                  <>
+                    Join School
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : (
+        /* Management view */
+        <div className="space-y-6">
+          {/* Header Card with join code */}
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-left">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
+                  Active Flight School
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black mt-2" style={{ color: 'var(--text-primary)' }}>
+                  {organization.name}
+                </h2>
+                
+                {/* Join code section */}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>
+                    School Invite Code:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <code className="text-xs font-mono font-bold uppercase bg-[var(--bg-tertiary)] border border-[var(--border-color)] px-2.5 py-1 rounded-lg text-[var(--text-primary)] select-all tracking-wider">
+                      {organization.join_code}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={handleCopyCode}
+                      className="p-1.5 rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer text-[var(--text-secondary)]"
+                      title="Copy join code to clipboard"
+                    >
+                      {copied ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    {copied && (
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 animate-fadeIn">
+                        Copied!
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Owner/Manager rotate credentials button */}
+              {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
+                <div className="sm:self-end">
+                  <button
+                    type="button"
+                    onClick={handleRotateJoinCode}
+                    disabled={rotateLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border hover:bg-[var(--bg-tertiary)] text-xs font-bold transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    style={{ borderColor: 'var(--amber)', color: 'var(--amber)' }}
+                  >
+                    <RefreshCw className={cn("w-3.5 h-3.5", rotateLoading && "animate-spin")} />
+                    New Code
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Members Card */}
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden text-left">
+            <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" style={{ color: 'var(--navy)' }} />
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Instructors &amp; Roster Members
+                </h3>
+              </div>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)]">
+                {members.length} Total
+              </span>
+            </div>
+
+            {memberError && (
+              <div className="p-4 mx-5 mt-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold">
+                {memberError}
+              </div>
+            )}
+
+            <div className="divide-y divide-[var(--border-color)]">
+              {members.length === 0 ? (
+                <div className="p-8 text-center text-xs font-medium text-[var(--text-muted)]">
+                  No registered members found.
+                </div>
+              ) : (
+                members.map((member) => {
+                  const isCurrent = member.user_id === sessionUser?.id;
+                  const isOwner = member.role === 'owner';
+                  const isManager = member.role === 'manager';
+
+                  return (
+                    <div
+                      key={member.user_id}
+                      className={cn(
+                        "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-colors",
+                        isCurrent && "bg-slate-50/50 dark:bg-slate-800/10"
+                      )}
+                    >
+                      {/* Name & Badge Info */}
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold uppercase text-[11px] shrink-0">
+                          {member.full_name ? member.full_name.substring(0, 2) : 'CF'}
+                        </div>
+                        <div className="overflow-hidden text-left">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-[var(--text-primary)] truncate">
+                              {member.full_name || 'Unnamed CFI'}
+                            </span>
+                            {isCurrent && (
+                              <span className="text-[9px] font-black uppercase text-amber-500 bg-amber-50 dark:bg-amber-950/20 px-1 py-0.5 rounded leading-none shrink-0">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[var(--text-muted)] block">
+                            Joined on {new Date(member.joined_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Badges & Actions */}
+                      <div className="flex items-center justify-end gap-3 shrink-0">
+                        {/* Member Role Badge */}
+                        <span>
+                          {isOwner ? (
+                            <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--navy)' }}>
+                              Owner
+                            </span>
+                          ) : isManager ? (
+                            <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--green)' }}>
+                              Manager
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)]">
+                              Instructor
+                            </span>
+                          )}
+                        </span>
+
+                        {/* Loading indication for currently loading member row */}
+                        {memberActionLoading === member.user_id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
+                        ) : (
+                          /* Render action controls conditionally */
+                          <div className="flex items-center gap-1.5">
+                            {currentUserRole === 'owner' && !isCurrent && (
+                              <>
+                                {/* Owner assign manager button */}
+                                {member.role === 'member' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetMemberRole(member.user_id, 'manager')}
+                                    className="px-2 py-1 text-[10px] font-bold rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer text-[var(--text-secondary)]"
+                                  >
+                                    Make Manager
+                                  </button>
+                                ) : isManager ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetMemberRole(member.user_id, 'member')}
+                                    className="px-2 py-1 text-[10px] font-bold rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer text-[var(--text-secondary)]"
+                                  >
+                                    Remove Manager
+                                  </button>
+                                ) : null}
+
+                                {/* Owner remove any other member / manager */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveMember(member.user_id)}
+                                  className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 cursor-pointer transition-colors flex items-center gap-1 shrink-0"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Remove
+                                </button>
+                              </>
+                            )}
+
+                            {currentUserRole === 'manager' && !isCurrent && member.role === 'member' && (
+                              /* Manager remove plain member button */
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMember(member.user_id)}
+                                className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 cursor-pointer transition-colors flex items-center gap-1 shrink-0"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Leave Section - Only visible if not the owner */}
+          {currentUserRole !== 'owner' && (
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => handleRemoveMember(sessionUser?.id)}
+                disabled={!!memberActionLoading}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 hover:underline cursor-pointer opacity-80 hover:opacity-100 disabled:opacity-40"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Leave this school
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
