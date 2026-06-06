@@ -15,6 +15,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const [role, setRole] = useState<'cfi' | 'student'>('cfi');
+  const [isResetMode, setIsResetMode] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,6 +61,34 @@ export default function Auth() {
       localStorage.setItem('pending_student_claim', claim);
     }
   }, [searchParams]);
+
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!email.trim()) {
+      setError('Please enter your email address to reset your password.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const redirectToUrl = `${window.location.origin}/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectToUrl,
+      });
+
+      if (resetError) throw resetError;
+
+      setSuccess("If an account exists for that email, we've sent a password reset link. Check your inbox.");
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during password reset request.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,35 +319,37 @@ export default function Auth() {
           </div>
 
           {/* Tab Toggle */}
-          <div className="px-5 sm:px-8 pt-5 sm:pt-6">
-            <div
-              className="flex rounded-xl p-1"
-              style={{ backgroundColor: 'var(--bg-tertiary)' }}
-            >
-              <button
-                onClick={() => setIsLogin(true)}
-                className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                style={{
-                  backgroundColor: isLogin ? 'var(--bg-secondary)' : 'transparent',
-                  color: isLogin ? 'var(--navy)' : 'var(--text-muted)',
-                  boxShadow: isLogin ? '0 1px 4px rgba(26,58,92,0.1)' : 'none'
-                }}
+          {!isResetMode && (
+            <div className="px-5 sm:px-8 pt-5 sm:pt-6">
+              <div
+                className="flex rounded-xl p-1"
+                style={{ backgroundColor: 'var(--bg-tertiary)' }}
               >
-                Sign In
-              </button>
-              <button
-                onClick={() => setIsLogin(false)}
-                className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                style={{
-                  backgroundColor: !isLogin ? 'var(--bg-secondary)' : 'transparent',
-                  color: !isLogin ? 'var(--navy)' : 'var(--text-muted)',
-                  boxShadow: !isLogin ? '0 1px 4px rgba(26,58,92,0.1)' : 'none'
-                }}
-              >
-                Create Account
-              </button>
+                <button
+                  onClick={() => setIsLogin(true)}
+                  className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: isLogin ? 'var(--bg-secondary)' : 'transparent',
+                    color: isLogin ? 'var(--navy)' : 'var(--text-muted)',
+                    boxShadow: isLogin ? '0 1px 4px rgba(26,58,92,0.1)' : 'none'
+                  }}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setIsLogin(false)}
+                  className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: !isLogin ? 'var(--bg-secondary)' : 'transparent',
+                    color: !isLogin ? 'var(--navy)' : 'var(--text-muted)',
+                    boxShadow: !isLogin ? '0 1px 4px rgba(26,58,92,0.1)' : 'none'
+                  }}
+                >
+                  Create Account
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Form */}
           <div className="px-5 sm:px-8 py-5 sm:py-6">
@@ -342,136 +373,218 @@ export default function Auth() {
               </div>
             )}
 
-            {!isLogin && searchParams.get('claim') && (
-              <div className="mb-5 p-3.5 rounded-xl border text-xs text-left" style={{ backgroundColor: 'rgba(232, 160, 32, 0.05)', borderColor: 'rgba(232, 160, 32, 0.2)', color: 'var(--text-primary)' }}>
-                <span className="font-bold text-[#e8a020] block mb-0.5">CFI Invite Verified</span>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  You are creating a private student account linked to your instructor's invite.
-                </p>
-              </div>
-            )}
-
-            {!isLogin && !searchParams.get('claim') && (
-              <div className="mb-5 space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest block text-left" style={{ color: 'var(--text-muted)' }}>
-                  Are you a CFI or a student?
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRole('cfi')}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
-                    style={{
-                      backgroundColor: role === 'cfi' ? 'var(--navy)' : 'var(--bg-tertiary)',
-                      borderColor: role === 'cfi' ? 'var(--navy)' : 'var(--border-color)',
-                      color: role === 'cfi' ? '#ffffff' : 'var(--text-primary)',
-                    }}
-                  >
-                    CFI (Instructor)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('student')}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
-                    style={{
-                      backgroundColor: role === 'student' ? 'var(--navy)' : 'var(--bg-tertiary)',
-                      borderColor: role === 'student' ? 'var(--navy)' : 'var(--border-color)',
-                      color: role === 'student' ? '#ffffff' : 'var(--text-primary)',
-                    }}
-                  >
-                    Student
-                  </button>
+            {isResetMode ? (
+              <div className="space-y-4">
+                <div className="text-left mb-6">
+                  <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                    Reset your password
+                  </h3>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                    Enter your account email and we'll send you a reset link
+                  </p>
                 </div>
-              </div>
-            )}
 
-            <form onSubmit={handleAuth} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-1.5">
-                  <label
-                    className="text-[10px] font-bold uppercase tracking-widest block text-left"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                    <input
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="John Smith CFI"
-                      className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                      style={{
-                        backgroundColor: 'var(--bg-tertiary)',
-                        borderColor: 'var(--border-color)',
-                        color: 'var(--text-primary)'
-                      }}
-                    />
+                <form onSubmit={handleResetRequest} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
 
-              <div className="space-y-1.5">
-                <label
-                  className="text-[10px] font-bold uppercase tracking-widest block text-left"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                    style={{
-                      backgroundColor: 'var(--bg-tertiary)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)'
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
+                    style={{ backgroundColor: 'var(--navy)' }}
+                  >
+                    {loading ? 'Sending link...' : 'Send reset link'}
+                  </button>
+                </form>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResetMode(false);
+                      setError(null);
+                      setSuccess(null);
                     }}
-                  />
+                    className="text-xs font-bold hover:underline cursor-pointer"
+                    style={{ color: 'var(--navy)' }}
+                  >
+                    Back to sign in
+                  </button>
                 </div>
               </div>
+            ) : (
+              <>
+                {!isLogin && searchParams.get('claim') && (
+                  <div className="mb-5 p-3.5 rounded-xl border text-xs text-left" style={{ backgroundColor: 'rgba(232, 160, 32, 0.05)', borderColor: 'rgba(232, 160, 32, 0.2)', color: 'var(--text-primary)' }}>
+                    <span className="font-bold text-[#e8a020] block mb-0.5">CFI Invite Verified</span>
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      You are creating a private student account linked to your instructor's invite.
+                    </p>
+                  </div>
+                )}
 
-              <div className="space-y-1.5">
-                <label
-                  className="text-[10px] font-bold uppercase tracking-widest block text-left"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
-                    className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                    style={{
-                      backgroundColor: 'var(--bg-tertiary)',
-                      borderColor: 'var(--border-color)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-              </div>
+                {!isLogin && !searchParams.get('claim') && (
+                  <div className="mb-5 space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest block text-left" style={{ color: 'var(--text-muted)' }}>
+                      Are you a CFI or a student?
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setRole('cfi')}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+                        style={{
+                          backgroundColor: role === 'cfi' ? 'var(--navy)' : 'var(--bg-tertiary)',
+                          borderColor: role === 'cfi' ? 'var(--navy)' : 'var(--border-color)',
+                          color: role === 'cfi' ? '#ffffff' : 'var(--text-primary)',
+                        }}
+                      >
+                        CFI (Instructor)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRole('student')}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+                        style={{
+                          backgroundColor: role === 'student' ? 'var(--navy)' : 'var(--bg-tertiary)',
+                          borderColor: role === 'student' ? 'var(--navy)' : 'var(--border-color)',
+                          color: role === 'student' ? '#ffffff' : 'var(--text-primary)',
+                        }}
+                      >
+                        Student
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
-                style={{ backgroundColor: 'var(--navy)' }}
-              >
-                {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
-              </button>
-            </form>
+                <form onSubmit={handleAuth} className="space-y-4">
+                  {!isLogin && (
+                    <div className="space-y-1.5">
+                      <label
+                        className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        Full Name
+                      </label>
+                      <div className="relative">
+                        <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                        <input
+                          type="text"
+                          required
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="John Smith CFI"
+                          className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                          style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            borderColor: 'var(--border-color)',
+                            color: 'var(--text-primary)'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
+                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                        style={{
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                    {isLogin && (
+                      <div className="text-right pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsResetMode(true);
+                            setError(null);
+                            setSuccess(null);
+                          }}
+                          className="text-xs font-bold hover:underline cursor-pointer"
+                          style={{ color: 'var(--navy)' }}
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
+                    style={{ backgroundColor: 'var(--navy)' }}
+                  >
+                    {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
+                  </button>
+                </form>
+              </>
+            )}
 
             <p
               className="text-center text-[10px] mt-6"

@@ -23,6 +23,7 @@ import Schedule from './components/Schedule';
 import Landing from './components/Landing';
 import Admin from './components/Admin';
 import Account from './components/Account';
+import ResetPassword from './components/ResetPassword';
 import OnboardingModal from './components/OnboardingModal';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -457,6 +458,7 @@ export default function App() {
           }
         />
         <Route path="/account" element={<Account />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </AnimatePresence>
     </>
