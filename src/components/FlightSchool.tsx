@@ -318,6 +318,31 @@ export default function FlightSchool() {
     }
   };
 
+  const handleTransferOwnership = async (targetUserId: string) => {
+    if (!organization || memberActionLoading) return;
+
+    const confirmMessage = "WARNING: You are about to transfer ownership of this school. This will hand full ownership to that instructor, and you will step down to a manager role. You will lose the ability to assign managers or transfer ownership in the future, and you cannot undo this action yourself. Are you absolutely sure you want to proceed?";
+    if (!window.confirm(confirmMessage)) return;
+
+    setMemberActionLoading(targetUserId);
+    setMemberError(null);
+    try {
+      const { error } = await supabase.rpc('transfer_ownership', {
+        p_org_id: organization.id,
+        p_user_id: targetUserId
+      });
+
+      if (error) throw error;
+
+      // Refresh members list
+      await fetchMembers(organization.id, sessionUser.id);
+    } catch (err: any) {
+      setMemberError(err.message || 'Failed to transfer ownership.');
+    } finally {
+      setMemberActionLoading(null);
+    }
+  };
+
   const handleAddAircraft = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!organization || !newTail.trim() || !newModel.trim() || addingInProgress) return;
@@ -664,6 +689,17 @@ export default function FlightSchool() {
                           <div className="flex items-center gap-1.5">
                             {currentUserRole === 'owner' && !isCurrent && (
                               <>
+                                {/* Make Owner Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleTransferOwnership(member.user_id)}
+                                  className="px-2 py-1 text-[10px] font-bold rounded-lg border hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+                                  style={{ color: 'var(--navy)', borderColor: 'var(--navy)' }}
+                                >
+                                  <Shield className="w-3.5 h-3.5" />
+                                  Make Owner
+                                </button>
+
                                 {/* Owner assign manager button */}
                                 {member.role === 'member' ? (
                                   <button
@@ -717,7 +753,7 @@ export default function FlightSchool() {
           </div>
 
           {/* Shared Fleet Card */}
-          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden text-left">
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-sm text-left">
             <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Plane className="w-4 h-4" style={{ color: 'var(--navy)' }} />
@@ -789,7 +825,7 @@ export default function FlightSchool() {
 
             {/* Addition row: Owner & Manager only */}
             {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
-              <div className="p-5 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)]">
+              <div className="p-5 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)] rounded-b-2xl">
                 <form onSubmit={handleAddAircraft} className="flex flex-col sm:flex-row items-end gap-3">
                   <div className="w-full sm:w-1/3 space-y-1.5 text-left">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
