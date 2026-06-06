@@ -154,6 +154,7 @@ export default function Schedule() {
   const [dragOverHour, setDragOverHour] = useState<{ hour: number, minute: number, tailNumber: string } | null>(null);
   const [draggingRequest, setDraggingRequest] = useState<any>(null);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [schoolmatesBusy, setSchoolmatesBusy] = useState<any[]>([]);
   const [isPendingPanelOpen, setIsPendingPanelOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -368,6 +369,22 @@ export default function Schedule() {
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: true });
       setPendingRequests(requestsData || []);
+
+      // Fetch schoolmates' busy blocks
+      try {
+        const { data: schoolBusyData, error: schoolBusyError } = await supabase.rpc('get_school_busy_blocks', {
+          p_date: dateStr
+        });
+        if (schoolBusyError) {
+          console.error('Error fetching school busy blocks:', schoolBusyError);
+          setSchoolmatesBusy([]);
+        } else {
+          setSchoolmatesBusy(schoolBusyData || []);
+        }
+      } catch (err) {
+        console.error('Exception fetching school busy blocks:', err);
+        setSchoolmatesBusy([]);
+      }
     } catch (error) {
       console.error('Error fetching schedule data:', error);
     } finally {
@@ -1562,6 +1579,41 @@ export default function Schedule() {
                                 <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
                                   {formatDuration(lesson.duration_hours || 0)}
                                 </span>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                      {/* Schoolmate Busy Blocks */}
+                      {schoolmatesBusy
+                        ?.filter(block => block.tail_number === ac.tail_number)
+                        .map((block, idx) => {
+                          const startDecimal = timeToDecimal(block.start_time);
+                          const duration = block.duration_hours || 0;
+                          const blockWidth = duration * 96;
+                          return (
+                            <div
+                              key={`schoolmate-busy-${idx}`}
+                              className="absolute top-2 bottom-2 rounded-lg p-2 flex flex-col justify-center overflow-hidden border border-dashed select-none pointer-events-none z-0"
+                              style={{
+                                left: `${startDecimal * 96}px`,
+                                width: `${blockWidth}px`,
+                                borderColor: 'var(--border-color)',
+                                backgroundColor: 'var(--bg-tertiary)',
+                                backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, var(--border-color) 6px, var(--border-color) 7px)',
+                                color: 'var(--text-muted)'
+                              }}
+                            >
+                              <span className="text-[10px] font-bold leading-tight truncate">
+                                Booked {block.cfi_name ? block.cfi_name : ''}
+                              </span>
+                              {block.start_time && (
+                                <div className="flex items-center gap-1 mt-0.5 opacity-80">
+                                  <Clock size={8} className="text-[var(--text-muted)] border-0" />
+                                  <span className="text-[8px] font-bold tracking-wider">
+                                    {block.start_time.substring(0, 5)}
+                                  </span>
+                                </div>
                               )}
                             </div>
                           );
