@@ -15,7 +15,8 @@ import {
   Plus,
   ArrowRight,
   LogOut,
-  Sparkles
+  Sparkles,
+  Plane
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -60,6 +61,14 @@ export default function FlightSchool() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [memberError, setMemberError] = useState<string | null>(null);
 
+  // Fleet management states
+  const [fleet, setFleet] = useState<any[]>([]);
+  const [newTail, setNewTail] = useState('');
+  const [newModel, setNewModel] = useState('');
+  const [addingInProgress, setAddingInProgress] = useState(false);
+  const [removingTail, setRemovingTail] = useState<string | null>(null);
+  const [fleetError, setFleetError] = useState<string | null>(null);
+
   useEffect(() => {
     loadFlightSchoolData();
   }, []);
@@ -91,9 +100,13 @@ export default function FlightSchool() {
         
         // Fetch organization members
         await fetchMembers(school.id, session.user.id);
+
+        // Fetch organization shared fleet
+        await fetchFleet(school.id);
       } else {
         setOrganization(null);
         setMembers([]);
+        setFleet([]);
       }
     } catch (err: any) {
       setGlobalError(err.message || 'Error loading Flight School information.');
@@ -124,6 +137,22 @@ export default function FlightSchool() {
       }
     } catch (err: any) {
       setMemberError(err.message || 'Failed to fetch school members list.');
+    }
+  };
+
+  const fetchFleet = async (orgId: string) => {
+    setFleetError(null);
+    try {
+      const { data, error } = await supabase
+        .from('organization_aircraft')
+        .select('id, tail_number, aircraft_model')
+        .eq('org_id', orgId)
+        .order('tail_number');
+
+      if (error) throw error;
+      setFleet(data || []);
+    } catch (err: any) {
+      setFleetError(err.message || 'Failed to load shared fleet.');
     }
   };
 
@@ -257,6 +286,7 @@ export default function FlightSchool() {
         // Returns the user to the initial view by resetting state
         setOrganization(null);
         setMembers([]);
+        setFleet([]);
         setCurrentUserRole('member');
       } else {
         // Refresh members list for others
@@ -266,6 +296,54 @@ export default function FlightSchool() {
       setMemberError(err.message || 'Failed to remove member.');
     } finally {
       setMemberActionLoading(null);
+    }
+  };
+
+  const handleAddAircraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!organization || !newTail.trim() || !newModel.trim() || addingInProgress) return;
+
+    setAddingInProgress(true);
+    setFleetError(null);
+    try {
+      const { error } = await supabase.rpc('add_org_aircraft', {
+        p_org_id: organization.id,
+        p_tail: newTail.trim().toUpperCase(),
+        p_model: newModel.trim()
+      });
+
+      if (error) throw error;
+
+      setNewTail('');
+      setNewModel('');
+      await fetchFleet(organization.id);
+    } catch (err: any) {
+      setFleetError(err.message || 'Failed to add shared aircraft.');
+    } finally {
+      setAddingInProgress(false);
+    }
+  };
+
+  const handleRemoveAircraft = async (tailNumber: string) => {
+    if (!organization || removingTail) return;
+
+    if (!window.confirm(`Are you sure you want to remove aircraft ${tailNumber} from the shared fleet?`)) return;
+
+    setRemovingTail(tailNumber);
+    setFleetError(null);
+    try {
+      const { error } = await supabase.rpc('remove_org_aircraft', {
+        p_org_id: organization.id,
+        p_tail: tailNumber
+      });
+
+      if (error) throw error;
+
+      await fetchFleet(organization.id);
+    } catch (err: any) {
+      setFleetError(err.message || `Failed to remove aircraft ${tailNumber}.`);
+    } finally {
+      setRemovingTail(null);
     }
   };
 
@@ -617,6 +695,130 @@ export default function FlightSchool() {
                 })
               )}
             </div>
+          </div>
+
+          {/* Shared Fleet Card */}
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden text-left">
+            <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Plane className="w-4 h-4" style={{ color: 'var(--navy)' }} />
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Shared Fleet
+                </h3>
+              </div>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)]">
+                {fleet.length} Total
+              </span>
+            </div>
+
+            {fleetError && (
+              <div className="p-4 mx-5 mt-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold">
+                {fleetError}
+              </div>
+            )}
+
+            <div className="divide-y divide-[var(--border-color)]">
+              {fleet.length === 0 ? (
+                <div className="p-8 text-center text-xs font-medium text-[var(--text-muted)]">
+                  No registered aircraft found.
+                </div>
+              ) : (
+                fleet.map((aircraft) => {
+                  const isRemoving = removingTail === aircraft.tail_number;
+                  return (
+                    <div
+                      key={aircraft.id || aircraft.tail_number}
+                      className="p-4 flex flex-row items-center justify-between gap-3 text-xs transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/10"
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden text-left">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold uppercase text-[11px] shrink-0">
+                          <Plane className="w-4 h-4" style={{ color: 'var(--navy)' }} />
+                        </div>
+                        <div className="overflow-hidden">
+                          <span className="font-bold text-[var(--text-primary)] block">
+                            {aircraft.tail_number}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-muted)] block truncate">
+                            {aircraft.aircraft_model}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Remove button: Owner & Manager only */}
+                      {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
+                        <div className="flex items-center justify-end shrink-0">
+                          {isRemoving ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAircraft(aircraft.tail_number)}
+                              disabled={!!removingTail}
+                              className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 cursor-pointer transition-colors flex items-center gap-1 shrink-0 disabled:opacity-40"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Addition row: Owner & Manager only */}
+            {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
+              <div className="p-5 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)]">
+                <form onSubmit={handleAddAircraft} className="flex flex-col sm:flex-row items-end gap-3">
+                  <div className="w-full sm:w-1/3 space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                      Tail Number
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newTail}
+                      onChange={(e) => setNewTail(e.target.value.toUpperCase())}
+                      placeholder="e.g. N172SP"
+                      className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] uppercase font-mono"
+                    />
+                  </div>
+                  <div className="w-full sm:w-1/2 space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                      Aircraft Model
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newModel}
+                      onChange={(e) => setNewModel(e.target.value)}
+                      placeholder="e.g. Cessna 172S"
+                      className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)]"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!newTail.trim() || !newModel.trim() || addingInProgress}
+                    className="w-full sm:w-auto h-[34px] px-6 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+                    style={{ backgroundColor: 'var(--navy)' }}
+                  >
+                    {addingInProgress ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        Add Aircraft
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
 
           {/* Leave Section - Only visible if not the owner */}

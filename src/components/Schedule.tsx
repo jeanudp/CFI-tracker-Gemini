@@ -358,7 +358,50 @@ export default function Schedule() {
         return tailA.localeCompare(tailB);
       });
 
-      setAircraft(sortedAircraft);
+      let mergedAircraftList = [...sortedAircraft];
+      try {
+        const { data: sharedFleet, error: sharedFleetError } = await supabase
+          .from('organization_aircraft')
+          .select('id, tail_number, aircraft_model');
+        
+        if (!sharedFleetError && sharedFleet && sharedFleet.length > 0) {
+          const personalTails = new Set(sortedAircraft.map((a: any) => a.tail_number?.toUpperCase()));
+          const uniqueShared = sharedFleet.filter((a: any) => {
+            const tail = a.tail_number?.toUpperCase();
+            if (!tail) return false;
+            return !personalTails.has(tail);
+          });
+
+          const fullList = [...sortedAircraft, ...uniqueShared];
+          fullList.sort((a: any, b: any) => {
+            if (a.aircraft_model < b.aircraft_model) return -1;
+            if (a.aircraft_model > b.aircraft_model) return 1;
+
+            const tailA = a.tail_number.startsWith('N') ? a.tail_number.substring(1) : a.tail_number;
+            const tailB = b.tail_number.startsWith('N') ? b.tail_number.substring(1) : b.tail_number;
+
+            const startsDigitA = /^\d/.test(tailA);
+            const startsDigitB = /^\d/.test(tailB);
+
+            if (startsDigitA && !startsDigitB) return -1;
+            if (!startsDigitA && startsDigitB) return 1;
+
+            const allNumericA = /^\d+$/.test(tailA);
+            const allNumericB = /^\d+$/.test(tailB);
+
+            if (allNumericA && allNumericB) {
+              return parseInt(tailA, 10) - parseInt(tailB, 10);
+            }
+
+            return tailA.localeCompare(tailB);
+          });
+          mergedAircraftList = fullList;
+        }
+      } catch (err) {
+        console.error('Error fetching or merging shared fleet:', err);
+      }
+
+      setAircraft(mergedAircraftList);
       setStudents(studentsRes.data || []);
       setScheduledLessons(lessonsRes.data || []);
 
@@ -1822,7 +1865,7 @@ export default function Schedule() {
                   >
                     <option value="">Choose an aircraft</option>
                     {aircraft.map(ac => (
-                      <option key={ac.id} value={ac.tail_number}>{ac.tail_number} - {ac.model}</option>
+                      <option key={ac.id} value={ac.tail_number}>{ac.tail_number} - {ac.aircraft_model}</option>
                     ))}
                   </select>
                 </div>
