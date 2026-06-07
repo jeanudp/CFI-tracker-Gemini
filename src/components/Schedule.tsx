@@ -172,6 +172,11 @@ export default function Schedule() {
   const [isAddingAircraft, setIsAddingAircraft] = useState(false);
   const [removingAircraftId, setRemovingAircraftId] = useState<string | null>(null);
   const [downAircraftTails, setDownAircraftTails] = useState<Set<string>>(new Set());
+  const [reassigningAircraft, setReassigningAircraft] = useState<any | null>(null);
+  const [upcomingLessons, setUpcomingLessons] = useState<any[]>([]);
+  const [upcomingLessonsCount, setUpcomingLessonsCount] = useState<number>(0);
+  const [selectedReplacementTail, setSelectedReplacementTail] = useState<string>('');
+  const [reassignInProgress, setReassignInProgress] = useState<boolean>(false);
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
@@ -196,6 +201,14 @@ export default function Schedule() {
   const isAircraftDown = (tail: string) => {
     if (!tail) return false;
     return downAircraftTails.has(tail.toUpperCase());
+  };
+
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   useEffect(() => {
@@ -1127,19 +1140,25 @@ export default function Schedule() {
         return;
       }
 
-      // Check for existing bookings across all dates
+      // Check for existing bookings on or after today's date
+      const todayString = getTodayDateString();
       const { data: bookings, error: bookingsError } = await supabase
         .from('scheduled_lessons')
-        .select('id')
+        .select('*')
         .eq('user_id', session.user.id)
-        .eq('tail_number', ac.tail_number);
+        .eq('tail_number', ac.tail_number)
+        .gte('date', todayString);
 
       if (bookingsError) {
         throw bookingsError;
       }
 
       if (bookings && bookings.length > 0) {
-        alert("Please remove or reassign that aircraft's booked lessons first.");
+        setReassigningAircraft(ac);
+        setUpcomingLessons(bookings);
+        setUpcomingLessonsCount(bookings.length);
+        setSelectedReplacementTail('');
+        setRemovingAircraftId(null);
         return;
       }
 
@@ -1159,6 +1178,57 @@ export default function Schedule() {
       alert(error.message || 'Failed to remove aircraft.');
     } finally {
       setRemovingAircraftId(null);
+    }
+  };
+
+  const handleReassignAndRemove = async () => {
+    if (!reassigningAircraft || !selectedReplacementTail) {
+      alert("Please select a replacement aircraft.");
+      return;
+    }
+
+    setReassignInProgress(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("You must be logged in to perform this action.");
+        return;
+      }
+
+      const todayString = getTodayDateString();
+
+      // Update all of this user's upcoming lessons on the old tail to the chosen replacement tail
+      const { error: updateError } = await supabase
+        .from('scheduled_lessons')
+        .update({ tail_number: selectedReplacementTail })
+        .eq('user_id', session.user.id)
+        .eq('tail_number', reassigningAircraft.tail_number)
+        .gte('date', todayString);
+
+      if (updateError) throw updateError;
+
+      // Delete the saved_aircraft row by id and user
+      const { error: deleteError } = await supabase
+        .from('saved_aircraft')
+        .delete()
+        .eq('id', reassigningAircraft.id)
+        .eq('user_id', session.user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Refresh the schedule
+      await fetchScheduleData();
+
+      // Close modal & clear reassignment state
+      setReassigningAircraft(null);
+      setUpcomingLessons([]);
+      setUpcomingLessonsCount(0);
+      setSelectedReplacementTail('');
+    } catch (error: any) {
+      console.error('Error reassigning and removing aircraft:', error);
+      alert(error.message || 'Failed to reassign and remove aircraft.');
+    } finally {
+      setReassignInProgress(false);
     }
   };
 
@@ -2443,6 +2513,100 @@ export default function Schedule() {
                   className="flex-[2] p-4 rounded-2xl font-black text-xs bg-[var(--navy)] text-white hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest"
                 >
                   {isAddingAircraft ? <Loader2 size={16} className="animate-spin" /> : 'Save Aircraft'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reassignment Modal */}
+      <AnimatePresence>
+        {reassigningAircraft && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => {
+                setReassigningAircraft(null);
+                setUpcomingLessons([]);
+                setUpcomingLessonsCount(0);
+                setSelectedReplacementTail('');
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-[var(--bg-secondary)] border rounded-3xl p-8 shadow-2xl flex flex-col gap-6"
+              style={{ borderColor: 'var(--border-color)' }}
+            >
+              <div>
+                <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>Move upcoming flights</h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-red-500">
+                  Fleet maintenance management
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-xs font-bold leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  {upcomingLessonsCount} upcoming flight(s) are booked on {reassigningAircraft.tail_number}. Choose an aircraft to move them to, then it will be removed.
+                </p>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
+                    Replacement Aircraft
+                  </label>
+                  <select
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold select-auto"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={selectedReplacementTail}
+                    onChange={(e) => setSelectedReplacementTail(e.target.value)}
+                  >
+                    <option value="" className="bg-[var(--bg-secondary)] text-[var(--text-muted)]">Select replacement aircraft...</option>
+                    {aircraft
+                      .filter((ac: any) => ac.tail_number?.toUpperCase() !== reassigningAircraft?.tail_number?.toUpperCase() && !isAircraftDown(ac.tail_number))
+                      .map((ac: any) => (
+                        <option 
+                          key={ac.id || ac.tail_number} 
+                          value={ac.tail_number}
+                          className="bg-[var(--bg-secondary)] text-[var(--text-primary)]"
+                        >
+                          {ac.tail_number} ({ac.aircraft_model})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button 
+                  onClick={() => {
+                    setReassigningAircraft(null);
+                    setUpcomingLessons([]);
+                    setUpcomingLessonsCount(0);
+                    setSelectedReplacementTail('');
+                  }}
+                  className="flex-1 p-4 rounded-2xl font-bold text-xs bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 transition-colors cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleReassignAndRemove}
+                  disabled={!selectedReplacementTail || reassignInProgress}
+                  className="flex-[2] p-4 rounded-2xl font-black text-xs bg-[var(--navy)] text-white hover:shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer uppercase tracking-widest"
+                >
+                  {reassignInProgress ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Moving...</span>
+                    </>
+                  ) : (
+                    <span>Move flights & remove</span>
+                  )}
                 </button>
               </div>
             </motion.div>
