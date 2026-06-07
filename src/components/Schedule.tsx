@@ -180,6 +180,7 @@ export default function Schedule() {
   const [selectedReplacementTail, setSelectedReplacementTail] = useState<string>('');
   const [reassignInProgress, setReassignInProgress] = useState<boolean>(false);
   const [archivedAircraft, setArchivedAircraft] = useState<any[]>([]);
+  const [archivedSharedAircraft, setArchivedSharedAircraft] = useState<any[]>([]);
   const [hidingAircraftId, setHidingAircraftId] = useState<string | null>(null);
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
@@ -401,10 +402,11 @@ export default function Schedule() {
       });
 
       let mergedAircraftList = [...sortedAircraft];
+      setArchivedSharedAircraft([]);
       try {
         const { data: sharedFleet, error: sharedFleetError } = await supabase
           .from('organization_aircraft')
-          .select('id, tail_number, aircraft_model, is_down');
+          .select('id, tail_number, aircraft_model, is_down, archived_at');
         
         if (!sharedFleetError && sharedFleet && sharedFleet.length > 0) {
           const downSet = new Set<string>();
@@ -417,6 +419,7 @@ export default function Schedule() {
 
           const personalTails = new Set(sortedAircraft.map((a: any) => a.tail_number?.toUpperCase()));
           const uniqueShared = sharedFleet.filter((a: any) => {
+            if (a.archived_at) return false;
             const tail = a.tail_number?.toUpperCase();
             if (!tail) return false;
             return !personalTails.has(tail);
@@ -425,6 +428,23 @@ export default function Schedule() {
             is_user_owned: false,
             user_owned: false
           }));
+
+          const allPersonalTails = new Set(rawUserAircraft.map((a: any) => a.tail_number?.toUpperCase()));
+          const archivedShared = sharedFleet.filter((a: any) => {
+            if (!a.archived_at) return false;
+            const tail = a.tail_number?.toUpperCase();
+            if (!tail) return false;
+            return !allPersonalTails.has(tail);
+          }).map((ac: any) => ({
+            ...ac,
+            is_user_owned: false,
+            user_owned: false
+          })).sort((a: any, b: any) => {
+            const tailA = a.tail_number || '';
+            const tailB = b.tail_number || '';
+            return tailA.localeCompare(tailB);
+          });
+          setArchivedSharedAircraft(archivedShared);
 
           const fullList = [...sortedAircraft, ...uniqueShared];
           fullList.sort((a: any, b: any) => {
@@ -450,9 +470,12 @@ export default function Schedule() {
             return tailA.localeCompare(tailB);
           });
           mergedAircraftList = fullList;
+        } else {
+          setArchivedSharedAircraft([]);
         }
       } catch (err) {
         console.error('Error fetching or merging shared fleet:', err);
+        setArchivedSharedAircraft([]);
       }
 
       setAircraft(mergedAircraftList);
@@ -2023,13 +2046,13 @@ export default function Schedule() {
                 })}
 
                 {/* Archived Aircraft Rows */}
-                {archivedAircraft
+                {[...archivedAircraft, ...archivedSharedAircraft]
                   .filter(ac => scheduledLessons.some(lesson => lesson.tail_number?.toUpperCase() === ac.tail_number?.toUpperCase()))
                   .map(ac => {
                     const isDown = isAircraftDown(ac.tail_number);
                     return (
                       <div 
-                        key={ac.id} 
+                        key={`archived-${ac.id || ac.tail_number}`} 
                         className={cn(
                           "flex border-b last:border-b-0 group/row opacity-50 dark:opacity-40 transition-opacity duration-200",
                           isDown && "opacity-40"
