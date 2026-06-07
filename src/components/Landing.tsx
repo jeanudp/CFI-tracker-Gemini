@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun, Check, Share2, ExternalLink, Lock } from 'lucide-react';
+import { CheckCircle2, BookOpen, Award, Plane, Moon, Sun, Check, Share2, ExternalLink, Lock, Users, Copy } from 'lucide-react';
 import TermsModal from './TermsModal';
 
 export default function Landing() {
@@ -887,6 +887,187 @@ export default function Landing() {
               </div>
             </motion.div>
 
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Flight School (Team) Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="w-full flex flex-col items-center px-6 py-20 border-t"
+        style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}
+      >
+        <div className="w-full max-w-4xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Column: Copy & Capability List */}
+            <div className="lg:col-span-7 text-left space-y-6">
+              <div 
+                className="flex items-center gap-2 px-3 py-1 border rounded-full w-fit"
+                style={{ 
+                  backgroundColor: 'rgba(26,58,92,0.06)', 
+                  borderColor: 'var(--border-color)' 
+                }}
+              >
+                <Users size={12} style={{ color: 'var(--navy)' }} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
+                  New · Flight Schools
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black leading-tight" style={{ color: 'var(--text-primary)' }}>
+                Run your whole school, not just your students
+              </h2>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Multiple instructors can now share one school — create a school as the owner, invite other CFIs with a join code, assign Owner / Manager / Instructor roles, and keep a shared aircraft fleet everyone schedules from.
+              </p>
+              
+              <div className="space-y-3 pt-2">
+                {[
+                  "Create a private school as Owner",
+                  "Invite CFIs with a rotating join code",
+                  "Assign Manager and Instructor roles",
+                  "Shared aircraft fleet with down-for-maintenance status",
+                  "Hide or archive retired aircraft"
+                ].map((cap, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    <CheckCircle2 size={14} className="mt-0.5 shrink-0" style={{ color: 'var(--green)' }} />
+                    <span>{cap}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Code-drawn Mockup Illustration */}
+            <div className="lg:col-span-5 w-full">
+              <div 
+                className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-2xl p-5 select-none pointer-events-none overflow-hidden relative shadow-inner flex flex-col gap-4 text-left"
+                style={{
+                  boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.02)',
+                  minHeight: '340px'
+                }}
+              >
+                {/* 1. School Header */}
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                      Skyline Aviation Academy
+                    </span>
+                    <span 
+                      className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider border whitespace-nowrap"
+                      style={{ 
+                        backgroundColor: 'rgba(45,122,79,0.1)', 
+                        borderColor: 'rgba(45,122,79,0.25)', 
+                        color: 'var(--green)' 
+                      }}
+                    >
+                      Active Flight School
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Instructor Join Code
+                    </span>
+                    <div className="flex items-center gap-1.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] px-2 py-1 rounded font-mono text-[9px] font-black" style={{ color: 'var(--navy)' }}>
+                      <span>SKYLINE-CFI-2026</span>
+                      <Copy size={9} className="text-[var(--text-muted)]" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Instructor Roster */}
+                <div className="space-y-2">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] block">
+                    Instructor Roster
+                  </span>
+                  <div className="space-y-1.5">
+                    {[
+                      { name: 'Sarah Jenkins', role: 'Owner', initials: 'SJ', isOwner: true, isManager: false },
+                      { name: 'Marcus Vance', role: 'Manager', initials: 'MV', isOwner: false, isManager: true },
+                      { name: 'David Miller', role: 'Instructor', initials: 'DM', isOwner: false, isManager: false }
+                    ].map((inst, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <div 
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 border"
+                            style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderColor: 'var(--border-color)' }}
+                          >
+                            {inst.initials}
+                          </div>
+                          <span className="text-[10px] font-bold truncate text-[var(--text-primary)]">
+                            {inst.name}
+                          </span>
+                        </div>
+                        <span 
+                          className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border"
+                          style={
+                            inst.isOwner 
+                              ? { backgroundColor: 'var(--navy)', color: 'white', borderColor: 'var(--navy)' }
+                              : inst.isManager 
+                                ? { backgroundColor: 'rgba(45,122,79,0.1)', color: 'var(--green)', borderColor: 'rgba(45,122,79,0.25)' }
+                                : { backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }
+                          }
+                        >
+                          {inst.role}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Shared Fleet */}
+                <div className="space-y-2">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)] block">
+                    Shared Aircraft Fleet
+                  </span>
+                  <div className="space-y-1.5">
+                    {[
+                      { tail: 'N172SP', model: 'Cessna 172S', status: null },
+                      { tail: 'N244DA', model: 'Diamond DA40', status: 'DOWN — MAINTENANCE' },
+                    ].map((ac, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <Plane className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
+                          <div className="overflow-hidden leading-tight">
+                            <span className="text-[10px] font-black block text-[var(--text-primary)]">
+                              {ac.tail}
+                            </span>
+                            <span className="text-[8px] text-[var(--text-muted)] block">
+                              {ac.model}
+                            </span>
+                          </div>
+                        </div>
+                        {ac.status ? (
+                          <span 
+                            className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider border"
+                            style={{ 
+                              backgroundColor: 'rgba(239,68,68,0.1)', 
+                              color: '#ef4444', 
+                              borderColor: 'rgba(239,68,68,0.2)' 
+                            }}
+                          >
+                            {ac.status}
+                          </span>
+                        ) : (
+                          <span 
+                            className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider border"
+                            style={{ 
+                              backgroundColor: 'rgba(45,122,79,0.1)', 
+                              color: 'var(--green)', 
+                              borderColor: 'rgba(45,122,79,0.25)' 
+                            }}
+                          >
+                            Active
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
