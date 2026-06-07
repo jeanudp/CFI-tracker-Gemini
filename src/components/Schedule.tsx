@@ -170,6 +170,7 @@ export default function Schedule() {
   const [isAddAircraftOpen, setIsAddAircraftOpen] = useState(false);
   const [newAircraft, setNewAircraft] = useState({ tailNumber: '', aircraftModel: '' });
   const [isAddingAircraft, setIsAddingAircraft] = useState(false);
+  const [removingAircraftId, setRemovingAircraftId] = useState<string | null>(null);
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
@@ -335,7 +336,11 @@ export default function Schedule() {
           .eq('date', dateStr)
       ]);
 
-      const sortedAircraft = (aircraftRes.data || []).sort((a: any, b: any) => {
+      const sortedAircraft = (aircraftRes.data || []).map((ac: any) => ({
+        ...ac,
+        is_user_owned: true,
+        user_owned: true
+      })).sort((a: any, b: any) => {
         if (a.aircraft_model < b.aircraft_model) return -1;
         if (a.aircraft_model > b.aircraft_model) return 1;
 
@@ -370,7 +375,11 @@ export default function Schedule() {
             const tail = a.tail_number?.toUpperCase();
             if (!tail) return false;
             return !personalTails.has(tail);
-          });
+          }).map((ac: any) => ({
+            ...ac,
+            is_user_owned: false,
+            user_owned: false
+          }));
 
           const fullList = [...sortedAircraft, ...uniqueShared];
           fullList.sort((a: any, b: any) => {
@@ -1074,6 +1083,55 @@ export default function Schedule() {
     }
   };
 
+  const handleRemoveAircraft = async (ac: any) => {
+    if (!ac || removingAircraftId) return;
+
+    const confirmMessage = `Remove ${ac.tail_number} from your aircraft? This can't be undone.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setRemovingAircraftId(ac.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("You must be logged in to perform this action.");
+        return;
+      }
+
+      // Check for existing bookings across all dates
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('scheduled_lessons')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('tail_number', ac.tail_number);
+
+      if (bookingsError) {
+        throw bookingsError;
+      }
+
+      if (bookings && bookings.length > 0) {
+        alert("Please remove or reassign that aircraft's booked lessons first.");
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from('saved_aircraft')
+        .delete()
+        .eq('id', ac.id)
+        .eq('user_id', session.user.id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      await fetchScheduleData();
+    } catch (error: any) {
+      console.error('Error removing aircraft:', error);
+      alert(error.message || 'Failed to remove aircraft.');
+    } finally {
+      setRemovingAircraftId(null);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-primary)]">
       <style dangerouslySetInnerHTML={{ __html: `
@@ -1553,10 +1611,36 @@ export default function Schedule() {
                 aircraft.map(ac => (
                   <div key={ac.id} className="flex border-b last:border-b-0 group/row" style={{ borderColor: 'var(--border-color)' }}>
                     {/* Aircraft Cell */}
-                    <div className="w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                    <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                       <span className="text-xs font-black" style={{ color: 'var(--text-primary)' }}>{ac.tail_number}</span>
                       <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
+                      
+                      {ac.is_user_owned && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center">
+                          {removingAircraftId === ac.id ? (
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                              className="w-[22px] h-[22px] flex items-center justify-center animate-spin"
+                            >
+                              <Loader2 size={13} className="text-red-500" />
+                            </motion.div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveAircraft(ac);
+                              }}
+                              className="p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+                              title="Remove Aircraft"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     {/* Timeline */}
