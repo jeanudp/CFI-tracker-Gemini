@@ -26,7 +26,9 @@ import {
   Send,
   CheckCircle2,
   Lightbulb,
-  Headset
+  Headset,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
@@ -177,6 +179,8 @@ export default function Schedule() {
   const [upcomingLessonsCount, setUpcomingLessonsCount] = useState<number>(0);
   const [selectedReplacementTail, setSelectedReplacementTail] = useState<string>('');
   const [reassignInProgress, setReassignInProgress] = useState<boolean>(false);
+  const [archivedAircraft, setArchivedAircraft] = useState<any[]>([]);
+  const [hidingAircraftId, setHidingAircraftId] = useState<string | null>(null);
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
@@ -355,7 +359,21 @@ export default function Schedule() {
           .eq('date', dateStr)
       ]);
 
-      const sortedAircraft = (aircraftRes.data || []).map((ac: any) => ({
+      const rawUserAircraft = aircraftRes.data || [];
+      const activeUserAircraftRaw = rawUserAircraft.filter((ac: any) => !ac.archived_at);
+      const archivedUserAircraftRaw = rawUserAircraft.filter((ac: any) => ac.archived_at);
+
+      const archivedSorted = archivedUserAircraftRaw.map((ac: any) => ({
+        ...ac,
+        is_user_owned: true,
+        user_owned: true
+      })).sort((a: any, b: any) => {
+        const tailA = a.tail_number || '';
+        const tailB = b.tail_number || '';
+        return tailA.localeCompare(tailB);
+      });
+
+      const sortedAircraft = activeUserAircraftRaw.map((ac: any) => ({
         ...ac,
         is_user_owned: true,
         user_owned: true
@@ -438,6 +456,7 @@ export default function Schedule() {
       }
 
       setAircraft(mergedAircraftList);
+      setArchivedAircraft(archivedSorted);
       setStudents(studentsRes.data || []);
       setScheduledLessons(lessonsRes.data || []);
 
@@ -1181,6 +1200,56 @@ export default function Schedule() {
     }
   };
 
+  const handleHideAircraft = async (acId: string) => {
+    if (!acId || hidingAircraftId) return;
+    setHidingAircraftId(acId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("You must be logged in to perform this action.");
+        return;
+      }
+      const { error } = await supabase
+        .from('saved_aircraft')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', acId)
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+      await fetchScheduleData();
+    } catch (error: any) {
+      console.error('Error hiding aircraft:', error);
+      alert(error.message || 'Failed to hide aircraft.');
+    } finally {
+      setHidingAircraftId(null);
+    }
+  };
+
+  const handleUnhideAircraft = async (acId: string) => {
+    if (!acId || hidingAircraftId) return;
+    setHidingAircraftId(acId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("You must be logged in to perform this action.");
+        return;
+      }
+      const { error } = await supabase
+        .from('saved_aircraft')
+        .update({ archived_at: null })
+        .eq('id', acId)
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+      await fetchScheduleData();
+    } catch (error: any) {
+      console.error('Error unhiding aircraft:', error);
+      alert(error.message || 'Failed to unhide aircraft.');
+    } finally {
+      setHidingAircraftId(null);
+    }
+  };
+
   const handleReassignAndRemove = async () => {
     if (!reassigningAircraft || !selectedReplacementTail) {
       alert("Please select a replacement aircraft.");
@@ -1708,228 +1777,420 @@ export default function Schedule() {
                   </p>
                 </div>
               ) : (
-                aircraft.map(ac => {
-                  const isDown = isAircraftDown(ac.tail_number);
-                  return (
-                    <div 
-                      key={ac.id} 
-                      className={cn(
-                        "flex border-b last:border-b-0 group/row transition-opacity duration-200",
-                        isDown && "opacity-80"
-                      )} 
-                      style={{ borderColor: 'var(--border-color)' }}
-                    >
-                      {/* Aircraft Cell */}
-                      <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
-                           style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={cn("text-xs font-black", isDown ? "text-red-500 dark:text-red-400" : "text-[var(--text-primary)]")}>
-                            {ac.tail_number}
-                          </span>
-                          {isDown && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-950/40 text-red-650 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 shrink-0">
-                              DOWN
+                <>
+                  {aircraft.map(ac => {
+                    const isDown = isAircraftDown(ac.tail_number);
+                    return (
+                      <div 
+                        key={ac.id} 
+                        className={cn(
+                          "flex border-b last:border-b-0 group/row transition-opacity duration-200",
+                          isDown && "opacity-80"
+                        )} 
+                        style={{ borderColor: 'var(--border-color)' }}
+                      >
+                        {/* Aircraft Cell */}
+                        <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                             style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={cn("text-xs font-black", isDown ? "text-red-500 dark:text-red-400" : "text-[var(--text-primary)]")}>
+                              {ac.tail_number}
                             </span>
-                          )}
-                        </div>
-                        <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
-                      
-                      {ac.is_user_owned && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center">
-                          {removingAircraftId === ac.id ? (
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                              className="w-[22px] h-[22px] flex items-center justify-center animate-spin"
-                            >
-                              <Loader2 size={13} className="text-red-500" />
-                            </motion.div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveAircraft(ac);
-                              }}
-                              className="p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors cursor-pointer"
-                              title="Remove Aircraft"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Timeline */}
-                    <div className={cn(
-                      "flex relative items-stretch h-24",
-                      isDown && "bg-red-500/[0.015]"
-                    )}>
-                      {/* Hour Grid Lines */}
-                      {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                        <div 
-                          key={hour} 
-                          className={cn(
-                            "w-24 border-r last:border-r-0 relative",
-                            isDown ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-                          )}
-                          style={{ borderColor: 'var(--border-color)' }}
-                          onClick={() => {
-                            if (isDown) {
-                              alert(`Aircraft ${ac.tail_number} is down for maintenance and cannot be booked.`);
-                              return;
-                            }
-                            openNewBooking(hour, ac.tail_number);
-                          }}
-                          onDragOver={(e) => {
-                            if (isDown) return;
-                            handleDragOver(e, hour, ac.tail_number);
-                          }}
-                          onDrop={(e) => {
-                            if (isDown) return;
-                            handleDrop(e, hour, ac.tail_number);
-                          }}
-                        >
-                          <div className={cn(
-                            "absolute inset-0 transition-colors pointer-events-none",
-                            dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number
-                              ? ""
-                              : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
-                          )}>
-                            {dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number && (
-                              <>
-                                <div 
-                                  className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10 transition-[left] duration-100"
-                                  style={{ 
-                                    left: `${(dragOverHour.minute / 60) * 100}%`, 
-                                    width: `${(10 / 60) * 100}%` 
-                                  }} 
-                                />
-                                {/* Drag Tooltip */}
-                                {draggingLesson && (
-                                  <div 
-                                    className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none transition-[left] duration-100"
-                                    style={{ 
-                                      left: `${((dragOverHour.minute / 60) * 100) + ((10 / 60) * 100) / 2}%` 
-                                    }}
-                                  >
-                                    {(() => {
-                                      const start = dragOverHour.hour + (dragOverHour.minute / 60);
-                                      const end = start + draggingLesson.duration_hours;
-                                      return `${decimalToTime(start)} – ${decimalToTime(end)}`;
-                                    })()}
-                                  </div>
-                                )}
-                              </>
+                            {isDown && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-950/40 text-red-650 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 shrink-0">
+                                DOWN
+                              </span>
                             )}
                           </div>
-                        </div>
-                      ))}
+                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
+                        
+                        {ac.is_user_owned && (
+                          <div className="absolute top-2 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            {hidingAircraftId === ac.id ? (
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-[22px] h-[22px] flex items-center justify-center"
+                              >
+                                <Loader2 size={13} className="text-[var(--text-muted)] animate-spin" />
+                              </motion.div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleHideAircraft(ac.id);
+                                }}
+                                className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-850 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                                title="Hide aircraft"
+                              >
+                                <EyeOff size={13} />
+                              </button>
+                            )}
 
-                      {/* Lesson Blocks */}
-                      {scheduledLessons
-                        .filter(lesson => lesson.tail_number === ac.tail_number)
-                        .map(lesson => {
-                          const startDecimal = timeToDecimal(lesson.start_time);
-                          const student = students.find(s => s.name === lesson.student_name);
-                          const rating = student?.current_rating || 'default';
-                          const color = getRatingColor(rating);
-                          const isDragging = draggingLesson?.id === lesson.id;
-                          
-                          return (
-                            <div 
-                              key={lesson.id}
-                              draggable
-                              onDragStart={(e) => {
-                                setDraggingLesson(lesson);
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setDragOffsetX(e.clientX - rect.left);
-                              }}
-                              onDragEnd={() => {
-                                setDraggingLesson(null);
-                                setDragOffsetX(0);
-                                setDragOverHour(null);
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditBooking(lesson);
-                              }}
-                              className={cn(
-                                "absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-10 cursor-grab active:cursor-grabbing transition-all",
-                                isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
-                              )}
-                              style={{ 
-                                left: `${startDecimal * 96}px`, 
-                                width: `${(lesson.duration_hours || 0) * 96}px`,
-                                backgroundColor: color
-                              }}
-                            >
-                              <span className="text-[10px] font-black leading-tight text-white truncate drop-shadow-sm">
-                                {lesson.student_name}
-                              </span>
-                              <div className="flex items-center gap-1 mt-0.5 opacity-90">
-                                <Clock size={8} className="text-white" />
-                                <span className="text-[8px] font-bold text-white tracking-wider">
-                                  {lesson.start_time?.substring(0, 5)}
-                                </span>
-                              </div>
-                              <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
-                                {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : (lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT')}
-                              </span>
-                              {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
-                                <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
-                                  {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
-                                </span>
-                              )}
-                              {(lesson.duration_hours || 0) * 96 > 80 && (
-                                <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
-                                  {formatDuration(lesson.duration_hours || 0)}
-                                </span>
+                            {removingAircraftId === ac.id ? (
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-[22px] h-[22px] flex items-center justify-center animate-spin"
+                              >
+                                <Loader2 size={13} className="text-red-500" />
+                              </motion.div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveAircraft(ac);
+                                }}
+                                className="p-1 rounded hover:bg-red-50 text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+                                title="Remove Aircraft"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Timeline */}
+                      <div className={cn(
+                        "flex relative items-stretch h-24",
+                        isDown && "bg-red-500/[0.015]"
+                      )}>
+                        {/* Hour Grid Lines */}
+                        {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                          <div 
+                            key={hour} 
+                            className={cn(
+                              "w-24 border-r last:border-r-0 relative",
+                              isDown ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                            )}
+                            style={{ borderColor: 'var(--border-color)' }}
+                            onClick={() => {
+                              if (isDown) {
+                                alert(`Aircraft ${ac.tail_number} is down for maintenance and cannot be booked.`);
+                                return;
+                              }
+                              openNewBooking(hour, ac.tail_number);
+                            }}
+                            onDragOver={(e) => {
+                              if (isDown) return;
+                              handleDragOver(e, hour, ac.tail_number);
+                            }}
+                            onDrop={(e) => {
+                              if (isDown) return;
+                              handleDrop(e, hour, ac.tail_number);
+                            }}
+                          >
+                            <div className={cn(
+                              "absolute inset-0 transition-colors pointer-events-none",
+                              dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number
+                                ? ""
+                                : "opacity-0 group-hover/row:bg-[var(--navy)]/[0.02]"
+                            )}>
+                              {dragOverHour?.hour === hour && dragOverHour?.tailNumber === ac.tail_number && (
+                                <>
+                                  <div 
+                                    className="absolute top-0 bottom-0 bg-[var(--navy)]/15 border-x border-[var(--navy)]/10 transition-[left] duration-100"
+                                    style={{ 
+                                      left: `${(dragOverHour.minute / 60) * 100}%`, 
+                                      width: `${(10 / 60) * 100}%` 
+                                    }} 
+                                  />
+                                  {/* Drag Tooltip */}
+                                  {draggingLesson && (
+                                    <div 
+                                      className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-neutral-900 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg z-[100] pointer-events-none transition-[left] duration-100"
+                                      style={{ 
+                                        left: `${((dragOverHour.minute / 60) * 100) + ((10 / 60) * 100) / 2}%` 
+                                      }}
+                                    >
+                                      {(() => {
+                                        const start = dragOverHour.hour + (dragOverHour.minute / 60);
+                                        const end = start + draggingLesson.duration_hours;
+                                        return `${decimalToTime(start)} – ${decimalToTime(end)}`;
+                                      })()}
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
 
-                      {/* Schoolmate Busy Blocks */}
-                      {schoolmatesBusy
-                        ?.filter(block => block.tail_number === ac.tail_number)
-                        .map((block, idx) => {
-                          const startDecimal = timeToDecimal(block.start_time);
-                          const duration = block.duration_hours || 0;
-                          const blockWidth = duration * 96;
-                          return (
-                            <div
-                              key={`schoolmate-busy-${idx}`}
-                              className="absolute top-2 bottom-2 rounded-lg p-2 flex flex-col justify-center overflow-hidden border border-dashed select-none pointer-events-none z-0"
-                              style={{
-                                left: `${startDecimal * 96}px`,
-                                width: `${blockWidth}px`,
-                                borderColor: 'var(--border-color)',
-                                backgroundColor: 'var(--bg-tertiary)',
-                                backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, var(--border-color) 6px, var(--border-color) 7px)',
-                                color: 'var(--text-muted)'
-                              }}
-                            >
-                              <span className="text-[10px] font-bold leading-tight truncate">
-                                Booked {block.cfi_name ? block.cfi_name : ''}
-                              </span>
-                              {block.start_time && (
-                                <div className="flex items-center gap-1 mt-0.5 opacity-80">
-                                  <Clock size={8} className="text-[var(--text-muted)] border-0" />
-                                  <span className="text-[8px] font-bold tracking-wider">
-                                    {block.start_time.substring(0, 5)}
+                        {/* Lesson Blocks */}
+                        {scheduledLessons
+                          .filter(lesson => lesson.tail_number === ac.tail_number)
+                          .map(lesson => {
+                            const startDecimal = timeToDecimal(lesson.start_time);
+                            const student = students.find(s => s.name === lesson.student_name);
+                            const rating = student?.current_rating || 'default';
+                            const color = getRatingColor(rating);
+                            const isDragging = draggingLesson?.id === lesson.id;
+                            
+                            return (
+                              <div 
+                                key={lesson.id}
+                                draggable
+                                onDragStart={(e) => {
+                                  setDraggingLesson(lesson);
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setDragOffsetX(e.clientX - rect.left);
+                                }}
+                                onDragEnd={() => {
+                                  setDraggingLesson(null);
+                                  setDragOffsetX(0);
+                                  setDragOverHour(null);
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditBooking(lesson);
+                                }}
+                                className={cn(
+                                  "absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-10 cursor-grab active:cursor-grabbing transition-all",
+                                  isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
+                                )}
+                                style={{ 
+                                  left: `${startDecimal * 96}px`, 
+                                  width: `${(lesson.duration_hours || 0) * 96}px`,
+                                  backgroundColor: color
+                                }}
+                              >
+                                <span className="text-[10px] font-black leading-tight text-white truncate drop-shadow-sm">
+                                  {lesson.student_name}
+                                </span>
+                                <div className="flex items-center gap-1 mt-0.5 opacity-90">
+                                  <Clock size={8} className="text-white" />
+                                  <span className="text-[8px] font-bold text-white tracking-wider">
+                                    {lesson.start_time?.substring(0, 5)}
                                   </span>
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                                <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
+                                  {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : (lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT')}
+                                </span>
+                                {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                                  <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
+                                    {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
+                                  </span>
+                                )}
+                                {(lesson.duration_hours || 0) * 96 > 80 && (
+                                  <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
+                                    {formatDuration(lesson.duration_hours || 0)}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                        {/* Schoolmate Busy Blocks */}
+                        {schoolmatesBusy
+                          ?.filter(block => block.tail_number === ac.tail_number)
+                          .map((block, idx) => {
+                            const startDecimal = timeToDecimal(block.start_time);
+                            const duration = block.duration_hours || 0;
+                            const blockWidth = duration * 96;
+                            return (
+                              <div
+                                key={`schoolmate-busy-${idx}`}
+                                className="absolute top-2 bottom-2 rounded-lg p-2 flex flex-col justify-center overflow-hidden border border-dashed select-none pointer-events-none z-0"
+                                style={{
+                                  left: `${startDecimal * 96}px`,
+                                  width: `${blockWidth}px`,
+                                  borderColor: 'var(--border-color)',
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, var(--border-color) 6px, var(--border-color) 7px)',
+                                  color: 'var(--text-muted)'
+                                }}
+                              >
+                                <span className="text-[10px] font-bold leading-tight truncate">
+                                  Booked {block.cfi_name ? block.cfi_name : ''}
+                                </span>
+                                {block.start_time && (
+                                  <div className="flex items-center gap-1 mt-0.5 opacity-80">
+                                    <Clock size={8} className="text-[var(--text-muted)] border-0" />
+                                    <span className="text-[8px] font-bold tracking-wider">
+                                      {block.start_time.substring(0, 5)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })
-              )}
+                  );
+                })}
+
+                {/* Archived Aircraft Rows */}
+                {archivedAircraft
+                  .filter(ac => scheduledLessons.some(lesson => lesson.tail_number?.toUpperCase() === ac.tail_number?.toUpperCase()))
+                  .map(ac => {
+                    const isDown = isAircraftDown(ac.tail_number);
+                    return (
+                      <div 
+                        key={ac.id} 
+                        className={cn(
+                          "flex border-b last:border-b-0 group/row opacity-50 dark:opacity-40 transition-opacity duration-200",
+                          isDown && "opacity-40"
+                        )} 
+                        style={{ borderColor: 'var(--border-color)' }}
+                      >
+                        {/* Aircraft Cell */}
+                        <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                             style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={cn("text-xs font-black", isDown ? "text-red-500 dark:text-red-400" : "text-[var(--text-primary)]")}>
+                              {ac.tail_number}
+                            </span>
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 shrink-0 uppercase">
+                              HIDDEN
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
+                        
+                        {ac.is_user_owned && (
+                          <div className="absolute top-2 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            {hidingAircraftId === ac.id ? (
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-[22px] h-[22px] flex items-center justify-center"
+                              >
+                                <Loader2 size={13} className="text-[var(--text-muted)] animate-spin" />
+                              </motion.div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUnhideAircraft(ac.id);
+                                }}
+                                className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-855 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                                title="Show aircraft"
+                              >
+                                <Eye size={13} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Timeline (Non-interactive) */}
+                      <div className="flex relative items-stretch h-24">
+                        {/* Hour Grid Lines */}
+                        {Array.from({ length: 24 }, (_, i) => i).map(hour => (
+                          <div 
+                            key={hour} 
+                            className="w-24 border-r last:border-r-0 relative cursor-not-allowed opacity-30"
+                            style={{ borderColor: 'var(--border-color)' }}
+                          />
+                        ))}
+
+                        {/* Lesson Blocks */}
+                        {scheduledLessons
+                          .filter(lesson => lesson.tail_number === ac.tail_number)
+                          .map(lesson => {
+                            const startDecimal = timeToDecimal(lesson.start_time);
+                            const student = students.find(s => s.name === lesson.student_name);
+                            const rating = student?.current_rating || 'default';
+                            const color = getRatingColor(rating);
+                            const isDragging = draggingLesson?.id === lesson.id;
+                            
+                            return (
+                              <div 
+                                key={lesson.id}
+                                draggable
+                                onDragStart={(e) => {
+                                  setDraggingLesson(lesson);
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setDragOffsetX(e.clientX - rect.left);
+                                }}
+                                onDragEnd={() => {
+                                  setDraggingLesson(null);
+                                  setDragOffsetX(0);
+                                  setDragOverHour(null);
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditBooking(lesson);
+                                }}
+                                className={cn(
+                                  "absolute top-2 bottom-2 rounded-lg p-2 shadow-sm flex flex-col justify-center overflow-hidden border border-white/20 select-none z-10 cursor-grab active:cursor-grabbing transition-all",
+                                  isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
+                                )}
+                                style={{ 
+                                  left: `${startDecimal * 96}px`, 
+                                  width: `${(lesson.duration_hours || 0) * 96}px`,
+                                  backgroundColor: color
+                                }}
+                              >
+                                <span className="text-[10px] font-black leading-tight text-white truncate drop-shadow-sm">
+                                  {lesson.student_name}
+                                </span>
+                                <div className="flex items-center gap-1 mt-0.5 opacity-90">
+                                  <Clock size={8} className="text-white" />
+                                  <span className="text-[8px] font-bold text-white tracking-wider">
+                                    {lesson.start_time?.substring(0, 5)}
+                                  </span>
+                                </div>
+                                <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
+                                  {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : (lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT')}
+                                </span>
+                                {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                                  <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
+                                    {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
+                                  </span>
+                                )}
+                                {(lesson.duration_hours || 0) * 96 > 80 && (
+                                  <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
+                                    {formatDuration(lesson.duration_hours || 0)}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+
+                        {/* Schoolmate Busy Blocks */}
+                        {schoolmatesBusy
+                          ?.filter(block => block.tail_number === ac.tail_number)
+                          .map((block, idx) => {
+                            const startDecimal = timeToDecimal(block.start_time);
+                            const duration = block.duration_hours || 0;
+                            const blockWidth = duration * 96;
+                            return (
+                              <div
+                                key={`schoolmate-busy-archived-${idx}`}
+                                className="absolute top-2 bottom-2 rounded-lg p-2 flex flex-col justify-center overflow-hidden border border-dashed select-none pointer-events-none z-0"
+                                style={{
+                                  left: `${startDecimal * 96}px`,
+                                  width: `${blockWidth}px`,
+                                  borderColor: 'var(--border-color)',
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 6px, var(--border-color) 6px, var(--border-color) 7px)',
+                                  color: 'var(--text-muted)'
+                                }}
+                              >
+                                <span className="text-[10px] font-bold leading-tight truncate">
+                                  Booked {block.cfi_name ? block.cfi_name : ''}
+                                </span>
+                                {block.start_time && (
+                                  <div className="flex items-center gap-1 mt-0.5 opacity-80">
+                                    <Clock size={8} className="text-[var(--text-muted)] border-0" />
+                                    <span className="text-[8px] font-bold tracking-wider">
+                                      {block.start_time.substring(0, 5)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
 
               {/* Add Aircraft Row */}
               {!loading && (
@@ -1966,6 +2227,89 @@ export default function Schedule() {
             </div>
           </div>
         </div>
+
+        {/* Hidden Aircraft Panel */}
+        {archivedAircraft.length > 0 && (
+          <div 
+            className="mt-6 border rounded-2xl p-6"
+            style={{ 
+              backgroundColor: 'var(--bg-secondary)', 
+              borderColor: 'var(--border-color)', 
+              boxShadow: '0 4px 20px rgba(26,58,92,0.05)' 
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.1em]" style={{ color: 'var(--text-primary)' }}>
+                  Hidden Aircraft ({archivedAircraft.length})
+                </h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5 text-amber-500">
+                  Archived but kept for historical records or pending lessons
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {archivedAircraft.map((ac) => (
+                <div 
+                  key={ac.id} 
+                  className="flex items-center justify-between p-3.5 rounded-xl border bg-[var(--bg-tertiary)]/30 group/hidden-row transition-all duration-200"
+                  style={{ borderColor: 'var(--border-color)' }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-black text-[var(--text-primary)]">
+                      {ac.tail_number}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      {ac.aircraft_model}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {hidingAircraftId === ac.id ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-8 h-8 flex items-center justify-center animate-spin"
+                      >
+                        <Loader2 size={14} className="text-[var(--text-muted)]" />
+                      </motion.div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleUnhideAircraft(ac.id)}
+                        className="p-2 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-zinc-500 hover:text-[var(--navy)] dark:text-zinc-400 border transition-all cursor-pointer flex items-center justify-center"
+                        style={{ borderColor: 'var(--border-color)' }}
+                        title="Unhide aircraft"
+                      >
+                        <Eye size={14} className="mr-1" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Show</span>
+                      </button>
+                    )}
+
+                    {removingAircraftId === ac.id ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-8 h-8 flex items-center justify-center animate-spin"
+                      >
+                        <Loader2 size={14} className="text-red-500" />
+                      </motion.div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAircraft(ac)}
+                        className="p-2 rounded-lg bg-red-550 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-500 hover:text-red-600 border border-red-200 dark:border-red-900/30 transition-all cursor-pointer flex items-center justify-center"
+                        title="Delete aircraft permanently"
+                      >
+                        <Trash2 size={14} className="mr-1" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Delete</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Booking Modal */}

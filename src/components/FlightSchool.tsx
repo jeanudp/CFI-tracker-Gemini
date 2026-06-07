@@ -17,7 +17,9 @@ import {
   LogOut,
   Sparkles,
   Plane,
-  Wrench
+  Wrench,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AIRCRAFT_MODELS } from '../constants/aircraft';
@@ -69,11 +71,13 @@ export default function FlightSchool() {
 
   // Fleet management states
   const [fleet, setFleet] = useState<any[]>([]);
+  const [archivedFleet, setArchivedFleet] = useState<any[]>([]);
   const [newTail, setNewTail] = useState('');
   const [newModel, setNewModel] = useState('');
   const [addingInProgress, setAddingInProgress] = useState(false);
   const [removingTail, setRemovingTail] = useState<string | null>(null);
   const [updatingMaintenanceTail, setUpdatingMaintenanceTail] = useState<string | null>(null);
+  const [hidingOrRestoringTail, setHidingOrRestoringTail] = useState<string | null>(null);
   const [fleetError, setFleetError] = useState<string | null>(null);
   const [showModelSuggestions, setShowModelSuggestions] = useState(false);
   const modelSearchContainerRef = useRef<HTMLDivElement>(null);
@@ -166,12 +170,22 @@ export default function FlightSchool() {
     try {
       const { data, error } = await supabase
         .from('organization_aircraft')
-        .select('id, tail_number, aircraft_model, is_down, maintenance_note')
+        .select('id, tail_number, aircraft_model, is_down, maintenance_note, archived_at')
         .eq('org_id', orgId)
         .order('tail_number');
 
       if (error) throw error;
-      setFleet(data || []);
+      
+      const rawFleet = data || [];
+      const activeFleet = rawFleet.filter((ac: any) => !ac.archived_at);
+      const hiddenFleet = rawFleet.filter((ac: any) => ac.archived_at).sort((a: any, b: any) => {
+        const tailA = a.tail_number || '';
+        const tailB = b.tail_number || '';
+        return tailA.localeCompare(tailB);
+      });
+
+      setFleet(activeFleet);
+      setArchivedFleet(hiddenFleet);
     } catch (err: any) {
       setFleetError(err.message || 'Failed to load shared fleet.');
     }
@@ -390,6 +404,50 @@ export default function FlightSchool() {
       setFleetError(err.message || `Failed to remove aircraft ${tailNumber}.`);
     } finally {
       setRemovingTail(null);
+    }
+  };
+
+  const handleHideAircraft = async (tailNumber: string) => {
+    if (!organization || hidingOrRestoringTail) return;
+
+    setHidingOrRestoringTail(tailNumber);
+    setFleetError(null);
+    try {
+      const { error } = await supabase.rpc('set_org_aircraft_archived', {
+        p_org_id: organization.id,
+        p_tail: tailNumber,
+        p_archived: true
+      });
+
+      if (error) throw error;
+
+      await fetchFleet(organization.id);
+    } catch (err: any) {
+      setFleetError(err.message || `Failed to hide aircraft ${tailNumber}.`);
+    } finally {
+      setHidingOrRestoringTail(null);
+    }
+  };
+
+  const handleRestoreAircraft = async (tailNumber: string) => {
+    if (!organization || hidingOrRestoringTail) return;
+
+    setHidingOrRestoringTail(tailNumber);
+    setFleetError(null);
+    try {
+      const { error } = await supabase.rpc('set_org_aircraft_archived', {
+        p_org_id: organization.id,
+        p_tail: tailNumber,
+        p_archived: false
+      });
+
+      if (error) throw error;
+
+      await fetchFleet(organization.id);
+    } catch (err: any) {
+      setFleetError(err.message || `Failed to restore aircraft ${tailNumber}.`);
+    } finally {
+      setHidingOrRestoringTail(null);
     }
   };
 
@@ -868,6 +926,20 @@ export default function FlightSchool() {
                             </button>
                           )}
 
+                          {hidingOrRestoringTail === aircraft.tail_number ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--text-muted)] mx-2 shrink-0" />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleHideAircraft(aircraft.tail_number)}
+                              disabled={!!removingTail || !!updatingMaintenanceTail || !!hidingOrRestoringTail}
+                              className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer transition-colors flex items-center gap-1 shrink-0 disabled:opacity-40"
+                            >
+                              <EyeOff className="w-3.5 h-3.5" />
+                              Hide
+                            </button>
+                          )}
+
                           {isRemoving ? (
                             <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)] px-3" />
                           ) : (
@@ -972,6 +1044,81 @@ export default function FlightSchool() {
                     )}
                   </button>
                 </form>
+              </div>
+            )}
+
+            {/* Hidden Aircraft Subsection: Owner/Manager only when archivedFleet has records */}
+            {(currentUserRole === 'owner' || currentUserRole === 'manager') && archivedFleet.length > 0 && (
+              <div className="p-5 border-t bg-[var(--bg-tertiary)]/30" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                      Hidden Aircraft ({archivedFleet.length})
+                    </h4>
+                    <p className="text-[9px] text-[var(--text-muted)] opacity-85 mt-0.5">
+                      Archived flight equipment excluded from general schedule booking
+                    </p>
+                  </div>
+                </div>
+                <div 
+                  className="divide-y border rounded-xl overflow-hidden bg-[var(--bg-secondary)]"
+                  style={{ borderColor: 'var(--border-color)' }}
+                >
+                  {archivedFleet.map((aircraft) => {
+                    const isRemoving = removingTail === aircraft.tail_number;
+                    const isHidingOrRestoring = hidingOrRestoringTail === aircraft.tail_number;
+                    return (
+                      <div
+                        key={aircraft.id || aircraft.tail_number}
+                        className="p-3 flex flex-row items-center justify-between gap-3 opacity-60 hover:opacity-100 transition-opacity bg-zinc-500/[0.01]"
+                        style={{ borderBottomColor: 'var(--border-color)' }}
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden text-left">
+                          <Plane className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                          <div className="overflow-hidden">
+                            <span className="font-bold text-[var(--text-primary)]">
+                              {aircraft.tail_number}
+                            </span>
+                            <span className="text-[10px] text-[var(--text-muted)] block">
+                              {aircraft.aircraft_model}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isHidingOrRestoring ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--text-muted)] mx-2" />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleRestoreAircraft(aircraft.tail_number)}
+                              disabled={!!removingTail || !!updatingMaintenanceTail || !!hidingOrRestoringTail}
+                              className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-850 text-[var(--text-primary)] border cursor-pointer transition-colors flex items-center gap-1 shrink-0 disabled:opacity-40"
+                              style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Unhide
+                            </button>
+                          )}
+
+                          {isRemoving ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)] px-3" />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAircraft(aircraft.tail_number)}
+                              disabled={!!removingTail || !!updatingMaintenanceTail || !!hidingOrRestoringTail}
+                              className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-650 text-red-650 dark:text-red-400 cursor-pointer transition-colors flex items-center gap-1 shrink-0 disabled:opacity-40 border border-red-100 dark:border-red-900/30 bg-red-50/20 dark:bg-red-950/5"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
