@@ -16,7 +16,8 @@ import {
   ArrowRight,
   LogOut,
   Sparkles,
-  Plane
+  Plane,
+  Wrench
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AIRCRAFT_MODELS } from '../constants/aircraft';
@@ -72,6 +73,7 @@ export default function FlightSchool() {
   const [newModel, setNewModel] = useState('');
   const [addingInProgress, setAddingInProgress] = useState(false);
   const [removingTail, setRemovingTail] = useState<string | null>(null);
+  const [updatingMaintenanceTail, setUpdatingMaintenanceTail] = useState<string | null>(null);
   const [fleetError, setFleetError] = useState<string | null>(null);
   const [showModelSuggestions, setShowModelSuggestions] = useState(false);
   const modelSearchContainerRef = useRef<HTMLDivElement>(null);
@@ -164,7 +166,7 @@ export default function FlightSchool() {
     try {
       const { data, error } = await supabase
         .from('organization_aircraft')
-        .select('id, tail_number, aircraft_model')
+        .select('id, tail_number, aircraft_model, is_down, maintenance_note')
         .eq('org_id', orgId)
         .order('tail_number');
 
@@ -388,6 +390,39 @@ export default function FlightSchool() {
       setFleetError(err.message || `Failed to remove aircraft ${tailNumber}.`);
     } finally {
       setRemovingTail(null);
+    }
+  };
+
+  const handleToggleMaintenanceStatus = async (tailNumber: string, currentDown: boolean) => {
+    if (!organization || updatingMaintenanceTail) return;
+
+    let note: string | null = null;
+    const newDown = !currentDown;
+
+    if (newDown) {
+      const input = window.prompt(`Enter a short maintenance note for ${tailNumber} (optional):`);
+      if (input === null) return; // User canceled the prompt
+      note = input.trim();
+    }
+
+    setUpdatingMaintenanceTail(tailNumber);
+    setFleetError(null);
+
+    try {
+      const { error } = await supabase.rpc('set_org_aircraft_status', {
+        p_org_id: organization.id,
+        p_tail: tailNumber,
+        p_is_down: newDown,
+        p_note: note
+      });
+
+      if (error) throw error;
+
+      await fetchFleet(organization.id);
+    } catch (err: any) {
+      setFleetError(err.message || `Failed to update status for ${tailNumber}.`);
+    } finally {
+      setUpdatingMaintenanceTail(null);
     }
   };
 
@@ -790,25 +825,56 @@ export default function FlightSchool() {
                           <Plane className="w-4 h-4" style={{ color: 'var(--navy)' }} />
                         </div>
                         <div className="overflow-hidden">
-                          <span className="font-bold text-[var(--text-primary)] block">
-                            {aircraft.tail_number}
-                          </span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-[var(--text-primary)]">
+                              {aircraft.tail_number}
+                            </span>
+                            {aircraft.is_down && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30">
+                                DOWN — MAINTENANCE
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10px] text-[var(--text-muted)] block truncate">
                             {aircraft.aircraft_model}
                           </span>
+                          {aircraft.is_down && aircraft.maintenance_note && (
+                            <span className="text-[10px] text-[var(--text-muted)] block truncate mt-0.5" title={aircraft.maintenance_note}>
+                              Note: {aircraft.maintenance_note}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                      {/* Remove button: Owner & Manager only */}
+                      {/* Controls: Owner & Manager only */}
                       {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
-                        <div className="flex items-center justify-end shrink-0">
-                          {isRemoving ? (
+                        <div className="flex items-center gap-2 justify-end shrink-0">
+                          {updatingMaintenanceTail === aircraft.tail_number ? (
                             <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
                           ) : (
                             <button
                               type="button"
+                              onClick={() => handleToggleMaintenanceStatus(aircraft.tail_number, !!aircraft.is_down)}
+                              disabled={!!updatingMaintenanceTail || !!removingTail}
+                              className={cn(
+                                "p-1 px-2 text-[10px] font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1 shrink-0 disabled:opacity-40",
+                                aircraft.is_down
+                                  ? "hover:bg-green-50 dark:hover:bg-green-950/20 text-green-600 dark:text-green-400"
+                                  : "hover:bg-amber-50 dark:hover:bg-amber-950/20 text-amber-600 dark:text-amber-500"
+                              )}
+                            >
+                              <Wrench className="w-3.5 h-3.5" />
+                              {aircraft.is_down ? 'Return to Service' : 'Mark Down'}
+                            </button>
+                          )}
+
+                          {isRemoving ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)] px-3" />
+                          ) : (
+                            <button
+                              type="button"
                               onClick={() => handleRemoveAircraft(aircraft.tail_number)}
-                              disabled={!!removingTail}
+                              disabled={!!removingTail || !!updatingMaintenanceTail}
                               className="p-1 px-2 text-[10px] font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 dark:text-red-400 cursor-pointer transition-colors flex items-center gap-1 shrink-0 disabled:opacity-40"
                             >
                               <Trash2 className="w-3.5 h-3.5" />

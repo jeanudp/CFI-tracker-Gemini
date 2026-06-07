@@ -171,6 +171,7 @@ export default function Schedule() {
   const [newAircraft, setNewAircraft] = useState({ tailNumber: '', aircraftModel: '' });
   const [isAddingAircraft, setIsAddingAircraft] = useState(false);
   const [removingAircraftId, setRemovingAircraftId] = useState<string | null>(null);
+  const [downAircraftTails, setDownAircraftTails] = useState<Set<string>>(new Set());
   const [maydayOpen, setMaydayOpen] = useState(false);
   const [maydayText, setMaydayText] = useState('');
   const [maydaySending, setMaydaySending] = useState(false);
@@ -191,6 +192,11 @@ export default function Schedule() {
     noEmailNames: string[];
     failedNames: string[];
   } | null>(null);
+
+  const isAircraftDown = (tail: string) => {
+    if (!tail) return false;
+    return downAircraftTails.has(tail.toUpperCase());
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -367,9 +373,17 @@ export default function Schedule() {
       try {
         const { data: sharedFleet, error: sharedFleetError } = await supabase
           .from('organization_aircraft')
-          .select('id, tail_number, aircraft_model');
+          .select('id, tail_number, aircraft_model, is_down');
         
         if (!sharedFleetError && sharedFleet && sharedFleet.length > 0) {
+          const downSet = new Set<string>();
+          sharedFleet.forEach((ac: any) => {
+            if (ac.is_down && ac.tail_number) {
+              downSet.add(ac.tail_number.toUpperCase());
+            }
+          });
+          setDownAircraftTails(downSet);
+
           const personalTails = new Set(sortedAircraft.map((a: any) => a.tail_number?.toUpperCase()));
           const uniqueShared = sharedFleet.filter((a: any) => {
             const tail = a.tail_number?.toUpperCase();
@@ -532,6 +546,10 @@ export default function Schedule() {
         setFormError(`That airplane is already booked by ${schoolmateConflict.cfi_name || 'another instructor'} at this time. Pick another time or aircraft.`);
         return;
       }
+      if (isAircraftDown(effectiveTail)) {
+        setFormError("That aircraft is down for maintenance and can't be scheduled.");
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -637,6 +655,10 @@ export default function Schedule() {
   };
 
   const openNewBooking = (hour: number, tailNumber: string) => {
+    if (tailNumber && tailNumber !== 'GROUND' && isAircraftDown(tailNumber)) {
+      alert(`Aircraft ${tailNumber} is down for maintenance and cannot be booked.`);
+      return;
+    }
     setEditingLesson(null);
     setFormError(null);
     setSuggestedTime(null);
@@ -919,6 +941,10 @@ export default function Schedule() {
           alert(`That airplane is already booked by ${schoolmateConflict.cfi_name || 'another instructor'} at this time.`);
           return;
         }
+        if (isAircraftDown(tailNumber)) {
+          alert("That aircraft is down for maintenance and can't be scheduled.");
+          return;
+        }
       }
 
       // Handle request drop
@@ -976,6 +1002,10 @@ export default function Schedule() {
       const schoolmateConflict = checkSchoolmateConflict(newStartTime, lesson.duration_hours || 0, tailNumber);
       if (schoolmateConflict) {
         alert(`That airplane is already booked by ${schoolmateConflict.cfi_name || 'another instructor'} at this time.`);
+        return;
+      }
+      if (isAircraftDown(tailNumber)) {
+        alert("That aircraft is down for maintenance and can't be scheduled.");
         return;
       }
     }
@@ -1608,13 +1638,31 @@ export default function Schedule() {
                   </p>
                 </div>
               ) : (
-                aircraft.map(ac => (
-                  <div key={ac.id} className="flex border-b last:border-b-0 group/row" style={{ borderColor: 'var(--border-color)' }}>
-                    {/* Aircraft Cell */}
-                    <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
-                         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
-                      <span className="text-xs font-black" style={{ color: 'var(--text-primary)' }}>{ac.tail_number}</span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
+                aircraft.map(ac => {
+                  const isDown = isAircraftDown(ac.tail_number);
+                  return (
+                    <div 
+                      key={ac.id} 
+                      className={cn(
+                        "flex border-b last:border-b-0 group/row transition-opacity duration-200",
+                        isDown && "opacity-80"
+                      )} 
+                      style={{ borderColor: 'var(--border-color)' }}
+                    >
+                      {/* Aircraft Cell */}
+                      <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                           style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={cn("text-xs font-black", isDown ? "text-red-500 dark:text-red-400" : "text-[var(--text-primary)]")}>
+                            {ac.tail_number}
+                          </span>
+                          {isDown && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-950/40 text-red-650 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 shrink-0">
+                              DOWN
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{ac.aircraft_model}</span>
                       
                       {ac.is_user_owned && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center">
@@ -1644,16 +1692,34 @@ export default function Schedule() {
                     </div>
                     
                     {/* Timeline */}
-                    <div className="flex relative items-stretch h-24">
+                    <div className={cn(
+                      "flex relative items-stretch h-24",
+                      isDown && "bg-red-500/[0.015]"
+                    )}>
                       {/* Hour Grid Lines */}
                       {Array.from({ length: 24 }, (_, i) => i).map(hour => (
                         <div 
                           key={hour} 
-                          className="w-24 border-r last:border-r-0 relative cursor-pointer"
+                          className={cn(
+                            "w-24 border-r last:border-r-0 relative",
+                            isDown ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                          )}
                           style={{ borderColor: 'var(--border-color)' }}
-                          onClick={() => openNewBooking(hour, ac.tail_number)}
-                          onDragOver={(e) => handleDragOver(e, hour, ac.tail_number)}
-                          onDrop={(e) => handleDrop(e, hour, ac.tail_number)}
+                          onClick={() => {
+                            if (isDown) {
+                              alert(`Aircraft ${ac.tail_number} is down for maintenance and cannot be booked.`);
+                              return;
+                            }
+                            openNewBooking(hour, ac.tail_number);
+                          }}
+                          onDragOver={(e) => {
+                            if (isDown) return;
+                            handleDragOver(e, hour, ac.tail_number);
+                          }}
+                          onDrop={(e) => {
+                            if (isDown) return;
+                            handleDrop(e, hour, ac.tail_number);
+                          }}
                         >
                           <div className={cn(
                             "absolute inset-0 transition-colors pointer-events-none",
@@ -1791,7 +1857,8 @@ export default function Schedule() {
                         })}
                     </div>
                   </div>
-                ))
+                );
+              })
               )}
 
               {/* Add Aircraft Row */}
