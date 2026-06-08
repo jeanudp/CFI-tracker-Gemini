@@ -78,6 +78,9 @@ export default function History() {
   const [activeStudentFilter, setActiveStudentFilter] = useState<string | null>(
     localStorage.getItem('sb_selected_student')
   );
+  const [activeStudentIdFilter, setActiveStudentIdFilter] = useState<string | null>(
+    localStorage.getItem('sb_selected_student_id')
+  );
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -299,9 +302,15 @@ export default function History() {
       setManualHours(manualData || []);
       setEndorsements(endorsementsData || []);
       const preSelectedStudent = localStorage.getItem('sb_selected_student');
-      if (preSelectedStudent) {
+      const preSelectedStudentId = localStorage.getItem('sb_selected_student_id');
+      if (preSelectedStudent || preSelectedStudentId) {
         if (lessonsData && lessonsData.length > 0) {
-          const studentLesson = lessonsData.find(l => l.student_name === preSelectedStudent);
+          const studentLesson = lessonsData.find(l => {
+            if (preSelectedStudentId && l.student_id) {
+              return l.student_id === preSelectedStudentId;
+            }
+            return l.student_name === preSelectedStudent;
+          });
           if (studentLesson) {
             setSelectedLessonId(studentLesson.id);
           } else {
@@ -538,19 +547,27 @@ export default function History() {
   useEffect(() => {
     if (selectedLesson?.student_name) {
       const fetchTestResults = async () => {
-        const { data } = await supabase
+        const targetId = selectedLesson.student_id;
+        const targetName = selectedLesson.student_name;
+        let query = supabase
           .from('student_tests')
           .select('*')
-          .eq('student_name', selectedLesson.student_name)
-          .eq('test_type', 'pre_solo')
-          .order('created_at', { ascending: false });
+          .eq('test_type', 'pre_solo');
+
+        if (targetId) {
+          query = query.or(`student_id.eq.${targetId},and(student_id.is.null,student_name.eq.${targetName})`);
+        } else {
+          query = query.eq('student_name', targetName);
+        }
+
+        const { data } = await query.order('created_at', { ascending: false });
         setPreSoloTestResults(data || []);
       };
       fetchTestResults();
     } else {
       setPreSoloTestResults([]);
     }
-  }, [selectedLesson?.student_name]);
+  }, [selectedLesson?.student_name, selectedLesson?.student_id]);
   const studentName = selectedLesson?.student_name;
   const lessonRating = selectedLesson?.meta?.rating_code || 'ppl';
 
@@ -558,16 +575,25 @@ export default function History() {
   useEffect(() => {
     if (selectedLesson && studentName) {
       const fetchEndorsements = async () => {
-        const { data } = await supabase
+        const targetId = selectedLesson.student_id;
+        const targetName = selectedLesson.student_name;
+        let query = supabase
           .from('endorsements')
           .select('*')
-          .eq('student_name', studentName)
           .eq('rating', lessonRating);
+
+        if (targetId) {
+          query = query.or(`student_id.eq.${targetId},and(student_id.is.null,student_name.eq.${targetName})`);
+        } else {
+          query = query.eq('student_name', targetName);
+        }
+
+        const { data } = await query;
         if (data) setEndorsements(data);
       };
       fetchEndorsements();
     }
-  }, [selectedLessonId, lessonRating]);
+  }, [selectedLessonId, lessonRating, selectedLesson?.student_id, selectedLesson?.student_name]);
 
   useEffect(() => {
     if (pickerOpen) {
@@ -579,18 +605,37 @@ export default function History() {
     }
   }, [pickerOpen, selectedLesson]);
 
+  const targetFilterId = selectedLesson?.student_id || activeStudentIdFilter;
+  const targetFilterName = studentName || activeStudentFilter;
+
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = (l.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (l.student_name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const filterName = studentName || activeStudentFilter;
-    if (filterName) {
-      return matchesSearch && l.student_name === filterName;
+    if (targetFilterId || targetFilterName) {
+      let isMatch = false;
+      if (targetFilterId && l.student_id) {
+        isMatch = l.student_id === targetFilterId;
+      } else {
+        isMatch = l.student_name === targetFilterName;
+      }
+      return matchesSearch && isMatch;
     }
     return matchesSearch;
   });
 
-  const studentLessons = (studentName || activeStudentFilter) ? lessons.filter(l => l.student_name === (studentName || activeStudentFilter)) : [];
-  const studentArchived = (studentName || activeStudentFilter) ? archivedLessons.filter(l => l.student_name === (studentName || activeStudentFilter)) : [];
+  const studentLessons = (targetFilterId || targetFilterName) ? lessons.filter(l => {
+    if (targetFilterId && l.student_id) {
+      return l.student_id === targetFilterId;
+    }
+    return l.student_name === targetFilterName;
+  }) : [];
+
+  const studentArchived = (targetFilterId || targetFilterName) ? archivedLessons.filter(l => {
+    if (targetFilterId && l.student_id) {
+      return l.student_id === targetFilterId;
+    }
+    return l.student_name === targetFilterName;
+  }) : [];
 
   const groundLessons = filteredLessons.filter(l => l.type === 'ground');
   const flightLessons = filteredLessons.filter(l => l.type === 'flight');
@@ -634,7 +679,7 @@ export default function History() {
     return 'bg-[#94a3b8]';
   };
 
-  const studentStats = (studentName || activeStudentFilter) ? {
+  const studentStats = (targetFilterId || targetFilterName) ? {
     count: studentLessons.length,
     hours: studentLessons.reduce((sum, l) => sum + (parseFloat(l.meta?.totalFlight || '0') || 0), 0),
     sGrades: studentLessons.reduce((sum, l) => sum + Object.values(l.grades || {}).filter(g => isPassingGrade(g)).length, 0)
@@ -736,10 +781,14 @@ export default function History() {
     const picTime = lessonsToSum.reduce((sum, l) => sum + (parseFloat(l.meta?.pic || '0') || (parseFloat(l.meta?.solo || '0') > 0 ? parseFloat(l.meta.totalFlight || '0') : 0)), 0);
 
     const getPriorValue = (key: string) => {
-      const m = manualHours.find(h =>
-        h.student_name === studentName &&
-        h.field_key === `prior_${key}`
-      );
+      const targetId = selectedLesson?.student_id || activeStudentIdFilter;
+      const targetName = studentName;
+      const m = manualHours.find(h => {
+        if (targetId && h.student_id) {
+          return h.student_id === targetId && h.field_key === `prior_${key}`;
+        }
+        return h.student_name === targetName && h.field_key === `prior_${key}`;
+      });
       return m ? m.total : 0;
     };
 
@@ -946,12 +995,16 @@ export default function History() {
 
   const isEndorsementMet = (key: string) => {
     if (!selectedLesson) return false;
-    return endorsements.some(e => 
-      e.student_name === selectedLesson.student_name && 
-      e.rating === lessonRating && 
-      e.endorsement_key === key && 
-      e.completed
-    );
+    const targetId = selectedLesson.student_id;
+    const targetName = selectedLesson.student_name;
+    return endorsements.some(e => {
+      const basicMatches = e.rating === lessonRating && e.endorsement_key === key && e.completed;
+      if (!basicMatches) return false;
+      if (targetId && e.student_id) {
+        return e.student_id === targetId;
+      }
+      return e.student_name === targetName;
+    });
   };
 
   const handleEditLesson = (lesson: Lesson) => {
@@ -1065,7 +1118,7 @@ export default function History() {
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
               <HistoryIcon size={48} className="opacity-20" />
             </div>
-            {activeStudentFilter ? (
+            {activeStudentFilter || activeStudentIdFilter ? (
               <>
                 <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">No lessons have been completed for this student yet</h3>
                 <p className="text-sm text-[#94a3b8] max-w-[240px] text-center leading-relaxed mb-6">
@@ -2986,7 +3039,12 @@ export default function History() {
                             {(() => {
                               const summarySections = SOLO_OPTIONS.map(section => {
                                 const givenInSection = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).map((e: any) => {
-                                  const record = endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name);
+                                  const record = endorsements.find(end => {
+                                    if (selectedLesson.student_id && end.student_id) {
+                                      return end.endorsement_key === e.key && end.student_id === selectedLesson.student_id;
+                                    }
+                                    return end.endorsement_key === e.key && end.student_name === selectedLesson.student_name;
+                                  });
                                   return {
                                     ...e,
                                     completed_date: record?.completed_date
@@ -3217,7 +3275,12 @@ export default function History() {
                             {(() => {
                               const summarySections = SOLO_OPTIONS.map(section => {
                                 const givenInSection = section.endorsements.filter((e: any) => isEndorsementMet(e.key)).map((e: any) => {
-                                  const record = endorsements.find(end => end.endorsement_key === e.key && end.student_name === selectedLesson.student_name);
+                                  const record = endorsements.find(end => {
+                                    if (selectedLesson.student_id && end.student_id) {
+                                      return end.endorsement_key === e.key && end.student_id === selectedLesson.student_id;
+                                    }
+                                    return end.endorsement_key === e.key && end.student_name === selectedLesson.student_name;
+                                  });
                                   return {
                                     ...e,
                                     completed_date: record?.completed_date

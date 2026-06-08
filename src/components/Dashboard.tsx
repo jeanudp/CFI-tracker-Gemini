@@ -3110,7 +3110,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { setIsDetailOpen(false); localStorage.setItem('sb_selected_student', selectedStudent.name); navigate('/history'); }}
+                    onClick={() => { setIsDetailOpen(false); localStorage.setItem('sb_selected_student', selectedStudent.name); localStorage.setItem('sb_selected_student_id', selectedStudent.id); navigate('/history'); }}
                     className="px-3 py-1.5 text-xs font-bold rounded-lg border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer"
                     style={{ borderColor: 'var(--border-color)', color: 'var(--navy-light)' }}
                   >

@@ -74,6 +74,7 @@ export interface Lesson {
   id: string;
   user_id: string;
   student_name: string;
+  student_id?: string;
   type: 'ground' | 'flight' | 'flight_review' | 'ipc';
   lesson_num: number;
   label: string;
@@ -114,6 +115,7 @@ export interface ManualHours {
   id: string;
   user_id: string;
   student_name: string;
+  student_id?: string;
   field_key: string;
   entries: ManualHoursEntry[];
   total: number;
@@ -124,6 +126,7 @@ export interface Endorsement {
   id: string;
   user_id: string;
   student_name: string;
+  student_id?: string;
   rating: string;
   endorsement_key: string;
   endorsement_label: string;
