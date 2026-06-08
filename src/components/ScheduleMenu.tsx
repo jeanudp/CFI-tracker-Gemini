@@ -6,9 +6,10 @@ import { Calendar, ChevronDown, Search, BookOpenCheck, History as HistoryIcon, L
 
 interface ScheduleMenuProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export default function ScheduleMenu({ className }: ScheduleMenuProps) {
+export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
@@ -153,14 +154,11 @@ export default function ScheduleMenu({ className }: ScheduleMenuProps) {
     return (
       <Link
         to="/schedule"
-        className={cn(
-          "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md",
-          className
-        )}
-        style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
+        className={className || "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"}
+        style={style || { borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
       >
         <Calendar size={14} />
-        <span className="hidden sm:inline">Schedule</span>
+        <span className={className ? "" : "hidden sm:inline"}>Schedule</span>
       </Link>
     );
   }
@@ -171,18 +169,15 @@ export default function ScheduleMenu({ className }: ScheduleMenuProps) {
       <div className="relative" ref={scheduleRef}>
         <button
           onClick={() => { setScheduleOpen(!scheduleOpen); }}
-          className={cn(
-            "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md",
-            className
-          )}
-          style={{
+          className={className || "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"}
+          style={style || {
             borderColor: 'var(--border-color)',
             color: 'var(--text-primary)',
             backgroundColor: scheduleOpen ? 'var(--bg-tertiary)' : 'transparent'
           }}
         >
           <Calendar size={14} />
-          <span className="hidden sm:inline">Schedule</span>
+          <span className={className ? "" : "hidden sm:inline"}>Schedule</span>
           <ChevronDown size={12} className={cn("transition-transform", scheduleOpen && "rotate-180")} />
         </button>
 

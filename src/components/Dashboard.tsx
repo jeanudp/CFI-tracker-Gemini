@@ -11,6 +11,7 @@ import confetti from 'canvas-confetti';
 import ShareProgressModal from './ShareProgressModal';
 import { ALL_ACS, RATINGS } from '../constants';
 import NewStudentModal from './NewStudentModal';
+import ScheduleMenu from './ScheduleMenu';
 
 const ratingConfig: Record<string, { bg: string, text: string, light: string, border: string, icon: any, label: string }> = {
   ppl:  { bg: '#1a3a5c', text: 'white', light: '#d4e8f5', border: '#1a3a5c', icon: Plane,        label: 'Private Pilot' },
@@ -1798,13 +1799,7 @@ export default function Dashboard() {
             >
               {darkMode ? <Sun size={15} color="white" /> : <Moon size={15} color="white" />}
             </button>
-            <button
-              onClick={() => navigate('/schedule')}
-              className="px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
-            >
-              <Calendar size={14} />
-              Schedule
-            </button>
+            <ScheduleMenu className="px-4 py-2 bg-[var(--navy)] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer" />
 
           </div>
           {user && (
