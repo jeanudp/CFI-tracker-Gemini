@@ -19,7 +19,8 @@ import {
   Plane,
   Wrench,
   Eye,
-  EyeOff
+  EyeOff,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AIRCRAFT_MODELS } from '../constants/aircraft';
@@ -82,6 +83,14 @@ export default function FlightSchool() {
   const [showModelSuggestions, setShowModelSuggestions] = useState(false);
   const modelSearchContainerRef = useRef<HTMLDivElement>(null);
 
+  // Students management states
+  const [students, setStudents] = useState<any[]>([]);
+  const [newStudentName, setNewStudentName] = useState('');
+  const [newStudentCfi, setNewStudentCfi] = useState('unassigned');
+  const [creatingStudent, setCreatingStudent] = useState(false);
+  const [reassigningStudentId, setReassigningStudentId] = useState<string | null>(null);
+  const [studentsError, setStudentsError] = useState<string | null>(null);
+
   useEffect(() => {
     loadFlightSchoolData();
   }, []);
@@ -128,10 +137,14 @@ export default function FlightSchool() {
 
         // Fetch organization shared fleet
         await fetchFleet(school.id);
+
+        // Fetch school students
+        await fetchStudents(school.id);
       } else {
         setOrganization(null);
         setMembers([]);
         setFleet([]);
+        setStudents([]);
       }
     } catch (err: any) {
       setGlobalError(err.message || 'Error loading Flight School information.');
@@ -188,6 +201,78 @@ export default function FlightSchool() {
       setArchivedFleet(hiddenFleet);
     } catch (err: any) {
       setFleetError(err.message || 'Failed to load shared fleet.');
+    }
+  };
+
+  const fetchStudents = async (orgId: string) => {
+    setStudentsError(null);
+    try {
+      const { data, error } = await supabase.rpc('get_school_students', {
+        p_org_id: orgId
+      });
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (err: any) {
+      setStudentsError(err.message || 'Failed to load school students.');
+    }
+  };
+
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!organization || !newStudentName.trim() || creatingStudent) return;
+
+    setCreatingStudent(true);
+    setStudentsError(null);
+
+    const cfiId = newStudentCfi === 'unassigned' ? null : newStudentCfi;
+
+    try {
+      const { data, error } = await supabase.rpc('create_school_student', {
+        p_org_id: organization.id,
+        p_name: newStudentName.trim(),
+        p_assigned_cfi: cfiId
+      });
+
+      if (error) throw error;
+
+      // Clear form
+      setNewStudentName('');
+      setNewStudentCfi('unassigned');
+
+      // Refetch students
+      await fetchStudents(organization.id);
+    } catch (err: any) {
+      setStudentsError(err.message || 'Failed to add student.');
+    } finally {
+      setCreatingStudent(false);
+    }
+  };
+
+  const handleReassignStudent = async (studentId: string, newCfiId: string) => {
+    if (reassigningStudentId) return;
+
+    setReassigningStudentId(studentId);
+    setStudentsError(null);
+
+    const targetCfiId = newCfiId === 'unassigned' ? null : newCfiId;
+
+    try {
+      const { data, error } = await supabase.rpc('set_student_assignment', {
+        p_student_id: studentId,
+        p_assigned_cfi: targetCfiId
+      });
+
+      if (error) throw error;
+
+      // Refetch students list
+      if (organization) {
+        await fetchStudents(organization.id);
+      }
+    } catch (err: any) {
+      setStudentsError(err.message || 'Failed to reassign student.');
+    } finally {
+      setReassigningStudentId(null);
     }
   };
 
@@ -322,6 +407,7 @@ export default function FlightSchool() {
         setOrganization(null);
         setMembers([]);
         setFleet([]);
+        setStudents([]);
         setCurrentUserRole('member');
       } else {
         // Refresh members list for others
@@ -844,6 +930,221 @@ export default function FlightSchool() {
               )}
             </div>
           </div>
+
+          {/* Students Card */}
+          {(() => {
+            // Group students by current school CFIs
+            const groupedByCfi: { [cfieId: string]: { cfiName: string; list: any[] } } = {};
+            const unassignedStudents: any[] = [];
+
+            // Set up groups for current school CFIs
+            members.forEach((m) => {
+              groupedByCfi[m.user_id] = {
+                cfiName: m.full_name || 'Unnamed CFI',
+                list: []
+              };
+            });
+
+            // Process each student
+            students.forEach((s) => {
+              const cfiId = s.assigned_cfi || s.p_assigned_cfi || s.cfi_user_id || s.assigned_cfi_id || null;
+              if (cfiId && groupedByCfi[cfiId]) {
+                groupedByCfi[cfiId].list.push(s);
+              } else {
+                unassignedStudents.push(s);
+              }
+            });
+
+            // Filter out CFI groups that have no assigned students
+            const activeCfiGroups = Object.entries(groupedByCfi)
+              .filter(([_, group]) => group.list.length > 0)
+              .map(([cfiId, group]) => ({ cfiId, ...group }));
+
+            return (
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-sm text-left">
+                <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4" style={{ color: 'var(--navy)' }} />
+                    <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                      Students
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-bold text-white bg-green-600 px-2.5 py-0.5 rounded-full">
+                    {students.length} {students.length === 1 ? 'Student' : 'Students'}
+                  </span>
+                </div>
+
+                <div className="divide-y divide-[var(--border-color)] max-h-[400px] overflow-y-auto">
+                  {students.length === 0 ? (
+                    <div className="p-10 text-center text-xs text-[var(--text-muted)] italic">
+                      No students found
+                    </div>
+                  ) : (
+                    <div className="p-4 space-y-6">
+                      {/* CFI active groups */}
+                      {activeCfiGroups.map((group) => (
+                        <div key={group.cfiId} className="space-y-2">
+                          <div className="text-[10px] font-black uppercase tracking-wider text-[var(--navy)] bg-[var(--bg-tertiary)] px-3 py-1 rounded inline-block">
+                            Instructor: {group.cfiName}
+                          </div>
+                          <div className="divide-y divide-[var(--border-color)] border border-[var(--border-color)] rounded-xl bg-[var(--bg-secondary)] overflow-hidden">
+                            {group.list.map((student) => {
+                              const selectedVal = student.assigned_cfi || student.p_assigned_cfi || student.cfi_user_id || student.assigned_cfi_id || 'unassigned';
+                              return (
+                                <div key={student.id} className="p-3 flex items-center justify-between text-xs hover:bg-[var(--bg-tertiary)] transition-colors">
+                                  <div className="space-y-0.5">
+                                    <span className="font-bold text-[var(--text-primary)] block">
+                                      {student.name}
+                                    </span>
+                                    <span className="text-[10px] text-[var(--text-muted)] block">
+                                      {student.current_rating_label || 'Student Pilot'}
+                                    </span>
+                                  </div>
+
+                                  {/* Reassign select actions for owner / manager */}
+                                  <div className="flex items-center gap-2">
+                                    {reassigningStudentId === student.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)] shrink-0" />
+                                    ) : (
+                                      (currentUserRole === 'owner' || currentUserRole === 'manager') ? (
+                                        <select
+                                          value={selectedVal}
+                                          disabled={reassigningStudentId !== null}
+                                          onChange={(e) => handleReassignStudent(student.id, e.target.value)}
+                                          className="text-[10px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] px-2 py-1 max-w-[150px] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] cursor-pointer"
+                                        >
+                                          <option value="unassigned">Unassigned</option>
+                                          {members.map((member) => (
+                                            <option key={member.user_id} value={member.user_id}>
+                                              {member.full_name || 'Unnamed CFI'}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      ) : null
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* CFI Unassigned Group */}
+                      {unassignedStudents.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-3 py-1 rounded inline-block">
+                            CFI Unassigned
+                          </div>
+                          <div className="divide-y divide-[var(--border-color)] border border-[var(--border-color)] rounded-xl bg-[var(--bg-secondary)] overflow-hidden">
+                            {unassignedStudents.map((student) => (
+                              <div key={student.id} className="p-3 flex items-center justify-between text-xs hover:bg-[var(--bg-tertiary)] transition-colors">
+                                <div className="space-y-0.5">
+                                  <span className="font-bold text-[var(--text-primary)] block">
+                                    {student.name}
+                                  </span>
+                                  <span className="text-[10px] text-[var(--text-muted)] block">
+                                    {student.current_rating_label || 'Student Pilot'}
+                                  </span>
+                                </div>
+
+                                {/* Reassign select actions for owner / manager */}
+                                <div className="flex items-center gap-2">
+                                  {reassigningStudentId === student.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)] shrink-0" />
+                                  ) : (
+                                    (currentUserRole === 'owner' || currentUserRole === 'manager') ? (
+                                      <select
+                                        value="unassigned"
+                                        disabled={reassigningStudentId !== null}
+                                        onChange={(e) => handleReassignStudent(student.id, e.target.value)}
+                                        className="text-[10px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] px-2 py-1 max-w-[150px] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] cursor-pointer"
+                                      >
+                                        <option value="unassigned">Unassigned</option>
+                                        {members.map((member) => (
+                                          <option key={member.user_id} value={member.user_id}>
+                                            {member.full_name || 'Unnamed CFI'}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : null
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Error display for students card */}
+                {studentsError && (
+                  <div className="px-5 py-2.5 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 border-t border-[var(--border-color)] flex items-center gap-1.5 font-medium">
+                    <ShieldAlert className="w-4 h-4 shrink-0" />
+                    <span>{studentsError}</span>
+                  </div>
+                )}
+
+                {/* Create-student form at the bottom */}
+                {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
+                  <div className="p-5 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)] rounded-b-2xl">
+                    <form onSubmit={handleCreateStudent} className="flex flex-col sm:flex-row items-end gap-3">
+                      <div className="w-full sm:w-1/2 space-y-1.5 text-left">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                          Student Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newStudentName}
+                          onChange={(e) => setNewStudentName(e.target.value)}
+                          placeholder="e.g. John Doe"
+                          className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] font-sans"
+                        />
+                      </div>
+                      <div className="w-full sm:w-1/3 space-y-1.5 text-left">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                          Assigned CFI
+                        </label>
+                        <select
+                          value={newStudentCfi}
+                          onChange={(e) => setNewStudentCfi(e.target.value)}
+                          className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] cursor-pointer"
+                        >
+                          <option value="unassigned">Unassigned</option>
+                          {members.map((member) => (
+                            <option key={member.user_id} value={member.user_id}>
+                              {member.full_name || 'Unnamed CFI'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={!newStudentName.trim() || creatingStudent}
+                        className="w-full sm:w-auto h-[34px] px-6 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+                        style={{ backgroundColor: 'var(--navy)' }}
+                      >
+                        {creatingStudent ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" />
+                            Add Student
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Shared Fleet Card */}
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl shadow-sm text-left">
