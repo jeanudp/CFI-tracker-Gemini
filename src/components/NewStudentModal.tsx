@@ -9,6 +9,8 @@ interface NewStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStudentCreated: (student: any) => void;
+  orgId?: string;
+  assignedCfiId?: string;
 }
 
 const STEPS = ['Details', 'Rating', 'Prior Hours', 'Share'];
@@ -133,7 +135,7 @@ const PRIOR_FIELDS = [
   ]},
 ];
 
-export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: NewStudentModalProps) {
+export default function NewStudentModal({ isOpen, onClose, onStudentCreated, orgId, assignedCfiId }: NewStudentModalProps) {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -408,6 +410,10 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
           medical_class: medicalClass || null,
           medical_exam_date: medicalExamDate || null,
           notes: notes || null,
+          ...(orgId ? {
+            org_id: orgId,
+            assigned_cfi: (assignedCfiId && assignedCfiId !== 'unassigned') ? assignedCfiId : null
+          } : {})
         })
         .select()
         .single();
@@ -421,6 +427,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated }: N
           .map(([key, value]) => ({
             user_id: session.user.id,
             student_name: name.trim(),
+            student_id: student.id,
             field_key: key,
             entries: [{ val: parseFloat(value as string), date: 'Prior logbook' }],
             total: parseFloat(value as string),

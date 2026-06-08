@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { AIRCRAFT_MODELS } from '../constants/aircraft';
+import NewStudentModal from './NewStudentModal';
 
 const normalizeString = (str: string) => {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -85,9 +86,8 @@ export default function FlightSchool() {
 
   // Students management states
   const [students, setStudents] = useState<any[]>([]);
-  const [newStudentName, setNewStudentName] = useState('');
   const [newStudentCfi, setNewStudentCfi] = useState('unassigned');
-  const [creatingStudent, setCreatingStudent] = useState(false);
+  const [isNewStudentModalOpen, setIsNewStudentModalOpen] = useState(false);
   const [reassigningStudentId, setReassigningStudentId] = useState<string | null>(null);
   const [studentsError, setStudentsError] = useState<string | null>(null);
 
@@ -218,35 +218,12 @@ export default function FlightSchool() {
     }
   };
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!organization || !newStudentName.trim() || creatingStudent) return;
-
-    setCreatingStudent(true);
-    setStudentsError(null);
-
-    const cfiId = newStudentCfi === 'unassigned' ? null : newStudentCfi;
-
-    try {
-      const { data, error } = await supabase.rpc('create_school_student', {
-        p_org_id: organization.id,
-        p_name: newStudentName.trim(),
-        p_assigned_cfi: cfiId
-      });
-
-      if (error) throw error;
-
-      // Clear form
-      setNewStudentName('');
-      setNewStudentCfi('unassigned');
-
-      // Refetch students
-      await fetchStudents(organization.id);
-    } catch (err: any) {
-      setStudentsError(err.message || 'Failed to add student.');
-    } finally {
-      setCreatingStudent(false);
+  const handleStudentCreated = () => {
+    if (organization) {
+      fetchStudents(organization.id);
     }
+    setNewStudentCfi('unassigned');
+    setIsNewStudentModalOpen(false);
   };
 
   const handleReassignStudent = async (studentId: string, newCfiId: string) => {
@@ -1090,21 +1067,8 @@ export default function FlightSchool() {
                 {/* Create-student form at the bottom */}
                 {(currentUserRole === 'owner' || currentUserRole === 'manager') && (
                   <div className="p-5 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)] rounded-b-2xl">
-                    <form onSubmit={handleCreateStudent} className="flex flex-col sm:flex-row items-end gap-3">
-                      <div className="w-full sm:w-1/2 space-y-1.5 text-left">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                          Student Name
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={newStudentName}
-                          onChange={(e) => setNewStudentName(e.target.value)}
-                          placeholder="e.g. John Doe"
-                          className="w-full text-xs rounded-xl px-4 py-2 border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--navy)] font-sans"
-                        />
-                      </div>
-                      <div className="w-full sm:w-1/3 space-y-1.5 text-left">
+                    <div className="flex flex-col sm:flex-row items-end gap-3">
+                      <div className="w-full sm:flex-1 space-y-1.5 text-left">
                         <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                           Assigned CFI
                         </label>
@@ -1122,24 +1086,15 @@ export default function FlightSchool() {
                         </select>
                       </div>
                       <button
-                        type="submit"
-                        disabled={!newStudentName.trim() || creatingStudent}
-                        className="w-full sm:w-auto h-[34px] px-6 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-sm disabled:opacity-50 shrink-0"
+                        type="button"
+                        onClick={() => setIsNewStudentModalOpen(true)}
+                        className="w-full sm:w-auto h-[34px] px-6 flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer shadow-sm shrink-0"
                         style={{ backgroundColor: 'var(--navy)' }}
                       >
-                        {creatingStudent ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Adding...
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-4 h-4" />
-                            Add Student
-                          </>
-                        )}
+                        <Plus className="w-4 h-4" />
+                        Add Student
                       </button>
-                    </form>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1440,6 +1395,15 @@ export default function FlightSchool() {
           )}
         </div>
       )}
+
+      {/* New Student Modal */}
+      <NewStudentModal
+        isOpen={isNewStudentModalOpen}
+        onClose={() => setIsNewStudentModalOpen(false)}
+        onStudentCreated={handleStudentCreated}
+        orgId={organization?.id}
+        assignedCfiId={newStudentCfi}
+      />
     </div>
   );
 }
