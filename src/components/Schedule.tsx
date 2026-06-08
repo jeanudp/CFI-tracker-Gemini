@@ -193,8 +193,11 @@ export default function Schedule() {
   const [darkMode, setDarkMode] = useState(false);
   const timePickerRef = useRef<HTMLDivElement>(null);
   const aircraftSearchRef = useRef<HTMLDivElement>(null);
+  const studentSearchRef = useRef<HTMLDivElement>(null);
   const [scheduleAircraftSearch, setScheduleAircraftSearch] = useState('');
   const [showScheduleAircraftDropdown, setShowScheduleAircraftDropdown] = useState(false);
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [pendingNotifications, setPendingNotifications] = useState<any[]>([]);
   const [sendingNotifications, setSendingNotifications] = useState(false);
   const [showNotificationSuccess, setShowNotificationSuccess] = useState(false);
@@ -225,6 +228,9 @@ export default function Schedule() {
       }
       if (aircraftSearchRef.current && !aircraftSearchRef.current.contains(event.target as Node)) {
         setShowScheduleAircraftDropdown(false);
+      }
+      if (studentSearchRef.current && !studentSearchRef.current.contains(event.target as Node)) {
+        setShowStudentDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -303,6 +309,15 @@ export default function Schedule() {
       setPendingStudentId(null);
     }
   }, [pendingStudentId, students]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      setStudentSearchQuery(modalData.studentName || '');
+    } else {
+      setStudentSearchQuery('');
+      setShowStudentDropdown(false);
+    }
+  }, [modalData.studentId, modalData.studentName, isModalOpen]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -2468,42 +2483,121 @@ export default function Schedule() {
                 </div>
               </div>
 
-              {/* Student Dropdown */}
-              <div>
+              {/* Student Dropdown or Searchable Picker */}
+              <div className="relative" ref={studentSearchRef}>
                 <label className="block text-[10px] font-black uppercase tracking-widest mb-1.5 ml-1" style={{ color: 'var(--text-muted)' }}>
                   Select Student
                 </label>
-                <select 
-                  className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
-                  style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                  value={modalData.studentId}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const selectedStudent = students.find(s => s.id === selectedId);
-                    setModalData({
-                      ...modalData,
-                      studentId: selectedId,
-                      studentName: selectedStudent ? selectedStudent.name : ''
-                    });
-                  }}
-                >
-                  <option value="">Select a student...</option>
-                  {students.map(s => {
-                    const isSchool = s.is_school_student || s.isSchoolStudent || s.is_school || s.isSchool;
-                    const cfiName = s.assigned_cfi_name || s.assignedCfiName || s.cfi_name;
-                    
-                    let label = s.name;
-                    if (isSchool) {
-                      label += cfiName ? ` (CFI: ${cfiName})` : ' (School)';
-                    }
-                    
-                    return (
-                      <option key={s.id} value={s.id}>
-                        {label}
-                      </option>
-                    );
-                  })}
-                </select>
+                <div className="relative animate-fade-in">
+                  <input 
+                    type="text"
+                    placeholder="Search/Select a student..."
+                    className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
+                    style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                    value={studentSearchQuery}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setStudentSearchQuery(val);
+                      setShowStudentDropdown(true);
+                      if (val === '') {
+                        setModalData({
+                          ...modalData,
+                          studentId: '',
+                          studentName: ''
+                        });
+                      }
+                    }}
+                    onFocus={() => setShowStudentDropdown(true)}
+                  />
+                  {studentSearchQuery && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setStudentSearchQuery('');
+                        setModalData({
+                          ...modalData,
+                          studentId: '',
+                          studentName: ''
+                        });
+                        setShowStudentDropdown(true);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {showStudentDropdown && (
+                  <div 
+                    className="absolute left-0 right-0 top-full mt-2 border rounded-xl shadow-xl z-[70] max-h-[240px] overflow-y-auto scrollbar-thin overflow-hidden" 
+                    style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+                  >
+                    {(() => {
+                      const isQueryEmpty = !studentSearchQuery.trim() || studentSearchQuery === modalData.studentName;
+                      
+                      let displayedStudents = [];
+                      if (isQueryEmpty) {
+                        displayedStudents = students.filter((s: any) => {
+                          const isSchool = s.is_school_student || s.isSchoolStudent || s.is_school || s.isSchool;
+                          return !isSchool || s.id === modalData.studentId;
+                        });
+                      } else {
+                        displayedStudents = students.filter((s: any) => 
+                          (s.name || '').toLowerCase().includes(studentSearchQuery.toLowerCase())
+                        );
+                      }
+
+                      if (displayedStudents.length === 0) {
+                        return (
+                          <div className="p-4 text-xs italic text-[var(--text-muted)] text-center">
+                            No matching students found
+                          </div>
+                        );
+                      }
+
+                      return displayedStudents.map((s: any) => {
+                        const isSchool = s.is_school_student || s.isSchoolStudent || s.is_school || s.isSchool;
+                        const cfiName = s.assigned_cfi_name || s.assignedCfiName || s.cfi_name;
+                        const isSelected = modalData.studentId === s.id;
+
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => {
+                              setModalData({
+                                ...modalData,
+                                studentId: s.id,
+                                studentName: s.name
+                              });
+                              setStudentSearchQuery(s.name);
+                              setShowStudentDropdown(false);
+                            }}
+                            className={cn(
+                              "p-3 hover:bg-[var(--bg-tertiary)]/70 cursor-pointer border-b last:border-0 transition-all flex items-center justify-between",
+                              isSelected ? "bg-[var(--bg-tertiary)]" : ""
+                            )}
+                            style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold">{s.name}</span>
+                              {isSchool && (
+                                <span className="text-[9px] text-[#e8a020] uppercase font-black tracking-wider mt-0.5">
+                                  {cfiName ? `CFI: ${cfiName}` : 'School Student'}
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <svg className="h-4 w-4 text-[#e8a020]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
               </div>
 
               {/* Aircraft Dropdown - Conditionally hidden */}

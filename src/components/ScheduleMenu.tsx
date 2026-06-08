@@ -279,7 +279,7 @@ export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
             </div>
 
             {/* Results */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto max-h-[350px] p-4 space-y-2">
               {loadingStudents ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-2 text-[var(--text-muted)]">
                   <Loader2 size={24} className="animate-spin text-[#e8a020]" />
@@ -289,6 +289,10 @@ export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
                 <div className="flex flex-col items-center justify-center py-12 gap-2 text-red-500">
                   <AlertTriangle size={24} />
                   <p className="text-xs font-semibold">{studentError}</p>
+                </div>
+              ) : !searchQuery.trim() ? (
+                <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)] text-center">
+                  <p className="text-sm font-semibold">Start typing a student's name…</p>
                 </div>
               ) : (() => {
                 const filtered = students.filter(s => 
