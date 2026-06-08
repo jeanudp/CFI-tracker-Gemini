@@ -809,7 +809,7 @@ export default function Dashboard() {
       if (!session) return;
 
       const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, studentNotesRes, profileProposalsRes] = await Promise.all([
-        supabase.from('students').select('*').eq('user_id', session.user.id).is('deleted_at', null).order('name'),
+        supabase.from('students').select('*').or(`and(org_id.is.null,user_id.eq.${session.user.id}),assigned_cfi.eq.${session.user.id}`).is('deleted_at', null).order('name'),
         supabase.from('students').select('*').eq('user_id', session.user.id).not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
         supabase.from('lessons').select('*'),
         supabase.from('manual_hours').select('*'),
