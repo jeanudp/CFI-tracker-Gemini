@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
@@ -222,7 +223,7 @@ export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
       </div>
 
       {/* Find a Student Modal */}
-      {findStudentOpen && (
+      {findStudentOpen && createPortal(
         <div 
           className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm"
           onClick={() => { setFindStudentOpen(false); setSelectedStudentForActions(null); setSearchQuery(''); }}
@@ -376,7 +377,8 @@ export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
               })()}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
