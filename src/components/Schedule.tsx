@@ -144,6 +144,7 @@ export default function Schedule() {
   const [modalData, setModalData] = useState({
     startTime: '08:00',
     studentName: '',
+    studentId: '',
     duration: 2,
     notes: '',
     tailNumber: '',
@@ -347,12 +348,7 @@ export default function Schedule() {
           .select('*')
           .eq('user_id', session.user.id)
           .order('last_used', { ascending: false }),
-        supabase
-          .from('students')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .is('deleted_at', null)
-          .order('name'),
+        supabase.rpc('get_schedulable_students'),
         supabase
           .from('scheduled_lessons')
           .select('*')
@@ -571,7 +567,7 @@ export default function Schedule() {
   };
 
   const handleSaveLesson = async () => {
-    if (!modalData.studentName) {
+    if (!modalData.studentId && !modalData.studentName) {
       setFormError('Please select a student');
       return;
     }
@@ -622,6 +618,7 @@ export default function Schedule() {
       const payload = {
         user_id: session.user.id,
         student_name: modalData.studentName,
+        student_id: modalData.studentId || null,
         tail_number: modalData.lessonType === 'Ground' ? 'GROUND' : modalData.tailNumber,
         date: dateStr,
         start_time: modalData.startTime,
@@ -720,6 +717,7 @@ export default function Schedule() {
     setModalData({
       startTime: `${hour.toString().padStart(2, '0')}:00`,
       studentName: '',
+      studentId: '',
       duration: 2,
       notes: '',
       tailNumber: tailNumber === 'GROUND' ? '' : tailNumber,
@@ -732,9 +730,21 @@ export default function Schedule() {
     setEditingLesson(lesson);
     setFormError(null);
     setSuggestedTime(null);
+
+    let selectedStudentId = '';
+    if (lesson.student_id) {
+      selectedStudentId = lesson.student_id;
+    } else {
+      const found = students.find(s => s.name === lesson.student_name);
+      if (found) {
+        selectedStudentId = found.id;
+      }
+    }
+
     setModalData({
       startTime: lesson.start_time?.substring(0, 5),
       studentName: lesson.student_name,
+      studentId: selectedStudentId,
       duration: lesson.duration_hours,
       notes: lesson.notes || '',
       tailNumber: lesson.tail_number === 'GROUND' ? '' : lesson.tail_number,
@@ -1013,6 +1023,7 @@ export default function Schedule() {
           .insert([{
             user_id: session.user.id,
             student_name: request.student_name,
+            student_id: request.student_id || null,
             date: dateStr,
             start_time: newStartTime,
             duration_hours: 2,
@@ -2429,13 +2440,33 @@ export default function Schedule() {
                 <select 
                   className="w-full p-3 rounded-xl border bg-[var(--bg-tertiary)]/50 focus:ring-2 focus:ring-[var(--navy)] outline-none transition-all text-sm font-bold"
                   style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                  value={modalData.studentName}
-                  onChange={(e) => setModalData({ ...modalData, studentName: e.target.value })}
+                  value={modalData.studentId}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const selectedStudent = students.find(s => s.id === selectedId);
+                    setModalData({
+                      ...modalData,
+                      studentId: selectedId,
+                      studentName: selectedStudent ? selectedStudent.name : ''
+                    });
+                  }}
                 >
                   <option value="">Select a student...</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
-                  ))}
+                  {students.map(s => {
+                    const isSchool = s.is_school_student || s.isSchoolStudent || s.is_school || s.isSchool;
+                    const cfiName = s.assigned_cfi_name || s.assignedCfiName || s.cfi_name;
+                    
+                    let label = s.name;
+                    if (isSchool) {
+                      label += cfiName ? ` (CFI: ${cfiName})` : ' (School)';
+                    }
+                    
+                    return (
+                      <option key={s.id} value={s.id}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
