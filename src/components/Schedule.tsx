@@ -160,6 +160,7 @@ export default function Schedule() {
   const [schoolmatesBusy, setSchoolmatesBusy] = useState<any[]>([]);
   const [isPendingPanelOpen, setIsPendingPanelOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [pendingStudentId, setPendingStudentId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -250,6 +251,8 @@ export default function Schedule() {
     const params = new URLSearchParams(window.location.search);
     const dateParam = params.get('date');
     const showRequests = params.get('showRequests');
+    const newBookingParam = params.get('new');
+    const studentIdParam = params.get('studentId');
 
     if (dateParam) {
       const [year, month, day] = dateParam.split('-').map(Number);
@@ -263,10 +266,43 @@ export default function Schedule() {
       setIsPendingPanelOpen(true);
     }
 
-    if (dateParam || showRequests) {
+    if (newBookingParam === '1' || newBookingParam === 'true') {
+      setEditingLesson(null);
+      setFormError(null);
+      setSuggestedTime(null);
+      setModalData({
+        startTime: '08:00',
+        studentName: '',
+        studentId: '',
+        duration: 2,
+        notes: '',
+        tailNumber: '',
+        lessonType: 'Flight'
+      });
+      setIsModalOpen(true);
+      if (studentIdParam) {
+        setPendingStudentId(studentIdParam);
+      }
+    }
+
+    if (dateParam || showRequests || newBookingParam || studentIdParam) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  useEffect(() => {
+    if (pendingStudentId && students.length > 0) {
+      const matched = students.find((s: any) => s.id === pendingStudentId);
+      if (matched) {
+        setModalData(prev => ({
+          ...prev,
+          studentId: matched.id,
+          studentName: matched.name
+        }));
+      }
+      setPendingStudentId(null);
+    }
+  }, [pendingStudentId, students]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
