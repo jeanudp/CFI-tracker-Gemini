@@ -10,6 +10,7 @@ import ACSStandardsModal from './ACSStandardsModal';
 
 export default function GroundLesson() {
   const [studentName, setStudentName] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [instructorName, setInstructorName] = useState('');
   const [lessonDate, setLessonDate] = useState(new Date().toISOString().split('T')[0]);
   const [lessonNotes, setLessonNotes] = useState('');
@@ -45,6 +46,7 @@ export default function GroundLesson() {
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
       JSON.parse(localStorage.getItem('faa_student_info') || '{}').student || '';
+    const savedStudentId = localStorage.getItem('sb_selected_student_id') || '';
     const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
 
     if (!savedStudent) {
@@ -57,12 +59,14 @@ export default function GroundLesson() {
     }
 
     setStudentName(savedStudent);
+    setStudentId(savedStudentId);
     setRating(savedRating);
 
     // Check for edit mode
     const editLesson = JSON.parse(localStorage.getItem('faa_edit_lesson') || 'null');
     if (editLesson && editLesson.type === 'ground') {
       setEditId(editLesson.id);
+      setStudentId(editLesson.student_id || savedStudentId);
       setGrades(editLesson.grades || {});
       setNotes(editLesson.notes || {});
       setLessonNotes(editLesson.meta?.notes || '');
@@ -251,6 +255,9 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
       grades,
       notes
     };
+    if (studentId) {
+      lessonData.student_id = studentId;
+    }
 
     let error;
     if (editId) {

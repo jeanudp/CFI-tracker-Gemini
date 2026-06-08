@@ -36,6 +36,7 @@ const APPROACH_TYPES = [
 
 export default function FlightLesson() {
   const [studentName, setStudentName] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [instructorName, setInstructorName] = useState('');
   const [meta, setMeta] = useState<LessonMeta>({
     date: new Date().toISOString().split('T')[0],
@@ -501,6 +502,7 @@ export default function FlightLesson() {
   useEffect(() => {
     const savedStudent = localStorage.getItem('sb_selected_student') ||
       JSON.parse(localStorage.getItem('faa_student_info') || '{}').student || '';
+    const savedStudentId = localStorage.getItem('sb_selected_student_id') || '';
     const savedRating = JSON.parse(localStorage.getItem('selected_rating') || '{}');
 
     if (!savedStudent) {
@@ -513,12 +515,14 @@ export default function FlightLesson() {
     }
 
     setStudentName(savedStudent);
+    setStudentId(savedStudentId);
     setRating(savedRating);
 
     // Check for edit mode
     const editLesson = JSON.parse(localStorage.getItem('faa_edit_lesson') || 'null');
     if (editLesson && editLesson.type === 'flight') {
       setEditId(editLesson.id);
+      setStudentId(editLesson.student_id || savedStudentId);
       setGrades(editLesson.grades || {});
       setNotes(editLesson.notes || {});
       setMeta(prev => ({ ...prev, ...editLesson.meta }));
@@ -1003,6 +1007,9 @@ export default function FlightLesson() {
       grades,
       notes
     };
+    if (studentId) {
+      lessonData.student_id = studentId;
+    }
 
     let error;
     let savedLessonId = editId;
