@@ -77,9 +77,7 @@ export default function OnboardingModal({ user, onComplete }: OnboardingModalPro
   const handleStartGuide = () => {
     localStorage.setItem('61t_onboarded', 'true');
     localStorage.setItem('61t_start_guide', 'true');
-    window.dispatchEvent(new Event('storage'));
-    onComplete();
-    navigate('/dashboard');
+    window.location.href = '/dashboard';
   };
 
   if (!user) return null;
