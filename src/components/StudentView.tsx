@@ -140,6 +140,10 @@ export default function StudentView() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [cfiUpgradeConfirm, setCfiUpgradeConfirm] = useState(false);
+  const [cfiUpgradeLoading, setCfiUpgradeLoading] = useState(false);
+  const [cfiUpgradeError, setCfiUpgradeError] = useState<string | null>(null);
+  const [hasCfiProfile, setHasCfiProfile] = useState<boolean | null>(null);
   const [noteText, setNoteText] = useState('');
   const [noteSending, setNoteSending] = useState(false);
   const [noteSentSuccess, setNoteSentSuccess] = useState(false);
@@ -255,6 +259,17 @@ export default function StudentView() {
           return;
         }
         headers['Authorization'] = `Bearer ${session.access_token}`;
+
+        const { data: cfiProfileRow, error: cfiProfileRowError } = await supabase
+          .from('cfi_profile')
+          .select('user_id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        if (!cfiProfileRowError) {
+          setHasCfiProfile(!!cfiProfileRow);
+        } else {
+          console.error('Error fetching cfi profile status:', cfiProfileRowError);
+        }
         
         const activeProfile = profileToUse || selectedProfile;
         if (activeProfile) {
@@ -515,6 +530,42 @@ export default function StudentView() {
       setProfileSaveError(err.message || 'Failed to save profile');
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const handleSwitchToCFI = async () => {
+    setCfiUpgradeLoading(true);
+    setCfiUpgradeError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("No active session found.");
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'setActiveView',
+          target: 'instructor',
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to switch account type");
+      }
+
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Error switching to CFI:', err);
+      setCfiUpgradeError(err.message || "Failed to switch to CFI");
+      setCfiUpgradeConfirm(false);
+    } finally {
+      setCfiUpgradeLoading(false);
     }
   };
 
@@ -1105,7 +1156,96 @@ export default function StudentView() {
                         >
                           Edit Profile
                         </button>
-                      </div>
+                                   <div className="border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40 my-4" />
+
+                      <div className="p-4 sm:p-5 bg-gradient-to-br from-[#1a3a5c]/5 to-[#1a3a5c]/10 dark:from-blue-950/20 dark:to-blue-900/10 rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e]/80 space-y-4">
+                        <div className="flex items-start gap-4">
+                          <div className="p-2.5 rounded-xl bg-[#1a3a5c]/10 text-[#1a3a5c] dark:text-blue-400 shrink-0 shadow-sm">
+                            <Award size={20} className="text-amber-500" />
+                          </div>
+                          <div>
+                            <h4 className="text-[#1a3a5c] dark:text-blue-400 text-sm font-black uppercase tracking-wider">
+                              {hasCfiProfile ? 'CFI view' : 'Become a CFI'}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed font-semibold">
+                              {hasCfiProfile 
+                                ? 'Switch to your CFI (instructor) view.'
+                                : "This adds a CFI (instructor) account to your profile and you'll be able to switch freely between your student view and your CFI view at any time — it is not permanent, and it does not remove your student account or your training history."}
+                            </p>
+                          </div>
+                        </div>
+
+                        {cfiUpgradeError && (
+                          <div className="p-3 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl">
+                            {cfiUpgradeError}
+                          </div>
+                        )}
+
+                        {hasCfiProfile ? (
+                          <div className="flex justify-end pt-1">
+                            <button
+                              type="button"
+                              disabled={cfiUpgradeLoading}
+                              onClick={handleSwitchToCFI}
+                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {cfiUpgradeLoading ? (
+                                <>
+                                  <Loader2 size={12} className="animate-spin" />
+                                  Switching...
+                                </>
+                              ) : (
+                                'Switch to CFI view'
+                              )}
+                            </button>
+                          </div>
+                        ) : !cfiUpgradeConfirm ? (
+                          <div className="flex justify-end pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCfiUpgradeConfirm(true);
+                                setCfiUpgradeError(null);
+                              }}
+                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                            >
+                              Switch to CFI account
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-4 rounded-xl bg-red-50/50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/20 space-y-3">
+                            <div className="flex items-start gap-2.5 text-xs font-black text-red-600 dark:text-red-400">
+                              <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                              <span>Are you sure you want to add a CFI account and switch to your instructor view? You will be able to switch back to your student view at any time.</span>
+                            </div>
+                            <div className="flex items-center justify-end gap-3">
+                              <button
+                                type="button"
+                                disabled={cfiUpgradeLoading}
+                                onClick={() => setCfiUpgradeConfirm(false)}
+                                className="px-3 py-1.5 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-805 text-gray-700 dark:text-gray-303 text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={cfiUpgradeLoading}
+                                onClick={handleSwitchToCFI}
+                                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
+                              >
+                                {cfiUpgradeLoading ? (
+                                  <>
+                                    <Loader2 size={12} className="animate-spin" />
+                                    Switching...
+                                  </>
+                                ) : (
+                                  'Yes, switch to CFI'
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>           </div>
                     </div>
                   ) : (
                     <form onSubmit={handleProfileSave} className="space-y-4">
@@ -1664,6 +1804,97 @@ export default function StudentView() {
                         >
                           Edit Profile
                         </button>
+                      </div>
+
+                      <div className="border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40 my-4" />
+
+                      <div className="p-4 sm:p-5 bg-gradient-to-br from-[#1a3a5c]/5 to-[#1a3a5c]/10 dark:from-blue-950/20 dark:to-blue-900/10 rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e]/80 space-y-4">
+                        <div className="flex items-start gap-4">
+                          <div className="p-2.5 rounded-xl bg-[#1a3a5c]/10 text-[#1a3a5c] dark:text-blue-400 shrink-0 shadow-sm">
+                            <Award size={20} className="text-amber-500" />
+                          </div>
+                          <div>
+                            <h4 className="text-[#1a3a5c] dark:text-blue-400 text-sm font-black uppercase tracking-wider">
+                              {hasCfiProfile ? 'CFI view' : 'Become a CFI'}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed font-semibold">
+                              {hasCfiProfile 
+                                ? 'Switch to your CFI (instructor) view.'
+                                : "This adds a CFI (instructor) account to your profile and you'll be able to switch freely between your student view and your CFI view at any time — it is not permanent, and it does not remove your student account or your training history."}
+                            </p>
+                          </div>
+                        </div>
+
+                        {cfiUpgradeError && (
+                          <div className="p-3 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl">
+                            {cfiUpgradeError}
+                          </div>
+                        )}
+
+                        {hasCfiProfile ? (
+                          <div className="flex justify-end pt-1">
+                            <button
+                              type="button"
+                              disabled={cfiUpgradeLoading}
+                              onClick={handleSwitchToCFI}
+                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              {cfiUpgradeLoading ? (
+                                <>
+                                  <Loader2 size={12} className="animate-spin" />
+                                  Switching...
+                                </>
+                              ) : (
+                                'Switch to CFI view'
+                              )}
+                            </button>
+                          </div>
+                        ) : !cfiUpgradeConfirm ? (
+                          <div className="flex justify-end pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCfiUpgradeConfirm(true);
+                                setCfiUpgradeError(null);
+                              }}
+                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                            >
+                              Switch to CFI account
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-4 rounded-xl bg-red-50/50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/20 space-y-3">
+                            <div className="flex items-start gap-2.5 text-xs font-black text-red-600 dark:text-red-400">
+                              <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                              <span>Are you sure you want to add a CFI account and switch to your instructor view? You will be able to switch back to your student view at any time.</span>
+                            </div>
+                            <div className="flex items-center justify-end gap-3">
+                              <button
+                                type="button"
+                                disabled={cfiUpgradeLoading}
+                                onClick={() => setCfiUpgradeConfirm(false)}
+                                className="px-3 py-1.5 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={cfiUpgradeLoading}
+                                onClick={handleSwitchToCFI}
+                                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-lg transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
+                              >
+                                {cfiUpgradeLoading ? (
+                                  <>
+                                    <Loader2 size={12} className="animate-spin" />
+                                    Switching...
+                                  </>
+                                ) : (
+                                  'Yes, switch to CFI'
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : (

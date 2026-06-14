@@ -85,25 +85,6 @@ export default async function handler(req: Request, res: Response) {
       });
     }
 
-    // Verify that this account is actually a student account, not a CFI/instructor account
-    const { data: userSub, error: userSubError } = await supabaseAdmin
-      .from('user_subscriptions')
-      .select('account_type')
-      .eq('user_id', matchedUserId)
-      .maybeSingle();
-
-    if (userSubError) {
-      console.error('Error checking user subscription type:', userSubError);
-      return res.status(500).json({ error: 'Error verifying account type' });
-    }
-
-    if (!userSub || userSub.account_type !== 'student') {
-      return res.status(200).json({
-        linked: false,
-        message: 'The email belongs to a non-student account'
-      });
-    }
-
     // 3. Link existing account in student_links table if not already linked
     const { data: existingLink, error: checkError } = await supabaseAdmin
       .from('student_links')

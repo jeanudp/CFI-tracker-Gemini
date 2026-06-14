@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { ArrowLeft, CreditCard, User, Mail, Shield, AlertCircle, Loader2, ExternalLink, Check, MapPin, Award, Calendar, FileText, Plane } from 'lucide-react';
+import { ArrowLeft, CreditCard, User, Mail, Shield, AlertCircle, Loader2, ExternalLink, Check, MapPin, Award, Calendar, FileText, Plane, BookOpen } from 'lucide-react';
 
 export default function Account() {
   const [user, setUser] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [cfiProfile, setCfiProfile] = useState<any>(null);
+  const [logbookRows, setLogbookRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [logbookLoading, setLogbookLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -24,6 +26,7 @@ export default function Account() {
 
   const fetchData = async () => {
     setLoading(true);
+    setLogbookLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -32,7 +35,7 @@ export default function Account() {
       }
       setUser(session.user);
 
-      const [subResponse, profileResponse] = await Promise.all([
+      const [subResponse, profileResponse, logbookResponse] = await Promise.all([
         supabase
           .from('user_subscriptions')
           .select('*')
@@ -42,17 +45,31 @@ export default function Account() {
           .from('cfi_profile')
           .select('*')
           .eq('user_id', session.user.id)
-          .single()
+          .single(),
+        supabase
+          .from('logbook')
+          .select('*')
+          .eq('student_user_id', session.user.id)
+          .order('flight_date', { ascending: false, nullsFirst: false })
       ]);
 
       setSubscription(subResponse.data);
       if (profileResponse.data) {
         setCfiProfile(profileResponse.data);
       }
+
+      const rawLogbook = logbookResponse.data || [];
+      const sortedLogbook = [...rawLogbook].sort((a, b) => {
+        if (!a.flight_date) return 1;
+        if (!b.flight_date) return -1;
+        return new Date(b.flight_date).getTime() - new Date(a.flight_date).getTime();
+      });
+      setLogbookRows(sortedLogbook);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setLogbookLoading(false);
     }
   };
 
@@ -336,6 +353,122 @@ export default function Account() {
                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{cfiProfile?.home_airport || '—'}</p>
               </div>
             </div>
+          </div>
+        </motion.div>
+
+        {/* Logbook Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="rounded-2xl border overflow-hidden"
+          style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 4px 16px rgba(26,58,92,0.08)' }}
+        >
+          <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-color)' }}>
+            <BookOpen size={16} style={{ color: 'var(--navy)' }} />
+            <h2 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>Logbook</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            {logbookLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 size={20} className="animate-spin text-gray-400" />
+              </div>
+            ) : logbookRows.length === 0 ? (
+              <div className="text-center py-6 px-4">
+                <BookOpen size={24} className="mx-auto select-none mb-2 text-gray-400" />
+                <p className="text-xs font-semibold text-gray-500">
+                  Logged flights from your training will appear here.
+                </p>
+              </div>
+            ) : (() => {
+              const lessonRows = logbookRows.filter(r => r.source_type === 'lesson');
+              const manualRows = logbookRows.filter(r => r.source_type === 'manual');
+
+              const totalLessonHours = lessonRows.reduce((sum, r) => sum + (parseFloat(r.total_hours) || 0), 0);
+              const lessonCount = lessonRows.length;
+
+              const totalManualHours = manualRows.reduce((sum, r) => sum + (parseFloat(r.total_hours) || 0), 0);
+
+              return (
+                <>
+                  {/* Summary */}
+                  <div className="p-4 rounded-xl border space-y-2" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Total Flight Hours</p>
+                        <p className="text-xl font-black" style={{ color: 'var(--navy)' }}>{totalLessonHours.toFixed(1)}h</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Flights</p>
+                        <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{lessonCount}</p>
+                      </div>
+                    </div>
+                    {manualRows.length > 0 && (
+                      <div className="border-t pt-2 mt-2" style={{ borderColor: 'var(--border-color)' }}>
+                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Prior / Other Experience</p>
+                        <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{totalManualHours.toFixed(1)} hrs total</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* List of Flights */}
+                  {lessonRows.length > 0 && (
+                    <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                      {lessonRows.map((row) => {
+                        const aircraftDisplayName = row.aircraft || row.aircraft_model || row.aircraft_class || 'Unknown Aircraft';
+                        const b = row.breakdown || {};
+                        
+                        const dual = parseFloat(b.dual) || 0;
+                        const night = parseFloat(b.night) || 0;
+                        const xc = (parseFloat(b.xcDual) || 0) + (parseFloat(b.xcSolo) || 0) + (parseFloat(b.xcPic) || 0);
+                        const solo = parseFloat(b.solo) || 0;
+                        const pic = parseFloat(b.pic) || 0;
+                        const simInst = parseFloat(b.simInst) || 0;
+                        const landings = (parseInt(b.ldgDay) || 0) + (parseInt(b.ldgNight) || 0);
+
+                        const tags = [
+                          dual > 0 && { label: 'Dual', val: `${dual.toFixed(1)}h` },
+                          night > 0 && { label: 'Night', val: `${night.toFixed(1)}h` },
+                          xc > 0 && { label: 'XC', val: `${xc.toFixed(1)}h` },
+                          solo > 0 && { label: 'Solo', val: `${solo.toFixed(1)}h` },
+                          pic > 0 && { label: 'PIC', val: `${pic.toFixed(1)}h` },
+                          simInst > 0 && { label: 'Sim', val: `${simInst.toFixed(1)}h` },
+                          landings > 0 && { label: 'Ldgs', val: `${landings}` },
+                        ].filter(Boolean) as { label: string, val: string }[];
+
+                        return (
+                          <div key={row.id} className="p-3 rounded-xl border transition-all" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{aircraftDisplayName}</p>
+                                <p className="text-[10px] font-semibold" style={{ color: 'var(--text-muted)' }}>{formatDate(row.flight_date)}</p>
+                              </div>
+                              <span className="text-sm font-black" style={{ color: 'var(--navy)' }}>
+                                {(parseFloat(row.total_hours) || 0).toFixed(1)}h
+                              </span>
+                            </div>
+                            
+                            {tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {tags.map((t, idx) => (
+                                  <span 
+                                    key={idx} 
+                                    className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+                                  >
+                                    {t.label}: {t.val}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </motion.div>
 

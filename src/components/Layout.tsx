@@ -69,6 +69,75 @@ export default function Layout({ children, user }: LayoutProps) {
     setUserOpen(false);
   }, [path]);
 
+  const [hasStudentLink, setHasStudentLink] = useState(false);
+  const [switchingView, setSwitchingView] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setHasStudentLink(false);
+      return;
+    }
+    const checkStudentLink = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('student_links')
+          .select('id')
+          .eq('student_user_id', user.id);
+        
+        if (!error && data && data.length > 0) {
+          setHasStudentLink(true);
+        } else {
+          setHasStudentLink(false);
+        }
+      } catch (err) {
+        console.error('Error checking student links:', err);
+        setHasStudentLink(false);
+      }
+    };
+    checkStudentLink();
+  }, [user]);
+
+  const handleSwitchToStudent = async () => {
+    if (switchingView) return;
+    setSwitchingView(true);
+    setSwitchError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setSwitchError('No active session found.');
+        setSwitchingView(false);
+        return;
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'setActiveView',
+          target: 'student',
+        }),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to switch view');
+      }
+
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Switch view error:', err);
+      setSwitchError(err.message || 'An error occurred.');
+      setTimeout(() => {
+        setSwitchError(null);
+      }, 3000);
+      setSwitchingView(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
@@ -278,9 +347,31 @@ export default function Layout({ children, user }: LayoutProps) {
                   </div>
 
                   <div className="p-1.5 space-y-0.5">
+                    {hasStudentLink && (
+                      <>
+                        <button
+                          onClick={handleSwitchToStudent}
+                          disabled={switchingView}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] disabled:opacity-50 cursor-pointer"
+                        >
+                          {switchingView ? (
+                            <Loader2 size={14} className="animate-spin text-gray-400" />
+                          ) : (
+                            <BookOpenCheck size={14} className="text-gray-400 dark:text-gray-500" />
+                          )}
+                          Switch to student view
+                        </button>
+                        {switchError && (
+                          <div className="px-3 py-1 text-[10px] text-red-500 font-bold overflow-hidden text-ellipsis">
+                            {switchError}
+                          </div>
+                        )}
+                        <div className="border-t my-1" style={{ borderColor: 'var(--border-color)' }} />
+                      </>
+                    )}
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-red-50 text-red-500"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-all hover:bg-red-50 text-red-500 cursor-pointer"
                     >
                       <LogOut size={14} />
                       Sign Out

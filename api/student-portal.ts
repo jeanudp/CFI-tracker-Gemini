@@ -264,6 +264,74 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    if (action === 'setActiveView') {
+      if (!sessionUserId) {
+        return res.status(401).json({ error: 'Unauthorized: Valid session required' });
+      }
+
+      const { target } = req.body;
+      if (target !== 'student' && target !== 'instructor') {
+        return res.status(400).json({ error: 'Invalid target view' });
+      }
+
+      const [cfiRes, linksRes, subRes] = await Promise.all([
+        supabaseAdmin
+          .from('cfi_profile')
+          .select('user_id')
+          .eq('user_id', sessionUserId)
+          .maybeSingle(),
+        supabaseAdmin
+          .from('student_links')
+          .select('id')
+          .eq('student_user_id', sessionUserId),
+        supabaseAdmin
+          .from('user_subscriptions')
+          .select('account_type')
+          .eq('user_id', sessionUserId)
+          .maybeSingle()
+      ]);
+
+      if (cfiRes.error) {
+        console.error('Error checking cfi_profile:', cfiRes.error);
+        return res.status(500).json({ error: 'Database check failed' });
+      }
+      if (linksRes.error) {
+        console.error('Error checking student_links:', linksRes.error);
+        return res.status(500).json({ error: 'Database check failed' });
+      }
+      if (subRes.error) {
+        console.error('Error checking user_subscriptions:', subRes.error);
+        return res.status(500).json({ error: 'Database check failed' });
+      }
+
+      const hasCfiProfile = !!cfiRes.data;
+      const holdsStudentRole = Array.isArray(linksRes.data) && linksRes.data.length > 0;
+      const currentAccountType = subRes.data?.account_type;
+
+      if (target === 'instructor') {
+        const isAllowedCfi = hasCfiProfile || currentAccountType === 'student';
+        if (!isAllowedCfi) {
+          return res.status(400).json({ error: "You can't switch to the CFI view because you do not have a CFI account." });
+        }
+      } else if (target === 'student') {
+        if (!holdsStudentRole) {
+          return res.status(400).json({ error: "You can't switch to the student view because you aren't enrolled as a student with any instructor." });
+        }
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from('user_subscriptions')
+        .update({ account_type: target })
+        .eq('user_id', sessionUserId);
+
+      if (updateError) {
+        console.error('Error updating account view:', updateError);
+        return res.status(500).json({ error: 'Failed to update account type' });
+      }
+
+      return res.status(200).json({ success: true, activeView: target });
+    }
+
     if (action === 'approveProposal') {
       if (!sessionUserId) {
         return res.status(401).json({ error: 'Unauthorized: Valid session required' });
