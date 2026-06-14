@@ -326,13 +326,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     const checkGuide = () => {
-      if (localStorage.getItem('onboarding_done') === 'true') return;
       const startGuide = localStorage.getItem('61t_start_guide');
       if (startGuide === 'true') {
+        localStorage.removeItem('onboarding_done');
         setTimeout(() => {
           setOnboardingStep(1);
           localStorage.removeItem('61t_start_guide');
         }, 300);
+      } else if (localStorage.getItem('onboarding_done') === 'true') {
+        return;
       }
     };
 
