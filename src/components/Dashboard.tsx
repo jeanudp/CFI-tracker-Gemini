@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Student, Lesson, PassedRating } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Bell, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy, MessageSquare, Users } from 'lucide-react';
+import { Plus, Bell, Trash2, ChevronRight, ChevronDown, Plane, History, Loader2, CheckCircle2, AlertCircle, Award, CheckCircle, X, Check, FileText, Cloud, Gauge, ClipboardList, Compass, Navigation, Archive, RotateCcw, Shield, XCircle, Phone, Mail, Calendar, Heart, Info, LogOut, Moon, Sun, WifiOff, BarChart3, User, Settings, Share2, Map, RefreshCw, Clock, AlertTriangle, Send, Lightbulb, Headset, Copy, MessageSquare, Users, BookOpen } from 'lucide-react';
 import emailjs from '@emailjs/browser';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
@@ -186,6 +186,10 @@ export default function Dashboard() {
   const [isQuickWeatherOpen, setIsQuickWeatherOpen] = useState(false);
   const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
 
+  const [hasStudentLink, setHasStudentLink] = useState(false);
+  const [switchingView, setSwitchingView] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+
   // Check email connectivity states for edit mode
   const [editCheckStatus, setEditCheckStatus] = useState<'idle' | 'checking' | 'verified' | 'not-found'>('idle');
   const [editCopiedFromCheck, setEditCopiedFromCheck] = useState(false);
@@ -348,6 +352,10 @@ export default function Dashboard() {
   });
 
   const dismissOnboarding = (step: number) => {
+    if (step === 1 && sortedStudents.length === 0) {
+      setOnboardingStep(0);
+      return;
+    }
     if (step >= 3) {
       localStorage.setItem('onboarding_done', 'true');
       setOnboardingStep(0);
@@ -402,13 +410,21 @@ export default function Dashboard() {
       if (session) {
         setUser(session.user);
         
-        // Fetch subscription and CFI profile in parallel
-        const [subRes, profileRes] = await Promise.all([
+        // Fetch subscription, CFI profile, and student links in parallel
+        const [subRes, profileRes, linksRes] = await Promise.all([
           supabase.from('user_subscriptions').select('*').eq('user_id', session.user.id).single(),
-          supabase.from('cfi_profile').select('re_exp_date, home_airport').eq('user_id', session.user.id).maybeSingle()
+          supabase.from('cfi_profile').select('re_exp_date, home_airport').eq('user_id', session.user.id).maybeSingle(),
+          supabase.from('student_links').select('id').eq('student_user_id', session.user.id)
         ]);
 
         setUserSubscription(subRes.data);
+        
+        if (linksRes && !linksRes.error && linksRes.data && linksRes.data.length > 0) {
+          setHasStudentLink(true);
+        } else {
+          setHasStudentLink(false);
+        }
+
         if (profileRes.data?.home_airport) {
           setCfiHomeAirport(profileRes.data.home_airport);
         }
@@ -432,7 +448,10 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    // Onboarding step logic
+    // Onboarding step logic: Advance from step 1 to 2 if they have at least one student
+    if (onboardingStep === 1 && sortedStudents.length > 0) {
+      setOnboardingStep(2);
+    }
   }, [onboardingStep, sortedStudents.length]);
 
   const fetchWeather = async () => {
@@ -495,6 +514,47 @@ export default function Dashboard() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handleSwitchToStudent = async () => {
+    if (switchingView) return;
+    setSwitchingView(true);
+    setSwitchError(null);
+    setIsUserMenuOpen(false);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setSwitchError('No active session found.');
+        setSwitchingView(false);
+        return;
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'setActiveView',
+          target: 'student',
+        }),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to switch view');
+      }
+
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Switch view error:', err);
+      setSwitchError(err.message || 'An error occurred.');
+      setTimeout(() => {
+        setSwitchError(null);
+      }, 3000);
+      setSwitchingView(false);
+    }
   };
 
   const handleMaydaySend = async () => {
@@ -1656,6 +1716,44 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Switch error banner */}
+      <AnimatePresence>
+        {switchError && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderColor: 'var(--border-color)',
+              boxShadow: '0 8px 32px rgba(239,68,68,0.15), 0 2px 8px rgba(239,68,68,0.1)',
+              minWidth: '320px',
+              maxWidth: '90vw',
+            }}
+          >
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: 'rgba(239,68,68,0.1)' }}
+            >
+              <AlertCircle size={14} className="text-red-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold text-red-600 dark:text-red-400">{switchError}</p>
+            </div>
+            <button
+              onClick={() => setSwitchError(null)}
+              className="w-5 h-5 rounded-full hover:bg-[var(--bg-tertiary)] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <X size={10} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <header
         className="sticky top-0 z-20 px-4 sm:px-6 h-16 border-b flex items-center justify-between shrink-0 backdrop-blur-md transition-colors duration-300"
         style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 2px 12px rgba(26,58,92,0.08)' }}
@@ -2155,10 +2253,7 @@ export default function Dashboard() {
               </span>
               <button
                 onClick={() => setIsNewStudentOpen(true)}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 bg-[var(--navy)] text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm hover:shadow-md transition-all cursor-pointer",
-                  onboardingStep === 1 && "shadow-[0_0_20px_4px_rgba(232,160,32,0.6)] ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
-                )}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-[var(--navy)] text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm hover:shadow-md transition-all cursor-pointer"
               >
                 <Plus size={10} />
                 Add Student
@@ -2232,14 +2327,17 @@ export default function Dashboard() {
             </p>
             <button
               onClick={() => setIsNewStudentOpen(true)}
-              className="px-6 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl text-sm shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer"
+              className={cn(
+                "px-6 py-3 bg-[#1a3a5c] text-white font-bold rounded-xl text-sm shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all cursor-pointer",
+                onboardingStep === 1 && "shadow-[0_0_20px_4px_rgba(232,160,32,0.6)] ring-2 ring-[#e8a020] ring-offset-2 animate-pulse"
+              )}
             >
               Add First Student
             </button>
           </div>
         ) : (
           <div className={cn("grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2.5 pt-2 relative")}>
-            {sortedStudents.map(student => {
+            {sortedStudents.map((student, idx) => {
               const ratingAccents: Record<string, string> = {
                 ppl:  '#2563eb',
                 ir:   '#7c3aed',
@@ -2259,7 +2357,10 @@ export default function Dashboard() {
                   whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(37, 99, 235, 0.12)' }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleSelectStudent(student)}
-                  className="group relative cursor-pointer rounded-xl overflow-hidden"
+                  className={cn(
+                    "group relative cursor-pointer rounded-xl overflow-hidden",
+                    onboardingStep === 2 && idx === 0 && "shadow-[0_0_20px_4px_rgba(232,160,32,0.6)] ring-2 ring-[#e8a020] ring-offset-2 animate-pulse z-10"
+                  )}
                   style={{
                     backgroundColor: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)',
@@ -3913,6 +4014,24 @@ export default function Dashboard() {
                 )}
               </div>
 
+              {hasStudentLink && (
+                <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                  <button
+                    disabled={switchingView}
+                    onClick={handleSwitchToStudent}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] disabled:opacity-50 cursor-pointer text-left"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {switchingView ? (
+                      <Loader2 size={14} className="animate-spin text-gray-400" />
+                    ) : (
+                      <BookOpen size={14} style={{ color: 'var(--navy)' }} />
+                    )}
+                    <span>Switch to student view</span>
+                  </button>
+                </div>
+              )}
+
               <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
                 <button
                   onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
@@ -4020,9 +4139,6 @@ export default function Dashboard() {
             }}
           >
             <div className="flex items-center gap-2">
-              <span className="absolute top-2 right-3 text-[#e8a020] text-lg font-black animate-bounce">
-                {onboardingStep === 2 ? '↑' : '↗'}
-              </span>
               {[1, 2, 3].map((s) => (
                 <div
                   key={s}
@@ -4034,9 +4150,9 @@ export default function Dashboard() {
               ))}
             </div>
             <p className="text-xs font-medium leading-relaxed">
-              {onboardingStep === 1 && "👆 Tap the glowing Add Student button in the top right to add your first student and get started."}
-              {onboardingStep === 2 && "👆 Tap any student card to open their profile and start a lesson."}
-              {onboardingStep === 3 && "👆 Tap your name in the top right to access your CFI hours, account settings, and dark mode."}
+              {onboardingStep === 1 && "👆 Tap \"Add First Student\" to create your first student."}
+              {onboardingStep === 2 && "👆 Tap your student's card to open their profile and log a lesson."}
+              {onboardingStep === 3 && "👆 Tap your name in the top right to reach your CFI Profile, Account, and Flight School."}
             </p>
             <button
               onClick={() => dismissOnboarding(onboardingStep)}
