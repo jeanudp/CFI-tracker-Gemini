@@ -683,7 +683,9 @@ export default function Admin() {
         >
           <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
             <h2 className="text-sm font-black" style={{ color: 'var(--text-primary)' }}>All Users</h2>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{users.length} total accounts</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              {users.length} total accounts · {users.filter(u => u.account_type !== 'student').length} CFIs · {users.filter(u => u.account_type === 'student').length} Students
+            </p>
           </div>
           {loading ? (
             <div className="p-8 text-center text-xs" style={{ color: 'var(--text-muted)' }}>Loading...</div>
@@ -697,6 +699,8 @@ export default function Admin() {
                   all_annual: '#2d7a4f',
                 };
                 const color = planColors[user.plan] || '#9ca3af';
+                const isStudent = user.account_type === 'student';
+
                 return (
                   <div key={user.id} className="px-6 py-3 flex items-center justify-between hover:bg-[var(--bg-tertiary)] transition-colors">
                     <div className="flex items-center gap-3">
@@ -714,6 +718,15 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <span
+                        className="text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider"
+                        style={{
+                          backgroundColor: isStudent ? 'rgba(232,160,32,0.1)' : 'rgba(26,58,92,0.1)',
+                          color: isStudent ? '#e8a020' : 'var(--navy)',
+                        }}
+                      >
+                        {isStudent ? 'Student' : 'CFI'}
+                      </span>
                       <span
                         className="text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-wider"
                         style={{ backgroundColor: `${color}15`, color }}
