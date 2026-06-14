@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { Copy, Check, Plus, RefreshCw, Shield, Users, Key, LogOut, X } from 'lucide-react';
+import { Copy, Check, Plus, RefreshCw, Shield, Users, Key, LogOut, X, User, GraduationCap } from 'lucide-react';
 
 const ADMIN_EMAIL = 'jeanudp@gmail.com';
 
@@ -132,6 +132,8 @@ export default function Admin() {
   const usedCodes = codes.filter(c => c.used);
   const paidUsers = users.filter(u => u.plan !== 'free');
   const freeUsers = users.filter(u => u.plan === 'free');
+  const studentCount = users.filter(u => u.account_type === 'student').length;
+  const cfiCount = users.filter(u => u.account_type !== 'student').length;
 
   // Platform Stats
   const totalLessons = allLessons.length;
@@ -224,11 +226,13 @@ export default function Admin() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { label: 'Total Users', value: users.length, color: '#1a3a5c', icon: Users },
             { label: 'Paid / Trial', value: paidUsers.length, color: '#2d7a4f', icon: Shield },
             { label: 'Free Users', value: freeUsers.length, color: '#e8a020', icon: Users },
+            { label: 'CFIs', value: cfiCount, color: '#1a3a5c', icon: User },
+            { label: 'Students', value: studentCount, color: '#e8a020', icon: GraduationCap },
             { label: 'Unused Codes', value: unusedCodes.length, color: '#7c3aed', icon: Key },
           ].map(stat => (
             <div
