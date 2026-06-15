@@ -306,10 +306,9 @@ export default function History() {
       if (preSelectedStudent || preSelectedStudentId) {
         if (lessonsData && lessonsData.length > 0) {
           const studentLesson = lessonsData.find(l => {
-            if (preSelectedStudentId && l.student_id) {
-              return l.student_id === preSelectedStudentId;
-            }
-            return l.student_name === preSelectedStudent;
+            const idMatches = !!(preSelectedStudentId && l.student_id && l.student_id === preSelectedStudentId);
+            const nameMatches = (l.student_name || '').trim().toLowerCase() === (preSelectedStudent || '').trim().toLowerCase();
+            return idMatches || nameMatches;
           });
           if (studentLesson) {
             setSelectedLessonId(studentLesson.id);
@@ -612,29 +611,24 @@ export default function History() {
     const matchesSearch = (l.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (l.student_name || '').toLowerCase().includes(searchQuery.toLowerCase());
     if (targetFilterId || targetFilterName) {
-      let isMatch = false;
-      if (targetFilterId && l.student_id) {
-        isMatch = l.student_id === targetFilterId;
-      } else {
-        isMatch = l.student_name === targetFilterName;
-      }
+      const idMatches = !!(targetFilterId && l.student_id && l.student_id === targetFilterId);
+      const nameMatches = (l.student_name || '').trim().toLowerCase() === (targetFilterName || '').trim().toLowerCase();
+      const isMatch = idMatches || nameMatches;
       return matchesSearch && isMatch;
     }
     return matchesSearch;
   });
 
   const studentLessons = (targetFilterId || targetFilterName) ? lessons.filter(l => {
-    if (targetFilterId && l.student_id) {
-      return l.student_id === targetFilterId;
-    }
-    return l.student_name === targetFilterName;
+    const idMatches = !!(targetFilterId && l.student_id && l.student_id === targetFilterId);
+    const nameMatches = (l.student_name || '').trim().toLowerCase() === (targetFilterName || '').trim().toLowerCase();
+    return idMatches || nameMatches;
   }) : [];
 
   const studentArchived = (targetFilterId || targetFilterName) ? archivedLessons.filter(l => {
-    if (targetFilterId && l.student_id) {
-      return l.student_id === targetFilterId;
-    }
-    return l.student_name === targetFilterName;
+    const idMatches = !!(targetFilterId && l.student_id && l.student_id === targetFilterId);
+    const nameMatches = (l.student_name || '').trim().toLowerCase() === (targetFilterName || '').trim().toLowerCase();
+    return idMatches || nameMatches;
   }) : [];
 
   const groundLessons = filteredLessons.filter(l => l.type === 'ground');
