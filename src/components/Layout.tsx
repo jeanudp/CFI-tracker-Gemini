@@ -174,12 +174,9 @@ export default function Layout({ children, user }: LayoutProps) {
     }
   };
 
-  const NAV_ITEMS = [
-    { label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> },
-  ];
-  if (path === '/history') {
-    NAV_ITEMS.push({ label: 'Schedule', path: '/schedule', icon: <Calendar size={14} /> });
-  }
+  const NAV_ITEMS = path === '/history'
+    ? [{ label: 'Schedule', path: '/schedule', icon: <Calendar size={14} /> }]
+    : [{ label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> }];
 
   const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';
   const shortName = displayName.split(' ')[0];
