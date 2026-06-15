@@ -1574,15 +1574,15 @@ export default function StudentView() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
           {/* Pending Instructor Requests panel, only in logged-in view (when no token) and at least one pending */}
           {!token && linkedProfiles && linkedProfiles.some(p => p.status === 'pending') && (
-            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm text-left animate-fadeIn">
+            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] p-5 shadow-sm text-left animate-fadeIn">
               <div className="flex items-center gap-2 mb-3">
-                <Users size={16} className="text-[#1a3a5c]" />
-                <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
+                <Users size={16} className="text-[#1a3a5c] dark:text-blue-400" />
+                <h3 className="text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
                   Pending Instructor Requests
                 </h3>
               </div>
               {approveError && (
-                <div className="mb-4 text-xs text-red-600 font-bold bg-red-50 p-2.5 rounded-xl border border-red-200">
+                <div className="mb-4 text-xs text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-950/20 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40">
                   {approveError}
                 </div>
               )}
@@ -1591,11 +1591,11 @@ export default function StudentView() {
                   const instructorName = p.cfi_name || 'Unnamed Instructor';
                   const isApproving = approvingConnectionId === p.id;
                   return (
-                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-dashed border-[#dde3ec] bg-slate-50/50">
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-dashed border-[#dde3ec] dark:border-[#2a4a6e] bg-slate-50/50 dark:bg-slate-900/20">
                       <div className="space-y-1">
-                        <h4 className="text-xs font-bold text-[#1c2333]">CFI {instructorName}</h4>
-                        <p className="text-xs text-gray-500 font-medium leading-relaxed max-w-xl">
-                          This instructor has added you and is requesting access to track your training and record mock checkrides/ground lessons.
+                        <h4 className="text-xs font-bold text-[#1c2333] dark:text-slate-100">CFI {instructorName}</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed max-w-xl">
+                          This instructor has added you as their student and is requesting access to view and track your training progress. Tap Confirm to approve and start sharing your records.
                         </p>
                       </div>
                       <button
@@ -1809,7 +1809,7 @@ export default function StudentView() {
 
           {/* My My Profile Section (authenticated mode only) */}
           {!token && (
-            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden text-left">
+            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left">
               <button
                 type="button"
                 onClick={() => {
@@ -1817,22 +1817,22 @@ export default function StudentView() {
                   setProfileSaveError(null);
                   setProfileSaveSuccess(false);
                 }}
-                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50/50 transition-all cursor-pointer text-left"
+                className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-all cursor-pointer text-left"
               >
                 <div className="flex items-center gap-3">
-                  <Users size={18} className="text-[#1a3a5c]" />
+                  <Users size={18} className="text-[#1a3a5c] dark:text-blue-400" />
                   <div>
-                    <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
+                    <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
                       My Profile
                     </h3>
-                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-400 font-medium mt-0.5">
                       Manage your contact, medical, and certificate details
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {studentProfile && (
-                    <span className="text-[10px] font-semibold bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full">
                       On File
                     </span>
                   )}
@@ -1844,38 +1844,38 @@ export default function StudentView() {
               </button>
 
               {isProfileOpen && (
-                <div className="p-4 sm:p-5 border-t border-[#dde3ec] bg-slate-50/30 space-y-4">
+                <div className="p-4 sm:p-5 border-t border-[#dde3ec] dark:border-[#2a4a6e] bg-slate-50/30 dark:bg-slate-900/10 space-y-4">
                   {!isProfileEditing ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Full Name</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.full_name || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.full_name || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Phone Number</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.phone || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.phone || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Date of Birth</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.dob || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.dob || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Class</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.medical_class || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_class || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Exam Date</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.medical_exam_date || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Certificate #</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] mt-0.5">{profileForm.student_cert_number || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.student_cert_number || '—'}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-[#dde3ec]/60">
-                        <span className="text-[11px] text-gray-400 italic">Last updated: {studentProfile?.updated_at ? new Date(studentProfile.updated_at).toLocaleString() : 'Never'}</span>
+                      <div className="flex items-center justify-between pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
+                        <span className="text-[11px] text-gray-400 dark:text-gray-400 italic">Last updated: {studentProfile?.updated_at ? new Date(studentProfile.updated_at).toLocaleString() : 'Never'}</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -1984,40 +1984,40 @@ export default function StudentView() {
                     <form onSubmit={handleProfileSave} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Full Name</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</label>
                           <input
                             type="text"
                             value={profileForm.full_name}
                             onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
                             placeholder="John Doe"
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Phone Number</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</label>
                           <input
                             type="tel"
                             value={profileForm.phone}
                             onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                             placeholder="(555) 555-5555"
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Date of Birth</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</label>
                           <input
                             type="date"
                             value={profileForm.dob}
                             onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Class</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</label>
                           <select
                             value={profileForm.medical_class}
                             onChange={(e) => setProfileForm({ ...profileForm, medical_class: e.target.value })}
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           >
                             <option value="">Select class</option>
                             <option value="First Class">First Class</option>
@@ -2028,33 +2028,33 @@ export default function StudentView() {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Medical Exam Date</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</label>
                           <input
                             type="date"
                             value={profileForm.medical_exam_date}
                             onChange={(e) => setProfileForm({ ...profileForm, medical_exam_date: e.target.value })}
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280]">Student Certificate #</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</label>
                           <input
                             type="text"
                             value={profileForm.student_cert_number}
                             onChange={(e) => setProfileForm({ ...profileForm, student_cert_number: e.target.value })}
                             placeholder="A1234567"
-                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
+                            className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
                       </div>
 
                       {profileSaveError && (
-                        <p className="text-xs text-red-600 font-bold mt-1">
+                        <p className="text-xs text-red-600 dark:text-red-400 font-bold mt-1">
                           {profileSaveError}
                         </p>
                       )}
 
-                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#dde3ec]/60">
+                      <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40">
                         <button
                           type="button"
                           onClick={() => {
@@ -2071,7 +2071,7 @@ export default function StudentView() {
                               });
                             }
                           }}
-                          className="px-4 py-2 border border-[#dde3ec] hover:bg-slate-100 text-[#1a3a5c] text-xs font-bold rounded-xl transition-all cursor-pointer"
+                          className="px-4 py-2 border border-[#dde3ec] dark:border-[#2a4a6e]/40 hover:bg-slate-100 dark:hover:bg-slate-800/10 text-[#1a3a5c] dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
                         >
                           Cancel
                         </button>
