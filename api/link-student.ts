@@ -41,7 +41,7 @@ export default async function handler(req: Request, res: Response) {
     return res.status(401).json({ error: 'Invalid or expired authorization token' });
   }
 
-  const { email: studentEmail, name: studentName } = req.body;
+  const { email: studentEmail, name: studentName, orgId } = req.body;
   if (!studentEmail || !studentName) {
     return res.status(400).json({ error: 'Missing student email or name in request body' });
   }
@@ -88,7 +88,7 @@ export default async function handler(req: Request, res: Response) {
     // 3. Link existing account in student_links table if not already linked
     const { data: existingLink, error: checkError } = await supabaseAdmin
       .from('student_links')
-      .select('id')
+      .select('id, status')
       .eq('student_user_id', matchedUserId)
       .eq('cfi_user_id', cfiUserId)
       .eq('student_name', studentName)
@@ -98,13 +98,26 @@ export default async function handler(req: Request, res: Response) {
       throw checkError;
     }
 
-    if (!existingLink) {
+    if (existingLink) {
+      if (orgId && existingLink.status === 'pending') {
+        const { error: updateError } = await supabaseAdmin
+          .from('student_links')
+          .update({ status: 'approved' })
+          .eq('id', existingLink.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+    } else {
+      const statusValue = orgId ? 'approved' : 'pending';
       const { error: insertError } = await supabaseAdmin
         .from('student_links')
         .insert({
           student_user_id: matchedUserId,
           cfi_user_id: cfiUserId,
-          student_name: studentName
+          student_name: studentName,
+          status: statusValue
         });
 
       if (insertError) {

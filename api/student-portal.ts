@@ -435,6 +435,48 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    if (action === 'approveLink') {
+      if (!sessionUserId) {
+        return res.status(401).json({ error: 'Unauthorized: Valid session required' });
+      }
+
+      const { link_id } = req.body;
+      if (!link_id) {
+        return res.status(400).json({ error: 'link_id is required' });
+      }
+
+      const { data: link, error: findError } = await supabaseAdmin
+        .from('student_links')
+        .select('*')
+        .eq('id', link_id)
+        .maybeSingle();
+
+      if (findError) {
+        console.error('Error fetching link:', findError);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (!link) {
+        return res.status(404).json({ error: 'Link not found' });
+      }
+
+      if (link.student_user_id !== sessionUserId) {
+        return res.status(403).json({ error: 'Forbidden: A student may only approve their own connection requests' });
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from('student_links')
+        .update({ status: 'approved' })
+        .eq('id', link_id);
+
+      if (updateError) {
+        console.error('Error approving link:', updateError);
+        return res.status(500).json({ error: 'Failed to update link status' });
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
     // Determine target CFI/student profile based on token vs. authenticated session
     let studentName = '';
     let userId = '';
@@ -482,7 +524,7 @@ export default async function handler(req: any, res: any) {
       // Look up all rows in student_links where student_user_id equals the session user id.
       const { data: links, error: linksError } = await supabaseAdmin
         .from('student_links')
-        .select('cfi_user_id, student_name')
+        .select('id, status, cfi_user_id, student_name')
         .eq('student_user_id', sessionUserId);
 
       if (linksError) throw linksError;

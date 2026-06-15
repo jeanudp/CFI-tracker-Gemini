@@ -81,6 +81,7 @@ export default function History() {
   const [activeStudentIdFilter, setActiveStudentIdFilter] = useState<string | null>(
     localStorage.getItem('sb_selected_student_id')
   );
+  const [pendingStudentNames, setPendingStudentNames] = useState<string[]>([]);
   const [selectedSoloOption, setSelectedSoloOption] = useState<string | null>(null);
   const [celebrated, setCelebrated] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,6 +204,37 @@ export default function History() {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchPendingLinks = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabase
+          .from('student_links')
+          .select('student_name')
+          .eq('cfi_user_id', session.user.id)
+          .eq('status', 'pending');
+
+        if (error) {
+          console.error('Error fetching pending links:', error);
+          return;
+        }
+
+        if (data) {
+          const names = data
+            .map((row: any) => (row.student_name || '').trim().toLowerCase())
+            .filter(Boolean);
+          setPendingStudentNames(names);
+        }
+      } catch (err) {
+        console.error('Failed to load pending links:', err);
+      }
+    };
+
+    fetchPendingLinks();
   }, []);
 
   const getRatingBadgeColor = (code: string) => {
@@ -606,6 +638,10 @@ export default function History() {
 
   const targetFilterId = selectedLesson?.student_id || activeStudentIdFilter;
   const targetFilterName = studentName || activeStudentFilter;
+
+  const isStudentPending = targetFilterName
+    ? pendingStudentNames.includes(targetFilterName.trim().toLowerCase())
+    : false;
 
   const filteredLessons = lessons.filter(l => {
     const matchesSearch = (l.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1107,7 +1143,17 @@ export default function History() {
     <div className="flex h-full w-full bg-[#f8fafc] relative overflow-hidden">
       {/* Main Content */}
       <main className="flex-1 min-w-0 bg-[var(--bg-primary)] p-3 sm:p-8 overflow-y-auto">
-        {!selectedLesson ? (
+        {isStudentPending ? (
+          <div className="min-h-[60vh] sm:h-full flex flex-col items-center justify-center text-[#6b7280]">
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-amber-500">
+              <AlertTriangle size={48} className="opacity-80" />
+            </div>
+            <h3 className="text-xl font-black text-[#1a3a5c] tracking-tight mb-2">Waiting for student to accept</h3>
+            <p className="text-sm text-[#94a3b8] max-w-sm text-center leading-relaxed font-semibold">
+              This student must accept your request from their own 61 Tracker student account before you can view their training history.
+            </p>
+          </div>
+        ) : !selectedLesson ? (
           <div className="min-h-[60vh] sm:h-full flex flex-col items-center justify-center text-[#6b7280]">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
               <HistoryIcon size={48} className="opacity-20" />

@@ -132,6 +132,8 @@ export default function StudentView() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [linkedProfiles, setLinkedProfiles] = useState<any[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<{ cfi_user_id: string; student_name: string } | null>(null);
+  const [approvingConnectionId, setApprovingConnectionId] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [profilePendingRemoval, setProfilePendingRemoval] = useState<{ cfi_user_id: string; student_name: string; cfi_name?: string } | null>(null);
   const [removalLoading, setRemovalLoading] = useState(false);
   const [studentProfile, setStudentProfile] = useState<any>(null);
@@ -465,6 +467,39 @@ export default function StudentView() {
       setClaimingError(err.message || "That code is invalid or expired — check with your instructor");
     } finally {
       setClaimingLoading(false);
+    }
+  };
+
+  const handleApprovePendingRequest = async (connectionId: string) => {
+    setApprovingConnectionId(connectionId);
+    setApproveError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'approveLink',
+          link_id: connectionId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to approve instructor request");
+      }
+
+      await validateAndFetch();
+    } catch (err: any) {
+      console.error('Error approving request:', err);
+      setApproveError(err.message || 'An error occurred while approving the request');
+    } finally {
+      setApprovingConnectionId(null);
     }
   };
 
@@ -1537,6 +1572,54 @@ export default function StudentView() {
 
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+          {/* Pending Instructor Requests panel, only in logged-in view (when no token) and at least one pending */}
+          {!token && linkedProfiles && linkedProfiles.some(p => p.status === 'pending') && (
+            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm text-left animate-fadeIn">
+              <div className="flex items-center gap-2 mb-3">
+                <Users size={16} className="text-[#1a3a5c]" />
+                <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
+                  Pending Instructor Requests
+                </h3>
+              </div>
+              {approveError && (
+                <div className="mb-4 text-xs text-red-600 font-bold bg-red-50 p-2.5 rounded-xl border border-red-200">
+                  {approveError}
+                </div>
+              )}
+              <div className="space-y-4">
+                {linkedProfiles.filter(p => p.status === 'pending').map((p: any) => {
+                  const instructorName = p.cfi_name || 'Unnamed Instructor';
+                  const isApproving = approvingConnectionId === p.id;
+                  return (
+                    <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-dashed border-[#dde3ec] bg-slate-50/50">
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-[#1c2333]">CFI {instructorName}</h4>
+                        <p className="text-xs text-gray-500 font-medium leading-relaxed max-w-xl">
+                          This instructor has added you and is requesting access to track your training and record mock checkrides/ground lessons.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleApprovePendingRequest(p.id)}
+                        disabled={!!approvingConnectionId}
+                        className="self-start sm:self-center px-4 py-2 bg-[#1a3a5c] hover:bg-[#2a5a8c] text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 cursor-pointer flex items-center gap-2 shrink-0 shadow-sm"
+                      >
+                        {isApproving ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin" />
+                            <span>Confirming...</span>
+                          </>
+                        ) : (
+                          <span>Confirm</span>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Add an instructor button & form near the top, only in authenticated mode */}
           {!token && (
             <div className="mb-6">

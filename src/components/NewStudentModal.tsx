@@ -266,6 +266,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated, org
         body: JSON.stringify({
           email: emailAddress.trim(),
           name: name.trim(),
+          ...(orgId ? { orgId } : {}),
         }),
       });
       if (linkRes.ok) {
@@ -450,6 +451,7 @@ export default function NewStudentModal({ isOpen, onClose, onStudentCreated, org
             body: JSON.stringify({
               email: emailAddress.trim(),
               name: name.trim(),
+              ...(orgId ? { orgId } : {}),
             }),
           });
           if (res.ok) {

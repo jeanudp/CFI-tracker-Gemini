@@ -140,6 +140,7 @@ const CurrencyRow = ({ title, reference, isCurrent, isNotApplicable, classBadge,
 
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [pendingStudentNames, setPendingStudentNames] = useState<string[]>([]);
   const [studentNotes, setStudentNotes] = useState<any[]>([]);
   const [profileProposals, setProfileProposals] = useState<any[]>([]);
   const [archivedStudents, setArchivedStudents] = useState<Student[]>([]);
@@ -352,6 +353,12 @@ export default function Dashboard() {
     if (ratingDiff !== 0) return ratingDiff;
     return a.name.localeCompare(b.name);
   });
+  
+  const isStudentPending = (student: Student | null): boolean => {
+    if (!student || !student.name) return false;
+    const nameLower = student.name.trim().toLowerCase();
+    return pendingStudentNames.includes(nameLower);
+  };
 
   const dismissOnboarding = (step: number) => {
     if (step === 1 && sortedStudents.length === 0) {
@@ -871,7 +878,7 @@ export default function Dashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, studentNotesRes, profileProposalsRes] = await Promise.all([
+      const [studentsRes, archivedRes, lessonsRes, manualRes, endorsementsRes, studentNotesRes, profileProposalsRes, linksRes] = await Promise.all([
         supabase.from('students').select('*').or(`and(org_id.is.null,user_id.eq.${session.user.id}),assigned_cfi.eq.${session.user.id}`).is('deleted_at', null).order('name'),
         supabase.from('students').select('*').eq('user_id', session.user.id).not('deleted_at', 'is', null).order('deleted_at', { ascending: false }),
         supabase.from('lessons').select('*'),
@@ -879,6 +886,14 @@ export default function Dashboard() {
         supabase.from('endorsements').select('*'),
         supabase.from('student_notes').select('*').eq('cfi_user_id', session.user.id).order('created_at', { ascending: false }),
         supabase.from('student_profile_proposals').select('*').eq('cfi_user_id', session.user.id).eq('status', 'pending').order('created_at', { ascending: false }),
+        (async () => {
+          try {
+            const res = await supabase.from('student_links').select('student_name, status').eq('cfi_user_id', session.user.id);
+            return res;
+          } catch {
+            return { data: null, error: true };
+          }
+        })()
       ]);
       setStudents(studentsRes.data || []);
       setArchivedStudents(archivedRes.data || []);
@@ -887,6 +902,15 @@ export default function Dashboard() {
       setEndorsements(endorsementsRes.data || []);
       setStudentNotes(studentNotesRes.data || []);
       setProfileProposals(profileProposalsRes.data || []);
+
+      let pendingNames: string[] = [];
+      if (linksRes && !linksRes.error && linksRes.data) {
+        pendingNames = linksRes.data
+          .filter((row: any) => row.status === 'pending')
+          .map((row: any) => (row.student_name || '').trim().toLowerCase())
+          .filter(Boolean);
+      }
+      setPendingStudentNames(pendingNames);
       
       await Promise.all([
         fetchUpcomingLessons(),
@@ -2410,8 +2434,16 @@ export default function Dashboard() {
                       </span>
                     </div>
 
-                    {/* Medical status badge */}
-                    {(() => {
+                    {/* Medical status badge / Connection Pending badge */}
+                    {isStudentPending(student) ? (
+                      <div
+                        className="shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter"
+                        style={{ backgroundColor: 'rgba(232,160,32,0.15)', border: '1px solid rgba(232,160,32,0.3)', color: '#e8a020' }}
+                        title="Connection Pending"
+                      >
+                        Pending
+                      </div>
+                    ) : (() => {
                       const status = getMedicalStatus((student as any).medical_class, (student as any).medical_exam_date, (student as any).dob);
                       if (!status) return null;
 
@@ -3208,9 +3240,21 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => { setIsDetailOpen(false); localStorage.setItem('sb_selected_student', selectedStudent.name); localStorage.setItem('sb_selected_student_id', selectedStudent.id); navigate('/history'); }}
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer"
-                    style={{ borderColor: 'var(--border-color)', color: 'var(--navy-light)' }}
+                    disabled={isStudentPending(selectedStudent)}
+                    onClick={() => {
+                      if (isStudentPending(selectedStudent)) return;
+                      setIsDetailOpen(false);
+                      localStorage.setItem('sb_selected_student', selectedStudent.name);
+                      localStorage.setItem('sb_selected_student_id', selectedStudent.id);
+                      navigate('/history');
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-bold rounded-lg border transition-all hover:bg-[var(--bg-tertiary)] cursor-pointer",
+                      isStudentPending(selectedStudent)
+                        ? "opacity-50 cursor-not-allowed text-gray-400 border-gray-100"
+                        : "hover:-translate-y-0.5"
+                    )}
+                    style={isStudentPending(selectedStudent) ? { borderColor: 'var(--border-color)', color: 'var(--text-muted)' } : { borderColor: 'var(--border-color)', color: 'var(--navy-light)' }}
                   >
                     History →
                   </button>
@@ -3220,7 +3264,20 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {isStudentPending(selectedStudent) ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white">
+                  <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-[#e8a020] mb-5">
+                    <AlertTriangle size={32} />
+                  </div>
+                  <h3 className="text-base font-black text-[#1a3a5c] mb-2">
+                    Waiting for student to accept
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed font-semibold max-w-sm">
+                    This student must accept your request from their own 61 Tracker student account before their training progress is shared with you.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
                 {selectedStudent.checkride_passed_ratings?.length ? (
                   <div className="rounded-xl p-4 border" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
@@ -3514,30 +3571,55 @@ export default function Dashboard() {
                     </div>
                   );
                 })()}
-              </div>
+                </div>
+              )}
 
               <div className="px-6 py-4 border-t flex gap-3 shrink-0" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
                 <button
-                  onClick={handleStartLesson}
-                  className="flex-1 text-white font-bold py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer"
-                  style={{ backgroundColor: 'var(--navy)' }}
+                  disabled={isStudentPending(selectedStudent)}
+                  onClick={isStudentPending(selectedStudent) ? undefined : handleStartLesson}
+                  className={cn(
+                    "flex-1 text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2",
+                    isStudentPending(selectedStudent)
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200 opacity-70"
+                      : "shadow-md hover:-translate-y-0.5 hover:shadow-lg cursor-pointer"
+                  )}
+                  style={isStudentPending(selectedStudent) ? { backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' } : { backgroundColor: 'var(--navy)' }}
                 >
                   <Plane size={18} />
                   Log a Lesson →
                 </button>
-                <Link
-                  to={`/iacra/${encodeURIComponent(selectedStudent.name)}`}
-                  className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs hover:-translate-y-0.5 hover:shadow-md"
-                  style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26,58,92,0.3)' }}
-                >
-                  <FileText size={18} />
-                  <span className="hidden sm:inline">IACRA Summary</span>
-                  <span className="sm:hidden">IACRA</span>
-                </Link>
+                {isStudentPending(selectedStudent) ? (
+                  <button
+                    disabled
+                    className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-not-allowed text-xs"
+                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)', borderColor: 'var(--border-color)' }}
+                  >
+                    <FileText size={18} />
+                    <span className="hidden sm:inline">IACRA Summary</span>
+                    <span className="sm:hidden">IACRA</span>
+                  </button>
+                ) : (
+                  <Link
+                    to={`/iacra/${encodeURIComponent(selectedStudent.name)}`}
+                    className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs hover:-translate-y-0.5 hover:shadow-md"
+                    style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--navy)', borderColor: 'rgba(26,58,92,0.3)' }}
+                  >
+                    <FileText size={18} />
+                    <span className="hidden sm:inline">IACRA Summary</span>
+                    <span className="sm:hidden">IACRA</span>
+                  </Link>
+                )}
                 <button
-                  onClick={(e) => handleShareStudent(e, selectedStudent)}
-                  className="px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 cursor-pointer text-xs hover:-translate-y-0.5 hover:shadow-md"
-                  style={{ backgroundColor: 'rgba(45,122,79,0.05)', color: '#2d7a4f', borderColor: 'rgba(45,122,79,0.3)' }}
+                  disabled={isStudentPending(selectedStudent)}
+                  onClick={isStudentPending(selectedStudent) ? undefined : (e) => handleShareStudent(e, selectedStudent)}
+                  className={cn(
+                    "px-4 py-3.5 font-bold rounded-xl border-2 transition-all flex items-center justify-center gap-2 text-xs",
+                    isStudentPending(selectedStudent)
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200 opacity-70"
+                      : "cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+                  )}
+                  style={isStudentPending(selectedStudent) ? { backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)', borderColor: 'var(--border-color)' } : { backgroundColor: 'rgba(45,122,79,0.05)', color: '#2d7a4f', borderColor: 'rgba(45,122,79,0.3)' }}
                 >
                   <Share2 size={18} />
                   <span className="hidden sm:inline">Share Progress</span>
