@@ -264,7 +264,7 @@ export default function Layout({ children, user }: LayoutProps) {
           </button>
 
           {/* Schedule dropdown / Dashboard link */}
-          {path === '/history' ? (
+          {(path === '/history' || path === '/ground' || path === '/flight') ? (
             <Link
               to="/dashboard"
               className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"
