@@ -96,26 +96,36 @@ export default function GroundLesson() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && !editLesson) {
-        supabase.from('lessons')
-          .select('instructor')
+         supabase.from('cfi_profile')
+          .select('full_name')
           .eq('user_id', session.user.id)
-          .order('saved_at', { ascending: false })
-          .limit(1)
-          .then(({ data }) => {
-            if (data && data.length > 0 && typeof data[0].instructor === 'string' && data[0].instructor.trim() !== '') {
-              setInstructorName(data[0].instructor);
+          .maybeSingle()
+          .then(({ data: profileData }) => {
+            if (profileData && typeof profileData.full_name === 'string' && profileData.full_name.trim() !== '') {
+              setInstructorName(profileData.full_name.trim());
             } else {
-              const fullName = session.user.user_metadata?.full_name;
-              if (fullName && typeof fullName === 'string' && fullName.trim() !== '') {
-                setInstructorName(fullName);
-              } else {
-                const savedInstructor = localStorage.getItem('cfi_instructor_name');
-                if (savedInstructor && savedInstructor.trim() !== '') {
-                  setInstructorName(savedInstructor);
-                } else {
-                  setInstructorName('');
-                }
-              }
+              supabase.from('lessons')
+                .select('instructor')
+                .eq('user_id', session.user.id)
+                .order('saved_at', { ascending: false })
+                .limit(1)
+                .then(({ data: lessonsData }) => {
+                  if (lessonsData && lessonsData.length > 0 && typeof lessonsData[0].instructor === 'string' && lessonsData[0].instructor.trim() !== '') {
+                    setInstructorName(lessonsData[0].instructor.trim());
+                  } else {
+                    const fullName = session.user.user_metadata?.full_name;
+                    if (fullName && typeof fullName === 'string' && fullName.trim() !== '') {
+                      setInstructorName(fullName.trim());
+                    } else {
+                      const savedInstructor = localStorage.getItem('cfi_instructor_name');
+                      if (savedInstructor && savedInstructor.trim() !== '') {
+                        setInstructorName(savedInstructor.trim());
+                      } else {
+                        setInstructorName('');
+                      }
+                    }
+                  }
+                });
             }
           });
       }
