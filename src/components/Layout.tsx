@@ -177,6 +177,9 @@ export default function Layout({ children, user }: LayoutProps) {
   const NAV_ITEMS = [
     { label: 'Dashboard', path: '/dashboard', icon: <Home size={14} /> },
   ];
+  if (path === '/history') {
+    NAV_ITEMS.push({ label: 'Schedule', path: '/schedule', icon: <Calendar size={14} /> });
+  }
 
   const displayName = user?.user_metadata?.full_name || user?.email || 'CFI';
   const shortName = displayName.split(' ')[0];
@@ -263,8 +266,19 @@ export default function Layout({ children, user }: LayoutProps) {
             {darkMode ? <Sun size={15} color="white" /> : <Moon size={15} color="white" />}
           </button>
 
-          {/* Schedule dropdown */}
-          <ScheduleMenu />
+          {/* Schedule dropdown / Dashboard link */}
+          {path === '/history' ? (
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-lg border text-[11px] font-bold uppercase tracking-widest transition-all hover:-translate-y-0.5 hover:shadow-md"
+              style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
+            >
+              <Home size={14} />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+          ) : (
+            <ScheduleMenu />
+          )}
 
           {/* Navigation dropdown */}
           <div className="relative" ref={navRef}>
