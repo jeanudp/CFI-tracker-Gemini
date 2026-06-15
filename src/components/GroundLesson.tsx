@@ -96,7 +96,28 @@ export default function GroundLesson() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && !editLesson) {
-        setInstructorName(session.user.user_metadata?.full_name || session.user.email || '');
+        supabase.from('lessons')
+          .select('instructor')
+          .eq('user_id', session.user.id)
+          .order('saved_at', { ascending: false })
+          .limit(1)
+          .then(({ data }) => {
+            if (data && data.length > 0 && typeof data[0].instructor === 'string' && data[0].instructor.trim() !== '') {
+              setInstructorName(data[0].instructor);
+            } else {
+              const fullName = session.user.user_metadata?.full_name;
+              if (fullName && typeof fullName === 'string' && fullName.trim() !== '') {
+                setInstructorName(fullName);
+              } else {
+                const savedInstructor = localStorage.getItem('cfi_instructor_name');
+                if (savedInstructor && savedInstructor.trim() !== '') {
+                  setInstructorName(savedInstructor);
+                } else {
+                  setInstructorName('');
+                }
+              }
+            }
+          });
       }
     });
   }, [navigate]);
@@ -351,7 +372,10 @@ const acsData = ALL_GROUND_ACS[rating?.code || 'ppl'] || ALL_GROUND_ACS['ppl'];
             <input
               type="text"
               value={instructorName}
-              onChange={(e) => setInstructorName(e.target.value)}
+              onChange={(e) => {
+                setInstructorName(e.target.value);
+                localStorage.setItem('cfi_instructor_name', e.target.value);
+              }}
               placeholder="Instructor name"
               className="w-full text-sm border border-[#dde3ec] rounded-lg px-3 py-2 focus:outline-none focus:border-[#2a5a8c] transition-all"
             />
