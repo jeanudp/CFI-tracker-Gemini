@@ -12,11 +12,24 @@ import ExportButton from './ExportButton';
 import { Heart } from 'lucide-react';
 import HowToExportModal from './HowToExportModal';
 
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatLocalDate = (date: Date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: string) {
   if (!medicalClass || !examDateStr || !dobStr) return null;
 
-  const examDate = new Date(examDateStr);
-  const dob = new Date(dobStr);
+  const examDate = parseLocalDate(examDateStr);
+  const dob = parseLocalDate(dobStr);
   const today = new Date();
 
   // Age at time of exam
@@ -607,8 +620,8 @@ export default function CFIHours() {
         { label: 'Medical Class', value: medicalStatus ? 1 : 0, target: 1, customValue: medicalStatus?.currentClass || 'None' },
         { label: 'Current Privileges', value: (medicalStatus && !medicalStatus.isExpired) ? 1 : 0, target: 1, customValue: medicalStatus?.currentPrivileges || 'N/A' },
       ],
-      lastDate: cfiProfile?.medical_exam_date ? new Date(cfiProfile.medical_exam_date).toLocaleDateString() : 'None',
-      expiryDate: medicalStatus?.expiryDate ? medicalStatus.expiryDate.toISOString().split('T')[0] : null,
+      lastDate: cfiProfile?.medical_exam_date ? parseLocalDate(cfiProfile.medical_exam_date).toLocaleDateString() : 'None',
+      expiryDate: medicalStatus?.expiryDate ? formatLocalDate(medicalStatus.expiryDate) : null,
       customMsg: medicalStatus?.isExpired ? "Medical expired. You cannot exercise pilot privileges." : 
                  (medicalStatus && medicalStatus.currentClass !== medicalStatus.currentPrivileges) ? `First class privileges downgraded to ${medicalStatus.currentPrivileges}.` : null
     },
