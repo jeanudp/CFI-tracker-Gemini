@@ -51,24 +51,43 @@ function getMedicalStatus(medicalClass: string, examDateStr: string, dobStr: str
   const daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   const isExpired = daysUntilExpiry < 0;
 
+  // Define privilege windows
+  const firstClassWindowEnd = new Date(examDate);
+  const firstPlusMonths = ageAtExam < 40 ? 12 : 6;
+  firstClassWindowEnd.setMonth(firstClassWindowEnd.getMonth() + firstPlusMonths + 1);
+  firstClassWindowEnd.setDate(0);
+
+  const secondClassWindowEnd = new Date(examDate);
+  const secondPlusMonths = 12;
+  secondClassWindowEnd.setMonth(secondClassWindowEnd.getMonth() + secondPlusMonths + 1);
+  secondClassWindowEnd.setDate(0);
+
   let currentPrivileges = medicalClass;
   if (medicalClass === 'First Class') {
-    const firstExpiry = new Date(examDate);
-    firstExpiry.setMonth(firstExpiry.getMonth() + firstClassMonths + 1);
-    firstExpiry.setDate(0);
-    if (today > firstExpiry) {
-      currentPrivileges = "1st — 3rd Class Privileges";
+    if (today <= firstClassWindowEnd) {
+      currentPrivileges = "First Class";
+    } else if (today <= secondClassWindowEnd) {
+      currentPrivileges = "Second Class";
+    } else if (!isExpired) {
+      currentPrivileges = "Third Class";
+    } else {
+      currentPrivileges = "Expired";
     }
   } else if (medicalClass === 'Second Class') {
-    const secondExpiry = new Date(examDate);
-    secondExpiry.setMonth(secondExpiry.getMonth() + secondClassMonths + 1);
-    secondExpiry.setDate(0);
-    if (today > secondExpiry) {
-      currentPrivileges = "2nd — 3rd Class Privileges";
+    if (today <= secondClassWindowEnd) {
+      currentPrivileges = "Second Class";
+    } else if (!isExpired) {
+      currentPrivileges = "Third Class";
+    } else {
+      currentPrivileges = "Expired";
+    }
+  } else {
+    if (isExpired) {
+      currentPrivileges = "Expired";
+    } else {
+      currentPrivileges = medicalClass;
     }
   }
-
-  if (isExpired) currentPrivileges = "Expired";
 
   let statusColor = "green";
   if (isExpired || daysUntilExpiry < 30) {
