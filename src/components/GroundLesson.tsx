@@ -64,7 +64,8 @@ export default function GroundLesson() {
 
     // Check for edit mode
     const editLesson = JSON.parse(localStorage.getItem('faa_edit_lesson') || 'null');
-    if (editLesson && editLesson.type === 'ground') {
+    const isEditMode = !!(editLesson && editLesson.type === 'ground');
+    if (isEditMode) {
       setEditId(editLesson.id);
       setStudentId(editLesson.student_id || savedStudentId);
       setGrades(editLesson.grades || {});
@@ -79,6 +80,7 @@ export default function GroundLesson() {
       localStorage.removeItem('faa_edit_lesson');
     } else {
       resetLessonState();
+      localStorage.removeItem('faa_edit_lesson');
       
       // Fetch next lesson number
       supabase.from('lessons')
@@ -95,7 +97,7 @@ export default function GroundLesson() {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !editLesson) {
+      if (session && !isEditMode) {
          supabase.from('cfi_profile')
           .select('full_name')
           .eq('user_id', session.user.id)
