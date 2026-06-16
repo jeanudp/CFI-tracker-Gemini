@@ -112,7 +112,7 @@ function CfiRouteGuard({ session, accountType, children }: { session: any, accou
 
 function AuthRedirect({ session, accountType }: { session: any, accountType: 'not-yet-determined' | 'instructor' | 'student' }) {
   const queryParams = new URLSearchParams(window.location.search);
-  if (queryParams.get('verified') === '1') {
+  if (queryParams.get('verified') === '1' || queryParams.get('oauth') === 'google') {
     return <Auth />;
   }
   if (!session) {

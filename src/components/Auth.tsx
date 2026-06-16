@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { Mail, Lock, User, AlertCircle, CheckCircle2, ArrowLeft, Moon, Sun } from 'lucide-react';
 
+
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(searchParams.get('mode') !== 'signup');
@@ -16,6 +17,12 @@ export default function Auth() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
   const [role, setRole] = useState<'cfi' | 'student'>('cfi');
   const [isResetMode, setIsResetMode] = useState(false);
+  
+  // Choice gating & OAuth reconciliation states
+  const [roleChosen, setRoleChosen] = useState(false);
+  const [showOauthRolePrompt, setShowOauthRolePrompt] = useState(false);
+  const [oauthSession, setOauthSession] = useState<any>(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,14 +34,194 @@ export default function Auth() {
     }
   }, [darkMode]);
 
+  // Normal session redirect check: bypass when OAuth return parameter is present!
   useEffect(() => {
     const isVerified = searchParams.get('verified') === '1';
-    if (isVerified) return;
+    const isOAuthReturn = searchParams.get('oauth') === 'google';
+    if (isVerified || isOAuthReturn) return;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate('/dashboard');
+      if (session) {
+        const userMetadata = session.user?.user_metadata || {};
+        if (userMetadata.account_type === 'student') {
+          navigate('/my-progress');
+        } else {
+          navigate('/dashboard');
+        }
+      }
     });
   }, [navigate, searchParams]);
+
+  // Google OAuth return reconciliation effect
+  useEffect(() => {
+    const isOAuthReturn = searchParams.get('oauth') === 'google';
+    if (!isOAuthReturn) return;
+
+    let mounted = true;
+
+    const performReconciliation = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Retrieve standard session, retry slightly in case parsing code isn't fully completed
+        let session = null;
+        for (let i = 0; i < 5; i++) {
+          const { data } = await supabase.auth.getSession();
+          if (data?.session) {
+            session = data.session;
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
+        if (!mounted) return;
+
+        if (!session) {
+          setError('No valid session found after Google Sign-In.');
+          setLoading(false);
+          return;
+        }
+
+        const user = session.user;
+
+        // 1. Determine whether this is a brand‑new user by checking for an existing row in user_subscriptions.
+        const { data: subData } = await supabase
+          .from('user_subscriptions')
+          .select('id, plan')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const isBrandNew = !subData;
+
+        // 2. Resolve the account type:
+        const pendingClaim = localStorage.getItem('pending_student_claim');
+        const storedMarker = localStorage.getItem('oauth_role_marker');
+        const hasStudentMetadata = user.user_metadata?.account_type === 'student';
+
+        let resolvedType: 'student' | 'cfi' | null = null;
+
+        if (pendingClaim || storedMarker === 'student' || hasStudentMetadata) {
+          resolvedType = 'student';
+        } else if (storedMarker === 'cfi' || (!isBrandNew && !hasStudentMetadata)) {
+          resolvedType = 'cfi';
+        }
+
+        // If the user is brand‑new AND the type is still undetermined (no claim, marker is "undetermined"),
+        // show the one‑time role prompt and wait — do not provision or route yet.
+        if (isBrandNew && !resolvedType) {
+          setOauthSession(session);
+          setShowOauthRolePrompt(true);
+          setLoading(false);
+          return;
+        }
+
+        const activeType = resolvedType || 'cfi';
+        await handleProvisionAndRoute(session, activeType, isBrandNew);
+
+      } catch (err: any) {
+        if (mounted) {
+          setError(err.message || 'An error occurred during account routing.');
+          setLoading(false);
+        }
+      }
+    };
+
+    performReconciliation();
+
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams]);
+
+  const handleProvisionAndRoute = async (session: any, resolvedType: 'student' | 'cfi', isBrandNew: boolean) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const user = session.user;
+      const emailVal = user.email || '';
+
+      // Update auth metadata to store the resolved account type permanently
+      if (resolvedType === 'student') {
+        const { error: updateMetaError } = await supabase.auth.updateUser({
+          data: { account_type: 'student' }
+        });
+        if (updateMetaError) {
+          console.error('Error updating user metadata to student:', updateMetaError);
+        }
+      }
+
+      // If brand-new, insert standard free-plan row
+      if (isBrandNew) {
+        const { error: subInsertError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: user.id,
+            email: emailVal,
+            plan: 'free',
+            ratings_unlocked: ['ppl'],
+            status: 'active'
+          });
+        if (subInsertError) {
+          console.error('Error inserting free subscription:', subInsertError);
+        }
+      }
+
+      // Clear the markers
+      localStorage.removeItem('oauth_role_marker');
+
+      // Routing & Integration APIs
+      if (resolvedType === 'student') {
+        try {
+          const response = await fetch('/api/set-student-account', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Set student account failed:', errorText);
+          }
+        } catch (err) {
+          console.error('Error setting student account:', err);
+        }
+
+        const pendingClaim = localStorage.getItem('pending_student_claim');
+        if (pendingClaim) {
+          try {
+            const response = await fetch('/api/student-portal', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({
+                token: pendingClaim,
+                action: 'claim'
+              })
+            });
+            if (response.ok) {
+              localStorage.removeItem('pending_student_claim');
+            } else {
+              const errorText = await response.text();
+              console.error('Claim request failed:', errorText);
+            }
+          } catch (err) {
+            console.error('Error claiming student token:', err);
+          }
+        }
+
+        window.location.href = '/my-progress';
+      } else {
+        window.location.href = '/dashboard';
+      }
+
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during account provisioning.');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const isVerified = searchParams.get('verified') === '1';
@@ -86,6 +273,38 @@ export default function Auth() {
     } catch (err: any) {
       setError(err.message || 'An error occurred during password reset request.');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setSuccess(null);
+    const pendingClaim = localStorage.getItem('pending_student_claim');
+    
+    let roleMarker = 'undetermined';
+    if (!isLogin) {
+      if (pendingClaim || role === 'student') {
+        roleMarker = 'student';
+      } else if (role === 'cfi') {
+        roleMarker = 'cfi';
+      }
+    }
+    
+    localStorage.setItem('oauth_role_marker', roleMarker);
+    setLoading(true);
+
+    try {
+      const redirectToUrl = `${window.location.origin}/auth?oauth=google`;
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectToUrl,
+        }
+      });
+      if (oauthError) throw oauthError;
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during Google Sign-In.');
       setLoading(false);
     }
   };
@@ -193,6 +412,9 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  const hasClaim = !!searchParams.get('claim');
+  const showGoogleButton = !isResetMode && (isLogin || hasClaim || roleChosen);
 
   return (
     <div
@@ -311,22 +533,26 @@ export default function Auth() {
             </div>
 
             <h2 className="text-2xl font-black text-white">
-              {isLogin ? 'Welcome back' : 'Create account'}
+              {showOauthRolePrompt ? 'One last step' : isLogin ? 'Welcome back' : 'Create account'}
             </h2>
             <p className="text-sm text-white/70 mt-1">
-              {isLogin ? 'Sign in to your CFI dashboard' : 'Start tracking lessons today'}
+              {showOauthRolePrompt ? 'Select your primary role' : isLogin ? 'Sign in to your dashboard' : 'Start tracking lessons today'}
             </p>
           </div>
 
           {/* Tab Toggle */}
-          {!isResetMode && (
+          {!isResetMode && !showOauthRolePrompt && (
             <div className="px-5 sm:px-8 pt-5 sm:pt-6">
               <div
                 className="flex rounded-xl p-1"
                 style={{ backgroundColor: 'var(--bg-tertiary)' }}
               >
                 <button
-                  onClick={() => setIsLogin(true)}
+                  onClick={() => {
+                    setIsLogin(true);
+                    setError(null);
+                    setSuccess(null);
+                  }}
                   className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
                   style={{
                     backgroundColor: isLogin ? 'var(--bg-secondary)' : 'transparent',
@@ -337,7 +563,12 @@ export default function Auth() {
                   Sign In
                 </button>
                 <button
-                  onClick={() => setIsLogin(false)}
+                  onClick={() => {
+                    setIsLogin(false);
+                    setRoleChosen(false);
+                    setError(null);
+                    setSuccess(null);
+                  }}
                   className="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
                   style={{
                     backgroundColor: !isLogin ? 'var(--bg-secondary)' : 'transparent',
@@ -373,7 +604,51 @@ export default function Auth() {
               </div>
             )}
 
-            {isResetMode ? (
+            {showOauthRolePrompt ? (
+              <div className="space-y-6 text-center py-2">
+                <div className="text-left">
+                  <h3 className="text-sm font-bold uppercase tracking-wider block text-left" style={{ color: 'var(--text-muted)' }}>
+                    Complete your profile
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Please select whether you are a Student pilot or a Flight Instructor (CFI). This is a one-time setup for your new account.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOauthRolePrompt(false);
+                      if (oauthSession) {
+                        handleProvisionAndRoute(oauthSession, 'student', true);
+                      }
+                    }}
+                    className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-sm text-center"
+                    style={{ backgroundColor: 'var(--navy)' }}
+                  >
+                    I am a Student Pilot
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOauthRolePrompt(false);
+                      if (oauthSession) {
+                        handleProvisionAndRoute(oauthSession, 'cfi', true);
+                      }
+                    }}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold transition-all border cursor-pointer text-center"
+                    style={{
+                      backgroundColor: 'var(--bg-tertiary)',
+                      borderColor: 'var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    I am a CFI (Instructor)
+                  </button>
+                </div>
+              </div>
+            ) : isResetMode ? (
               <div className="space-y-4">
                 <div className="text-left mb-6">
                   <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -437,7 +712,7 @@ export default function Auth() {
               </div>
             ) : (
               <>
-                {!isLogin && searchParams.get('claim') && (
+                {!isLogin && hasClaim && (
                   <div className="mb-5 p-3.5 rounded-xl border text-xs text-left" style={{ backgroundColor: 'rgba(232, 160, 32, 0.05)', borderColor: 'rgba(232, 160, 32, 0.2)', color: 'var(--text-primary)' }}>
                     <span className="font-bold text-[#e8a020] block mb-0.5">CFI Invite Verified</span>
                     <p style={{ color: 'var(--text-secondary)' }}>
@@ -446,143 +721,200 @@ export default function Auth() {
                   </div>
                 )}
 
-                {!isLogin && !searchParams.get('claim') && (
-                  <div className="mb-5 space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest block text-left" style={{ color: 'var(--text-muted)' }}>
-                      Are you a CFI or a student?
-                    </label>
-                    <div className="flex gap-2">
+                {!isLogin && !hasClaim && !roleChosen ? (
+                  <div className="space-y-4 py-2">
+                    <div className="text-center mb-6">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-left" style={{ color: 'var(--text-muted)' }}>
+                        Choose your path
+                      </h3>
+                      <p className="text-sm font-black text-left mt-1 animate-fadeIn" style={{ color: 'var(--text-primary)' }}>
+                        To get started, tell us if you are a student or a flight instructor.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
                       <button
                         type="button"
-                        onClick={() => setRole('cfi')}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
-                        style={{
-                          backgroundColor: role === 'cfi' ? 'var(--navy)' : 'var(--bg-tertiary)',
-                          borderColor: role === 'cfi' ? 'var(--navy)' : 'var(--border-color)',
-                          color: role === 'cfi' ? '#ffffff' : 'var(--text-primary)',
+                        onClick={() => {
+                          setRole('student');
+                          setRoleChosen(true);
                         }}
+                        className="w-full text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-sm text-center"
+                        style={{ backgroundColor: 'var(--navy)' }}
                       >
-                        CFI (Instructor)
+                        I am a Student Pilot
                       </button>
                       <button
                         type="button"
-                        onClick={() => setRole('student')}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer"
+                        onClick={() => {
+                          setRole('cfi');
+                          setRoleChosen(true);
+                        }}
+                        className="w-full py-4 rounded-xl text-sm font-bold transition-all border cursor-pointer text-center"
                         style={{
-                          backgroundColor: role === 'student' ? 'var(--navy)' : 'var(--bg-tertiary)',
-                          borderColor: role === 'student' ? 'var(--navy)' : 'var(--border-color)',
-                          color: role === 'student' ? '#ffffff' : 'var(--text-primary)',
+                          backgroundColor: 'var(--bg-tertiary)',
+                          borderColor: 'var(--border-color)',
+                          color: 'var(--text-primary)',
                         }}
                       >
-                        Student
+                        I am a Flight Instructor (CFI)
                       </button>
                     </div>
                   </div>
-                )}
-
-                <form onSubmit={handleAuth} className="space-y-4">
-                  {!isLogin && (
-                    <div className="space-y-1.5">
-                      <label
-                        className="text-[10px] font-bold uppercase tracking-widest block text-left"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        Full Name
-                      </label>
-                      <div className="relative">
-                        <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                        <input
-                          type="text"
-                          required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="John Smith CFI"
-                          className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                          style={{
-                            backgroundColor: 'var(--bg-tertiary)',
-                            borderColor: 'var(--border-color)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <label
-                      className="text-[10px] font-bold uppercase tracking-widest block text-left"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      Email
-                    </label>
-                    <div className="relative">
-                      <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                        style={{
-                          backgroundColor: 'var(--bg-tertiary)',
-                          borderColor: 'var(--border-color)',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label
-                      className="text-[10px] font-bold uppercase tracking-widest block text-left"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      Password
-                    </label>
-                    <div className="relative">
-                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
-                        className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
-                        style={{
-                          backgroundColor: 'var(--bg-tertiary)',
-                          borderColor: 'var(--border-color)',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
-                    </div>
-                    {isLogin && (
-                      <div className="text-right pt-1">
+                ) : (
+                  <>
+                    {!isLogin && !hasClaim && roleChosen && (
+                      <div className="flex items-center justify-between p-3.5 rounded-xl border mb-5 text-xs text-left animate-fadeIn" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
+                        <div>
+                          <span className="text-gray-400 font-bold block uppercase tracking-wider text-[9px]">Account Type</span>
+                          <span className="font-extrabold text-[#1a3a5c] dark:text-slate-100">
+                            {role === 'student' ? 'Student Pilot' : 'Flight Instructor (CFI)'}
+                          </span>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setIsResetMode(true);
-                            setError(null);
-                            setSuccess(null);
-                          }}
-                          className="text-xs font-bold hover:underline cursor-pointer"
-                          style={{ color: 'var(--navy)' }}
+                          onClick={() => setRoleChosen(false)}
+                          className="text-xs font-bold underline text-blue-500 hover:text-blue-600 cursor-pointer"
                         >
-                          Forgot password?
+                          Change
                         </button>
                       </div>
                     )}
-                  </div>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
-                    style={{ backgroundColor: 'var(--navy)' }}
-                  >
-                    {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
-                  </button>
-                </form>
+                    <form onSubmit={handleAuth} className="space-y-4">
+                      {!isLogin && (
+                        <div className="space-y-1.5">
+                          <label
+                            className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            Full Name
+                          </label>
+                          <div className="relative">
+                            <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                            <input
+                              type="text"
+                              required
+                              value={fullName}
+                              onChange={(e) => setFullName(e.target.value)}
+                              placeholder={role === 'student' ? 'John Smith' : 'John Smith CFI'}
+                              className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                              style={{
+                                backgroundColor: 'var(--bg-tertiary)',
+                                borderColor: 'var(--border-color)',
+                                color: 'var(--text-primary)'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5">
+                        <label
+                          className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          Email
+                        </label>
+                        <div className="relative">
+                          <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                          <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                            style={{
+                              backgroundColor: 'var(--bg-tertiary)',
+                              borderColor: 'var(--border-color)',
+                              color: 'var(--text-primary)'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label
+                          className="text-[10px] font-bold uppercase tracking-widest block text-left"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          Password
+                        </label>
+                        <div className="relative">
+                          <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                          <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder={isLogin ? '••••••••' : 'At least 6 characters'}
+                            className="w-full text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none transition-all border"
+                            style={{
+                              backgroundColor: 'var(--bg-tertiary)',
+                              borderColor: 'var(--border-color)',
+                              color: 'var(--text-primary)'
+                            }}
+                          />
+                        </div>
+                        {isLogin && (
+                          <div className="text-right pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsResetMode(true);
+                                setError(null);
+                                setSuccess(null);
+                              }}
+                              className="text-xs font-bold hover:underline cursor-pointer"
+                              style={{ color: 'var(--navy)' }}
+                            >
+                              Forgot password?
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-2 text-sm cursor-pointer"
+                        style={{ backgroundColor: 'var(--navy)' }}
+                      >
+                        {loading ? 'Processing...' : isLogin ? 'Sign In →' : 'Create Account →'}
+                      </button>
+                    </form>
+
+                    {showGoogleButton && (
+                      <>
+                        <div className="relative my-4">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t" style={{ borderColor: 'var(--border-color)' }}></div>
+                          </div>
+                          <div className="relative flex justify-center text-xs">
+                            <span className="px-3 text-xs uppercase" style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                              or
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleGoogleSignIn}
+                          disabled={loading}
+                          className="w-full text-xs sm:text-sm font-bold py-3.5 rounded-xl transition-all shadow-sm border flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            borderColor: 'var(--border-color)',
+                            color: 'var(--text-primary)',
+                          }}
+                        >
+                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white text-[12px] font-black font-sans shadow-sm border border-slate-100" style={{ color: '#4285F4' }}>G</span>
+                          Continue with Google
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
               </>
             )}
 
@@ -598,3 +930,4 @@ export default function Auth() {
     </div>
   );
 }
+
