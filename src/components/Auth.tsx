@@ -723,14 +723,6 @@ export default function Auth() {
 
                 {!isLogin && !hasClaim && !roleChosen ? (
                   <div className="space-y-4 py-2">
-                    <div className="text-center mb-6">
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-left" style={{ color: 'var(--text-muted)' }}>
-                        Choose your path
-                      </h3>
-                      <p className="text-sm font-black text-left mt-1 animate-fadeIn" style={{ color: 'var(--text-primary)' }}>
-                        To get started, tell us if you are a student or a flight instructor.
-                      </p>
-                    </div>
                     <div className="flex flex-col gap-3">
                       <button
                         type="button"
@@ -738,10 +730,10 @@ export default function Auth() {
                           setRole('student');
                           setRoleChosen(true);
                         }}
-                        className="w-full text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-sm text-center"
+                        className="w-full text-white font-bold py-4.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-base text-center"
                         style={{ backgroundColor: 'var(--navy)' }}
                       >
-                        I am a Student Pilot
+                        Student
                       </button>
                       <button
                         type="button"
@@ -749,14 +741,10 @@ export default function Auth() {
                           setRole('cfi');
                           setRoleChosen(true);
                         }}
-                        className="w-full py-4 rounded-xl text-sm font-bold transition-all border cursor-pointer text-center"
-                        style={{
-                          backgroundColor: 'var(--bg-tertiary)',
-                          borderColor: 'var(--border-color)',
-                          color: 'var(--text-primary)',
-                        }}
+                        className="w-full text-white font-bold py-4.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer text-base text-center"
+                        style={{ backgroundColor: 'var(--navy)' }}
                       >
-                        I am a Flight Instructor (CFI)
+                        CFI
                       </button>
                     </div>
                   </div>
