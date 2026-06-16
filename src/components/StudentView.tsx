@@ -1321,12 +1321,12 @@ export default function StudentView() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">FTN Number</label>
                           <input
                             type="text"
                             value={profileForm.student_cert_number}
                             onChange={(e) => setProfileForm({ ...profileForm, student_cert_number: e.target.value })}
-                            placeholder="A1234567"
+                            placeholder="1234567"
                             className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
@@ -1508,7 +1508,7 @@ export default function StudentView() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] flex flex-col">
+    <div className="min-h-screen bg-[#f1f5f9] dark:bg-[#0b1329] flex flex-col">
       {/* Read-Only Header */}
       <header className="bg-[#1a3a5c] text-white py-4 px-6 sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -1615,9 +1615,9 @@ export default function StudentView() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl border border-[#dde3ec] p-5 shadow-sm text-left max-w-md ml-auto">
+                <div className="bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] p-5 shadow-sm text-left max-w-md ml-auto">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
+                    <h3 className="text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
                       Link an Instructor
                     </h3>
                     <button
@@ -1627,12 +1627,12 @@ export default function StudentView() {
                         setClaimingSuccess(null);
                         setInstructorCode('');
                       }}
-                      className="text-gray-400 hover:text-gray-600 text-xs font-bold cursor-pointer"
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs font-bold cursor-pointer"
                     >
                       Cancel
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mb-4 font-medium leading-relaxed">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mb-4 font-medium leading-relaxed">
                     Paste the invite code or share link sent by your instructor to link your training profile.
                   </p>
                   <form onSubmit={handleClaimInstructor} className="space-y-3">
@@ -1643,7 +1643,7 @@ export default function StudentView() {
                         value={instructorCode}
                         onChange={(e) => setInstructorCode(e.target.value)}
                         placeholder="Paste share link or code here..."
-                        className="flex-1 text-xs rounded-xl px-4 py-3 border border-[#dde3ec] bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] text-[#1c2333]"
+                        className="flex-1 text-xs rounded-xl px-4 py-3 border border-[#dde3ec] dark:border-[#2a4a6e] bg-gray-50 dark:bg-[#0f1e2e] focus:bg-white dark:focus:bg-[#0f1e2e] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] dark:focus:ring-blue-500 text-[#1c2333] dark:text-slate-100 placeholder-gray-400 dark:placeholder-gray-500"
                         disabled={claimingLoading}
                       />
                       <button
@@ -1655,12 +1655,12 @@ export default function StudentView() {
                       </button>
                     </div>
                     {claimingError && (
-                      <p className="text-xs text-red-600 font-bold mt-1">
+                      <p className="text-xs text-red-600 dark:text-red-400 font-bold mt-1">
                         {claimingError}
                       </p>
                     )}
                     {claimingSuccess && (
-                      <p className="text-xs text-green-600 font-bold mt-1">
+                      <p className="text-xs text-green-600 dark:text-green-400 font-bold mt-1">
                         {claimingSuccess}
                       </p>
                     )}
@@ -1672,26 +1672,26 @@ export default function StudentView() {
 
           {/* Instructor Switcher control, only when more than one profile is linked in authenticated mode */}
           {!token && linkedProfiles && linkedProfiles.length > 1 && (
-            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] p-4 sm:p-5 shadow-sm text-left animate-fadeIn">
-              <h3 className="text-xs font-bold text-[#1a3a5c] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <Users size={14} className="text-[#1a3a5c]" />
+            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] p-4 sm:p-5 shadow-sm text-left animate-fadeIn">
+              <h3 className="text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Users size={14} className="text-[#1a3a5c] dark:text-blue-400" />
                 Switch Training Profile
               </h3>
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 bg-[#f8fafc] border border-[#dde3ec] hover:border-[#cbd5e1] hover:bg-white text-[#1a3a5c] text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm text-left"
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-[#f8fafc] dark:bg-[#0f1e2e] border border-[#dde3ec] dark:border-[#2a4a6e] hover:border-[#cbd5e1] dark:hover:border-blue-500/30 hover:bg-white dark:hover:bg-slate-900/10 text-[#1a3a5c] dark:text-blue-400 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm text-left"
                 >
                   <div className="flex items-center gap-2 overflow-hidden">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
                     <span className="truncate">{activeInstructorName || 'Select Instructor'}</span>
                   </div>
-                  <ChevronDown size={14} className="text-[#1a3a5c] ml-1 shrink-0" />
+                  <ChevronDown size={14} className="text-[#1a3a5c] dark:text-blue-400 ml-1 shrink-0" />
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute left-0 mt-1.5 w-full bg-white border border-[#dde3ec] rounded-2xl shadow-lg z-30 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="absolute left-0 mt-1.5 w-full bg-white dark:bg-[#162440] border border-[#dde3ec] dark:border-[#2a4a6e] rounded-2xl shadow-lg z-30 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
                     <div className="max-h-60 overflow-y-auto">
                       {linkedProfiles.map((p: any) => {
                         const isActive = selectedProfile && 
@@ -1707,13 +1707,13 @@ export default function StudentView() {
                             }}
                             className={`group flex items-center justify-between px-4 py-2.5 text-xs cursor-pointer transition-colors ${
                               isActive 
-                                ? 'bg-[#f0f4f8] font-bold text-[#1a3a5c]' 
-                                : 'hover:bg-slate-50 text-gray-700 hover:text-[#1a3a5c]'
+                                ? 'bg-[#f0f4f8] dark:bg-slate-800/60 font-bold text-[#1a3a5c] dark:text-blue-400' 
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/20 text-gray-700 dark:text-slate-300 hover:text-[#1a3a5c] dark:hover:text-blue-400'
                             }`}
                           >
                             <div className="flex items-center gap-2 overflow-hidden mr-2">
                               {isActive ? (
-                                <Check size={14} className="text-emerald-600 shrink-0" />
+                                <Check size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                               ) : (
                                 <div className="w-3.5 h-3.5 shrink-0" />
                               )}
@@ -1728,7 +1728,7 @@ export default function StudentView() {
                                 setProfilePendingRemoval(p);
                                 setIsDropdownOpen(false);
                               }}
-                              className="p-1 rounded-lg hover:bg-red-50 hover:text-red-600 text-[#94a3b8] cursor-pointer transition-colors shrink-0"
+                              className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 text-[#94a3b8] dark:text-slate-400 cursor-pointer transition-colors shrink-0"
                               title="Remove instructor link"
                             >
                               <XCircle size={14} />
@@ -1746,16 +1746,16 @@ export default function StudentView() {
           {/* Unlink Instructor Confirmation Modal */}
           {profilePendingRemoval && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-slate-900/40">
-              <div className="bg-white rounded-2xl border border-[#dde3ec] max-w-sm w-full p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 text-left">
+              <div className="bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] max-w-sm w-full p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 text-left">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="p-3 bg-red-50 rounded-xl text-red-600 shrink-0">
+                  <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-xl text-red-600 dark:text-red-400 shrink-0">
                     <AlertCircle size={24} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#1a3a5c] mb-1">Unlink Instructor</h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">
+                    <h3 className="text-sm font-bold text-[#1a3a5c] dark:text-blue-400 mb-1">Unlink Instructor</h3>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                       Are you sure you want to remove your link to CFI{' '}
-                      <strong className="text-[#1a3a5c]">
+                      <strong className="text-[#1a3a5c] dark:text-blue-400">
                         {profilePendingRemoval.cfi_name || profilePendingRemoval.student_name || 'this instructor'}
                       </strong>?
                     </p>
@@ -1766,7 +1766,7 @@ export default function StudentView() {
                   <button
                     onClick={() => setProfilePendingRemoval(null)}
                     disabled={removalLoading}
-                    className="px-4 py-2 border border-[#dde3ec] hover:bg-[#f8fafc] text-[#1a3a5c] text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 border border-[#dde3ec] dark:border-[#2a4a6e] hover:bg-[#f8fafc] dark:hover:bg-slate-800 text-[#1a3a5c] dark:text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -1999,12 +1999,12 @@ export default function StudentView() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</label>
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">FTN Number</label>
                           <input
                             type="text"
                             value={profileForm.student_cert_number}
                             onChange={(e) => setProfileForm({ ...profileForm, student_cert_number: e.target.value })}
-                            placeholder="A1234567"
+                            placeholder="1234567"
                             className="w-full text-xs rounded-xl px-4 py-2.5 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c]"
                           />
                         </div>
@@ -2054,13 +2054,13 @@ export default function StudentView() {
                   )}
 
                   {profileSaveSuccess && (
-                    <div className="mt-2 text-xs text-emerald-600 font-bold flex items-center gap-1.5 animate-fadeIn">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>Changes saved successfully!</span>
                     </div>
                   )}
 
-                  <div className="mt-4 p-3 bg-blue-50/50 border border-blue-100 rounded-xl text-[11px] leading-relaxed text-blue-700">
+                  <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl text-[11px] leading-relaxed text-blue-700 dark:text-blue-300">
                     <p>
                       <strong>Note:</strong> Saving will send these details to your currently selected instructor for approval. The instructor's records will update only once they approve the changes.
                     </p>
@@ -2072,14 +2072,14 @@ export default function StudentView() {
 
           {/* Message Your Instructor Section (authenticated mode only) */}
           {!token && (
-            <div className="mb-6 bg-white rounded-2xl border border-[#dde3ec] shadow-sm overflow-hidden text-left p-4 sm:p-5">
+            <div className="mb-6 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden text-left p-4 sm:p-5">
               <div className="flex items-center gap-3 mb-3">
-                <MessageSquare size={18} className="text-[#1a3a5c]" />
+                <MessageSquare size={18} className="text-[#1a3a5c] dark:text-blue-400" />
                 <div>
-                  <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">
+                  <h3 className="text-xs sm:text-xs font-bold text-[#1a3a5c] dark:text-blue-400 uppercase tracking-wider">
                     Message Your Instructor
                   </h3>
-                  <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                  <p className="text-[10px] text-gray-400 dark:text-slate-400 font-medium mt-0.5">
                     Send a note to the instructor whom you currently have selected
                   </p>
                 </div>
@@ -2091,19 +2091,19 @@ export default function StudentView() {
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="Need to request a correction to your records? Or have a question about recent entries? Type your message here..."
                   rows={3}
-                  className="w-full text-xs rounded-xl px-4 py-3 border border-[#dde3ec] bg-white text-[#1c2333] focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] placeholder-gray-400 resize-none"
+                  className="w-full text-xs rounded-xl px-4 py-3 border border-[#dde3ec] dark:border-[#2a4a6e] bg-white dark:bg-[#0f1e2e] text-[#1c2333] dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1a3a5c] dark:focus:ring-blue-500 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
                   disabled={noteSending}
                 />
 
                 {noteError && (
-                  <p className="text-xs text-red-600 font-bold">
+                  <p className="text-xs text-red-600 dark:text-red-400 font-bold">
                     {noteError}
                   </p>
                 )}
 
                 {noteSentSuccess && (
-                  <div className="text-xs text-emerald-600 font-bold flex items-center gap-1.5 animate-fadeIn">
-                    <CheckCircle2 size={14} className="text-emerald-600" />
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
                     <span>Message successfully sent to your instructor!</span>
                   </div>
                 )}
@@ -2134,35 +2134,35 @@ export default function StudentView() {
 
           {/* Student Profile & Quick Stats */}
           <div className="mb-6 sm:mb-8">
-            <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-4 sm:p-8 shadow-sm">
+            <div className="bg-white dark:bg-[#162440] rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] p-4 sm:p-8 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                 <div>
                   {!token && studentProfileName ? (
                     <>
-                      <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentProfileName}</h2>
-                      <p className="text-xs sm:text-sm text-[#64748b] mt-1 font-medium">
+                      <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] dark:text-blue-400 tracking-tight">{studentProfileName}</h2>
+                      <p className="text-xs sm:text-sm text-[#64748b] dark:text-slate-300 mt-1 font-medium">
                         {activeInstructorName ? `Training with ${activeInstructorName}` : 'My Training Progress'}
                       </p>
                     </>
                   ) : !token && activeInstructorName ? (
-                    <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">Training with {activeInstructorName}</h2>
+                    <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] dark:text-blue-400 tracking-tight">Training with {activeInstructorName}</h2>
                   ) : (
-                    <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] tracking-tight">{studentName}'s Training Progress</h2>
+                    <h2 className="text-xl sm:text-3xl font-bold text-[#1a3a5c] dark:text-blue-400 tracking-tight">{studentName}'s Training Progress</h2>
                   )}
-                  <p className="text-[10px] sm:text-sm text-[#64748b] mt-1 font-medium italic">Shared via 61 Tracker · Read-only access</p>
+                  <p className="text-[10px] sm:text-sm text-[#64748b] dark:text-slate-400 mt-1 font-medium italic">Shared via 61 Tracker · Read-only access</p>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   <div className="text-center md:text-left">
-                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-0.5 sm:mb-1">Lessons</p>
-                    <p className="text-lg sm:text-2xl font-black text-[#1a3a5c]">{studentLessons.length}</p>
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] dark:text-slate-400 tracking-widest mb-0.5 sm:mb-1">Lessons</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#1a3a5c] dark:text-slate-100">{studentLessons.length}</p>
                   </div>
                   <div className="text-center md:text-left">
-                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-0.5 sm:mb-1">Total Hours</p>
-                    <p className="text-lg sm:text-2xl font-black text-[#1a3a5c]">{stats.totFlight.toFixed(1)}</p>
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] dark:text-slate-400 tracking-widest mb-0.5 sm:mb-1">Total Hours</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#1a3a5c] dark:text-slate-100">{stats.totFlight.toFixed(1)}</p>
                   </div>
                   <div className="text-center md:text-left hidden lg:block">
-                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-0.5 sm:mb-1">Passing Tasks</p>
-                    <p className="text-lg sm:text-2xl font-black text-[#2d7a4f]">
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] dark:text-slate-400 tracking-widest mb-0.5 sm:mb-1">Passing Tasks</p>
+                    <p className="text-lg sm:text-2xl font-black text-[#2d7a4f] dark:text-emerald-400">
                       {studentLessons.reduce((sum, l) => sum + Object.values(l.grades || {}).filter(g => isPassingGrade(g)).length, 0)}
                     </p>
                   </div>
@@ -2172,7 +2172,7 @@ export default function StudentView() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex sm:flex-wrap gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-white/50 p-1.5 rounded-2xl border border-white/50 w-full sm:w-fit backdrop-blur-sm shadow-sm overflow-x-auto scrollbar-hide shrink-0">
+          <div className="flex sm:flex-wrap gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-white/50 dark:bg-slate-900/40 p-1.5 rounded-2xl border border-white/50 dark:border-slate-800/40 w-full sm:w-fit backdrop-blur-sm shadow-sm overflow-x-auto scrollbar-hide shrink-0">
             {[
               { id: 'schedule', label: 'Schedule', fullLabel: 'Schedule', icon: Calendar },
               { id: 'this-lesson', label: 'Lesson', fullLabel: 'This Lesson', icon: BookOpen },
@@ -2197,8 +2197,8 @@ export default function StudentView() {
                 className={cn(
                   "px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap shrink-0",
                   activeTab === tab.id
-                    ? "bg-[#1a3a5c] text-white shadow-md"
-                    : "text-[#64748b] hover:bg-white hover:text-[#1a3a5c]"
+                    ? "bg-[#1a3a5c] dark:bg-blue-600 text-white shadow-md"
+                    : "text-[#64748b] dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-[#1a3a5c] dark:hover:text-blue-400"
                 )}
               >
                 <tab.icon size={13} className="sm:w-[14px] sm:h-[14px]" />
@@ -2211,7 +2211,7 @@ export default function StudentView() {
           {/* Lesson Selection Pills */}
           {activeTab !== 'schedule' && activeTab !== 'presolo-test' && (
             <div className="mb-8 sm:mb-10 sm:px-4 text-left">
-              <h3 className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] tracking-widest mb-3 sm:mb-4">Lesson History — Tap to view details</h3>
+              <h3 className="text-[8px] sm:text-[10px] font-black uppercase text-[#94a3b8] dark:text-slate-400 tracking-widest mb-3 sm:mb-4">Lesson History — Tap to view details</h3>
               <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 scrollbar-hide">
                 {studentLessons.map((lesson) => (
                   <button
@@ -2220,14 +2220,14 @@ export default function StudentView() {
                     className={cn(
                       "shrink-0 px-6 py-4 rounded-2xl border text-left transition-all min-w-[180px]",
                       selectedLessonId === lesson.id
-                        ? "bg-[#1a3a5c] text-white border-[#1a3a5c] shadow-lg scale-[1.02]"
-                        : "bg-white border-[#dde3ec] text-[#1a3a5c] hover:border-[#1a3a5c]/30 shadow-sm"
+                        ? "bg-[#1a3a5c] dark:bg-blue-600 text-white border-[#1a3a5c] dark:border-blue-600 shadow-lg scale-[1.02]"
+                        : "bg-white dark:bg-[#162440] border-[#dde3ec] dark:border-[#2a4a6e] text-[#1a3a5c] dark:text-blue-400 hover:border-[#1a3a5c]/30 dark:hover:border-blue-500/30 shadow-sm"
                     )}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className={cn(
                         "text-[9px] font-black uppercase px-2 py-0.5 rounded-full",
-                        selectedLessonId === lesson.id ? "bg-white/20 text-white" : "bg-gray-100 text-[#64748b]"
+                        selectedLessonId === lesson.id ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-[#0f1e2e] text-[#64748b] dark:text-slate-300"
                       )}>
                         {lesson.type}
                       </span>
@@ -2240,10 +2240,13 @@ export default function StudentView() {
                         </span>
                       )}
                     </div>
-                    <div className="font-bold text-sm leading-tight mb-2">{lesson.label}</div>
+                    <div className={cn(
+                      "font-bold text-sm leading-tight mb-2",
+                      selectedLessonId === lesson.id ? "text-white" : "text-[#1a3a5c] dark:text-slate-100"
+                    )}>{lesson.label}</div>
                     <div className={cn(
                       "text-[10px] font-medium flex items-center gap-1.5",
-                      selectedLessonId === lesson.id ? "text-white/60" : "text-[#94a3b8]"
+                      selectedLessonId === lesson.id ? "text-white/60" : "text-[#94a3b8] dark:text-slate-400"
                     )}>
                       <Calendar size={10} />
                       {new Date(lesson.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -2264,8 +2267,8 @@ export default function StudentView() {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-8"
                 >
-                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
-                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
+                  <div className="bg-white dark:bg-[#162440] rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] p-5 sm:p-8 shadow-sm">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] dark:text-blue-400 mb-6 flex items-center gap-2">
                       <Calendar className="text-amber-500" size={20} />
                       Upcoming Lessons
                     </h3>
@@ -2293,30 +2296,30 @@ export default function StudentView() {
                           const endTimeStr = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
 
                           return (
-                            <div key={idx} className="flex items-center justify-between p-4 bg-[#f8fafc] rounded-xl border border-[#dde3ec] relative overflow-hidden group hover:border-[#1a3a5c]/30 transition-colors">
+                            <div key={idx} className="flex items-center justify-between p-4 bg-[#f8fafc] dark:bg-[#0f1e2e] rounded-xl border border-[#dde3ec] dark:border-[#2a4a6e] relative overflow-hidden group hover:border-[#1a3a5c]/30 dark:hover:border-blue-500/30 transition-colors">
                               <div 
                                 className="absolute left-0 top-0 bottom-0 w-1.5" 
                                 style={{ backgroundColor: accentColor }}
                               />
                               <div className="flex items-center gap-4 pl-3">
                                 <div className="min-w-[60px]">
-                                  <p className="text-[10px] font-black text-[#1a3a5c] uppercase leading-none mb-1">
+                                  <p className="text-[10px] font-black text-[#1a3a5c] dark:text-blue-400 uppercase leading-none mb-1">
                                     {new Date(lesson.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                   </p>
-                                  <p className="text-xs font-black text-[#64748b]">
+                                  <p className="text-xs font-black text-[#64748b] dark:text-slate-300">
                                     {lesson.start_time.substring(0, 5)} – {endTimeStr}
                                   </p>
                                 </div>
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="px-2 py-0.5 bg-white border border-[#dde3ec] rounded-full text-[9px] font-black text-[#64748b] uppercase tracking-tighter">
+                                    <span className="px-2 py-0.5 bg-white dark:bg-[#162440] border border-[#dde3ec] dark:border-[#2a4a6e] rounded-full text-[9px] font-black text-[#64748b] dark:text-slate-300 uppercase tracking-tighter">
                                       {lesson.lesson_type || (lesson.tail_number === 'GROUND' ? 'Ground' : '')}
                                     </span>
-                                    <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-widest">
+                                    <p className="text-[9px] font-black text-[#94a3b8] dark:text-slate-400 uppercase tracking-widest">
                                       {lesson.tail_number === 'GROUND' ? 'Ground' : lesson.tail_number}
                                     </p>
                                   </div>
-                                  <p className="text-[11px] font-bold text-[#1a3a5c]">{lesson.student_name}</p>
+                                  <p className="text-[11px] font-bold text-[#1a3a5c] dark:text-slate-100">{lesson.student_name}</p>
                                 </div>
                               </div>
                             </div>
@@ -2324,9 +2327,9 @@ export default function StudentView() {
                         })}
                       </div>
                     ) : (
-                      <div className="py-12 bg-[#f8fafc] rounded-2xl border border-dashed border-[#dde3ec] text-center mb-10">
+                      <div className="py-12 bg-[#f8fafc] dark:bg-[#0f1e2e] rounded-2xl border border-dashed border-[#dde3ec] dark:border-slate-800/60 text-center mb-10">
                         <Calendar size={32} className="mx-auto text-[#94a3b8] mb-3 opacity-20" />
-                        <p className="text-xs font-bold text-[#64748b]">
+                        <p className="text-xs font-bold text-[#64748b] dark:text-slate-400">
                           {(token || studentInfo)
                             ? "No upcoming lessons scheduled — use the form below to request one."
                             : "No upcoming lessons scheduled."}
@@ -2335,7 +2338,7 @@ export default function StudentView() {
                     )}
 
                     {(token || studentInfo) && (
-                      <div className="pt-8 border-t border-[#dde3ec]">
+                      <div className="pt-8 border-t border-[#dde3ec] dark:border-[#2a4a6e]">
                         <div className="flex items-center justify-between mb-6">
                         <h3 className="text-sm font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
                           <Calendar size={16} />
@@ -2345,10 +2348,10 @@ export default function StudentView() {
 
                       {requestSubmitted ? (
                         <div className="py-8 text-center flex flex-col items-center gap-3">
-                          <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                          <div className="w-12 h-12 bg-green-100 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center">
                             <CheckCircle2 size={24} />
                           </div>
-                          <p className="text-sm font-bold text-green-700">Request sent — your CFI will confirm the time.</p>
+                          <p className="text-sm font-bold text-green-700 dark:text-green-400">Request sent — your CFI will confirm the time.</p>
                           <button 
                             onClick={() => {
                               setRequestSubmitted(false);
@@ -2362,7 +2365,7 @@ export default function StudentView() {
                       ) : (
                         <div className="space-y-4 max-w-2xl">
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Lesson Type</label>
+                            <label className="text-[10px] font-black text-[#1a3a5c] dark:text-slate-300 uppercase tracking-widest pl-1">Lesson Type</label>
                             <div className="flex gap-2">
                               {['Flight', 'Ground'].map((type) => (
                                 <button
@@ -2372,7 +2375,7 @@ export default function StudentView() {
                                     "flex-1 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer",
                                     lessonRequest.lessonType === type
                                       ? "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20"
-                                      : "bg-white text-[#64748b] border-[#dde3ec] hover:border-[#1a3a5c]/30"
+                                      : "bg-white dark:bg-[#0f1e2e] text-[#64748b] dark:text-slate-300 border-[#dde3ec] dark:border-[#2a4a6e] hover:border-[#1a3a5c]/30 dark:hover:border-blue-500/30"
                                   )}
                                 >
                                   {type}
@@ -2380,12 +2383,12 @@ export default function StudentView() {
                               ))}
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5 relative">
-                              <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Date</label>
+                              <label className="text-[10px] font-black text-[#1a3a5c] dark:text-slate-300 uppercase tracking-widest pl-1">Preferred Date</label>
                               <button 
                                 onClick={() => setIsRequestDatePickerOpen(!isRequestDatePickerOpen)}
-                                className="w-full px-4 py-3 bg-white border border-dashed border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer group"
+                                className="w-full px-4 py-3 bg-white dark:bg-[#0f1e2e] border border-dashed border-[#dde3ec] dark:border-[#2a4a6e] rounded-xl text-xs font-bold text-[#1a3a5c] dark:text-slate-300 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer group"
                               >
                                 <span>
                                   {lessonRequest.date ? new Date(lessonRequest.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Select a date'}
@@ -2399,7 +2402,7 @@ export default function StudentView() {
                                     className="fixed inset-0 z-40" 
                                     onClick={() => setIsRequestDatePickerOpen(false)}
                                   />
-                                  <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl border border-[#dde3ec] shadow-xl z-50 p-4">
+                                  <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-xl z-50 p-4">
                                     <div className="flex items-center justify-between mb-4">
                                       <button 
                                         onClick={() => {
@@ -2407,11 +2410,11 @@ export default function StudentView() {
                                           prev.setMonth(prev.getMonth() - 1);
                                           setRequestPickerMonth(prev);
                                         }}
-                                        className="p-1.5 rounded-lg hover:bg-gray-100 text-amber-500 transition-all cursor-pointer"
+                                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-amber-500 transition-all cursor-pointer"
                                       >
                                         <ChevronLeft size={16} />
                                       </button>
-                                      <div className="text-[10px] font-black uppercase tracking-widest text-[#1a3a5c]">
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-[#1a3a5c] dark:text-blue-400">
                                         {requestPickerMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                                       </div>
                                       <button 
@@ -2420,7 +2423,7 @@ export default function StudentView() {
                                           next.setMonth(next.getMonth() + 1);
                                           setRequestPickerMonth(next);
                                         }}
-                                        className="p-1.5 rounded-lg hover:bg-gray-100 text-amber-500 transition-all cursor-pointer"
+                                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-amber-500 transition-all cursor-pointer"
                                       >
                                         <ChevronRight size={16} />
                                       </button>
@@ -2469,8 +2472,8 @@ export default function StudentView() {
                                                 isSelected 
                                                   ? "bg-amber-500 text-white shadow-md shadow-amber-500/20" 
                                                   : isPast 
-                                                    ? "text-gray-300 cursor-not-allowed" 
-                                                    : "text-[#1a3a5c] hover:bg-amber-50"
+                                                    ? "text-gray-300 dark:text-slate-600 cursor-not-allowed" 
+                                                    : "text-[#1a3a5c] dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800"
                                               )}
                                             >
                                               {d}
@@ -2488,10 +2491,10 @@ export default function StudentView() {
                               )}
                             </div>
                             <div className="space-y-1.5 relative" ref={requestTimePickerRef}>
-                              <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Preferred Time <span className="text-[#94a3b8] font-medium">(Optional)</span></label>
+                              <label className="text-[10px] font-black text-[#1a3a5c] dark:text-slate-300 uppercase tracking-widest pl-1">Preferred Time <span className="text-[#94a3b8] dark:text-slate-400 font-medium">(Optional)</span></label>
                               <button 
                                 onClick={() => setIsRequestTimePickerOpen(!isRequestTimePickerOpen)}
-                                className="w-full px-4 py-3 bg-white border border-dashed border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer group"
+                                className="w-full px-4 py-3 bg-white dark:bg-[#0f1e2e] border border-dashed border-[#dde3ec] dark:border-[#2a4a6e] rounded-xl text-xs font-bold text-[#1a3a5c] dark:text-slate-300 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer group"
                               >
                                 <span>
                                   {lessonRequest.preferredTime ? (() => {
@@ -2505,7 +2508,7 @@ export default function StudentView() {
                               </button>
 
                               {isRequestTimePickerOpen && (
-                                <div className="absolute top-full left-0 mt-2 w-full sm:w-64 bg-white rounded-2xl border border-[#dde3ec] shadow-xl z-50 p-2 flex gap-1">
+                                <div className="absolute top-full left-0 mt-2 w-full sm:w-64 bg-white dark:bg-[#162440] rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-xl z-50 p-2 flex gap-1">
                                   {/* Hours 00-23 */}
                                   <div className="flex-1 h-[200px] overflow-y-auto scrollbar-hide py-1">
                                     {Array.from({ length: 24 }).map((_, h) => {
@@ -2520,7 +2523,7 @@ export default function StudentView() {
                                           }}
                                           className={cn(
                                             "w-full h-10 flex items-center justify-center text-xs font-bold rounded-lg transition-colors cursor-pointer",
-                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] hover:bg-amber-50"
+                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800"
                                           )}
                                         >
                                           {String(h).padStart(2, '0')}
@@ -2529,7 +2532,7 @@ export default function StudentView() {
                                     })}
                                   </div>
                                   {/* Minutes */}
-                                  <div className="flex-1 h-[200px] overflow-y-auto scrollbar-hide py-1 border-l border-r border-[#dde3ec]">
+                                  <div className="flex-1 h-[200px] overflow-y-auto scrollbar-hide py-1 border-l border-r border-[#dde3ec] dark:border-[#2a4a6e]">
                                     {[0, 10, 20, 30, 40, 50].map((m) => {
                                       const currentM = lessonRequest.preferredTime ? parseInt(lessonRequest.preferredTime.split(':')[1]) : 0;
                                       const isSelected = currentM === m;
@@ -2542,7 +2545,7 @@ export default function StudentView() {
                                           }}
                                           className={cn(
                                             "w-full h-10 flex items-center justify-center text-xs font-bold rounded-lg transition-colors cursor-pointer",
-                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] hover:bg-amber-50"
+                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800"
                                           )}
                                         >
                                           {String(m).padStart(2, '0')}
@@ -2568,7 +2571,7 @@ export default function StudentView() {
                                           }}
                                           className={cn(
                                             "w-full h-10 flex items-center justify-center text-xs font-bold rounded-lg transition-colors cursor-pointer",
-                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] hover:bg-amber-50"
+                                            isSelected ? "bg-amber-500 text-white" : "text-[#1a3a5c] dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-800"
                                           )}
                                         >
                                           {p}
@@ -2581,18 +2584,18 @@ export default function StudentView() {
                             </div>
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest pl-1">Notes</label>
+                            <label className="text-[10px] font-black text-[#1a3a5c] dark:text-slate-300 uppercase tracking-widest pl-1">Notes</label>
                             <textarea 
                               placeholder="What would you like to work on?"
                               value={lessonRequest.notes}
                               onChange={(e) => setLessonRequest({ ...lessonRequest, notes: e.target.value })}
                               rows={3}
-                              className="w-full px-4 py-3 bg-white border border-[#dde3ec] rounded-xl text-xs font-bold text-[#1a3a5c] focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all resize-none"
+                              className="w-full px-4 py-3 bg-white dark:bg-[#0f1e2e] border border-[#dde3ec] dark:border-[#2a4a6e] rounded-xl text-xs font-bold text-[#1a3a5c] dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all resize-none"
                             />
                           </div>
 
                           {requestError && (
-                            <p className="text-[10px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100">
+                            <p className="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg border border-red-100 dark:border-red-950/40">
                               {requestError}
                             </p>
                           )}
@@ -2626,7 +2629,7 @@ export default function StudentView() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                 >
-                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] shadow-sm overflow-hidden">
+                  <div className="bg-white dark:bg-[#162440] rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm overflow-hidden">
                     <div className="p-5 sm:p-8 bg-gradient-to-r from-[#1a3a5c] to-[#2a5a8c] text-white">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
@@ -2663,11 +2666,11 @@ export default function StudentView() {
                     <div className="p-5 sm:p-8">
                       {/* Lesson Notes */}
                       {selectedLesson.notes?.[`lesson_notes`] && (
-                        <div className="mb-8 sm:mb-10 bg-[#f8fafc] p-4 sm:p-6 rounded-2xl border border-[#dde3ec] relative">
-                          <div className="absolute -top-3 left-4 sm:left-6 px-3 py-1 bg-white border border-[#dde3ec] rounded-full text-[8px] sm:text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">
+                        <div className="mb-8 sm:mb-10 bg-[#f8fafc] dark:bg-[#0f1e2e] p-4 sm:p-6 rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] relative">
+                          <div className="absolute -top-3 left-4 sm:left-6 px-3 py-1 bg-white dark:bg-[#162440] border border-[#dde3ec] dark:border-[#2a4a6e] rounded-full text-[8px] sm:text-[10px] font-black text-[#1a3a5c] dark:text-blue-400 uppercase tracking-widest">
                             Instructor Comments
                           </div>
-                          <p className="text-xs sm:text-sm text-[#1a3a5c] leading-relaxed italic whitespace-pre-wrap">{selectedLesson.notes[`lesson_notes`]}</p>
+                          <p className="text-xs sm:text-sm text-[#1a3a5c] dark:text-slate-200 leading-relaxed italic whitespace-pre-wrap">{selectedLesson.notes[`lesson_notes`]}</p>
                         </div>
                       )}
 
@@ -2684,12 +2687,12 @@ export default function StudentView() {
                             { label: 'Night', val: selectedLesson.meta.night, unit: 'h' },
                             { label: 'X-Country', fullLabel: 'Cross Country', val: (parseFloat(selectedLesson.meta.xcDual||'0')+parseFloat(selectedLesson.meta.xcSolo||'0')).toFixed(1), unit: 'h' },
                           ].map((s, i) => (
-                            <div key={i} className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#dde3ec] shadow-sm">
-                              <p className="text-[8px] sm:text-[10px] font-black text-[#94a3b8] uppercase tracking-widest mb-0.5 sm:mb-1">
+                            <div key={i} className="bg-white dark:bg-[#192b4d] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm">
+                              <p className="text-[8px] sm:text-[10px] font-black text-[#94a3b8] dark:text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">
                                 <span className="sm:hidden">{s.label}</span>
                                 <span className="hidden sm:inline">{s.fullLabel || s.label}</span>
                               </p>
-                              <p className="text-lg sm:text-xl font-black text-[#1a3a5c]">{s.val || '0'}{s.unit}</p>
+                              <p className="text-lg sm:text-xl font-black text-[#1a3a5c] dark:text-slate-100">{s.val || '0'}{s.unit}</p>
                             </div>
                           ))}
                         </div>
@@ -2698,32 +2701,32 @@ export default function StudentView() {
                       {/* Task Performance Table */}
                       <div className="space-y-4 sm:space-y-6">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-[10px] sm:text-xs font-black text-[#1a3a5c] uppercase tracking-widest flex items-center gap-2">
+                          <h4 className="text-[10px] sm:text-xs font-black text-[#1a3a5c] dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
                              <FileText size={13} className="text-amber-500 sm:w-[14px] sm:h-[14px]" />
                              Task Performance
                           </h4>
-                          <span className="text-[9px] sm:text-[11px] text-[#64748b] font-medium">{Object.keys(selectedLesson.grades || {}).length} tasks graded</span>
+                          <span className="text-[9px] sm:text-[11px] text-[#64748b] dark:text-slate-400 font-medium">{Object.keys(selectedLesson.grades || {}).length} tasks graded</span>
                         </div>
                         
-                        <div className="border border-[#dde3ec] rounded-xl sm:rounded-2xl overflow-hidden divide-y divide-[#dde3ec]">
+                        <div className="border border-[#dde3ec] dark:border-[#2a4a6e] rounded-xl sm:rounded-2xl overflow-hidden divide-y divide-[#dde3ec] dark:divide-[#2a4a6e]">
                           {acsData.map((area, ai) => {
                             const areaTasks = area.tasks.filter((_, ti) => selectedLesson.grades?.[`${ai}_${ti}`]);
                             if (areaTasks.length === 0) return null;
                             return (
-                              <div key={ai} className="bg-white">
-                                <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#f8fafc] flex items-center justify-between">
-                                  <span className="text-[9px] sm:text-[11px] font-black uppercase text-[#64748b] tracking-wider">{area.area}</span>
+                              <div key={ai} className="bg-white dark:bg-[#162440]">
+                                <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#f8fafc] dark:bg-[#0f1e2e] flex items-center justify-between">
+                                  <span className="text-[9px] sm:text-[11px] font-black uppercase text-[#64748b] dark:text-slate-300 tracking-wider">{area.area}</span>
                                 </div>
-                                <div className="divide-y divide-[#f1f5f9]">
+                                <div className="divide-y divide-[#f1f5f9] dark:divide-[#2a4a6e]">
                                   {area.tasks.map((task, ti) => {
                                     const grade = selectedLesson.grades?.[`${ai}_${ti}`];
                                     if (!grade) return null;
                                     const note = selectedLesson.notes?.[`${ai}_${ti}`];
                                     return (
-                                      <div key={ti} className="p-4 sm:p-6 bg-white">
+                                      <div key={ti} className="p-4 sm:p-6 bg-white dark:bg-[#162440]">
                                         <div className="flex items-start justify-between gap-3 sm:gap-4 mb-1 sm:mb-2">
                                           <div>
-                                            <p className="text-[11px] sm:text-xs font-black text-[#1a3a5c]">{task.code}: {task.name}</p>
+                                            <p className="text-[11px] sm:text-xs font-black text-[#1a3a5c] dark:text-slate-100">{task.code}: {task.name}</p>
                                           </div>
                                           <div className={cn(
                                             "shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-white text-[10px] sm:text-xs font-black shadow-sm",
@@ -2733,7 +2736,7 @@ export default function StudentView() {
                                           </div>
                                         </div>
                                         {note && (
-                                          <div className="mt-2 sm:mt-3 p-2.5 sm:p-3 bg-gray-50 rounded-lg sm:rounded-xl border border-gray-100 text-[10px] sm:text-[11px] text-[#475569] leading-relaxed italic">
+                                          <div className="mt-2 sm:mt-3 p-2.5 sm:p-3 bg-gray-50 dark:bg-[#0f1e2e]/55 rounded-lg sm:rounded-xl border border-gray-100 dark:border-[#2a4a6e] text-[10px] sm:text-[11px] text-[#475569] dark:text-slate-300 leading-relaxed italic">
                                             {note}
                                           </div>
                                         )}
@@ -2761,7 +2764,7 @@ export default function StudentView() {
                 >
                   {/* Hours Summary Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                    <div className="md:col-span-3 bg-white p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] shadow-sm">
+                    <div className="md:col-span-3 bg-white dark:bg-[#162440] p-5 sm:p-6 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm">
                        {token && (
                          <>
                            <div className="flex justify-end gap-2 mb-6">
@@ -2781,7 +2784,7 @@ export default function StudentView() {
                          </button>
                          <button
                            onClick={() => window.open('/howto-export', '_blank')}
-                           className="bg-white hover:bg-amber-50 text-amber-600 border border-amber-300 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm"
+                           className="bg-white dark:bg-[#0f1e2e] hover:bg-amber-50 dark:hover:bg-slate-800 text-amber-600 border border-amber-300 dark:border-[#2a4a6e] px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
                          >
                            <HelpCircle size={12} />
                            How To
@@ -2789,7 +2792,7 @@ export default function StudentView() {
                        </div>
                        
                        {showExportConfirm && (
-                         <div className="w-full bg-amber-50 border border-amber-300 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                         <div className="w-full bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-900 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
                            <div className="flex items-start gap-3">
                              <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
                              <p className="text-sm font-bold text-[#1a3a5c]">
@@ -2807,7 +2810,7 @@ export default function StudentView() {
                              </button>
                              <button
                                onClick={() => { setShowExportConfirm(false); setPendingExportLessonIds([]); }}
-                               className="px-4 py-2 bg-white text-amber-600 text-xs font-bold rounded-xl border border-amber-300 hover:bg-amber-50 transition-all"
+                               className="px-4 py-2 bg-white dark:bg-[#0f1e2e] text-amber-600 dark:text-amber-500 text-xs font-bold rounded-xl border border-amber-300 dark:border-amber-900 hover:bg-amber-50 dark:hover:bg-amber-950/25 transition-all cursor-pointer"
                              >
                                Cancel
                              </button>
@@ -2816,7 +2819,7 @@ export default function StudentView() {
                        )}
                        </>
                       )}
-                       <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 flex items-center gap-2">
+                       <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] dark:text-blue-400 mb-6 flex items-center gap-2">
                          <Clock className="text-amber-500" size={20} />
                          <span className="sm:inline hidden">Total Cumulative Training Time</span>
                          <span className="sm:hidden">Total Training Time</span>
@@ -2835,7 +2838,7 @@ export default function StudentView() {
                                <span className="sm:hidden">{s.label.split(' ')[0]}</span>
                                <span className="hidden sm:inline">{s.fullLabel || s.label}</span>
                              </p>
-                             <p className="text-lg sm:text-2xl font-black text-[#1a3a5c]">{s.val}</p>
+                             <p className="text-lg sm:text-2xl font-black text-[#1a3a5c] dark:text-slate-100">{s.val}</p>
                            </div>
                          ))}
                        </div>
@@ -2843,27 +2846,27 @@ export default function StudentView() {
                   </div>
 
                   {/* ACS Performance Tracking */}
-                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
-                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 sm:mb-8 flex items-center gap-2">
+                  <div className="bg-white dark:bg-[#162440] rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] p-5 sm:p-8 shadow-sm">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] dark:text-blue-400 mb-6 sm:mb-8 flex items-center gap-2">
                        <Trophy className="text-amber-500" size={20} />
                        ACS Performance Tracking
                     </h3>
                     
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {acsData.map((area, ai) => (
-                        <div key={ai} className="bg-[#f8fafc] rounded-xl sm:rounded-2xl border border-[#dde3ec] p-4 sm:p-5">
-                          <h4 className="text-[10px] sm:text-xs font-black uppercase text-[#1a3a5c] tracking-widest mb-3 sm:mb-4">{area.area}</h4>
+                        <div key={ai} className="bg-[#f8fafc] dark:bg-[#0f1e2e] rounded-xl sm:rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e] p-4 sm:p-5">
+                          <h4 className="text-[10px] sm:text-xs font-black uppercase text-[#1a3a5c] dark:text-slate-300 tracking-widest mb-3 sm:mb-4">{area.area}</h4>
                           <div className="space-y-2 sm:space-y-3">
                             {area.tasks.map((task, ti) => {
                               const taskId = `${ai}_${ti}`;
                               const gradeInfo = getMostRecentGradeInfo(studentLessons, taskId);
                               return (
-                                <div key={ti} className="flex items-center justify-between gap-3 p-2.5 sm:p-3 bg-white rounded-lg sm:rounded-xl border border-[#dde3ec] shadow-sm">
-                                  <span className="text-[11px] sm:text-xs font-bold text-[#1a3a5c] truncate">{task.code}: {task.name}</span>
+                                <div key={ti} className="flex items-center justify-between gap-3 p-2.5 sm:p-3 bg-white dark:bg-[#162440] rounded-lg sm:rounded-xl border border-[#dde3ec] dark:border-[#2a4a6e] shadow-sm">
+                                  <span className="text-[11px] sm:text-xs font-bold text-[#1a3a5c] dark:text-slate-100 truncate">{task.code}: {task.name}</span>
                                   <div className="flex items-center gap-2 sm:gap-3">
                                     {gradeInfo ? (
                                       <>
-                                        <span className="text-[8px] sm:text-[10px] text-[#94a3b8] font-medium hidden sm:block">Last: {new Date(gradeInfo.date).toLocaleDateString()}</span>
+                                        <span className="text-[8px] sm:text-[10px] text-[#94a3b8] dark:text-slate-400 font-medium hidden sm:block">Last: {new Date(gradeInfo.date).toLocaleDateString()}</span>
                                         <div className={cn(
                                           "w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-white text-[9px] sm:text-[10px] font-black shadow-sm",
                                           gradeDisplayColor(gradeInfo.grade)
@@ -2872,7 +2875,7 @@ export default function StudentView() {
                                         </div>
                                       </>
                                     ) : (
-                                      <span className="text-[9px] font-black uppercase text-gray-200">N/A</span>
+                                      <span className="text-[9px] font-black uppercase text-gray-300 dark:text-slate-600">N/A</span>
                                     )}
                                   </div>
                                 </div>
@@ -2894,14 +2897,14 @@ export default function StudentView() {
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-8"
                 >
-                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
+                  <div className="bg-white dark:bg-[#162440] rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] p-5 sm:p-8 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
                        <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] flex items-center gap-2">
                          <CheckSquare className="text-amber-500" size={20} />
                          <span className="sm:inline hidden">Regulatory Requirements Progress (61.109)</span>
                          <span className="sm:hidden">Checkride Progress</span>
                        </h3>
-                       <div className="w-fit px-3 py-1 bg-[#f8fafc] border border-[#dde3ec] rounded-full text-[8px] sm:text-[10px] font-black text-[#64748b] uppercase tracking-widest">
+                       <div className="w-fit px-3 py-1 bg-[#f8fafc] dark:bg-[#0f1e2e] border border-[#dde3ec] dark:border-[#2a4a6e] rounded-full text-[8px] sm:text-[10px] font-black text-[#64748b] dark:text-slate-300 uppercase tracking-widest">
                          Rating: {selectedLesson?.meta?.rating_code?.toUpperCase() || 'PPL'}
                        </div>
                     </div>
@@ -2945,15 +2948,15 @@ export default function StudentView() {
                             {/* Mobile Requirements Card View */}
                             <div className="sm:hidden space-y-2">
                               {section.rows.map((row: any, i: number) => (
-                                <div key={i} className="bg-[#f8fafc] border border-[#dde3ec] p-3 rounded-xl flex items-center justify-between gap-4">
+                                <div key={i} className="bg-[#f8fafc] dark:bg-[#0f1e2e] border border-[#dde3ec] dark:border-[#2a4a6e] p-3 rounded-xl flex items-center justify-between gap-4">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-bold text-[#1a3a5c] truncate">{row.label}</p>
+                                    <p className="text-[11px] font-bold text-[#1a3a5c] dark:text-slate-100 truncate">{row.label}</p>
                                     <p className="text-[9px] font-black text-[#94a3b8] uppercase tracking-widest">Goal: {row.need}{row.unit}</p>
                                   </div>
                                   <div className="flex items-center gap-3">
                                     <span className={cn(
                                       "text-[10px] font-black px-2 py-1 rounded-full",
-                                      row.have >= row.need ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                                      row.have >= row.need ? "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-300" : "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300"
                                     )}>
                                       {row.have.toFixed(1)}{row.unit}
                                     </span>
@@ -2968,25 +2971,25 @@ export default function StudentView() {
                             </div>
 
                             {/* Desktop Table View */}
-                            <div className="hidden sm:block overflow-hidden border border-[#dde3ec] rounded-2xl">
-                              <table className="min-w-full divide-y divide-[#dde3ec]">
-                                <thead className="bg-[#f8fafc]">
+                            <div className="hidden sm:block overflow-hidden border border-[#dde3ec] dark:border-[#2a4a6e] rounded-2xl">
+                              <table className="min-w-full divide-y divide-[#dde3ec] dark:divide-[#2a4a6e]">
+                                <thead className="bg-[#f8fafc] dark:bg-[#0f1e2e]">
                                   <tr>
-                                    <th className="px-6 py-4 text-left text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Requirement Item</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Minimum</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Current</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#1a3a5c] uppercase tracking-widest">Status</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-[#1a3a5c] dark:text-blue-400 uppercase tracking-widest">Requirement Item</th>
+                                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#1a3a5c] dark:text-blue-400 uppercase tracking-widest">Minimum</th>
+                                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#1a3a5c] dark:text-blue-400 uppercase tracking-widest">Current</th>
+                                    <th className="px-6 py-4 text-center text-[10px] font-black text-[#1a3a5c] dark:text-blue-400 uppercase tracking-widest">Status</th>
                                   </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-[#f1f5f9]">
+                                <tbody className="bg-white dark:bg-[#162440] divide-y divide-[#f1f5f9] dark:divide-[#2a4a6e]">
                                   {section.rows.map((row: any, i: number) => (
-                                    <tr key={i} className="hover:bg-gray-50/50">
-                                      <td className="px-6 py-4 text-sm font-bold text-[#1a3a5c]">{row.label}</td>
-                                      <td className="px-6 py-4 text-center text-[11px] font-black text-[#6b7280]">{row.need}{row.unit}</td>
+                                    <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30">
+                                      <td className="px-6 py-4 text-sm font-bold text-[#1a3a5c] dark:text-slate-100">{row.label}</td>
+                                      <td className="px-6 py-4 text-center text-[11px] font-black text-[#6b7280] dark:text-slate-400">{row.need}{row.unit}</td>
                                       <td className="px-6 py-4 text-center">
                                         <span className={cn(
                                           "text-[11px] font-black px-2 py-1 rounded-full",
-                                          row.have >= row.need ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                                          row.have >= row.need ? "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-300" : "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300"
                                         )}>
                                           {row.have.toFixed(1)}{row.unit}
                                         </span>
@@ -3012,32 +3015,32 @@ export default function StudentView() {
                   </div>
 
                   {/* Endorsements Section */}
-                  <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] p-5 sm:p-8 shadow-sm">
-                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] mb-6 sm:mb-8 flex items-center gap-2">
+                  <div className="bg-white dark:bg-[#162440] rounded-[1.5rem] sm:rounded-[2rem] border border-[#dde3ec] dark:border-[#2a4a6e] p-5 sm:p-8 shadow-sm">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1a3a5c] dark:text-blue-400 mb-6 sm:mb-8 flex items-center gap-2">
                        <Award className="text-amber-500" size={20} />
                        Endorsements Verified
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       {endorsements.filter(e => e.completed).map((e, i) => (
-                        <div key={i} className="p-3 sm:p-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl flex items-center justify-between gap-3">
+                        <div key={i} className="p-3 sm:p-4 bg-[#f0fdf4] dark:bg-green-950/20 border border-[#bbf7d0] dark:border-green-900/40 rounded-xl flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                             <div className="shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white">
                               <Check size={16} />
                             </div>
                             <div className="truncate">
-                               <p className="text-[9px] sm:text-[10px] font-black text-[#166534] uppercase tracking-widest">{e.endorsement_key}</p>
-                               <p className="text-[10px] sm:text-[11px] text-[#166534] font-medium truncate">{e.endorsement_label}</p>
+                               <p className="text-[9px] sm:text-[10px] font-black text-[#166534] dark:text-green-400 uppercase tracking-widest">{e.endorsement_key}</p>
+                               <p className="text-[10px] sm:text-[11px] text-[#166534] dark:text-green-300 font-medium truncate">{e.endorsement_label}</p>
                             </div>
                           </div>
-                          <div className="shrink-0 text-[8px] sm:text-[10px] font-bold text-[#166534]/60 whitespace-nowrap">
+                          <div className="shrink-0 text-[8px] sm:text-[10px] font-bold text-[#166534]/60 dark:text-green-400/60 whitespace-nowrap">
                             {formatDate(e.completed_date || '')}
                           </div>
                         </div>
                       ))}
                       {endorsements.filter(e => e.completed).length === 0 && (
-                        <div className="col-span-full py-10 text-center bg-gray-50 rounded-2xl sm:rounded-[2rem] border border-dashed border-gray-200">
-                          <Award size={28} className="text-gray-300 mx-auto mb-3" />
-                          <p className="text-[11px] sm:text-sm font-medium text-gray-400 italic">No instructor endorsements recorded.</p>
+                        <div className="col-span-full py-10 text-center bg-gray-50 dark:bg-[#0f1e2e]/55 rounded-2xl sm:rounded-[2rem] border border-dashed border-gray-200 dark:border-[#2a4a6e]">
+                          <Award size={28} className="text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+                          <p className="text-[11px] sm:text-sm font-medium text-gray-400 dark:text-slate-400 italic">No instructor endorsements recorded.</p>
                         </div>
                       )}
                     </div>
@@ -3237,9 +3240,9 @@ export default function StudentView() {
         </div>
       </main>
 
-      <footer className="py-8 px-6 text-center bg-white border-t border-[#dde3ec]">
-        <p className="text-sm font-medium text-[#64748b]">
-          Shared by your CFI via <a href="https://61tracker.com" className="text-[#1a3a5c] font-bold hover:underline">61 Tracker</a> · The fastest way to your private pilot certificate.
+      <footer className="py-8 px-6 text-center bg-white dark:bg-[#0b1329] border-t border-[#dde3ec] dark:border-[#2a4a6e]">
+        <p className="text-sm font-medium text-[#64748b] dark:text-slate-400">
+          Shared by your CFI via <a href="https://61tracker.com" className="text-[#1a3a5c] dark:text-blue-400 font-bold hover:underline">61 Tracker</a> · The fastest way to your private pilot certificate.
         </p>
       </footer>
     </div>
