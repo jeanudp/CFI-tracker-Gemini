@@ -754,7 +754,7 @@ export default function Auth() {
                       <div className="flex items-center justify-between p-3.5 rounded-xl border mb-5 text-xs text-left animate-fadeIn" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }}>
                         <div>
                           <span className="text-gray-400 font-bold block uppercase tracking-wider text-[9px]">Account Type</span>
-                          <span className="font-extrabold text-[#1a3a5c] dark:text-slate-100">
+                          <span className="font-extrabold" style={{ color: 'var(--text-primary)' }}>
                             {role === 'student' ? 'Student Pilot' : 'Flight Instructor (CFI)'}
                           </span>
                         </div>
