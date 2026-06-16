@@ -1104,7 +1104,7 @@ export default function StudentView() {
             
             {/* Welcome empty-state */}
             <div className="text-left py-4">
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2333] dark:text-slate-105 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2333] dark:text-slate-100 tracking-tight">
                 Your training dashboard
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-2xl leading-relaxed">
@@ -1154,27 +1154,27 @@ export default function StudentView() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.full_name || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.full_name || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.phone || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.phone || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.dob || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.dob || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_class || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_class || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.student_cert_number || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">FTN Number</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.student_cert_number || '—'}</p>
                         </div>
                       </div>
 
@@ -1191,60 +1191,42 @@ export default function StudentView() {
                         >
                           Edit Profile
                         </button>
-                                   <div className="border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40 my-4" />
+                      </div>
 
-                      <div className="p-4 sm:p-5 bg-gradient-to-br from-[#1a3a5c]/5 to-[#1a3a5c]/10 dark:from-blue-950/20 dark:to-blue-900/10 rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e]/80 space-y-4">
-                        <div className="flex items-start gap-4">
-                          <div className="p-2.5 rounded-xl bg-[#1a3a5c]/10 text-[#1a3a5c] dark:text-blue-400 shrink-0 shadow-sm">
-                            <Award size={20} className="text-amber-500" />
-                          </div>
-                          <div>
-                            <h4 className="text-[#1a3a5c] dark:text-blue-400 text-sm font-black uppercase tracking-wider">
-                              {hasCfiProfile ? 'CFI view' : 'Become a CFI'}
-                            </h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed font-semibold">
-                              {hasCfiProfile 
-                                ? 'Switch to your CFI (instructor) view.'
-                                : "This adds a CFI (instructor) account to your profile and you'll be able to switch freely between your student view and your CFI view at any time — it is not permanent, and it does not remove your student account or your training history."}
-                            </p>
-                          </div>
-                        </div>
+                      <div className="border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40 my-4" />
 
+                      <div className="pt-2">
                         {cfiUpgradeError && (
-                          <div className="p-3 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl">
+                          <div className="p-3 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl mb-3">
                             {cfiUpgradeError}
                           </div>
                         )}
 
-                        {hasCfiProfile ? (
-                          <div className="flex justify-end pt-1">
+                        {!cfiUpgradeConfirm ? (
+                          <div className="flex justify-end">
                             <button
                               type="button"
                               disabled={cfiUpgradeLoading}
-                              onClick={handleSwitchToCFI}
-                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                              onClick={() => {
+                                if (hasCfiProfile) {
+                                  handleSwitchToCFI();
+                                } else {
+                                  setCfiUpgradeConfirm(true);
+                                  setCfiUpgradeError(null);
+                                }
+                              }}
+                              className="text-xs font-bold text-[#1a3a5c] dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1 bg-transparent border-0 p-0 shadow-none disabled:opacity-50"
                             >
                               {cfiUpgradeLoading ? (
                                 <>
                                   <Loader2 size={12} className="animate-spin" />
                                   Switching...
                                 </>
-                              ) : (
+                              ) : hasCfiProfile ? (
                                 'Switch to CFI view'
+                              ) : (
+                                "I'm ready to be a CFI"
                               )}
-                            </button>
-                          </div>
-                        ) : !cfiUpgradeConfirm ? (
-                          <div className="flex justify-end pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCfiUpgradeConfirm(true);
-                                setCfiUpgradeError(null);
-                              }}
-                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
-                            >
-                              Switch to CFI account
                             </button>
                           </div>
                         ) : (
@@ -1258,7 +1240,7 @@ export default function StudentView() {
                                 type="button"
                                 disabled={cfiUpgradeLoading}
                                 onClick={() => setCfiUpgradeConfirm(false)}
-                                className="px-3 py-1.5 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-805 text-gray-700 dark:text-gray-303 text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                className="px-3 py-1.5 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50"
                               >
                                 Cancel
                               </button>
@@ -1280,7 +1262,7 @@ export default function StudentView() {
                             </div>
                           </div>
                         )}
-                      </div>           </div>
+                      </div>
                     </div>
                   ) : (
                     <form onSubmit={handleProfileSave} className="space-y-4">
@@ -1850,27 +1832,27 @@ export default function StudentView() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Full Name</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.full_name || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.full_name || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Phone Number</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.phone || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.phone || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Date of Birth</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.dob || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.dob || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Class</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_class || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_class || '—'}</p>
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Medical Exam Date</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.medical_exam_date || '—'}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">Student Certificate #</p>
-                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-105 mt-0.5">{profileForm.student_cert_number || '—'}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b7280] dark:text-slate-400">FTN Number</p>
+                          <p className="text-xs sm:text-sm font-semibold text-[#1c2333] dark:text-slate-100 mt-0.5">{profileForm.student_cert_number || '—'}</p>
                         </div>
                       </div>
 
@@ -1891,58 +1873,38 @@ export default function StudentView() {
 
                       <div className="border-t border-[#dde3ec]/60 dark:border-[#2a4a6e]/40 my-4" />
 
-                      <div className="p-4 sm:p-5 bg-gradient-to-br from-[#1a3a5c]/5 to-[#1a3a5c]/10 dark:from-blue-950/20 dark:to-blue-900/10 rounded-2xl border border-[#dde3ec] dark:border-[#2a4a6e]/80 space-y-4">
-                        <div className="flex items-start gap-4">
-                          <div className="p-2.5 rounded-xl bg-[#1a3a5c]/10 text-[#1a3a5c] dark:text-blue-400 shrink-0 shadow-sm">
-                            <Award size={20} className="text-amber-500" />
-                          </div>
-                          <div>
-                            <h4 className="text-[#1a3a5c] dark:text-blue-400 text-sm font-black uppercase tracking-wider">
-                              {hasCfiProfile ? 'CFI view' : 'Become a CFI'}
-                            </h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed font-semibold">
-                              {hasCfiProfile 
-                                ? 'Switch to your CFI (instructor) view.'
-                                : "This adds a CFI (instructor) account to your profile and you'll be able to switch freely between your student view and your CFI view at any time — it is not permanent, and it does not remove your student account or your training history."}
-                            </p>
-                          </div>
-                        </div>
-
+                      <div className="pt-2">
                         {cfiUpgradeError && (
-                          <div className="p-3 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl">
+                          <div className="p-3 text-xs bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl mb-3">
                             {cfiUpgradeError}
                           </div>
                         )}
 
-                        {hasCfiProfile ? (
-                          <div className="flex justify-end pt-1">
+                        {!cfiUpgradeConfirm ? (
+                          <div className="flex justify-end">
                             <button
                               type="button"
                               disabled={cfiUpgradeLoading}
-                              onClick={handleSwitchToCFI}
-                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                              onClick={() => {
+                                if (hasCfiProfile) {
+                                  handleSwitchToCFI();
+                                } else {
+                                  setCfiUpgradeConfirm(true);
+                                  setCfiUpgradeError(null);
+                                }
+                              }}
+                              className="text-xs font-bold text-[#1a3a5c] dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1 bg-transparent border-0 p-0 shadow-none disabled:opacity-50"
                             >
                               {cfiUpgradeLoading ? (
                                 <>
                                   <Loader2 size={12} className="animate-spin" />
                                   Switching...
                                 </>
-                              ) : (
+                              ) : hasCfiProfile ? (
                                 'Switch to CFI view'
+                              ) : (
+                                "I'm ready to be a CFI"
                               )}
-                            </button>
-                          </div>
-                        ) : !cfiUpgradeConfirm ? (
-                          <div className="flex justify-end pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCfiUpgradeConfirm(true);
-                                setCfiUpgradeError(null);
-                              }}
-                              className="px-4 py-2.5 bg-[#1a3a5c] hover:bg-[#2a5a8c] dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
-                            >
-                              Switch to CFI account
                             </button>
                           </div>
                         ) : (
@@ -3138,7 +3100,7 @@ export default function StudentView() {
                           <div className="text-3xl sm:text-4xl font-black text-[#1a3a5c]">
                             {PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length} / {PRE_SOLO_TEST_QUESTIONS.length}
                           </div>
-                          <div className="text-sm font-semibold text-gray-650">
+                          <div className="text-sm font-semibold text-gray-600">
                             Score: {Math.round((PRE_SOLO_TEST_QUESTIONS.filter(q => testAnswers[q.id] === q.correct).length / PRE_SOLO_TEST_QUESTIONS.length) * 100)}%
                           </div>
                           <div className="pt-2">
@@ -3235,7 +3197,7 @@ export default function StudentView() {
                         {/* Submit Section */}
                         <div className="pt-8 border-t border-[#dde3ec] flex flex-col items-center gap-4">
                           {testSubmitError && (
-                            <div className="text-red-650 text-xs font-semibold flex items-center gap-1.5 bg-red-50 px-4 py-2 rounded-xl border border-red-100">
+                            <div className="text-red-600 text-xs font-semibold flex items-center gap-1.5 bg-red-50 px-4 py-2 rounded-xl border border-red-100">
                               <AlertCircle size={14} /> {testSubmitError}
                             </div>
                           )}
