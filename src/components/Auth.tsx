@@ -152,15 +152,19 @@ export default function Auth() {
 
       // If brand-new, insert standard free-plan row
       if (isBrandNew) {
+        const insertPayload: any = {
+          user_id: user.id,
+          email: emailVal,
+          plan: 'free',
+          ratings_unlocked: ['ppl'],
+          status: 'active'
+        };
+        if (resolvedType === 'student') {
+          insertPayload.account_type = 'student';
+        }
         const { error: subInsertError } = await supabase
           .from('user_subscriptions')
-          .insert({
-            user_id: user.id,
-            email: emailVal,
-            plan: 'free',
-            ratings_unlocked: ['ppl'],
-            status: 'active'
-          });
+          .insert(insertPayload);
         if (subInsertError) {
           console.error('Error inserting free subscription:', subInsertError);
         }
