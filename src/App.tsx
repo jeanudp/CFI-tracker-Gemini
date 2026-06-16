@@ -182,6 +182,7 @@ export default function App() {
     const userId = session?.user?.id;
     if (userId) {
       setAccountType('not-yet-determined');
+      setShowOnboarding(false);
       
       const fetchUserData = async () => {
         try {
@@ -190,14 +191,14 @@ export default function App() {
             .select('id')
             .eq('user_id', userId)
             .maybeSingle();
-          
-          setShowOnboarding(!profile);
 
           const { data: sub, error } = await supabase
             .from('user_subscriptions')
             .select('account_type')
             .eq('user_id', userId)
             .maybeSingle();
+
+          let resolvedType: 'instructor' | 'student' = 'instructor';
 
           if (error || !sub || !sub.account_type) {
             const userMetadata = session?.user?.user_metadata;
@@ -213,15 +214,24 @@ export default function App() {
               } catch (err) {
                 console.error('Error setting student account from metadata:', err);
               }
-              setAccountType('student');
+              resolvedType = 'student';
             } else {
-              setAccountType('instructor');
+              resolvedType = 'instructor';
             }
           } else {
-            setAccountType(sub.account_type === 'student' ? 'student' : 'instructor');
+            resolvedType = sub.account_type === 'student' ? 'student' : 'instructor';
+          }
+
+          setAccountType(resolvedType);
+
+          if (resolvedType === 'instructor' && !profile) {
+            setShowOnboarding(true);
+          } else {
+            setShowOnboarding(false);
           }
         } catch (err) {
           setAccountType('instructor');
+          setShowOnboarding(false);
         }
       };
 
