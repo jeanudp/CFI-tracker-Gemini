@@ -1618,20 +1618,20 @@ export default function Schedule() {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 sm:px-6 py-6">
+      <main className="flex-1 px-4 sm:px-6 py-3 sm:py-6">
 
         {/* Date Navigation Bar */}
         <div 
-          className="relative z-[50] flex items-center justify-between p-2 rounded-2xl border mb-6"
+          className="relative z-[50] flex items-center justify-between p-1 sm:p-2 rounded-2xl border mb-3 sm:mb-6"
           style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
         >
           <div className="flex items-center gap-1">
             <button 
               onClick={handlePrevDay}
-              className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+              className="p-1 sm:p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
               style={{ color: 'var(--text-primary)' }}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
@@ -1642,13 +1642,13 @@ export default function Schedule() {
                   setIsDatePickerOpen(!isDatePickerOpen);
                   setPickerMonth(new Date(selectedDate));
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)]/50 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-4 sm:py-2 rounded-xl bg-[var(--bg-tertiary)]/50 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
               >
-                <Calendar size={14} style={{ color: 'var(--navy)' }} />
-                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" style={{ color: 'var(--navy)' }} />
+                <span className="text-xs sm:text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                   {formatDateNav(selectedDate)}
                 </span>
-                <ChevronDown size={12} className={cn("transition-transform duration-200", isDatePickerOpen && "rotate-180")} style={{ color: 'var(--text-muted)' }} />
+                <ChevronDown className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200", isDatePickerOpen && "rotate-180")} style={{ color: 'var(--text-muted)' }} />
               </button>
 
               <DatePickerDropdown 
@@ -1669,7 +1669,7 @@ export default function Schedule() {
               onClick={handleToday}
               disabled={isToday(selectedDate)}
               className={cn(
-                "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                "px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                 isToday(selectedDate) 
                   ? "opacity-50 grayscale cursor-not-allowed" 
                   : "bg-[var(--navy)] text-white hover:shadow-md cursor-pointer"
@@ -1679,10 +1679,10 @@ export default function Schedule() {
             </button>
             <button 
               onClick={handleNextDay}
-              className="p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
+              className="p-1 sm:p-2 rounded-xl hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
               style={{ color: 'var(--text-primary)' }}
             >
-              <ChevronRight size={20} />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -1698,14 +1698,14 @@ export default function Schedule() {
               {/* Grid Header */}
               <div className="flex border-b" style={{ borderColor: 'var(--border-color)' }}>
                 {/* Corner Cell */}
-                <div className="w-48 sticky left-0 z-20 shrink-0 p-4 font-black text-[10px] uppercase tracking-[0.2em] border-r flex items-center gap-2"
+                <div className="w-32 sm:w-48 sticky left-0 z-20 shrink-0 p-2 sm:p-4 font-black text-[10px] uppercase tracking-[0.2em] border-r flex items-center gap-2"
                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}>
                   <Plane size={14} style={{ color: 'var(--navy)' }} />
                   Aircraft
                 </div>
                 {/* Hour Headers */}
                 {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                  <div key={hour} className="w-24 shrink-0 p-4 text-center border-r last:border-r-0 flex flex-col items-center justify-center gap-0.5"
+                  <div key={hour} className="w-24 shrink-0 p-2 sm:p-4 text-center border-r last:border-r-0 flex flex-col items-center justify-center gap-0.5"
                        style={{ borderColor: 'var(--border-color)' }}>
                     <span className="text-[10px] font-black" style={{ color: 'var(--text-primary)' }}>
                       {hour.toString().padStart(2, '0')}:00
@@ -1720,14 +1720,14 @@ export default function Schedule() {
               {/* Ground Row */}
               <div className="flex border-b group/row" style={{ borderColor: 'var(--border-color)' }}>
                 {/* Aircraft Cell */}
-                <div className="w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                <div className="w-32 sm:w-48 sticky left-0 z-20 shrink-0 p-2 sm:p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                   <span className="text-xs font-black" style={{ color: 'var(--navy)' }}>GROUND</span>
                   <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Instruction / Briefing</span>
                 </div>
                 
                 {/* Timeline */}
-                <div className="flex relative items-stretch h-24">
+                <div className="flex relative items-stretch h-16 sm:h-24">
                   {/* Hour Grid Lines */}
                   {Array.from({ length: 24 }, (_, i) => i).map(hour => (
                     <div 
@@ -1842,7 +1842,7 @@ export default function Schedule() {
 
               {/* Grid Rows */}
               {loading ? (
-                <div className="p-20 flex flex-col items-center justify-center gap-4">
+                <div className="p-8 sm:p-20 flex flex-col items-center justify-center gap-4">
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -1852,7 +1852,7 @@ export default function Schedule() {
                   <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>Synchronizing Schedule...</p>
                 </div>
               ) : aircraft.length === 0 ? (
-                <div className="p-20 text-center flex flex-col items-center justify-center">
+                <div className="p-8 sm:p-20 text-center flex flex-col items-center justify-center">
                   <div className="w-16 h-16 rounded-3xl bg-[var(--bg-tertiary)] flex items-center justify-center mb-4">
                     <Plane size={32} className="opacity-20" />
                   </div>
@@ -1875,7 +1875,7 @@ export default function Schedule() {
                         style={{ borderColor: 'var(--border-color)' }}
                       >
                         {/* Aircraft Cell */}
-                        <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                        <div className="relative w-32 sm:w-48 sticky left-0 z-20 shrink-0 p-2 sm:p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className={cn("text-xs font-black", isDown ? "text-red-500 dark:text-red-400" : "text-[var(--text-primary)]")}>
@@ -1940,7 +1940,7 @@ export default function Schedule() {
                       
                       {/* Timeline */}
                       <div className={cn(
-                        "flex relative items-stretch h-24",
+                        "flex relative items-stretch h-16 sm:h-24",
                         isDown && "bg-red-500/[0.015]"
                       )}>
                         {/* Hour Grid Lines */}
@@ -2122,7 +2122,7 @@ export default function Schedule() {
                         style={{ borderColor: 'var(--border-color)' }}
                       >
                         {/* Aircraft Cell */}
-                        <div className="relative w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
+                        <div className="relative w-32 sm:w-48 sticky left-0 z-20 shrink-0 p-2 sm:p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                              style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className={cn("text-xs font-black", isDown ? "text-red-500 dark:text-red-400" : "text-[var(--text-primary)]")}>
@@ -2162,7 +2162,7 @@ export default function Schedule() {
                       </div>
                       
                       {/* Timeline (Non-interactive) */}
-                      <div className="flex relative items-stretch h-24">
+                      <div className="flex relative items-stretch h-16 sm:h-24">
                         {/* Hour Grid Lines */}
                         {Array.from({ length: 24 }, (_, i) => i).map(hour => (
                           <div 
@@ -2281,29 +2281,28 @@ export default function Schedule() {
               {!loading && (
                 <div className="flex group/row" style={{ borderColor: 'var(--border-color)' }}>
                   <div 
-                    className="w-48 sticky left-0 z-20 shrink-0 p-4 border-r flex items-center justify-center transition-colors hover:bg-[var(--bg-tertiary)]"
+                    className="w-32 sm:w-48 sticky left-0 z-20 shrink-0 p-2 sm:p-4 border-r flex items-center justify-center transition-colors hover:bg-[var(--bg-tertiary)]"
                     style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
                   >
                     <button
                       onClick={() => setIsAddAircraftOpen(true)}
-                      className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] cursor-pointer hover:text-[var(--navy)] transition-colors"
+                      className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-[8px] sm:text-[9px] text-center font-black uppercase tracking-wider sm:tracking-widest text-[var(--text-muted)] cursor-pointer hover:text-[var(--navy)] transition-colors"
                     >
                       <Plus size={12} />
                       Add Aircraft
                     </button>
                   </div>
                   {/* Empty space for the timeline part of the row */}
-                  <div className="flex h-12" />
+                  <div className="flex h-8 sm:h-12" />
                 </div>
               )}
 
               {/* Current Time Indicator */}
               {isToday(selectedDate) && (
                 <div 
-                  className="absolute top-0 bottom-0 w-[2px] bg-[#ef4444] z-20 pointer-events-none"
+                  className="absolute top-0 bottom-0 w-[2px] bg-[#ef4444] z-20 pointer-events-none ml-32 sm:ml-48"
                   style={{ 
-                    left: `${(currentTime.getHours() + currentTime.getMinutes() / 60) * 96}px`,
-                    marginLeft: '192px' 
+                    left: `${(currentTime.getHours() + currentTime.getMinutes() / 60) * 96}px`
                   }}
                 >
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#ef4444]" />
