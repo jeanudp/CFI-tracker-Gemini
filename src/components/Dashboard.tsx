@@ -1905,7 +1905,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setMaydayOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="w-9 h-9 hidden sm:flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
               style={{ 
                 background: 'var(--navy)'
               }}
@@ -1915,7 +1915,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="w-9 h-9 hidden sm:flex items-center justify-center rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-md"
               style={{ 
                 background: 'var(--navy)'
               }}
@@ -1927,7 +1927,7 @@ export default function Dashboard() {
 
           </div>
           {user && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {reExpWarning !== null && reExpWarning <= 90 && (
                 <button 
                   onClick={() => setShowReExpModal(true)}
@@ -1940,7 +1940,7 @@ export default function Dashboard() {
                   <span>{reExpWarning < 0 ? "CFI Exp" : `Expiring ${reExpWarning}d`}</span>
                 </button>
               )}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setIsUserMenuOpen(prev => !prev)}
                   className={cn(
@@ -4115,6 +4115,25 @@ export default function Dashboard() {
                   </button>
                 </div>
               )}
+
+              <div className="py-1 border-t sm:hidden" style={{ borderColor: 'var(--border-color)' }}>
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); setDarkMode(!darkMode); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer text-left"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {darkMode ? <Sun size={14} style={{ color: 'var(--navy)' }} /> : <Moon size={14} style={{ color: 'var(--navy)' }} />}
+                  <span>Toggle dark mode</span>
+                </button>
+                <button
+                  onClick={() => { setIsUserMenuOpen(false); setMaydayOpen(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer text-left"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  <Headset size={14} style={{ color: 'var(--navy)' }} />
+                  <span>Report a problem</span>
+                </button>
+              </div>
 
               <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
                 <button

@@ -159,7 +159,7 @@ export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
         style={style || { borderColor: 'var(--border-color)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
       >
         <Calendar size={14} />
-        <span className={className ? "" : "hidden sm:inline"}>Schedule</span>
+        <span className="hidden sm:inline">Schedule</span>
       </Link>
     );
   }
@@ -178,7 +178,7 @@ export default function ScheduleMenu({ className, style }: ScheduleMenuProps) {
           }}
         >
           <Calendar size={14} />
-          <span className={className ? "" : "hidden sm:inline"}>Schedule</span>
+          <span className="hidden sm:inline">Schedule</span>
           <ChevronDown size={12} className={cn("transition-transform", scheduleOpen && "rotate-180")} />
         </button>
 
