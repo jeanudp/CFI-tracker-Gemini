@@ -187,6 +187,48 @@ export default function Dashboard() {
   const [isQuickWeatherOpen, setIsQuickWeatherOpen] = useState(false);
   const [shareModalData, setShareModalData] = useState<{ url: string, studentName: string } | null>(null);
 
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
+  const [showIOSInstallModal, setShowIOSInstallModal] = useState(false);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isS = window.matchMedia('(display-mode: standalone)').matches ||
+                  (window.navigator as any).standalone === true;
+      setIsStandalone(isS);
+    };
+    checkStandalone();
+
+    const ua = window.navigator.userAgent;
+    const isIP = /iPhone|iPad|iPod/i.test(ua) || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    setIsIOS(isIP);
+    const isSafariCheck = /Safari/i.test(ua) && !/Chrome|CriOS|FxiOS|OPiOS|mercury|android/i.test(ua);
+    setIsSafari(isSafariCheck);
+
+    if ((window as any).deferredPrompt) {
+      setDeferredPrompt((window as any).deferredPrompt);
+    }
+
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
   const [hasStudentLink, setHasStudentLink] = useState(false);
   const [switchingView, setSwitchingView] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
@@ -4135,6 +4177,30 @@ export default function Dashboard() {
                 </button>
               </div>
 
+              {(!isStandalone && (isIOS ? isSafari : !!deferredPrompt)) && (
+                <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                  <button
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      if (isIOS) {
+                        setShowIOSInstallModal(true);
+                      } else if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult: any) => {
+                          (window as any).deferredPrompt = null;
+                          setDeferredPrompt(null);
+                        });
+                      }
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer text-left"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    <Phone size={14} style={{ color: 'var(--navy)' }} />
+                    <span>Add to Home Screen</span>
+                  </button>
+                </div>
+              )}
+
               <div className="py-1 border-t" style={{ borderColor: 'var(--border-color)' }}>
                 <button
                   onClick={() => { setIsUserMenuOpen(false); handleSignOut(); }}
@@ -4573,6 +4639,80 @@ export default function Dashboard() {
                   style={{ backgroundColor: 'var(--navy)', boxShadow: '0 4px 12px rgba(26,58,92,0.3)' }}
                 >
                   Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* iOS Add to Home Screen Instructions Modal */}
+      <AnimatePresence>
+        {showIOSInstallModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowIOSInstallModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10"
+              style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+            >
+              <div className="p-6 border-b flex items-center justify-between shrink-0" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(26,58,92,0.1)' }}>
+                    <Plus size={16} style={{ color: 'var(--navy)' }} />
+                  </div>
+                  <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Add to Home Screen</h3>
+                </div>
+                <button
+                  onClick={() => setShowIOSInstallModal(false)}
+                  className="w-8 h-8 rounded-full hover:bg-[var(--bg-tertiary)] flex items-center justify-center transition-colors cursor-pointer"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-4">
+                  <div className="flex gap-3 items-start">
+                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">1</div>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                      Tap the <strong className="font-semibold text-[var(--navy)]">Share</strong> button at the bottom of Safari (usually looks like a box with an up arrow).
+                    </p>
+                  </div>
+                  <div className="flex gap-3 items-start">
+                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">2</div>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                      Scroll down or swipe, then choose <strong className="font-semibold text-[var(--navy)]">Add to Home Screen</strong>.
+                    </p>
+                  </div>
+                  <div className="flex gap-3 items-start">
+                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">3</div>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                      Tap <strong className="font-semibold text-[var(--navy)]">Add</strong> in the top right corner.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-dashed text-[11px] leading-relaxed" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}>
+                  <span className="font-semibold text-amber-600 block mb-0.5">Safari Required</span>
+                  This works in <strong className="font-semibold text-[var(--text-primary)]">Safari</strong> browser. If you opened this app via Chrome, Firefox, or in-app custom browsers, please open link in Safari to install.
+                </div>
+
+                <button
+                  onClick={() => setShowIOSInstallModal(false)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer text-center"
+                  style={{ backgroundColor: 'var(--navy)' }}
+                >
+                  Got it
                 </button>
               </div>
             </motion.div>
