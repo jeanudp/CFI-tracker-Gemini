@@ -133,6 +133,25 @@ const DatePickerDropdown = memo(({
 
 export default function Schedule() {
   const navigate = useNavigate();
+  const [hourWidth, setHourWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 640 ? 56 : 96;
+    }
+    return 96;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setHourWidth(window.innerWidth < 640 ? 56 : 96);
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [aircraft, setAircraft] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -369,13 +388,13 @@ export default function Schedule() {
     if (scrollContainerRef.current) {
       if (isToday(selectedDate)) {
         const currentHour = new Date().getHours();
-        const scrollPos = Math.max(0, (currentHour - 1) * 96);
+        const scrollPos = Math.max(0, (currentHour - 1) * hourWidth);
         scrollContainerRef.current.scrollLeft = scrollPos;
       } else {
-        scrollContainerRef.current.scrollLeft = 6 * 96;
+        scrollContainerRef.current.scrollLeft = 6 * hourWidth;
       }
     }
-  }, [selectedDate]);
+  }, [selectedDate, hourWidth]);
 
   useEffect(() => {
     fetchScheduleData();
@@ -990,7 +1009,7 @@ export default function Schedule() {
     e.preventDefault();
     const cellRect = e.currentTarget.getBoundingClientRect();
     const offsetX = (e.clientX - dragOffsetX) - cellRect.left;
-    const minutesInHour = Math.round((offsetX / 96 * 60) / 10) * 10;
+    const minutesInHour = Math.round((offsetX / hourWidth * 60) / 10) * 10;
     const totalMinutes = hour * 60 + minutesInHour;
     
     const clampedMinutes = Math.max(0, Math.min(1430, totalMinutes));
@@ -1004,7 +1023,7 @@ export default function Schedule() {
     e.preventDefault();
     const cellRect = e.currentTarget.getBoundingClientRect();
     const offsetX = (e.clientX - dragOffsetX) - cellRect.left;
-    const minutesInHour = Math.round((offsetX / 96 * 60) / 10) * 10;
+    const minutesInHour = Math.round((offsetX / hourWidth * 60) / 10) * 10;
     const totalMinutes = hour * 60 + minutesInHour;
     
     const clampedMinutes = Math.max(0, Math.min(1430, totalMinutes));
@@ -1705,8 +1724,8 @@ export default function Schedule() {
                 </div>
                 {/* Hour Headers */}
                 {Array.from({ length: 24 }, (_, i) => i).map(hour => (
-                  <div key={hour} className="w-24 shrink-0 p-2 sm:p-4 text-center border-r last:border-r-0 flex flex-col items-center justify-center gap-0.5"
-                       style={{ borderColor: 'var(--border-color)' }}>
+                  <div key={hour} className="shrink-0 p-2 sm:p-4 text-center border-r last:border-r-0 flex flex-col items-center justify-center gap-0.5"
+                       style={{ borderColor: 'var(--border-color)', width: `${hourWidth}px` }}>
                     <span className="text-[10px] font-black" style={{ color: 'var(--text-primary)' }}>
                       {hour.toString().padStart(2, '0')}:00
                     </span>
@@ -1722,8 +1741,8 @@ export default function Schedule() {
                 {/* Aircraft Cell */}
                 <div className="w-32 sm:w-48 sticky left-0 z-20 shrink-0 p-2 sm:p-4 border-r flex flex-col justify-center gap-0.5 shadow-[2px_0_8px_rgba(0,0,0,0.02)]"
                      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
-                  <span className="text-xs font-black" style={{ color: 'var(--navy)' }}>GROUND</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Instruction / Briefing</span>
+                   <span className="text-xs font-black" style={{ color: 'var(--navy)' }}>GROUND</span>
+                   <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Instruction / Briefing</span>
                 </div>
                 
                 {/* Timeline */}
@@ -1732,8 +1751,8 @@ export default function Schedule() {
                   {Array.from({ length: 24 }, (_, i) => i).map(hour => (
                     <div 
                       key={hour} 
-                      className="w-24 border-r last:border-r-0 relative cursor-pointer"
-                      style={{ borderColor: 'var(--border-color)' }}
+                      className="border-r last:border-r-0 relative cursor-pointer shrink-0"
+                      style={{ borderColor: 'var(--border-color)', width: `${hourWidth}px` }}
                       onClick={() => openNewBooking(hour, 'GROUND')}
                       onDragOver={(e) => handleDragOver(e, hour, 'GROUND')}
                       onDrop={(e) => handleDrop(e, hour, 'GROUND')}
@@ -1807,8 +1826,8 @@ export default function Schedule() {
                             isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
                           )}
                           style={{ 
-                            left: `${startDecimal * 96}px`, 
-                            width: `${(lesson.duration_hours || 0) * 96}px`,
+                            left: `${startDecimal * hourWidth}px`, 
+                            width: `${(lesson.duration_hours || 0) * hourWidth}px`,
                             backgroundColor: color
                           }}
                         >
@@ -1818,12 +1837,12 @@ export default function Schedule() {
                           <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                             {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : "GND"}
                           </span>
-                          {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                          {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * hourWidth > 80 && (
                             <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
                               {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
                             </span>
                           )}
-                          {(lesson.duration_hours || 0) * 96 > 80 && (
+                          {(lesson.duration_hours || 0) * hourWidth > 80 && (
                             <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
                               {formatDuration(lesson.duration_hours || 0)}
                             </span>
@@ -1948,10 +1967,10 @@ export default function Schedule() {
                           <div 
                             key={hour} 
                             className={cn(
-                              "w-24 border-r last:border-r-0 relative",
+                              "border-r last:border-r-0 relative shrink-0",
                               isDown ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                             )}
-                            style={{ borderColor: 'var(--border-color)' }}
+                            style={{ borderColor: 'var(--border-color)', width: `${hourWidth}px` }}
                             onClick={() => {
                               if (isDown) {
                                 alert(`Aircraft ${ac.tail_number} is down for maintenance and cannot be booked.`);
@@ -2037,8 +2056,8 @@ export default function Schedule() {
                                   isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
                                 )}
                                 style={{ 
-                                  left: `${startDecimal * 96}px`, 
-                                  width: `${(lesson.duration_hours || 0) * 96}px`,
+                                  left: `${startDecimal * hourWidth}px`, 
+                                  width: `${(lesson.duration_hours || 0) * hourWidth}px`,
                                   backgroundColor: color
                                 }}
                               >
@@ -2054,12 +2073,12 @@ export default function Schedule() {
                                 <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                                   {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : (lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT')}
                                 </span>
-                                {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                                {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * hourWidth > 80 && (
                                   <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
                                     {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
                                   </span>
                                 )}
-                                {(lesson.duration_hours || 0) * 96 > 80 && (
+                                {(lesson.duration_hours || 0) * hourWidth > 80 && (
                                   <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
                                     {formatDuration(lesson.duration_hours || 0)}
                                   </span>
@@ -2074,13 +2093,13 @@ export default function Schedule() {
                           .map((block, idx) => {
                             const startDecimal = timeToDecimal(block.start_time);
                             const duration = block.duration_hours || 0;
-                            const blockWidth = duration * 96;
+                            const blockWidth = duration * hourWidth;
                             return (
                               <div
                                 key={`schoolmate-busy-${idx}`}
                                 className="absolute top-2 bottom-2 rounded-lg p-2 flex flex-col justify-center overflow-hidden border border-dashed select-none pointer-events-none z-0"
                                 style={{
-                                  left: `${startDecimal * 96}px`,
+                                  left: `${startDecimal * hourWidth}px`,
                                   width: `${blockWidth}px`,
                                   borderColor: 'var(--border-color)',
                                   backgroundColor: 'var(--bg-tertiary)',
@@ -2205,8 +2224,8 @@ export default function Schedule() {
                                   isDragging ? "opacity-40 scale-95" : "hover:brightness-110 active:scale-[0.98]"
                                 )}
                                 style={{ 
-                                  left: `${startDecimal * 96}px`, 
-                                  width: `${(lesson.duration_hours || 0) * 96}px`,
+                                  left: `${startDecimal * hourWidth}px`, 
+                                  width: `${(lesson.duration_hours || 0) * hourWidth}px`,
                                   backgroundColor: color
                                 }}
                               >
@@ -2222,12 +2241,12 @@ export default function Schedule() {
                                 <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter mt-0.5">
                                   {lesson.notes?.startsWith("Student requested:") ? "REQUESTED" : (lesson.lesson_type === 'Ground' ? 'GND' : lesson.lesson_type === 'Sim' ? 'SIM' : 'FLT')}
                                 </span>
-                                {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * 96 > 80 && (
+                                {lesson.notes?.startsWith("Student requested:") && (lesson.duration_hours || 0) * hourWidth > 80 && (
                                   <span className="text-[7px] font-black text-white/70 uppercase tracking-tighter">
                                     {lesson.notes.split("Student requested:")[1].trim().split('\n')[0].substring(0, 5)}
                                   </span>
                                 )}
-                                {(lesson.duration_hours || 0) * 96 > 80 && (
+                                {(lesson.duration_hours || 0) * hourWidth > 80 && (
                                   <span className="text-[7px] font-black text-white/80 uppercase tracking-tighter">
                                     {formatDuration(lesson.duration_hours || 0)}
                                   </span>
@@ -2242,13 +2261,13 @@ export default function Schedule() {
                           .map((block, idx) => {
                             const startDecimal = timeToDecimal(block.start_time);
                             const duration = block.duration_hours || 0;
-                            const blockWidth = duration * 96;
+                            const blockWidth = duration * hourWidth;
                             return (
                               <div
                                 key={`schoolmate-busy-archived-${idx}`}
                                 className="absolute top-2 bottom-2 rounded-lg p-2 flex flex-col justify-center overflow-hidden border border-dashed select-none pointer-events-none z-0"
                                 style={{
-                                  left: `${startDecimal * 96}px`,
+                                  left: `${startDecimal * hourWidth}px`,
                                   width: `${blockWidth}px`,
                                   borderColor: 'var(--border-color)',
                                   backgroundColor: 'var(--bg-tertiary)',
@@ -2302,7 +2321,7 @@ export default function Schedule() {
                 <div 
                   className="absolute top-0 bottom-0 w-[2px] bg-[#ef4444] z-20 pointer-events-none ml-32 sm:ml-48"
                   style={{ 
-                    left: `${(currentTime.getHours() + currentTime.getMinutes() / 60) * 96}px`
+                    left: `${(currentTime.getHours() + currentTime.getMinutes() / 60) * hourWidth}px`
                   }}
                 >
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#ef4444]" />
