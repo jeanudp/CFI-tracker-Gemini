@@ -125,6 +125,9 @@ export default function StudentView() {
   const [hasNoProfileLinked, setHasNoProfileLinked] = useState(false);
   const [requiresAccount, setRequiresAccount] = useState(false);
   const [requiresAccountStudentName, setRequiresAccountStudentName] = useState('');
+  const [requiresAccountSession, setRequiresAccountSession] = useState<any>(null);
+  const [linkAccountLoading, setLinkAccountLoading] = useState(false);
+  const [linkAccountError, setLinkAccountError] = useState<string | null>(null);
   const [instructorCode, setInstructorCode] = useState('');
   const [claimingLoading, setClaimingLoading] = useState(false);
   const [claimingError, setClaimingError] = useState<string | null>(null);
@@ -239,6 +242,48 @@ export default function StudentView() {
       hasSetInitialProfileState.current = true;
     }
   }, [loading, hasNoProfileLinked, studentProfile]);
+
+  useEffect(() => {
+    if (requiresAccount) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setRequiresAccountSession(session || null);
+      });
+    }
+  }, [requiresAccount]);
+
+  const handleLinkAccount = async () => {
+    setLinkAccountLoading(true);
+    setLinkAccountError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to link this account");
+      }
+
+      const response = await fetch('/api/student-portal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'claim',
+          token,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to link training record to your account");
+      }
+
+      window.location.href = '/my-progress';
+    } catch (err: any) {
+      console.error('Error linking training record to account:', err);
+      setLinkAccountError(err.message || "Failed to link training record. Please try again.");
+      setLinkAccountLoading(false);
+    }
+  };
 
   const validateAndFetch = async (profileToUse?: { cfi_user_id: string; student_name: string }) => {
     setLoading(true);
@@ -1461,24 +1506,59 @@ export default function StudentView() {
               <AlertCircle size={40} />
             </div>
             <h2 className="text-2xl font-bold text-[#1c2333] mb-3">Account Required</h2>
-            <p className="text-[#1a3a5c] font-semibold text-sm mb-4">
-              {requiresAccountStudentName}'s training progress has been shared with you
-            </p>
-            <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-              Create a free student account to view and interact with your training data.
-            </p>
-            <button
-              onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
-              className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer mb-4"
-            >
-              Create Student Account
-            </button>
-            <button
-              onClick={() => navigate(`/auth?mode=signin&claim=${encodeURIComponent(token || '')}`)}
-              className="text-[#1a3a5c] hover:underline text-sm font-semibold transition-all cursor-pointer inline-block"
-            >
-              Already have an account? Sign in
-            </button>
+            {requiresAccountSession ? (
+              <>
+                {requiresAccountStudentName && (
+                  <p className="text-[#1a3a5c] font-semibold text-sm mb-4">
+                    {requiresAccountStudentName}'s training progress has been shared with you
+                  </p>
+                )}
+                <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+                  You are signed in and can link this training record to your account.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleLinkAccount}
+                  disabled={linkAccountLoading}
+                  className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer mb-4 disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {linkAccountLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Linking...</span>
+                    </>
+                  ) : (
+                    "Link to My Account"
+                  )}
+                </button>
+                {linkAccountError && (
+                  <p className="text-xs text-red-600 font-bold mb-4">
+                    {linkAccountError}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-[#1a3a5c] font-semibold text-sm mb-4">
+                  {requiresAccountStudentName}'s training progress has been shared with you
+                </p>
+                <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+                  Create a free student account to view and interact with your training data.
+                </p>
+                <button
+                  onClick={() => navigate(`/auth?mode=signup&claim=${encodeURIComponent(token || '')}`)}
+                  className="w-full bg-[#1a3a5c] text-white font-bold py-4 rounded-xl hover:bg-[#2a5a8c] transition-all cursor-pointer mb-4"
+                >
+                  Create Student Account
+                </button>
+                <button
+                  onClick={() => navigate(`/auth?mode=signin&claim=${encodeURIComponent(token || '')}`)}
+                  className="text-[#1a3a5c] hover:underline text-sm font-semibold transition-all cursor-pointer inline-block"
+                >
+                  Already have an account? Sign in
+                </button>
+              </>
+            )}
           </div>
         </main>
       </div>
