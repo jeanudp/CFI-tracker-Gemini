@@ -67,10 +67,14 @@ export default async function handler(req: any, res: any) {
 
       const { student_name: tokenStudentName, user_id: tokenCfiUserId } = shareToken;
 
+      if (tokenCfiUserId === sessionUserId) {
+        return res.status(400).json({ error: "You can't link your account to one of your own students' records." });
+      }
+
       // Check if that exact combination already exists in student_links
       const { data: existingLink, error: linkCheckError } = await supabaseAdmin
         .from('student_links')
-        .select('id')
+        .select('id, status')
         .eq('student_user_id', sessionUserId)
         .eq('cfi_user_id', tokenCfiUserId)
         .eq('student_name', tokenStudentName)
@@ -84,18 +88,36 @@ export default async function handler(req: any, res: any) {
           .insert({
             student_user_id: sessionUserId,
             cfi_user_id: tokenCfiUserId,
-            student_name: tokenStudentName
+            student_name: tokenStudentName,
+            status: 'approved'
           });
         if (insertError) throw insertError;
+      } else if (existingLink.status !== 'approved') {
+        const { error: updateError } = await supabaseAdmin
+          .from('student_links')
+          .update({ status: 'approved' })
+          .eq('id', existingLink.id);
+        if (updateError) throw updateError;
       }
 
-      // Update user_subscriptions setting account_type to 'student'
-      const { error: subUpdateError } = await supabaseAdmin
-        .from('user_subscriptions')
-        .update({ account_type: 'student' })
-        .eq('user_id', sessionUserId);
+      // Check if user has a cfi_profile
+      const { data: cfiProfile, error: cfiProfileError } = await supabaseAdmin
+        .from('cfi_profile')
+        .select('user_id')
+        .eq('user_id', sessionUserId)
+        .maybeSingle();
 
-      if (subUpdateError) throw subUpdateError;
+      if (cfiProfileError) throw cfiProfileError;
+
+      if (!cfiProfile) {
+        // Update user_subscriptions setting account_type to 'student'
+        const { error: subUpdateError } = await supabaseAdmin
+          .from('user_subscriptions')
+          .update({ account_type: 'student' })
+          .eq('user_id', sessionUserId);
+
+        if (subUpdateError) throw subUpdateError;
+      }
 
       return res.status(200).json({ success: true });
     }
